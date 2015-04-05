@@ -1,9 +1,9 @@
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('fieldset', {
     fbtemplate: 'formio/formbuilder/fieldset.html'
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/fieldset.html',

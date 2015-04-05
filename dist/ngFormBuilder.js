@@ -277,8 +277,7 @@ app.run([
   }
 ]);
 
-var components = angular.module('formio.components');
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -310,7 +309,7 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('textfield', {
     views: [
       {
@@ -328,7 +327,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -407,7 +406,7 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('address', {
     views: [
       {
@@ -425,7 +424,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -469,12 +468,12 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('container', {
     fbtemplate: 'formio/formbuilder/container.html'
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/container.html',
@@ -487,18 +486,18 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('email', {
     views: formioComponentsProvider.$get().components.textfield.views
   });
 });
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('fieldset', {
     fbtemplate: 'formio/formbuilder/fieldset.html'
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/fieldset.html',
@@ -510,7 +509,7 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('number', {
     views: [
       {
@@ -528,7 +527,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -602,13 +601,13 @@ components.run([
 ]);
 
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('password', {
     views: formioComponentsProvider.$get().components.textfield.views
   });
 });
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('phoneNumber', {
     views: [
       {
@@ -626,7 +625,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -677,7 +676,7 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('resource', {
     onEdit: function($scope, component, Formio) {
       $scope.resources = [];
@@ -705,7 +704,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -765,7 +764,7 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('select', {
     views: [
       {
@@ -783,7 +782,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
@@ -835,7 +834,7 @@ components.run([
   }
 ]);
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('textarea', {
     views: [
       {
@@ -854,12 +853,12 @@ components.config(function(formioComponentsProvider) {
   });
 });
 
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('well', {
     fbtemplate: 'formio/formbuilder/well.html'
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/well.html',

@@ -1,4 +1,4 @@
-components.config(function(formioComponentsProvider) {
+app.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('resource', {
     onEdit: function($scope, component, Formio) {
       $scope.resources = [];
@@ -26,7 +26,7 @@ components.config(function(formioComponentsProvider) {
     ]
   });
 });
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 

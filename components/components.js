@@ -1,5 +1,4 @@
-var components = angular.module('formio.components');
-components.run([
+app.run([
   '$templateCache',
   function($templateCache) {
 
