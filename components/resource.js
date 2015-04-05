@@ -1,9 +1,9 @@
-var app = angular.module('formio.components');
-app.config(function(formioComponentsProvider) {
+components.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('resource', {
     onEdit: function($scope, component, Formio) {
       $scope.resources = [];
-      Formio().loadResources().then(function(resources) {
+      var loader = new Formio();
+      loader.loadResources().then(function(resources) {
         $scope.resources = resources;
         if (!$scope.component.resource) {
           $scope.component.resource = resources[0]._id;
@@ -26,7 +26,7 @@ app.config(function(formioComponentsProvider) {
     ]
   });
 });
-app.run([
+components.run([
   '$templateCache',
   function($templateCache) {
 

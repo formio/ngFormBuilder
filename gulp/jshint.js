@@ -1,8 +1,8 @@
 module.exports = function (gulp, plugins) {
   return function () {
-    return gulp.src(require('./sources').js)
+    return gulp.src('dist/ngFormBuilder.js')
       .pipe(plugins.jshint({
-        predef: ['angular']
+        predef: ['angular', '_']
       }))
       .pipe(plugins.jshint.reporter('default'))
   };

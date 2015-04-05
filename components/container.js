@@ -1,10 +1,9 @@
-var app = angular.module('formio.components');
-app.config(function(formioComponentsProvider) {
+components.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('container', {
     fbtemplate: 'formio/formbuilder/container.html'
   });
 });
-app.run([
+components.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/container.html',

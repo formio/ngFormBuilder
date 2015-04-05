@@ -1,5 +1,4 @@
-var app = angular.module('formio.components');
-app.config(function(formioComponentsProvider) {
+components.config(function(formioComponentsProvider) {
   formioComponentsProvider.register('phoneNumber', {
     views: [
       {
@@ -17,7 +16,7 @@ app.config(function(formioComponentsProvider) {
     ]
   });
 });
-app.run([
+components.run([
   '$templateCache',
   function($templateCache) {
 
