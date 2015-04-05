@@ -14,6 +14,8 @@ var sources = [
   'components/*.js'
 ];
 
+gulp.task('clean', require('del').bind(null, ['dist']));
+
 gulp.task('watch', function () {
   gulp.watch(sources, ['jshint', 'scripts']);
 });
@@ -33,10 +35,11 @@ gulp.task('scripts', function () {
       header: "(function () {\n'use strict';\n",
       footer: '})();'
     }))
-    .pipe(gulp.dest('dist/js/'))
+    .pipe(gulp.dest('dist/'))
     .pipe(rename('ngFormBuilder.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest('dist/js/'));
+    .pipe(gulp.dest('dist/'));
 });
 
-gulp.task('default', ['jshint', 'scripts', 'watch']);
+gulp.task('build', ['clean', 'scripts']);
+gulp.task('default', ['jshint', 'build', 'watch']);

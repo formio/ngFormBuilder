@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/formioapp/ngFormBuilder",
   "devDependencies": {
+    "del": "^1.1.1",
     "gulp": "^3.8.11",
     "gulp-concat": "^2.5.2",
     "gulp-jshint": "^1.10.0",
