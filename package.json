@@ -1,0 +1,29 @@
+{
+  "name": "ngFormBuilder",
+  "version": "0.0.1",
+  "description": "The Angular.js form builder component.",
+  "main": "dist/ngFormBuilder.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:formioapp/ngFormBuilder.git"
+  },
+  "author": "Travis Tidwell <travis@form.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/formioapp/ngFormBuilder/issues"
+  },
+  "homepage": "https://github.com/formioapp/ngFormBuilder",
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-concat": "^2.5.2",
+    "gulp-jshint": "^1.10.0",
+    "gulp-notify": "^2.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.1.0",
+    "gulp-watch": "^4.2.3",
+    "gulp-wrapper": "^0.1.5"
+  }
+}
