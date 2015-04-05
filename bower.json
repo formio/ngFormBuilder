@@ -15,7 +15,7 @@
     "tests"
   ],
   "dependencies": {
-    "formio": "https://github.com/formioapp/ngFormio.git#b8b7751eef21e79c2cac80c84c4beff4d34a19ba",
+    "formio": "https://github.com/formioapp/ngFormio.git#6b752bc6bc42e7a926db705364a5fb29b9e9ac1d",
     "angular-drag-and-drop-lists": "~1.2.0",
     "angular-bootstrap": "~0.12.1",
     "restangular": "~1.5.1",
