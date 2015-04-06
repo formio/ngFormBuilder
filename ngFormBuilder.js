@@ -176,7 +176,10 @@ app.directive('formBuilderElement', [
       controller: [
         '$scope',
         'formioComponents',
-        function($scope, formioComponents) {
+        function(
+          $scope,
+          formioComponents
+        ) {
           var component = formioComponents.components[$scope.component.type];
           if (component.fbtemplate) {
             $scope.template = component.fbtemplate;

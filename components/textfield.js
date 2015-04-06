@@ -1,21 +1,24 @@
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('textfield', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/textfield/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/textfield/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/textfield/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('textfield', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/textfield/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/textfield/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/textfield/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {

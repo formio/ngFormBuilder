@@ -1,21 +1,24 @@
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('address', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/address/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/address/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/address/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('address', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/address/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/address/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/address/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {

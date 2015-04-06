@@ -1,8 +1,11 @@
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('fieldset', {
-    fbtemplate: 'formio/formbuilder/fieldset.html'
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('fieldset', {
+      fbtemplate: 'formio/formbuilder/fieldset.html'
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {

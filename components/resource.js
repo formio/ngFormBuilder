@@ -1,31 +1,34 @@
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('resource', {
-    onEdit: function($scope, component, Formio) {
-      $scope.resources = [];
-      var loader = new Formio();
-      loader.loadResources().then(function(resources) {
-        $scope.resources = resources;
-        if (!$scope.component.resource) {
-          $scope.component.resource = resources[0]._id;
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('resource', {
+      onEdit: function($scope, component, Formio) {
+        $scope.resources = [];
+        var loader = new Formio();
+        loader.loadResources().then(function(resources) {
+          $scope.resources = resources;
+          if (!$scope.component.resource) {
+            $scope.component.resource = resources[0]._id;
+          }
+        });
+      },
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/resource/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/resource/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/resource/api.html'
         }
-      });
-    },
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/resource/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/resource/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/resource/api.html'
-      }
-    ]
-  });
-});
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {

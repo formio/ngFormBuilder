@@ -178,7 +178,10 @@ app.directive('formBuilderElement', [
       controller: [
         '$scope',
         'formioComponents',
-        function($scope, formioComponents) {
+        function(
+          $scope,
+          formioComponents
+        ) {
           var component = formioComponents.components[$scope.component.type];
           if (component.fbtemplate) {
             $scope.template = component.fbtemplate;
@@ -309,24 +312,27 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('textfield', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/textfield/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/textfield/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/textfield/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('textfield', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/textfield/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/textfield/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/textfield/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -406,24 +412,27 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('address', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/address/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/address/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/address/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('address', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/address/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/address/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/address/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -468,11 +477,14 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('container', {
-    fbtemplate: 'formio/formbuilder/container.html'
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('container', {
+      fbtemplate: 'formio/formbuilder/container.html'
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -486,17 +498,23 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('email', {
-    views: formioComponentsProvider.$get().components.textfield.views
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('email', {
+      views: formioComponentsProvider.$get().components.textfield.views
+    });
+  }
+]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('fieldset', {
-    fbtemplate: 'formio/formbuilder/fieldset.html'
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('fieldset', {
+      fbtemplate: 'formio/formbuilder/fieldset.html'
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -509,24 +527,27 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('number', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/number/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/number/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/textfield/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('number', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/number/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/number/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/textfield/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -601,30 +622,36 @@ app.run([
 ]);
 
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('password', {
-    views: formioComponentsProvider.$get().components.textfield.views
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('password', {
+      views: formioComponentsProvider.$get().components.textfield.views
+    });
+  }
+]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('phoneNumber', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/phoneNumber/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/phoneNumber/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/phoneNumber/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('phoneNumber', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/phoneNumber/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/phoneNumber/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/phoneNumber/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -676,34 +703,37 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('resource', {
-    onEdit: function($scope, component, Formio) {
-      $scope.resources = [];
-      var loader = new Formio();
-      loader.loadResources().then(function(resources) {
-        $scope.resources = resources;
-        if (!$scope.component.resource) {
-          $scope.component.resource = resources[0]._id;
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('resource', {
+      onEdit: function($scope, component, Formio) {
+        $scope.resources = [];
+        var loader = new Formio();
+        loader.loadResources().then(function(resources) {
+          $scope.resources = resources;
+          if (!$scope.component.resource) {
+            $scope.component.resource = resources[0]._id;
+          }
+        });
+      },
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/resource/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/resource/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/resource/api.html'
         }
-      });
-    },
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/resource/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/resource/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/resource/api.html'
-      }
-    ]
-  });
-});
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -764,24 +794,27 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('select', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/select/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/select/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/select/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('select', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/select/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/select/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/select/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -834,30 +867,36 @@ app.run([
   }
 ]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('textarea', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/textfield/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/textfield/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/textfield/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('textarea', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/textfield/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/textfield/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/textfield/api.html'
+        }
+      ]
+    });
+  }
+]);
 
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('well', {
-    fbtemplate: 'formio/formbuilder/well.html'
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('well', {
+      fbtemplate: 'formio/formbuilder/well.html'
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {

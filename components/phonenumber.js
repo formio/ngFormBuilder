@@ -1,21 +1,24 @@
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('phoneNumber', {
-    views: [
-      {
-        name: 'Display',
-        template: 'formio/components/phoneNumber/display.html'
-      },
-      {
-        name: 'Validation',
-        template: 'formio/components/phoneNumber/validate.html'
-      },
-      {
-        name: 'API',
-        template: 'formio/components/phoneNumber/api.html'
-      }
-    ]
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('phoneNumber', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/phoneNumber/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/phoneNumber/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/phoneNumber/api.html'
+        }
+      ]
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {

@@ -1,8 +1,11 @@
-app.config(function(formioComponentsProvider) {
-  formioComponentsProvider.register('container', {
-    fbtemplate: 'formio/formbuilder/container.html'
-  });
-});
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('container', {
+      fbtemplate: 'formio/formbuilder/container.html'
+    });
+  }
+]);
 app.run([
   '$templateCache',
   function($templateCache) {
