@@ -19,6 +19,7 @@ app.directive('formBuilder', function() {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
+      app: '=',
       form: '='
     },
     controller: [
@@ -45,7 +46,7 @@ app.directive('formBuilder', function() {
         });
 
         // Get the resource fields.
-        Restangular.one('app', $scope.form.appId).all('resource').getList().then(function(resources) {
+        Restangular.one('app', $scope.app).all('resource').getList().then(function(resources) {
 
           // Iterate through all resources.
           _.each(resources, function(resource) {
