@@ -299,7 +299,7 @@ app.run([
             '<div class="panel panel-default">' +
               '<div class="panel-heading">Preview</div>' +
               '<div class="panel-body">' +
-                '<formio-component component="component" data="data"></formio-component>' +
+                '<formio-component component="component" data="data" formio="formio"></formio-component>' +
               '</div>' +
             '</div>' +
             '<div class="form-group">' +
