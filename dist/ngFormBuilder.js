@@ -710,7 +710,7 @@ app.config([
     formioComponentsProvider.register('resource', {
       onEdit: function($scope, component, Formio) {
         $scope.resources = [];
-        var loader = new Formio();
+        var loader = new Formio('/app/' + $scope.app);
         loader.loadResources().then(function(resources) {
           $scope.resources = resources;
           if (!$scope.component.resource) {
