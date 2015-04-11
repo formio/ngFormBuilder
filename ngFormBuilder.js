@@ -269,8 +269,7 @@ app.run([
             '<tab heading="Page 1">' +
               '<div class="dropzone">' +
                 '<form-builder-list></form-builder-list>' +
-              '</div><br>' +
-              '<button type="button" class="btn btn-info btn-block" ng-click=""><i class="glyphicon glyphicon-plus-sign"></i> Add Behavior</button>' +
+              '</div>' +
             '</tab>' +
             '<tab><tab-heading><i class="glyphicon glyphicon-plus-sign"></i> Add Page</tab-heading></tab>' +
           '</tabset>' +
