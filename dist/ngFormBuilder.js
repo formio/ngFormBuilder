@@ -512,7 +512,13 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('fieldset', {
-      fbtemplate: 'formio/formbuilder/fieldset.html'
+      fbtemplate: 'formio/formbuilder/fieldset.html',
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/fieldset/display.html'
+        }
+      ]
     });
   }
 ]);
@@ -524,6 +530,16 @@ app.run([
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
         '<form-builder-component-list></form-builder-component-list>' +
       '</fieldset>'
+    );
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/fieldset/display.html',
+      '<ng-form>' +
+        '<div class="form-group">' +
+          '<label for="label">Legend</label>' +
+          '<input type="text" class="form-control" id="legend" name="legend" ng-model="component.legend" placeholder="FieldSet Legend" value="{{ component.legend }}">' +
+        '</div>' +
+      '</ng-form>'
     );
   }
 ]);
@@ -834,6 +850,10 @@ app.run([
         '<div class="form-group">' +
           '<label for="placeholder">Data Source</label>' +
           '<textarea class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" placeholder="Data Source URL or JSON" rows="3">{{ component.dataSrc }}</textarea>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label for="placeholder">Value Property</label>' +
+          '<input type="text" class="form-control" id="valueProperty" name="valueProperty" ng-model="component.valueProperty" placeholder="The selected items property to save." value="{{ component.valueProperty }}">' +
         '</div>' +
         '<div class="form-group">' +
           '<label for="placeholder">Item Template</label>' +

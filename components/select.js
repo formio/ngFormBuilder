@@ -39,6 +39,10 @@ app.run([
           '<textarea class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" placeholder="Data Source URL or JSON" rows="3">{{ component.dataSrc }}</textarea>' +
         '</div>' +
         '<div class="form-group">' +
+          '<label for="placeholder">Value Property</label>' +
+          '<input type="text" class="form-control" id="valueProperty" name="valueProperty" ng-model="component.valueProperty" placeholder="The selected items property to save." value="{{ component.valueProperty }}">' +
+        '</div>' +
+        '<div class="form-group">' +
           '<label for="placeholder">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
