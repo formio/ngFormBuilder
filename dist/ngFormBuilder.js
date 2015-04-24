@@ -366,6 +366,11 @@ app.run([
             '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Multiple Values' +
           '</label>' +
         '</div>' +
+        '<div class="checkbox">' +
+          '<label>' +
+            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
+          '</label>' +
+        '</div>' +
       '</ng-form>'
     );
 
