@@ -51,6 +51,21 @@ app.run([
             '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Allow Multiple Values' +
           '</label>' +
         '</div>' +
+        '<div class="checkbox">' +
+          '<label>' +
+            '<input type="checkbox" id="unique" name="unique" ng-model="component.unique" ng-checked="component.unique"> Unique' +
+          '</label>' +
+        '</div>' +
+        '<div class="checkbox">' +
+          '<label>' +
+            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
+          '</label>' +
+        '</div>' +
+        '<div class="checkbox">' +
+          '<label>' +
+            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
+          '</label>' +
+        '</div>' +
       '</ng-form>'
     );
 
