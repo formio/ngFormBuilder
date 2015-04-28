@@ -27,14 +27,12 @@ app.directive('formBuilder', function() {
       'formioComponents',
       'formBuilderTools',
       'ngDialog',
-      'Restangular',
       'Formio',
       function(
         $scope,
         formioComponents,
         formBuilderTools,
         ngDialog,
-        Restangular,
         Formio
       ) {
 
@@ -47,7 +45,7 @@ app.directive('formBuilder', function() {
         });
 
         // Get the resource fields.
-        Restangular.one('app', $scope.app).all('resource').getList().then(function(resources) {
+        $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
 
           // Iterate through all resources.
           _.each(resources, function(resource) {
