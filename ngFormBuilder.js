@@ -115,7 +115,7 @@ app.directive('formBuilder', function() {
 
           // Watch the settings label and auto set the key from it.
           $scope.$watch('component.label', function() {
-            if ($scope.component.label && !$scope.component.lockKey) {
+            if (!$scope.form._id && $scope.component.label && !$scope.component.lockKey) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
@@ -256,7 +256,7 @@ app.run([
                 '<li ng-repeat="component in formComponentsByGroup[groupName]"' +
                   'dnd-draggable="component.settings"' +
                   'dnd-effect-allowed="copy">' +
-                  '<button type="button" class="btn btn-success btn-block" disabled="disabled">{{component.title}}</button>' +
+                  '<button type="button" class="btn btn-primary btn-sm btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
                 '</li>' +
               '</ul>' +
             '</accordion-group>' +

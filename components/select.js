@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('select', {
+      icon: 'fa fa-th-list',
       views: [
         {
           name: 'Display',

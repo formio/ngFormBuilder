@@ -5,7 +5,7 @@ app.config([
       onEdit: function($scope, component, Formio) {
         $scope.resources = [];
         var loader = new Formio('/app/' + $scope.app);
-        loader.loadResources().then(function(resources) {
+        loader.loadForms({params: {type: 'resource'}}).then(function(resources) {
           $scope.resources = resources;
           if (!$scope.component.resource) {
             $scope.component.resource = resources[0]._id;
