@@ -115,7 +115,7 @@ app.directive('formBuilder', function() {
 
           // Watch the settings label and auto set the key from it.
           $scope.$watch('component.label', function() {
-            if (!$scope.form._id && $scope.component.label && !$scope.component.lockKey) {
+            if ($scope.component.label && !$scope.component.lockKey) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }

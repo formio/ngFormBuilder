@@ -74,7 +74,7 @@ app.run([
       '<ng-form>' +
         '<div class="form-group">' +
           '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
+          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
         '</div>' +
       '</ng-form>'
     );
@@ -106,6 +106,14 @@ app.run([
             '<small><p>Enter custom validation code.</p>' +
             '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
             '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
+            '<div class="well">' +
+              '<div class="checkbox">' +
+                '<label>' +
+                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
+                '</label>' +
+              '</div>' +
+              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</ng-form>'
