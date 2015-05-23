@@ -3,7 +3,8 @@ var app = angular.module('ngFormBuilder', [
   'dndLists',
   'restangular',
   'ngDialog',
-  'ui.bootstrap.accordion'
+  'ui.bootstrap.accordion',
+  'froala'
 ]);
 app.service('formBuilderTools', function() {
   return {
@@ -134,6 +135,9 @@ app.directive('formBuilder', function() {
             $scope.data[component.key] = '';
           }
           $scope.previousSettings = angular.copy(component);
+          if (!$scope.formComponents[component.type].hasOwnProperty('views')) {
+            return;
+          }
 
           $scope.$watch('component.multiple', function(value) {
             $scope.data[$scope.component.key] = value ? [''] : '';
@@ -240,10 +244,17 @@ app.directive('formBuilderList', function() {
 app.run([
   '$templateCache',
   function($templateCache) {
+    $templateCache.put('formio/formbuilder/editbuttons.html',
+      '<div class="component-btn-group">' +
+        '<button class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component)"><span class="glyphicon glyphicon-remove"></span></button>' +
+        '<button class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
+        '<button ng-if="formComponents[component.type].views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
+      '</div>'
+    );
+
     $templateCache.put('formio/formbuilder/component.html',
       '<div class="component-form-group" ng-class="{highlight: hover}" ng-mouseenter="hover = true" ng-mouseleave="hover = false">' +
-        '<button class="btn btn-xs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
-        '<button class="btn btn-xs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
+        '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
         '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
       '</div>'
     );
@@ -261,7 +272,11 @@ app.run([
           'dnd-draggable="component" ' +
           'dnd-effect-allowed="move" ' +
           'dnd-moved="removeComponent(component)">' +
-          '<form-builder-component></form-builder-component>' +
+          '<form-builder-component ng-if="component.input"></form-builder-component>' +
+          '<div ng-if="!component.input">' +
+            '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
+            '<form-builder-element></form-builder-element>' +
+          '</div>' +
         '</li>' +
       '</ul>'
     );
