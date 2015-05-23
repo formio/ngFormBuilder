@@ -20,6 +20,6 @@
     "angular-bootstrap": "~0.12.1",
     "ngDialog": "~0.3.12",
     "lodash": "~3.6.0",
-    "angular-froala": "~1.2.7"
+    "ng-ckeditor": "~0.2.1"
   }
 }
