@@ -10,7 +10,7 @@ app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/content.html',
-      '<textarea ckeditor="component.settings" ng-model="component.html"><textarea>'
+      '<textarea ckeditor ng-model="component.html"><textarea>'
     );
   }
 ]);
