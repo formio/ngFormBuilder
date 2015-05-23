@@ -84,27 +84,53 @@ app.directive('formBuilder', function() {
           });
         });
 
-        if (!$scope.form.components) {
-          $scope.form.components = [];
-        }
+        // Find the appropriate list.
+        var findList = function(components, component) {
+          var i = components.length;
+          var list = null;
+          outerloop:
+          while (i--) {
+            if (components[i] === component) {
+              return components;
+            }
+            else if (components[i].hasOwnProperty('columns')) {
+              var j = components[i].columns.length;
+              while (j--) {
+                list = findList(components[i].columns[j].components, component);
+                if (list) {
+                  break outerloop;
+                }
+              }
+            }
+            else if (components[i].hasOwnProperty('components')) {
+              list = findList(components[i].components, component);
+              if (list) {
+                break;
+              }
+            }
+          }
+          return list;
+        };
 
         // Remove a component.
-        $scope.removeComponent = function() {
-          $scope.componentList.splice($scope.componentList.indexOf($scope.component), 1);
+        $scope.removeComponent = function(component) {
+          var list = findList($scope.form.components, component);
+          if (list) {
+            list.splice(list.indexOf(component), 1);
+          }
           ngDialog.closeAll();
         };
 
         // Add a new component.
         $scope.addComponent = function(list, component) {
-          $scope.editComponent(list, component);
+          $scope.editComponent(component);
           return component;
         };
 
         // Edit a specific component.
-        $scope.editComponent = function(list, component) {
+        $scope.editComponent = function(component) {
           // Set the active component.
           $scope.component = component;
-          $scope.componentList = list;
           $scope.data = {};
           if (component.key) {
             $scope.data[component.key] = '';
@@ -196,15 +222,21 @@ app.directive('formBuilderList', function() {
     scope: false,
     restrict: 'E',
     replace: true,
+    controller: [
+      '$scope',
+      function(
+        $scope
+      ) {
+        if (!$scope.component && $scope.form) {
+          $scope.component = $scope.form;
+          $scope.$watch('form', function(form) {
+            if (!form) { return; }
+            $scope.component = $scope.form;
+          });
+        }
+      }
+    ],
     templateUrl: 'formio/formbuilder/list.html'
-  };
-});
-app.directive('formBuilderComponentList', function() {
-  return {
-    scope: false,
-    restrict: 'E',
-    replace: true,
-    templateUrl: 'formio/formbuilder/component-list.html'
   };
 });
 app.run([
@@ -212,7 +244,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/component.html',
       '<div class="component-form-group" ng-class="{highlight: hover}" ng-mouseenter="hover = true" ng-mouseleave="hover = false">' +
-        '<button class="btn btn-xs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(form.components, component)"><span class="glyphicon glyphicon-cog"></span></button>' +
+        '<button class="btn btn-xs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
         '<button class="btn btn-xs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
         '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
       '</div>'
@@ -220,30 +252,17 @@ app.run([
 
     $templateCache.put('formio/formbuilder/list.html',
       '<ul class="component-list" ' +
-        'dnd-list="form.components"' +
-        'dnd-drop="addComponent(form.components, item)">' +
-        '<li ng-if="form.components.length === 0">' +
+        'dnd-list="component.components"' +
+        'dnd-drop="addComponent(component.components, item)">' +
+        '<li ng-if="component.components.length === 0">' +
           '<div class="alert alert-info" style="text-align:center; margin-bottom: 0px;" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
         '</li>' +
-        '<li ng-repeat="component in form.components" ' +
-          'dnd-draggable="component" ' +
-          'dnd-effect-allowed="move" ' +
-          'dnd-moved="form.components.splice($index, 1)">' +
-          '<form-builder-component></form-builder-component>' +
-        '</li>' +
-      '</ul>'
-    );
-
-    $templateCache.put('formio/formbuilder/component-list.html',
-      '<ul class="component-list" ' +
-        'dnd-list="component.components"' +
-        'dnd-drop="addComponent(component.components, item)">' +
         '<li ng-repeat="component in component.components" ' +
           'dnd-draggable="component" ' +
           'dnd-effect-allowed="move" ' +
-          'dnd-moved="component.components.splice($index, 1)">' +
+          'dnd-moved="removeComponent(component)">' +
           '<form-builder-component></form-builder-component>' +
         '</li>' +
       '</ul>'
@@ -258,7 +277,7 @@ app.run([
                 '<li ng-repeat="component in formComponentsByGroup[groupName]"' +
                   'dnd-draggable="component.settings"' +
                   'dnd-effect-allowed="copy">' +
-                  '<button type="button" class="btn btn-primary btn-sm btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
+                  '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
                 '</li>' +
               '</ul>' +
             '</accordion-group>' +
@@ -302,7 +321,7 @@ app.run([
             '<div class="form-group">' +
               '<button type="submit" class="btn btn-success" ng-click="saveSettings()">Save</button>&nbsp;' +
               '<button type="button" class="btn btn-default" ng-click="cancelSettings()">Cancel</button>&nbsp;' +
-              '<button type="button" class="btn btn-danger" ng-click="removeComponent()">Remove</button>' +
+              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component)">Remove</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -580,7 +599,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/container.html',
       '<div class="row">' +
-        '<div class="col-xs-6 component-form-group" ng-repeat="components in component.columns">' +
+        '<div class="col-xs-6 component-form-group" ng-repeat="component in component.columns">' +
           '<form-builder-list></form-builder-list>' +
         '</div>' +
       '</div>'
@@ -617,7 +636,7 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
-        '<form-builder-component-list></form-builder-component-list>' +
+        '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
 
@@ -1144,7 +1163,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/well.html',
       '<div class="well">' +
-        '<form-builder-component-list></form-builder-component-list>' +
+        '<form-builder-list></form-builder-list>' +
       '</div>'
     );
   }

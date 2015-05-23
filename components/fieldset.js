@@ -18,7 +18,7 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
-        '<form-builder-component-list></form-builder-component-list>' +
+        '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
 

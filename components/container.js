@@ -11,7 +11,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/container.html',
       '<div class="row">' +
-        '<div class="col-xs-6 component-form-group" ng-repeat="components in component.columns">' +
+        '<div class="col-xs-6 component-form-group" ng-repeat="component in component.columns">' +
           '<form-builder-list></form-builder-list>' +
         '</div>' +
       '</div>'
