@@ -19,6 +19,7 @@
     "angular-drag-and-drop-lists": "~1.2.0",
     "angular-bootstrap": "~0.12.1",
     "ngDialog": "~0.3.12",
-    "lodash": "~3.6.0"
+    "lodash": "~3.6.0",
+    "textAngular": "~1.4.0"
   }
 }
