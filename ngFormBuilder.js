@@ -286,13 +286,11 @@ app.run([
         '<div class="col-sm-3">' +
           '<accordion close-others="true">' +
             '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-              '<ul class="form-component-list">' +
-                '<li ng-repeat="component in formComponentsByGroup[groupName]"' +
-                  'dnd-draggable="component.settings"' +
-                  'dnd-effect-allowed="copy">' +
-                  '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
-                '</li>' +
-              '</ul>' +
+              '<div ng-repeat="component in formComponentsByGroup[groupName]"' +
+                'dnd-draggable="component.settings"' +
+                'dnd-effect-allowed="copy" style="width:48%;margin: 0 4px 4px 0; float:left;">' +
+                '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
+              '</div>' +
             '</accordion-group>' +
           '</accordion>' +
         '</div>' +
