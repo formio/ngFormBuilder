@@ -15,11 +15,11 @@
     "tests"
   ],
   "dependencies": {
-    "formio": "git@github.com:formioapp/ngFormio.git#79bf651cc557496ba5453edef9be3820b2c478d4",
+    "formio": "git@github.com:formioapp/ngFormio.git#faae622df14d914efe071afa85174c9df6ddfa4b",
     "angular-drag-and-drop-lists": "~1.2.0",
     "angular-bootstrap": "~0.12.1",
     "ngDialog": "~0.3.12",
     "lodash": "~3.6.0",
-    "angular-froala": "~1.2.7"
+    "ng-ckeditor": "~0.2.1"
   }
 }

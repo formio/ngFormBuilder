@@ -4,7 +4,7 @@ var app = angular.module('ngFormBuilder', [
   'restangular',
   'ngDialog',
   'ui.bootstrap.accordion',
-  'froala'
+  'ngCkeditor'
 ]);
 app.service('formBuilderTools', function() {
   return {
