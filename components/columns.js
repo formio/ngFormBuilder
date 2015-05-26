@@ -1,15 +1,15 @@
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
-    formioComponentsProvider.register('container', {
-      fbtemplate: 'formio/formbuilder/container.html'
+    formioComponentsProvider.register('columns', {
+      fbtemplate: 'formio/formbuilder/columns.html'
     });
   }
 ]);
 app.run([
   '$templateCache',
   function($templateCache) {
-    $templateCache.put('formio/formbuilder/container.html',
+    $templateCache.put('formio/formbuilder/columns.html',
       '<div class="row">' +
         '<div class="col-xs-6 component-form-group" ng-repeat="component in component.columns">' +
           '<form-builder-list></form-builder-list>' +
