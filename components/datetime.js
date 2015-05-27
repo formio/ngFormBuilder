@@ -1,22 +1,22 @@
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
-    formioComponentsProvider.register('datetime', {
-      views: [
-        {
-          name: 'Display',
-          template: 'formio/components/datetime/display.html'
-        },
-        {
-          name: 'Validation',
-          template: 'formio/components/datetime/validate.html'
-        },
-        {
-          name: 'API',
-          template: 'formio/components/datetime/api.html'
-        }
-      ]
-    });
+    // formioComponentsProvider.register('datetime', {
+    //   views: [
+    //     {
+    //       name: 'Display',
+    //       template: 'formio/components/datetime/display.html'
+    //     },
+    //     {
+    //       name: 'Validation',
+    //       template: 'formio/components/datetime/validate.html'
+    //     },
+    //     {
+    //       name: 'API',
+    //       template: 'formio/components/datetime/api.html'
+    //     }
+    //   ]
+    // });
   }
 ]);
 app.run([
