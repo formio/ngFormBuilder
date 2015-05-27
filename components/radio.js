@@ -1,17 +1,3 @@
-var radioController = function($scope) {
-  $scope.addValue = function() {
-    var value = $scope.component.values.length + 1;
-    $scope.component.values.push({
-      value: 'value' + value,
-      label: 'Value ' + value
-    });
-  };
-  $scope.removeValue = function(index) {
-    $scope.component.values.splice(index, 1);
-  };
-};
-radioController.$inject = ['$scope'];
-
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
@@ -20,7 +6,18 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/radio/display.html',
-          controller: radioController
+          controller: ['$scope', function($scope) {
+            $scope.addValue = function() {
+              var value = $scope.component.values.length + 1;
+              $scope.component.values.push({
+                value: 'value' + value,
+                label: 'Value ' + value
+              });
+            };
+            $scope.removeValue = function(index) {
+              $scope.component.values.splice(index, 1);
+            };
+          }]
         },
         {
           name: 'Validation',
