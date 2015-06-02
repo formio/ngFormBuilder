@@ -1158,17 +1158,21 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/radio/display.html',
-          controller: function($scope) {
-            $scope.addValue = function() {
-              $scope.component.values.push({
-                value: '',
-                label: ''
-              });
-            };
-            $scope.removeValue = function(index) {
-              $scope.component.values.splice(index, 1);
-            };
-          }
+          controller: [
+            '$scope',
+            function($scope) {
+              $scope.addValue = function() {
+                var value = $scope.component.values.length + 1;
+                $scope.component.values.push({
+                  value: 'value' + value,
+                  label: 'Value ' + value
+                });
+              };
+              $scope.removeValue = function(index) {
+                $scope.component.values.splice(index, 1);
+              };
+            }
+          ]
         },
         {
           name: 'Validation',
