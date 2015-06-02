@@ -8,6 +8,14 @@ app.config([
           template: 'formio/components/datetime/display.html'
         },
         {
+          name: 'Date',
+          template: 'formio/components/datetime/date.html'
+        },
+        {
+          name: 'Time',
+          template: 'formio/components/datetime/time.html'
+        },
+        {
           name: 'Validation',
           template: 'formio/components/datetime/validate.html'
         },
@@ -48,6 +56,21 @@ app.run([
             '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
           '</label>' +
         '</div>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/datetime/date.html',
+      '<ng-form>' +
+        '<div class="form-group">' +
+          '<label for="label">Minimum Date</label>' +
+          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
+        '</div>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/datetime/time.html',
+      '<ng-form>' +
+
       '</ng-form>'
     );
 

@@ -647,6 +647,14 @@ app.config([
           template: 'formio/components/datetime/display.html'
         },
         {
+          name: 'Date',
+          template: 'formio/components/datetime/date.html'
+        },
+        {
+          name: 'Time',
+          template: 'formio/components/datetime/time.html'
+        },
+        {
           name: 'Validation',
           template: 'formio/components/datetime/validate.html'
         },
@@ -688,6 +696,14 @@ app.run([
           '</label>' +
         '</div>' +
       '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/datetime/date.html',
+      ''
+    );
+
+    $templateCache.put('formio/components/datetime/time.html'
+      ''
     );
 
     // Create the API markup.
