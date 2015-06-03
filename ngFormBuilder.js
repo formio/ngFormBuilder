@@ -241,6 +241,19 @@ app.directive('formBuilderList', function() {
     templateUrl: 'formio/formbuilder/list.html'
   };
 });
+app.directive('builderTooltip', function() {
+  return {
+    restrict: 'A',
+    replace: false,
+    link: function($scope, el, attrs) {
+      var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
+      tooltip.attr('title', attrs.builderTooltip);
+      tooltip.tooltip();
+      el.append(' ').append(tooltip);
+    }
+  };
+
+});
 app.run([
   '$templateCache',
   function($templateCache) {
