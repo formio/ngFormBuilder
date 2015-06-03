@@ -26,29 +26,17 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/address/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Allow Multiple Addresses' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
+
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/address/api.html',
       '<ng-form>' +
-      '<div class="form-group">' +
-      '<label for="key">Property Name</label>' +
-      '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-      '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 

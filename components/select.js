@@ -27,46 +27,21 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/select/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder">Data Source</label>' +
           '<textarea class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" placeholder="Data Source URL or JSON" rows="3">{{ component.dataSrc }}</textarea>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Value Property</label>' +
-          '<input type="text" class="form-control" id="valueProperty" name="valueProperty" ng-model="component.valueProperty" placeholder="The selected items property to save." value="{{ component.valueProperty }}">' +
-        '</div>' +
+        '<form-builder-option property="valueProperty" label="Value Property" placeholder="The selected items property to save."></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
-        '<div class="form-group checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Allow Multiple Values' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="unique" name="unique" ng-model="component.unique" ng-checked="component.unique"> Unique' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="multiple"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 

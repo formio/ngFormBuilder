@@ -25,10 +25,7 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Legend</label>' +
-          '<input type="text" class="form-control" id="legend" name="legend" ng-model="component.legend" placeholder="FieldSet Legend" value="{{ component.legend }}">' +
-        '</div>' +
+        '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend"></form-builder-option>' +
       '</ng-form>'
     );
   }

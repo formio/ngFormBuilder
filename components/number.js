@@ -26,58 +26,23 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/number/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Increment (Step)</label>' +
-          '<input type="text" class="form-control" id="step" name="step" ng-model="component.validate.step" placeholder="Enter how much to increment per step (or precision)." value="{{ component.validate.step }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="prefix">Prefix</label>' +
-          '<input type="text" class="form-control" id="prefix" name="prefix" ng-model="component.prefix" placeholder="example \'$\', \'@\'" value="{{ component.prefix }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="suffix">Suffix</label>' +
-          '<input type="text" class="form-control" id="suffix" name="suffix" ng-model="component.suffix" placeholder="example \'%\', \'#\'" value="{{ component.suffix }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Multiple Values' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)."></form-builder-option>' +
+        '<form-builder-option property="prefix"></form-builder-option>' +
+        '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="multiple"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/number/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Minimum Value</label>' +
-          '<input type="number" class="form-control" id="min" name="min" ng-model="component.validate.min" placeholder="Minimum Value" value="{{ component.validate.min }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Maximum Value</label>' +
-          '<input type="number" class="form-control" id="max" name="max" ng-model="component.validate.max" placeholder="Maximum Value" value="{{ component.validate.max }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Greater Than</label>' +
-          '<input type="number" class="form-control" id="greater" name="greater" ng-model="component.validate.greater" placeholder="Greater Than" value="{{ component.validate.greater }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Less Than</label>' +
-          '<input type="number" class="form-control" id="less" name="less" ng-model="component.validate.less" placeholder="Less Than" value="{{ component.validate.less }}">' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="validate.min" type="number" label="Minimum Value" placeholder="Minimum Value"></form-builder-option>' +
+        '<form-builder-option property="validate.max" type="number" label="Maximum Value" placeholder="Maximum Value"></form-builder-option>' +
+        '<form-builder-option property="validate.greater" type="number" label="Greater Than" placeholder="Greater Than"></form-builder-option>' +
+        '<form-builder-option property="validate.less" type="number" label="Less Than" placeholder="Less Than"></form-builder-option>' +
         '<div class="panel panel-default">' +
           '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
           '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
