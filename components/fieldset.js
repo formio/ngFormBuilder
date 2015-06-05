@@ -25,7 +25,7 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
-        '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend"></form-builder-option>' +
+        '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
       '</ng-form>'
     );
   }

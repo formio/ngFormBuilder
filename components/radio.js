@@ -43,7 +43,7 @@ app.run([
       '<ng-form ng-controller="view.controller">' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="">Values</label>' +
+          '<label for="" form-builder-tooltip="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form.">Values</label>' +
           '<table class="table table-condensed">' +
             '<thead>' +
               '<tr>' +

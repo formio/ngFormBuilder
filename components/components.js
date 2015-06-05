@@ -34,66 +34,75 @@ app.run([
 /**
 * These are component options that can be reused
 * with the builder-option directive
-* Valid properties: label, placeholder, type
+* Valid properties: label, placeholder, tooltip, type
 */
 app.constant('COMMON_OPTIONS', {
-  'label': {
-    'label': 'Label',
-    'placeholder': 'Field Label'
+  label: {
+    label: 'Label',
+    placeholder: 'Field Label',
+    tooltip: 'The label for this field that will appear next to it.'
   },
-  'placeholder': {
-    'label': 'Placeholder',
-    'placeholder': 'Placeholder'
+  placeholder: {
+    label: 'Placeholder',
+    placeholder: 'Placeholder',
+    tooltip: 'The placeholder text that will appear when this field is empty.'
   },
-  'inputMask': {
-    'label': 'Input Mask',
-    'placeholder': 'Input Mask'
+  inputMask: {
+    label: 'Input Mask',
+    placeholder: 'Input Mask',
+    tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone number mask: (999) 999-9999'
   },
-  'prefix': {
-    'label': 'Prefix',
-    'placeholder': 'example \'$\', \'@\''
+  prefix: {
+    label: 'Prefix',
+    placeholder: 'example \'$\', \'@\'',
+    tooltip: 'The text to show before a field.'
   },
-  'suffix': {
-    'label': 'Suffix',
-    'placeholder': 'example \'$\', \'@\''
+  suffix: {
+    label: 'Suffix',
+    placeholder: 'example \'$\', \'@\'',
+    tooltip: 'The text to show after a field.'
   },
-  'multiple': {
-    'label': 'Multiple Values',
-    'type': 'checkbox'
+  multiple: {
+    label: 'Multiple Values',
+    type: 'checkbox',
+    tooltip: 'Allows multiple values to be entered for this field.'
   },
-  'unique': {
-    'label': 'Unique',
-    'type': 'checkbox'
+  unique: {
+    label: 'Unique',
+    type: 'checkbox',
+    tooltip: 'Makes sure the data submitted for this field is unique, and has not been submitted before.'
   },
-  'protected': {
-    'label': 'Protected',
-    'type': 'checkbox'
+  protected: {
+    label: 'Protected',
+    type: 'checkbox',
+    tooltip: 'A protected field will not be returned when queried via API.'
   },
-  'persistent': {
-    'label': 'Persistent',
-    'type': 'checkbox'
-  },
-  'key': {
-    'label': 'Property Name'
+  persistent: {
+    label: 'Persistent',
+    type: 'checkbox',
+    tooltip: 'A persistent field will be stored in database when the form is submitted.'
   },
   'validate.required': {
-    'label': 'Required',
-    'type': 'checkbox'
+    label: 'Required',
+    type: 'checkbox',
+    tooltip: 'A required field must be filled in before the form can be submitted.'
   },
   'validate.minLength': {
-    'label': 'Minimum Length',
-    'placeholder': 'Minimum Length',
-    'type': 'number'
+    label: 'Minimum Length',
+    placeholder: 'Minimum Length',
+    type: 'number',
+    tooltip: 'The minimum length requirement this field must meet.'
   },
   'validate.maxLength': {
-    'label': 'Maximum Length',
-    'placeholder': 'Maximum Length',
-    'type': 'number'
+    label: 'Maximum Length',
+    placeholder: 'Maximum Length',
+    type: 'number',
+    tooltip: 'The maximum length requirement this field must meet'
   },
   'validate.pattern': {
-    'label': 'Regular Expression Pattern',
-    'placeholder': 'Regular Expression Pattern',
-
+    label: 'Regular Expression Pattern',
+    placeholder: 'Regular Expression Pattern',
+    tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
   }
 });
 
@@ -105,9 +114,9 @@ app.constant('COMMON_OPTIONS', {
 * of the component to bind to.
 *
 * If the property is defined in COMMON_OPTIONS above, it will automatically
-* populate its label, placeholder, and input type. If not, you may specify
-* those via attributes. The generated input will also carry over any other
-* properties you specify on this directive.
+* populate its label, placeholder, input type, and tooltip. If not, you may specify
+* those via attributes (except for tooltip, which you can specify with the title attribute).
+* The generated input will also carry over any other properties you specify on this directive.
 */
 app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
   return {
@@ -120,6 +129,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
       var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
+      var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
       var input = angular.element('<input></input>');
       var inputAttrs = {
@@ -132,15 +142,17 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
         inputAttrs[key] = attrs[key];
+        // Allow specifying tooltip via title attr
+        if(key.toLowerCase() === 'title') {
+          tooltip = attrs[key];
+        }
       });
       input.attr(inputAttrs);
-
-      console.log("generating templ");
 
       // Checkboxes have a slightly different layout
       if(inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
-                '<label for="label" >' +
+                '<label for="label" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
                 ' ' + label + '</label>' +
               '</div>';  
@@ -148,7 +160,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="label" >' + label + '</label>' +
+                '<label for="label" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
                 input.prop('outerHTML') +
               '</div>';
     }
@@ -167,7 +179,7 @@ app.directive('formBuilderOptionKey', function(){
     template: function(el, attrs) {
       var disableOnLock = attrs.disableOnLock || attrs.disableOnLock === '';
       return '<div class="form-group">' +
-                '<label for="key">Property Name</label>' +
+                '<label for="key" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ' +
                   (disableOnLock ? 'ng-disabled="component.lockKey" ' : 'ng-blur="component.lockKey = true;" ') +
                   'ng-required>' +

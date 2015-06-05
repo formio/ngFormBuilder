@@ -39,17 +39,16 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Resource</label>' +
+          '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
           '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
         '</div>' +
         '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression"></form-builder-option>' +
-        // TODO: replace this with form-builder-option. figure out how to make ng-list work
         '<div class="form-group">' +
           '<label for="placeholder">Search Fields</label>' +
           '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The search field parings" value="{{ component.searchFields }}">' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Item Template</label>' +
+          '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +

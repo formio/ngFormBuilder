@@ -241,19 +241,29 @@ app.directive('formBuilderList', function() {
     templateUrl: 'formio/formbuilder/list.html'
   };
 });
-app.directive('builderTooltip', function() {
+
+/**
+* Invokes Bootstrap's tooltip jquery plugin on an element
+* Tooltip text can be provided via title attribute or
+* as the value for this directive.
+*/
+app.directive('formBuilderTooltip', function() {
   return {
     restrict: 'A',
     replace: false,
     link: function($scope, el, attrs) {
-      var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
-      tooltip.attr('title', attrs.builderTooltip);
-      tooltip.tooltip();
-      el.append(' ').append(tooltip);
+      if(attrs.formBuilderTooltip || attrs.title) {
+        var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted" data-placement="right" data-html="true"></i>');
+        if(!attrs.title) {
+          tooltip.attr('title', attrs.formBuilderTooltip);          
+        }
+        tooltip.tooltip();
+        el.append(' ').append(tooltip);  
+      }
     }
   };
-
 });
+
 app.run([
   '$templateCache',
   function($templateCache) {
