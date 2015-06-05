@@ -41,8 +41,6 @@ app.run([
         '<form-builder-option property="validate.required"></form-builder-option>' +
         '<form-builder-option property="validate.min" type="number" label="Minimum Value" placeholder="Minimum Value" title="The minimum value this field must have before the form can be submitted."></form-builder-option>' +
         '<form-builder-option property="validate.max" type="number" label="Maximum Value" placeholder="Maximum Value" title="The maximum value this field must have before the form can be submitted."></form-builder-option>' +
-        '<form-builder-option property="validate.greater" type="number" label="Greater Than" placeholder="Greater Than"></form-builder-option>' +
-        '<form-builder-option property="validate.less" type="number" label="Less Than" placeholder="Less Than"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
