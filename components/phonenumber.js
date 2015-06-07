@@ -26,36 +26,18 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/phoneNumber/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Input Mask</label>' +
-          '<input type="text" class="form-control" id="inputMask" name="inputMask" ng-model="component.inputMask" placeholder="Input Mask" value="{{ component.inputMask }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="prefix">Prefix</label>' +
-          '<input type="text" class="form-control" id="prefix" name="prefix" ng-model="component.prefix" placeholder="example \'$\', \'@\'" value="{{ component.prefix }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="suffix">Suffix</label>' +
-          '<input type="text" class="form-control" id="suffix" name="suffix" ng-model="component.suffix" placeholder="example \'%\', \'#\'" value="{{ component.suffix }}">' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="inputMask"></form-builder-option>' +
+        '<form-builder-option property="prefix"></form-builder-option>' +
+        '<form-builder-option property="suffix"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/phoneNumber/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-        '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 

@@ -55,12 +55,9 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/panel/display.html',
       '<ng-form>' +
+        '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="label">Title</label>' +
-          '<input type="text" class="form-control" id="title" name="title" ng-model="component.title" placeholder="Panel Title" value="{{ component.title }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Theme</label>' +
+          '<label for="placeholder" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
       '</ng-form>'

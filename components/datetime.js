@@ -62,44 +62,27 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/datetime/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="format">Date Format</label>' +
-          '<input type="text" class="form-control" id="format" name="format" ng-model="component.format" placeholder="Enter the Date format" value="{{ component.format }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the AngularJS date filter."></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
     $templateCache.put('formio/components/datetime/date.html',
       '<ng-form>' +
         '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
+          '<label form-builder-tooltip="Enables date input for this field.">' +
+            '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
           '</label>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="datepickerMode">Initial Mode</label>' +
+          '<label for="datepickerMode" form-builder-tooltip="The initial view to display when clicking on this field.">Initial Mode</label>' +
           '<select class="form-control" id="datepickerMode" name="datepickerMode" ng-model="component.datepickerMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Minimum Date</label>' +
+          '<label for="placeholder" form-builder-tooltip="The minimum date that can be picked.">Minimum Date</label>' +
           '<div class="input-group">' +
             '<input type="text" class="form-control" ' +
               'ng-focus="minDateOpen = true" ' +
@@ -114,7 +97,7 @@ app.run([
           '</div>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Maximum Date</label>' +
+          '<label for="placeholder"  form-builder-tooltip="The maximum date that can be picked.">Maximum Date</label>' +
           '<div class="input-group">' +
             '<input type="text" class="form-control" ' +
               'ng-focus="maxDateOpen = true" ' +
@@ -129,92 +112,49 @@ app.run([
           '</div>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="startingDay">Starting Day</label>' +
+          '<label for="startingDay" form-builder-tooltip="The first day of the week.">Starting Day</label>' +
           '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day for (idx, day) in startingDays"></select>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="minMode">Minimum Mode</label>' +
+          '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">Minimum Mode</label>' +
           '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="maxMode">Maximum Mode</label>' +
+          '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">Maximum Mode</label>' +
           '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label for="yearRange">Number of Years Displayed</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.datePicker.yearRange" placeholder="Year Range" value="{{ component.datePicker.yearRange }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.datePicker.showWeeks" ng-checked="component.datePicker.showWeeks"> Show Week Numbers' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="datePicker.yearRange" label="Number of Years Displayed" placeholder="Year Range" title="The number of years to display in the years view."></form-builder-option>' +
+
+        '<form-builder-option property="datePicker.showWeeks" type="checkbox" label="Show Week Numbers" title="Displays the week numbers on the date picker."></form-builder-option>' +
       '</ng-form>'
     );
 
     $templateCache.put('formio/components/datetime/time.html',
       '<ng-form>' +
         '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> Enable Time Input' +
+          '<label form-builder-tooltip="Enables time input for this field.">' +
+            '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> Enable Time Input' +
           '</label>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label for="hourStep">Hour Step Size</label>' +
-          '<input type="number" class="form-control" id="hourStep" name="hourStep" ng-model="component.timePicker.hourStep" value="{{ component.timePicker.hourStep }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="minuteStep">Minute Step Size</label>' +
-          '<input type="number" class="form-control" id="minuteStep" name="minuteStep" ng-model="component.timePicker.minuteStep" value="{{ component.timePicker.minuteStep }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.timePicker.showMeridian" ng-checked="component.timePicker.showMeridian"> 12 hour time (AM/PM)' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.timePicker.readonlyInput" ng-checked="component.timePicker.readonlyInput"> Read-Only Input' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="timePicker.hourStep" type="number" label="Hour Step Size" title="The number of hours to increment/decrement in the time picker."></form-builder-option>' +
+        '<form-builder-option property="timePicker.minuteStep" type="number" label="Minute Step Size" title="The number of minutes to increment/decrement in the time picker."></form-builder-option>' +
+        '<form-builder-option property="timePicker.showMeridian" type="checkbox" label="12 Hour Time (AM/PM)" title="Display time in 12 hour time with AM/PM."></form-builder-option>' +
+        '<form-builder-option property="timePicker.readonlyInput" type="checkbox" label="Read-Only Input" title="Makes the time picker input boxes read-only. The time can only be changed by the increment/decrement buttons."></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/datetime/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/datetime/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
-        '<div class="panel panel-default">' +
-          '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
-          '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small><p>Enter custom validation code.</p>' +
-            '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-            '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
-            '<div class="well">' +
-              '<div class="checkbox">' +
-                '<label>' +
-                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
-                '</label>' +
-              '</div>' +
-              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
