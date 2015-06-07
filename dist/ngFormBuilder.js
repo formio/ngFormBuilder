@@ -243,6 +243,29 @@ app.directive('formBuilderList', function() {
     templateUrl: 'formio/formbuilder/list.html'
   };
 });
+
+/**
+* Invokes Bootstrap's tooltip jquery plugin on an element
+* Tooltip text can be provided via title attribute or
+* as the value for this directive.
+*/
+app.directive('formBuilderTooltip', function() {
+  return {
+    restrict: 'A',
+    replace: false,
+    link: function($scope, el, attrs) {
+      if(attrs.formBuilderTooltip || attrs.title) {
+        var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted" data-placement="right" data-html="true"></i>');
+        if(!attrs.title) {
+          tooltip.attr('title', attrs.formBuilderTooltip);          
+        }
+        tooltip.tooltip();
+        el.append(' ').append(tooltip);  
+      }
+    }
+  };
+});
+
 app.run([
   '$templateCache',
   function($templateCache) {
@@ -343,6 +366,191 @@ app.run([
   }
 ]);
 
+
+/**
+* These are component options that can be reused
+* with the builder-option directive
+* Valid properties: label, placeholder, tooltip, type
+*/
+app.constant('COMMON_OPTIONS', {
+  label: {
+    label: 'Label',
+    placeholder: 'Field Label',
+    tooltip: 'The label for this field that will appear next to it.'
+  },
+  placeholder: {
+    label: 'Placeholder',
+    placeholder: 'Placeholder',
+    tooltip: 'The placeholder text that will appear when this field is empty.'
+  },
+  inputMask: {
+    label: 'Input Mask',
+    placeholder: 'Input Mask',
+    tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone number mask: (999) 999-9999'
+  },
+  prefix: {
+    label: 'Prefix',
+    placeholder: 'example \'$\', \'@\'',
+    tooltip: 'The text to show before a field.'
+  },
+  suffix: {
+    label: 'Suffix',
+    placeholder: 'example \'$\', \'@\'',
+    tooltip: 'The text to show after a field.'
+  },
+  multiple: {
+    label: 'Multiple Values',
+    type: 'checkbox',
+    tooltip: 'Allows multiple values to be entered for this field.'
+  },
+  unique: {
+    label: 'Unique',
+    type: 'checkbox',
+    tooltip: 'Makes sure the data submitted for this field is unique, and has not been submitted before.'
+  },
+  protected: {
+    label: 'Protected',
+    type: 'checkbox',
+    tooltip: 'A protected field will not be returned when queried via API.'
+  },
+  persistent: {
+    label: 'Persistent',
+    type: 'checkbox',
+    tooltip: 'A persistent field will be stored in database when the form is submitted.'
+  },
+  'validate.required': {
+    label: 'Required',
+    type: 'checkbox',
+    tooltip: 'A required field must be filled in before the form can be submitted.'
+  },
+  'validate.minLength': {
+    label: 'Minimum Length',
+    placeholder: 'Minimum Length',
+    type: 'number',
+    tooltip: 'The minimum length requirement this field must meet.'
+  },
+  'validate.maxLength': {
+    label: 'Maximum Length',
+    placeholder: 'Maximum Length',
+    type: 'number',
+    tooltip: 'The maximum length requirement this field must meet'
+  },
+  'validate.pattern': {
+    label: 'Regular Expression Pattern',
+    placeholder: 'Regular Expression Pattern',
+    tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  }
+});
+
+// Common directives for editing component
+
+/**
+* This directive creates a field for tweaking component options.
+* This needs at least a property attribute specifying what property
+* of the component to bind to.
+*
+* If the property is defined in COMMON_OPTIONS above, it will automatically
+* populate its label, placeholder, input type, and tooltip. If not, you may specify
+* those via attributes (except for tooltip, which you can specify with the title attribute).
+* The generated input will also carry over any other properties you specify on this directive.
+*/
+app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
+  return {
+    restrict: 'E',
+    require: 'property',
+    priority: 2,
+    replace: true,
+    template: function(el, attrs) {
+      var property = attrs.property;
+      var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
+      var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
+      var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
+      var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
+
+      var input = angular.element('<input></input>');
+      var inputAttrs = {
+        id: property,
+        name: property,
+        type: type,
+        'ng-model': 'component.' + property,
+        placeholder: placeholder
+      };
+      // Pass through attributes from the directive to the input element
+      angular.forEach(attrs.$attr, function(key) {
+        inputAttrs[key] = attrs[key];
+        // Allow specifying tooltip via title attr
+        if(key.toLowerCase() === 'title') {
+          tooltip = attrs[key];
+        }
+      });
+      input.attr(inputAttrs);
+
+      // Checkboxes have a slightly different layout
+      if(inputAttrs.type.toLowerCase() === 'checkbox') {
+        return '<div class="checkbox">' +
+                '<label for="label" form-builder-tooltip="' + tooltip + '">' +
+                input.prop('outerHTML') +
+                ' ' + label + '</label>' +
+              '</div>';  
+      }
+
+      input.addClass('form-control');
+      return '<div class="form-group">' +
+                '<label for="label" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
+                input.prop('outerHTML') +
+              '</div>';
+    }
+  };
+}]);
+
+/**
+* A directive for a field to edit a component's key.
+* If you want the field to be disabled on when component.lockKey is true,
+* specify a `disable-on-lock` attribute. 
+*/
+app.directive('formBuilderOptionKey', function(){
+  return {
+    restrict: 'E',
+    replace: true,
+    template: function(el, attrs) {
+      var disableOnLock = attrs.disableOnLock || attrs.disableOnLock === '';
+      return '<div class="form-group">' +
+                '<label for="key" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
+                '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ' +
+                  (disableOnLock ? 'ng-disabled="component.lockKey" ' : 'ng-blur="component.lockKey = true;" ') +
+                  'ng-required>' +
+              '</div>';
+    }
+  };
+});
+
+/**
+* A directive for editing a component's custom validation.
+*/
+app.directive('formBuilderOptionCustomValidation', function(){
+  return {
+    restrict: 'E',
+    replace: true,
+    template: '<div class="panel panel-default">' +
+                '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
+                '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
+                  '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
+                  '<small><p>Enter custom validation code.</p>' +
+                  '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
+                  '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
+                  '<div class="well">' +
+                    '<div class="checkbox">' +
+                      '<label>' +
+                        '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
+                      '</label>' +
+                    '</div>' +
+                    '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
+                  '</div>' +
+                '</div>' +
+              '</div>'
+  };
+});
+// TODO: custom validation directive
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
@@ -371,96 +579,33 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/textfield/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Input Mask</label>' +
-          '<input type="text" class="form-control" id="inputMask" name="inputMask" ng-model="component.inputMask" placeholder="Input Mask" value="{{ component.inputMask }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="prefix">Prefix</label>' +
-          '<input type="text" class="form-control" id="prefix" name="prefix" ng-model="component.prefix" placeholder="example \'$\', \'@\'" value="{{ component.prefix }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="suffix">Suffix</label>' +
-          '<input type="text" class="form-control" id="suffix" name="suffix" ng-model="component.suffix" placeholder="example \'%\', \'#\'" value="{{ component.suffix }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Multiple Values' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="unique" name="unique" ng-model="component.unique" ng-checked="component.unique"> Unique' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="inputMask"></form-builder-option>' +
+        '<form-builder-option property="prefix"></form-builder-option>' +
+        '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="multiple"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/textfield/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/textfield/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Minimum Length</label>' +
-          '<input type="number" class="form-control" id="min" name="min" ng-model="component.validate.minLength" placeholder="Minimum Length" value="{{ component.validate.minLength }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Maximum Length</label>' +
-          '<input type="number" class="form-control" id="max" name="max" ng-model="component.validate.maxLength" placeholder="Maximum Length" value="{{ component.validate.maxLength }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Regular Expression Pattern</label>' +
-          '<input type="text" class="form-control" id="pattern" name="pattern" ng-model="component.validate.pattern" placeholder="Regular Expression Pattern" value="{{ component.validate.pattern }}">' +
-        '</div>' +
-        '<div class="panel panel-default">' +
-          '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
-          '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small><p>Enter custom validation code.</p>' +
-            '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-            '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
-            '<div class="well">' +
-              '<div class="checkbox">' +
-                '<label>' +
-                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
-                '</label>' +
-              '</div>' +
-              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="validate.minLength"></form-builder-option>' +
+        '<form-builder-option property="validate.maxLength"></form-builder-option>' +
+        '<form-builder-option property="validate.pattern"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -494,29 +639,17 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/address/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Allow Multiple Addresses' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
+
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/address/api.html',
       '<ng-form>' +
-      '<div class="form-group">' +
-      '<label for="key">Property Name</label>' +
-      '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-      '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -559,41 +692,23 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/checkbox/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/checkbox/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/checkbox/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -701,44 +816,27 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/datetime/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="format">Date Format</label>' +
-          '<input type="text" class="form-control" id="format" name="format" ng-model="component.format" placeholder="Enter the Date format" value="{{ component.format }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the AngularJS date filter."></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
     $templateCache.put('formio/components/datetime/date.html',
       '<ng-form>' +
         '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
+          '<label form-builder-tooltip="Enables date input for this field.">' +
+            '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
           '</label>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="datepickerMode">Initial Mode</label>' +
+          '<label for="datepickerMode" form-builder-tooltip="The initial view to display when clicking on this field.">Initial Mode</label>' +
           '<select class="form-control" id="datepickerMode" name="datepickerMode" ng-model="component.datepickerMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Minimum Date</label>' +
+          '<label for="placeholder" form-builder-tooltip="The minimum date that can be picked.">Minimum Date</label>' +
           '<div class="input-group">' +
             '<input type="text" class="form-control" ' +
               'ng-focus="minDateOpen = true" ' +
@@ -753,7 +851,7 @@ app.run([
           '</div>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Maximum Date</label>' +
+          '<label for="placeholder"  form-builder-tooltip="The maximum date that can be picked.">Maximum Date</label>' +
           '<div class="input-group">' +
             '<input type="text" class="form-control" ' +
               'ng-focus="maxDateOpen = true" ' +
@@ -768,92 +866,49 @@ app.run([
           '</div>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="startingDay">Starting Day</label>' +
+          '<label for="startingDay" form-builder-tooltip="The first day of the week.">Starting Day</label>' +
           '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day for (idx, day) in startingDays"></select>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="minMode">Minimum Mode</label>' +
+          '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">Minimum Mode</label>' +
           '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="maxMode">Maximum Mode</label>' +
+          '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">Maximum Mode</label>' +
           '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label for="yearRange">Number of Years Displayed</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.datePicker.yearRange" placeholder="Year Range" value="{{ component.datePicker.yearRange }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.datePicker.showWeeks" ng-checked="component.datePicker.showWeeks"> Show Week Numbers' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="datePicker.yearRange" label="Number of Years Displayed" placeholder="Year Range" title="The number of years to display in the years view."></form-builder-option>' +
+
+        '<form-builder-option property="datePicker.showWeeks" type="checkbox" label="Show Week Numbers" title="Displays the week numbers on the date picker."></form-builder-option>' +
       '</ng-form>'
     );
 
     $templateCache.put('formio/components/datetime/time.html',
       '<ng-form>' +
         '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> Enable Time Input' +
+          '<label form-builder-tooltip="Enables time input for this field.">' +
+            '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> Enable Time Input' +
           '</label>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label for="hourStep">Hour Step Size</label>' +
-          '<input type="number" class="form-control" id="hourStep" name="hourStep" ng-model="component.timePicker.hourStep" value="{{ component.timePicker.hourStep }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="minuteStep">Minute Step Size</label>' +
-          '<input type="number" class="form-control" id="minuteStep" name="minuteStep" ng-model="component.timePicker.minuteStep" value="{{ component.timePicker.minuteStep }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.timePicker.showMeridian" ng-checked="component.timePicker.showMeridian"> 12 hour time (AM/PM)' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.timePicker.readonlyInput" ng-checked="component.timePicker.readonlyInput"> Read-Only Input' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="timePicker.hourStep" type="number" label="Hour Step Size" title="The number of hours to increment/decrement in the time picker."></form-builder-option>' +
+        '<form-builder-option property="timePicker.minuteStep" type="number" label="Minute Step Size" title="The number of minutes to increment/decrement in the time picker."></form-builder-option>' +
+        '<form-builder-option property="timePicker.showMeridian" type="checkbox" label="12 Hour Time (AM/PM)" title="Display time in 12 hour time with AM/PM."></form-builder-option>' +
+        '<form-builder-option property="timePicker.readonlyInput" type="checkbox" label="Read-Only Input" title="Makes the time picker input boxes read-only. The time can only be changed by the increment/decrement buttons."></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/datetime/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/datetime/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
-        '<div class="panel panel-default">' +
-          '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
-          '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small><p>Enter custom validation code.</p>' +
-            '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-            '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
-            '<div class="well">' +
-              '<div class="checkbox">' +
-                '<label>' +
-                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
-                '</label>' +
-              '</div>' +
-              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -895,10 +950,7 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Legend</label>' +
-          '<input type="text" class="form-control" id="legend" name="legend" ng-model="component.legend" placeholder="FieldSet Legend" value="{{ component.legend }}">' +
-        '</div>' +
+        '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -993,67 +1045,22 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/number/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Increment (Step)</label>' +
-          '<input type="text" class="form-control" id="step" name="step" ng-model="component.validate.step" placeholder="Enter how much to increment per step (or precision)." value="{{ component.validate.step }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="prefix">Prefix</label>' +
-          '<input type="text" class="form-control" id="prefix" name="prefix" ng-model="component.prefix" placeholder="example \'$\', \'@\'" value="{{ component.prefix }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="suffix">Suffix</label>' +
-          '<input type="text" class="form-control" id="suffix" name="suffix" ng-model="component.suffix" placeholder="example \'%\', \'#\'" value="{{ component.suffix }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Multiple Values' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
+        '<form-builder-option property="prefix"></form-builder-option>' +
+        '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="multiple"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/number/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Minimum Value</label>' +
-          '<input type="number" class="form-control" id="min" name="min" ng-model="component.validate.min" placeholder="Minimum Value" value="{{ component.validate.min }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Maximum Value</label>' +
-          '<input type="number" class="form-control" id="max" name="max" ng-model="component.validate.max" placeholder="Maximum Value" value="{{ component.validate.max }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Greater Than</label>' +
-          '<input type="number" class="form-control" id="greater" name="greater" ng-model="component.validate.greater" placeholder="Greater Than" value="{{ component.validate.greater }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Less Than</label>' +
-          '<input type="number" class="form-control" id="less" name="less" ng-model="component.validate.less" placeholder="Less Than" value="{{ component.validate.less }}">' +
-        '</div>' +
-        '<div class="panel panel-default">' +
-          '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
-          '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small><p>Enter custom validation code.</p>' +
-            '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-            '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
-          '</div>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="validate.min" type="number" label="Minimum Value" placeholder="Minimum Value" title="The minimum value this field must have before the form can be submitted."></form-builder-option>' +
+        '<form-builder-option property="validate.max" type="number" label="Maximum Value" placeholder="Maximum Value" title="The maximum value this field must have before the form can be submitted."></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -1117,12 +1124,9 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/panel/display.html',
       '<ng-form>' +
+        '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="label">Title</label>' +
-          '<input type="text" class="form-control" id="title" name="title" ng-model="component.title" placeholder="Panel Title" value="{{ component.title }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Theme</label>' +
+          '<label for="placeholder" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
       '</ng-form>'
@@ -1167,36 +1171,18 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/phoneNumber/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Input Mask</label>' +
-          '<input type="text" class="form-control" id="inputMask" name="inputMask" ng-model="component.inputMask" placeholder="Input Mask" value="{{ component.inputMask }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="prefix">Prefix</label>' +
-          '<input type="text" class="form-control" id="prefix" name="prefix" ng-model="component.prefix" placeholder="example \'$\', \'@\'" value="{{ component.prefix }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="suffix">Suffix</label>' +
-          '<input type="text" class="form-control" id="suffix" name="suffix" ng-model="component.suffix" placeholder="example \'%\', \'#\'" value="{{ component.suffix }}">' +
-        '</div>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="inputMask"></form-builder-option>' +
+        '<form-builder-option property="prefix"></form-builder-option>' +
+        '<form-builder-option property="suffix"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/phoneNumber/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-        '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -1254,12 +1240,9 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/radio/display.html',
       '<ng-form ng-controller="view.controller">' +
+        '<form-builder-option property="label"></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="">Values</label>' +
+          '<label for="" form-builder-tooltip="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form.">Values</label>' +
           '<table class="table table-condensed">' +
             '<thead>' +
               '<tr>' +
@@ -1278,54 +1261,23 @@ app.run([
           '</table>' +
           '<button class="btn" ng-click="addValue()">Add Value</button>' +
         '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/radio/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/radio/validate.html',
       '<ng-form>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="required" name="required" ng-model="component.validate.required" ng-checked="component.validate.required"> Required' +
-          '</label>' +
-        '</div>' +
-        '<div class="panel panel-default">' +
-          '<div class="panel-heading"><a class="panel-title" ng-click="customCollapsed = !customCollapsed">Custom Validation</a></div>' +
-          '<div class="panel-body" collapse="customCollapsed" ng-init="customCollapsed = true;">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small><p>Enter custom validation code.</p>' +
-            '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-            '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p></small>' +
-            '<div class="well">' +
-              '<div class="checkbox">' +
-                '<label>' +
-                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
-                '</label>' +
-              '</div>' +
-              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -1369,45 +1321,28 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/resource/display.html',
       '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Resource</label>' +
+          '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
           '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Search Expression</label>' +
-          '<input type="text" class="form-control" id="searchExpression" name="searchExpression" ng-model="component.searchExpression" placeholder="The search string regular expression" value="{{ component.searchExpression }}">' +
-        '</div>' +
+        '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression"></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder">Search Fields</label>' +
           '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The search field parings" value="{{ component.searchFields }}">' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Item Template</label>' +
+          '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
-        '<div class="form-group checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Allow Multiple Resources' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
       '</ng-form>'
     );
-
     // Create the API markup.
     $templateCache.put('formio/components/resource/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-        '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -1451,46 +1386,21 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/select/display.html',
       '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="label">Label</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Field Label" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Place Holder</label>' +
-          '<input type="text" class="form-control" id="placeholder" name="placeholder" ng-model="component.placeholder" placeholder="Placeholder" value="{{ component.placeholder }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Data Source</label>' +
+          '<label for="placeholder" form-builder-tooltip="The data to populate the select field items from. This can either be a JSON array of values, or a URL that returns a JSON array.">Data Source</label>' +
           '<textarea class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" placeholder="Data Source URL or JSON" rows="3">{{ component.dataSrc }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Value Property</label>' +
-          '<input type="text" class="form-control" id="valueProperty" name="valueProperty" ng-model="component.valueProperty" placeholder="The selected items property to save." value="{{ component.valueProperty }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Item Template</label>' +
+          '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
-        '<div class="form-group checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="multiple" name="multiple" ng-model="component.multiple" ng-checked="component.multiple"> Allow Multiple Values' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="unique" name="unique" ng-model="component.unique" ng-checked="component.unique"> Unique' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="multiple"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -1539,36 +1449,18 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/signature/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Footer Label</label>' +
-          '<input type="text" class="form-control" id="footer" name="footer" ng-model="component.footer" placeholder="Footer Label" value="{{ component.footer }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Width</label>' +
-          '<input type="text" class="form-control" id="width" name="width" ng-model="component.width" placeholder="Width" value="{{ component.width }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Height</label>' +
-          '<input type="text" class="form-control" id="height" name="height" ng-model="component.height" placeholder="Height" value="{{ component.height }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Background Color</label>' +
-          '<input type="text" class="form-control" id="backgroundColor" name="backgroundColor" ng-model="component.backgroundColor" placeholder="Background Color" value="{{ component.backgroundColor }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="placeholder">Pen Color</label>' +
-          '<input type="text" class="form-control" id="penColor" name="penColor" ng-model="component.penColor" placeholder="Pen Color" value="{{ component.penColor }}">' +
-        '</div>' +
+        '<form-builder-option property="footer" label="Footer Label" placeholder="Footer Label" title="The footer text that appears below the signature area."></form-builder-option>' +
+        '<form-builder-option property="width" label="Width" placeholder="Width" title="The width of the signature area."></form-builder-option>' +
+        '<form-builder-option property="height" label="Height" placeholder="Height" title="The height of the signature area."></form-builder-option>' +
+        '<form-builder-option property="backgroundColor" label="Background Color" placeholder="Background Color" title="The background color of the signature area."></form-builder-option>' +
+        '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
       '</ng-form>'
     );
 
     // Create the API markup.
     $templateCache.put('formio/components/signature/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
   }
