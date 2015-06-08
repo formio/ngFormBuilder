@@ -1,35 +1,14 @@
 app.config([
   'formioComponentsProvider',
-  function(formioComponentsProvider) {
+  'FORM_OPTIONS',
+  function(
+    formioComponentsProvider,
+    FORM_OPTIONS
+  ) {
     formioComponentsProvider.register('panel', {
       fbtemplate: 'formio/formbuilder/panel.html',
       onEdit: function($scope) {
-        $scope.themes = [
-          {
-            name: 'default',
-            title: 'Default'
-          },
-          {
-            name: 'primary',
-            title: 'Primary'
-          },
-          {
-            name: 'info',
-            title: 'Info'
-          },
-          {
-            name: 'success',
-            title: 'Succeess'
-          },
-          {
-            name: 'danger',
-            title: 'Danger'
-          },
-          {
-            name: 'warning',
-            title: 'Warning'
-          }
-        ];
+        $scope.themes = FORM_OPTIONS.themes;
       },
       views: [
         {
@@ -57,7 +36,7 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="placeholder" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+          '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
       '</ng-form>'

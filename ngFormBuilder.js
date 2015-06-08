@@ -45,6 +45,11 @@ app.directive('formBuilder', function() {
           return component.group;
         });
 
+        // Add the submit button to the components.
+        if ($scope.form.components.length === 0) {
+          $scope.form.components.push(formioComponents.components.button.settings);
+        }
+
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
 
@@ -255,10 +260,10 @@ app.directive('formBuilderTooltip', function() {
       if(attrs.formBuilderTooltip || attrs.title) {
         var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted" data-placement="right" data-html="true"></i>');
         if(!attrs.title) {
-          tooltip.attr('title', attrs.formBuilderTooltip);          
+          tooltip.attr('title', attrs.formBuilderTooltip);
         }
         tooltip.tooltip();
-        el.append(' ').append(tooltip);  
+        el.append(' ').append(tooltip);
       }
     }
   };
@@ -286,8 +291,8 @@ app.run([
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
         'dnd-drop="addComponent(component.components, item)">' +
-        '<li ng-if="component.components.length === 0">' +
-          '<div class="alert alert-info" style="text-align:center; margin-bottom: 0px;" role="alert">' +
+        '<li ng-if="component.components.length <= 1">' +
+          '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
         '</li>' +
@@ -309,10 +314,10 @@ app.run([
         '<div class="col-sm-3">' +
           '<accordion close-others="true">' +
             '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-              '<div ng-repeat="component in formComponentsByGroup[groupName]"' +
+              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-effect-allowed="copy" style="width:48%;margin: 0 4px 4px 0; float:left;">' +
-                '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
+                '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</button>' +
               '</div>' +
             '</accordion-group>' +
           '</accordion>' +

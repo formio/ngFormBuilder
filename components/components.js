@@ -30,6 +30,71 @@ app.run([
   }
 ]);
 
+app.constant('FORM_OPTIONS', {
+  actions: [
+    {
+      name: 'submit',
+      title: 'Submit'
+    },
+    {
+      name: 'prevPage',
+      title: 'Previous Page'
+    },
+    {
+      name: 'nextPage',
+      title: 'Next Page'
+    },
+    {
+      name: 'reset',
+      title: 'Reset'
+    }
+  ],
+  themes: [
+    {
+      name: 'default',
+      title: 'Default'
+    },
+    {
+      name: 'primary',
+      title: 'Primary'
+    },
+    {
+      name: 'info',
+      title: 'Info'
+    },
+    {
+      name: 'success',
+      title: 'Succeess'
+    },
+    {
+      name: 'danger',
+      title: 'Danger'
+    },
+    {
+      name: 'warning',
+      title: 'Warning'
+    }
+  ],
+  sizes: [
+    {
+      name: 'xs',
+      title: 'Extra Small'
+    },
+    {
+      name: 'sm',
+      title: 'Small'
+    },
+    {
+      name: 'md',
+      title: 'Medium'
+    },
+    {
+      name: 'lg',
+      title: 'Large'
+    }
+  ]
+});
+
 
 /**
 * These are component options that can be reused
@@ -81,6 +146,26 @@ app.constant('COMMON_OPTIONS', {
     label: 'Persistent',
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
+  },
+  block: {
+    label: 'Block',
+    type: 'checkbox',
+    tooltip: 'This control should span the full width of the bounding container.'
+  },
+  leftIcon: {
+    label: 'Left Icon',
+    placeholder: 'Enter icon classes',
+    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+  },
+  rightIcon: {
+    label: 'Right Icon',
+    placeholder: 'Enter icon classes',
+    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+  },
+  disableOnInvalid: {
+    label: 'Disable on Form Invalid',
+    type: 'checkbox',
+    tooltip: 'This will disable this field if the form is invalid.'
   },
   'validate.required': {
     label: 'Required',
@@ -155,7 +240,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
                 '<label for="label" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
                 ' ' + label + '</label>' +
-              '</div>';  
+              '</div>';
       }
 
       input.addClass('form-control');
@@ -170,7 +255,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
 /**
 * A directive for a field to edit a component's key.
 * If you want the field to be disabled on when component.lockKey is true,
-* specify a `disable-on-lock` attribute. 
+* specify a `disable-on-lock` attribute.
 */
 app.directive('formBuilderOptionKey', function(){
   return {

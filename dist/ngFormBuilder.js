@@ -47,6 +47,11 @@ app.directive('formBuilder', function() {
           return component.group;
         });
 
+        // Add the submit button to the components.
+        if ($scope.form.components.length === 0) {
+          $scope.form.components.push(formioComponents.components.button.settings);
+        }
+
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
 
@@ -257,10 +262,10 @@ app.directive('formBuilderTooltip', function() {
       if(attrs.formBuilderTooltip || attrs.title) {
         var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted" data-placement="right" data-html="true"></i>');
         if(!attrs.title) {
-          tooltip.attr('title', attrs.formBuilderTooltip);          
+          tooltip.attr('title', attrs.formBuilderTooltip);
         }
         tooltip.tooltip();
-        el.append(' ').append(tooltip);  
+        el.append(' ').append(tooltip);
       }
     }
   };
@@ -288,8 +293,8 @@ app.run([
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
         'dnd-drop="addComponent(component.components, item)">' +
-        '<li ng-if="component.components.length === 0">' +
-          '<div class="alert alert-info" style="text-align:center; margin-bottom: 0px;" role="alert">' +
+        '<li ng-if="component.components.length <= 1">' +
+          '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
         '</li>' +
@@ -311,10 +316,10 @@ app.run([
         '<div class="col-sm-3">' +
           '<accordion close-others="true">' +
             '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-              '<div ng-repeat="component in formComponentsByGroup[groupName]"' +
+              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-effect-allowed="copy" style="width:48%;margin: 0 4px 4px 0; float:left;">' +
-                '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{component.title}}</button>' +
+                '<button type="button" class="btn btn-primary btn-xs btn-block" disabled="disabled"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</button>' +
               '</div>' +
             '</accordion-group>' +
           '</accordion>' +
@@ -365,6 +370,71 @@ app.run([
     );
   }
 ]);
+
+app.constant('FORM_OPTIONS', {
+  actions: [
+    {
+      name: 'submit',
+      title: 'Submit'
+    },
+    {
+      name: 'prevPage',
+      title: 'Previous Page'
+    },
+    {
+      name: 'nextPage',
+      title: 'Next Page'
+    },
+    {
+      name: 'reset',
+      title: 'Reset'
+    }
+  ],
+  themes: [
+    {
+      name: 'default',
+      title: 'Default'
+    },
+    {
+      name: 'primary',
+      title: 'Primary'
+    },
+    {
+      name: 'info',
+      title: 'Info'
+    },
+    {
+      name: 'success',
+      title: 'Succeess'
+    },
+    {
+      name: 'danger',
+      title: 'Danger'
+    },
+    {
+      name: 'warning',
+      title: 'Warning'
+    }
+  ],
+  sizes: [
+    {
+      name: 'xs',
+      title: 'Extra Small'
+    },
+    {
+      name: 'sm',
+      title: 'Small'
+    },
+    {
+      name: 'md',
+      title: 'Medium'
+    },
+    {
+      name: 'lg',
+      title: 'Large'
+    }
+  ]
+});
 
 
 /**
@@ -417,6 +487,26 @@ app.constant('COMMON_OPTIONS', {
     label: 'Persistent',
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
+  },
+  block: {
+    label: 'Block',
+    type: 'checkbox',
+    tooltip: 'This control should span the full width of the bounding container.'
+  },
+  leftIcon: {
+    label: 'Left Icon',
+    placeholder: 'Enter icon classes',
+    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+  },
+  rightIcon: {
+    label: 'Right Icon',
+    placeholder: 'Enter icon classes',
+    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+  },
+  disableOnInvalid: {
+    label: 'Disable on Form Invalid',
+    type: 'checkbox',
+    tooltip: 'This will disable this field if the form is invalid.'
   },
   'validate.required': {
     label: 'Required',
@@ -491,7 +581,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
                 '<label for="label" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
                 ' ' + label + '</label>' +
-              '</div>';  
+              '</div>';
       }
 
       input.addClass('form-control');
@@ -506,7 +596,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
 /**
 * A directive for a field to edit a component's key.
 * If you want the field to be disabled on when component.lockKey is true,
-* specify a `disable-on-lock` attribute. 
+* specify a `disable-on-lock` attribute.
 */
 app.directive('formBuilderOptionKey', function(){
   return {
@@ -551,6 +641,7 @@ app.directive('formBuilderOptionCustomValidation', function(){
   };
 });
 // TODO: custom validation directive
+
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
@@ -659,6 +750,61 @@ app.run([
       '<div class="form-group">' +
       '<label for="key">Required</label>' +
       '</div>' +
+      '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  'FORM_OPTIONS',
+  function(
+    formioComponentsProvider,
+    FORM_OPTIONS
+  ) {
+    formioComponentsProvider.register('button', {
+      onEdit: function($scope) {
+        $scope.actions = FORM_OPTIONS.actions;
+        $scope.sizes = FORM_OPTIONS.sizes;
+        $scope.themes = FORM_OPTIONS.themes;
+      },
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/button/display.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/textfield/api.html'
+        }
+      ]
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/button/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<div class="form-group">' +
+          '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">Action</label>' +
+          '<select class="form-control" id="action" name="action" ng-options="action.name as action.title for action in actions" ng-model="component.action"></select>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+          '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label for="size" form-builder-tooltip="The size of this button.">Size</label>' +
+          '<select class="form-control" id="size" name="size" ng-options="size.name as size.title for size in sizes" ng-model="component.size"></select>' +
+        '</div>' +
+        '<form-builder-option property="leftIcon"></form-builder-option>' +
+        '<form-builder-option property="rightIcon"></form-builder-option>' +
+        '<form-builder-option property="block"></form-builder-option>' +
+        '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1070,35 +1216,31 @@ app.run([
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
+    formioComponentsProvider.register('page', {
+      fbtemplate: 'formio/formbuilder/page.html'
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+    $templateCache.put('formio/formbuilder/page.html',
+      '<form-builder-list></form-builder-list>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  'FORM_OPTIONS',
+  function(
+    formioComponentsProvider,
+    FORM_OPTIONS
+  ) {
     formioComponentsProvider.register('panel', {
       fbtemplate: 'formio/formbuilder/panel.html',
       onEdit: function($scope) {
-        $scope.themes = [
-          {
-            name: 'default',
-            title: 'Default'
-          },
-          {
-            name: 'primary',
-            title: 'Primary'
-          },
-          {
-            name: 'info',
-            title: 'Info'
-          },
-          {
-            name: 'success',
-            title: 'Succeess'
-          },
-          {
-            name: 'danger',
-            title: 'Danger'
-          },
-          {
-            name: 'warning',
-            title: 'Warning'
-          }
-        ];
+        $scope.themes = FORM_OPTIONS.themes;
       },
       views: [
         {
@@ -1126,7 +1268,7 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="placeholder" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+          '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
       '</ng-form>'
