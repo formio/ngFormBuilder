@@ -67,6 +67,8 @@ app.directive('formBuilder', function() {
             // Iterate through each component.
             _.each(resource.components, function(component) {
 
+              if (component.type === 'button') { return; }
+
               // Add the component to the list.
               var resourceKey = resource.title.toLowerCase();
               $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
