@@ -44,8 +44,7 @@ app.run([
         '</div>' +
         '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression" title="A regular expression to filter the results with."></form-builder-option>' +
         '<div class="form-group">' +
-          // TODO: Add some kind of direct link to documentation, or move documentation to formio and reference that.
-          '<label for="placeholder" form-builder-tooltip="A list of search filters based on the fields of the resource. See the Resource.js documentation for the format of these filters.">Search Fields</label>' +
+          '<label for="placeholder" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">Search Fields</label>' +
           '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The search field parings" value="{{ component.searchFields }}">' +
         '</div>' +
         '<div class="form-group">' +
