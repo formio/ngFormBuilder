@@ -50,6 +50,7 @@ app.constant('COMMON_OPTIONS', {
   inputMask: {
     label: 'Input Mask',
     placeholder: 'Input Mask',
+    // TODO: have a direct link to the input mask documentation
     tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone number mask: (999) 999-9999'
   },
   prefix: {
