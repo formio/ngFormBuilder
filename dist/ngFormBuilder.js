@@ -49,7 +49,7 @@ app.directive('formBuilder', function() {
 
         // Add the submit button to the components.
         if ($scope.form.components.length === 0) {
-          $scope.form.components.push(formioComponents.components.button.settings);
+          $scope.form.components.push(angular.copy(formioComponents.components.button.settings));
         }
 
         // Get the resource fields.
