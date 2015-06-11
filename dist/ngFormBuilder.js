@@ -580,7 +580,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
       // Checkboxes have a slightly different layout
       if(inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
-                '<label for="label" form-builder-tooltip="' + tooltip + '">' +
+                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
                 ' ' + label + '</label>' +
               '</div>';
@@ -588,7 +588,7 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="label" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
+                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
                 input.prop('outerHTML') +
               '</div>';
     }
@@ -642,7 +642,53 @@ app.directive('formBuilderOptionCustomValidation', function(){
               '</div>'
   };
 });
-// TODO: custom validation directive
+
+/**
+* A directive that provides a UI to add {value, label} objects to an array.
+*/
+app.directive('valueBuilder', function(){
+  return {
+    scope: {
+      data: '=',
+      label: '@',
+      tooltipText: '@'
+    },
+    restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
+    template: '<div class="form-group">' +
+                '<label form-builder-tooltip="{{ tooltipText }}">{{ label }}</label>' +
+                '<table class="table table-condensed">' +
+                  '<thead>' +
+                    '<tr>' +
+                      '<th class="col-xs-4">Value</th>' +
+                      '<th class="col-xs-6">Label</th>' +
+                      '<th class="col-xs-2"></th>' +
+                    '</tr>' +
+                  '</thead>' +
+                  '<tbody>' +
+                    '<tr ng-repeat="v in data track by $index">' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label"/></td>' +
+                      '<td class="col-xs-2"><button class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                    '</tr>' +
+                  '</tbody>' +
+                '</table>' +
+                '<button class="btn" ng-click="addValue()">Add Value</button>' +
+                '</div>',
+    replace: true,
+    link: function($scope) {
+      $scope.addValue = function() {
+        var value = $scope.data.length + 1;
+        $scope.data.push({
+          value: 'value' + value,
+          label: 'Value ' + value
+        });
+      };
+      $scope.removeValue = function(index) {
+        $scope.data.splice(index, 1);
+      };
+    }
+  };
+});
 
 app.config([
   'formioComponentsProvider',
@@ -1348,22 +1394,7 @@ app.config([
       views: [
         {
           name: 'Display',
-          template: 'formio/components/radio/display.html',
-          controller: [
-            '$scope',
-            function($scope) {
-              $scope.addValue = function() {
-                var value = $scope.component.values.length + 1;
-                $scope.component.values.push({
-                  value: 'value' + value,
-                  label: 'Value ' + value
-                });
-              };
-              $scope.removeValue = function(index) {
-                $scope.component.values.splice(index, 1);
-              };
-            }
-          ]
+          template: 'formio/components/radio/display.html'
         },
         {
           name: 'Validation',
@@ -1383,28 +1414,9 @@ app.run([
 
     // Create the settings markup.
     $templateCache.put('formio/components/radio/display.html',
-      '<ng-form ng-controller="view.controller">' +
+      '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
-        '<div class="form-group">' +
-          '<label for="" form-builder-tooltip="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form.">Values</label>' +
-          '<table class="table table-condensed">' +
-            '<thead>' +
-              '<tr>' +
-                '<th class="col-xs-4">Value</th>' +
-                '<th class="col-xs-6">Label</th>' +
-                '<th class="col-xs-2"></th>' +
-              '</tr>' +
-            '</thead>' +
-            '<tbody>' +
-              '<tr ng-repeat="v in component.values track by $index">' +
-                '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value"/></td>' +
-                '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label"/></td>' +
-                '<td class="col-xs-2"><button class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
-              '</tr>' +
-            '</tbody>' +
-          '</table>' +
-          '<button class="btn" ng-click="addValue()">Add Value</button>' +
-        '</div>' +
+        '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
@@ -1519,7 +1531,14 @@ app.config([
           name: 'API',
           template: 'formio/components/select/api.html'
         }
-      ]
+      ],
+      onEdit: function($scope) {
+        $scope.dataSources = {
+          values: 'Values',
+          json: 'Raw JSON',
+          url: 'URL'
+        };
+      }
     });
   }
 ]);
@@ -1533,10 +1552,19 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="placeholder" form-builder-tooltip="The data to populate the select field items from. This can either be a JSON array of values, or a URL that returns a JSON array.">Data Source</label>' +
-          '<textarea class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" placeholder="Data Source URL or JSON" rows="3">{{ component.dataSrc }}</textarea>' +
+          '<label for="dataSrc" form-builder-tooltip="The source to use for the select data. Values lets you provide your own values and labels. JSON lets you provide raw JSON data. URL lets you provide a URL to retrieve the JSON data from.">Data Source Type</label>' +
+          '<select class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" ng-options="value as label for (value, label) in dataSources"></select>' +
         '</div>' +
-        '<form-builder-option property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
+        '<ng-switch on="component.dataSrc">' +
+          '<div class="form-group" ng-switch-when="json">' +
+            '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">Data Source Raw JSON</label>' +
+            '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" rows="3">{{ component.data.json }}</textarea>' +
+          '</div>' +
+          '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
+          '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
+        '</ng-switch>' +
+        
+        '<form-builder-option ng-hide="component.dataSrc == \'values\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
