@@ -1485,6 +1485,10 @@ app.run([
         '</div>' +
         '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression"></form-builder-option>' +
         '<div class="form-group">' +
+          '<label for="placeholder">Select Fields</label>' +
+          '<input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
+        '</div>' +
+        '<div class="form-group">' +
           '<label for="placeholder">Search Fields</label>' +
           '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The search field parings" value="{{ component.searchFields }}">' +
         '</div>' +
