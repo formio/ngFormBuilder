@@ -32,6 +32,7 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 

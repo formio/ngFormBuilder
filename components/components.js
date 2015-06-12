@@ -117,6 +117,11 @@ app.constant('COMMON_OPTIONS', {
     placeholder: 'Input Mask',
     tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone number mask: (999) 999-9999'
   },
+  tableView: {
+    label: 'Table View',
+    type: 'checkbox',
+    tooltip: 'Shows this value within the table view of the submissions.'
+  },
   prefix: {
     label: 'Prefix',
     placeholder: 'example \'$\', \'@\'',

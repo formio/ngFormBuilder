@@ -56,6 +56,7 @@ app.run([
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
     // Create the API markup.

@@ -29,7 +29,7 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
-
+        '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
