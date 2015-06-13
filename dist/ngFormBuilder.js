@@ -252,7 +252,7 @@ app.directive('formBuilderList', function() {
 });
 
 /**
-* Invokes Bootstrap's tooltip jquery plugin on an element
+* Invokes Bootstrap's popover jquery plugin on an element
 * Tooltip text can be provided via title attribute or
 * as the value for this directive.
 */
@@ -262,11 +262,26 @@ app.directive('formBuilderTooltip', function() {
     replace: false,
     link: function($scope, el, attrs) {
       if(attrs.formBuilderTooltip || attrs.title) {
-        var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted" data-placement="right" data-html="true"></i>');
-        if(!attrs.title) {
-          tooltip.attr('title', attrs.formBuilderTooltip);
-        }
-        tooltip.tooltip();
+        var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
+        tooltip.popover({
+          html: true,
+          trigger: 'manual',
+          placement: 'right',
+          content: attrs.title || attrs.formBuilderTooltip
+        }).on('mouseenter', function() {
+          var $self = $(this);
+          $self.popover('show');
+          $self.siblings('.popover').on('mouseleave', function() {
+            $self.popover('hide');
+          });
+        }).on('mouseleave', function() {
+          var $self = $(this);
+          setTimeout(function() {
+            if(!$('.popover:hover').length) {
+              $self.popover('hide');
+            }
+          }, 100);
+        });
         el.append(' ').append(tooltip);
       }
     }
@@ -458,7 +473,7 @@ app.constant('COMMON_OPTIONS', {
   inputMask: {
     label: 'Input Mask',
     placeholder: 'Input Mask',
-    tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone number mask: (999) 999-9999'
+    tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone mask: (999) 999-9999<br><br>See the <a target=\'_blank\' href=\'https://github.com/RobinHerbots/jquery.inputmask\'>jquery.inputmask documentation</a> for more information.</a>'
   },
   tableView: {
     label: 'Table View',
@@ -1495,13 +1510,13 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
           '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
         '</div>' +
-        '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression"></form-builder-option>' +
+        '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression" title="A regular expression to filter the results with."></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder">Select Fields</label>' +
           '<input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Search Fields</label>' +
+          '<label for="placeholder" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">Search Fields</label>' +
           '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The search field parings" value="{{ component.searchFields }}">' +
         '</div>' +
         '<div class="form-group">' +

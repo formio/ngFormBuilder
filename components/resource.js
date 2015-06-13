@@ -42,13 +42,13 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
           '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
         '</div>' +
-        '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression"></form-builder-option>' +
+        '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression" title="A regular expression to filter the results with."></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder">Select Fields</label>' +
           '<input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Search Fields</label>' +
+          '<label for="placeholder" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">Search Fields</label>' +
           '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The search field parings" value="{{ component.searchFields }}">' +
         '</div>' +
         '<div class="form-group">' +
