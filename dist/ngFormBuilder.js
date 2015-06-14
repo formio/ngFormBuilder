@@ -1392,6 +1392,7 @@ app.run([
         '<form-builder-option property="inputMask"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -1597,7 +1598,7 @@ app.run([
           '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
           '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
         '</ng-switch>' +
-        
+
         '<form-builder-option ng-hide="component.dataSrc == \'values\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
@@ -1624,9 +1625,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/select/validate.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Required</label>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );
   }
