@@ -274,6 +274,27 @@ app.directive('formBuilderOptionKey', function(){
                   (disableOnLock ? 'ng-disabled="component.lockKey" ' : 'ng-blur="component.lockKey = true;" ') +
                   'ng-required>' +
               '</div>';
+    },
+    link: function($scope) {
+      var suffixRegex = /(\d+)$/;
+      $scope.$watch('component.key', function(newValue) {
+        var valid = $scope.form.components.every(function(component) {
+          if(component.key === newValue && component !== $scope.component) {
+            return false;
+          }
+          return true;
+        });
+        if(valid) {
+          return;
+        }
+        if(suffixRegex.test(newValue)) {
+          newValue = newValue.replace(suffixRegex, function(suffix) { return Number(suffix) + 1; });
+        }
+        else {
+          newValue += '2';
+        }
+        $scope.component.key = newValue;
+      });
     }
   };
 });
