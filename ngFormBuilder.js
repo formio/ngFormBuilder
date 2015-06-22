@@ -177,8 +177,8 @@ app.directive('formBuilder', function() {
           }).closePromise.then(function (e) {
             var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
             if (cancelled) {
-              // Revert to old settings.
-              $scope.component = $scope.previousSettings;
+              // Revert to old settings, but use the same object reference
+              _.assign($scope.component, $scope.previousSettings);
             }
           });
         };
