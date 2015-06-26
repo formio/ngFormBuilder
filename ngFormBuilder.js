@@ -124,7 +124,7 @@ app.directive('formBuilder', function() {
           if (list) {
             list.splice(list.indexOf(component), 1);
           }
-          ngDialog.closeAll();
+          ngDialog.closeAll(true);
         };
 
         // Add a new component.
@@ -174,23 +174,38 @@ app.directive('formBuilder', function() {
             template: 'formio/components/settings.html',
             scope: $scope,
             className: 'ngdialog-theme-default component-settings'
+          }).closePromise.then(function (e) {
+            var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+            if (cancelled) {
+              // Revert to old settings.
+              $scope.component = $scope.previousSettings;
+            }
           });
         };
 
-        // Cancel the settings.
         $scope.cancelSettings = function() {
-          $scope.component = $scope.previousSettings;
-          ngDialog.close();
+          ngDialog.closeAll(false);
         };
 
-        // The settings are already bound, so just close the dialog.
         $scope.saveSettings = function() {
-          ngDialog.close();
+          ngDialog.closeAll(true);
         };
+
       }
     ]
   };
 });
+
+app.run([
+  '$rootScope',
+  'ngDialog',
+  function($rootScope, ngDialog) {
+    // Close all open dialogs on state change.
+    $rootScope.$on('$stateChangeStart', function() {
+      ngDialog.closeAll(false);
+    });
+  }
+]);
 
 /**
  * Create the form-builder-component directive.
