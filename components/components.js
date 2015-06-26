@@ -20,7 +20,7 @@ app.run([
             '</div>' +
             '<div class="form-group">' +
               '<button type="submit" class="btn btn-success" ng-click="saveSettings()">Save</button>&nbsp;' +
-              '<button type="button" class="btn btn-default" ng-click="cancelSettings()">Cancel</button>&nbsp;' +
+              '<button type="button" class="btn btn-default" ng-click="cancelSettings()" ng-if="!component.isNew">Cancel</button>&nbsp;' +
               '<button type="button" class="btn btn-danger" ng-click="removeComponent(component)">Remove</button>' +
             '</div>' +
           '</div>' +
