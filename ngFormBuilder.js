@@ -129,6 +129,7 @@ app.directive('formBuilder', function() {
 
         // Add a new component.
         $scope.addComponent = function(list, component) {
+          component.isNew = true;
           $scope.editComponent(component);
           return component;
         };
@@ -177,8 +178,16 @@ app.directive('formBuilder', function() {
           }).closePromise.then(function (e) {
             var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
             if (cancelled) {
-              // Revert to old settings, but use the same object reference
-              _.assign($scope.component, $scope.previousSettings);
+              if($scope.component.isNew) {
+                $scope.removeComponent($scope.component);
+              }
+              else {
+                // Revert to old settings, but use the same object reference
+                _.assign($scope.component, $scope.previousSettings);                
+              }
+            }
+            else {
+              delete $scope.component.isNew;
             }
           });
         };
