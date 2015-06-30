@@ -126,11 +126,12 @@ app.directive('formBuilder', function() {
           if (list) {
             list.splice(list.indexOf(component), 1);
           }
-          ngDialog.closeAll();
+          ngDialog.closeAll(true);
         };
 
         // Add a new component.
         $scope.addComponent = function(list, component) {
+          component.isNew = true;
           $scope.editComponent(component);
           return component;
         };
@@ -176,23 +177,46 @@ app.directive('formBuilder', function() {
             template: 'formio/components/settings.html',
             scope: $scope,
             className: 'ngdialog-theme-default component-settings'
+          }).closePromise.then(function (e) {
+            var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+            if (cancelled) {
+              if($scope.component.isNew) {
+                $scope.removeComponent($scope.component);
+              }
+              else {
+                // Revert to old settings, but use the same object reference
+                _.assign($scope.component, $scope.previousSettings);                
+              }
+            }
+            else {
+              delete $scope.component.isNew;
+            }
           });
         };
 
-        // Cancel the settings.
         $scope.cancelSettings = function() {
-          $scope.component = $scope.previousSettings;
-          ngDialog.close();
+          ngDialog.closeAll(false);
         };
 
-        // The settings are already bound, so just close the dialog.
         $scope.saveSettings = function() {
-          ngDialog.close();
+          ngDialog.closeAll(true);
         };
+
       }
     ]
   };
 });
+
+app.run([
+  '$rootScope',
+  'ngDialog',
+  function($rootScope, ngDialog) {
+    // Close all open dialogs on state change.
+    $rootScope.$on('$stateChangeStart', function() {
+      ngDialog.closeAll(false);
+    });
+  }
+]);
 
 /**
  * Create the form-builder-component directive.
@@ -378,7 +402,7 @@ app.run([
             '</div>' +
             '<div class="form-group">' +
               '<button type="submit" class="btn btn-success" ng-click="saveSettings()">Save</button>&nbsp;' +
-              '<button type="button" class="btn btn-default" ng-click="cancelSettings()">Cancel</button>&nbsp;' +
+              '<button type="button" class="btn btn-default" ng-click="cancelSettings()" ng-if="!component.isNew">Cancel</button>&nbsp;' +
               '<button type="button" class="btn btn-danger" ng-click="removeComponent(component)">Remove</button>' +
             '</div>' +
           '</div>' +
