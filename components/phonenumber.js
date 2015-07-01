@@ -46,7 +46,7 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
+    // Create the Validation markup.
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
