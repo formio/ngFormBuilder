@@ -69,9 +69,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/resource/validate.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Required</label>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );
   }
