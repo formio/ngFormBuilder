@@ -1452,7 +1452,7 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
+    // Create the Validation markup.
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -1585,9 +1585,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/resource/validate.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Required</label>' +
-        '</div>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1686,6 +1684,10 @@ app.config([
           template: 'formio/components/signature/display.html'
         },
         {
+          name: 'Validation',
+          template: 'formio/components/signature/validate.html'
+        },
+        {
           name: 'API',
           template: 'formio/components/signature/api.html'
         }
@@ -1713,6 +1715,13 @@ app.run([
     $templateCache.put('formio/components/signature/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the Validation markup.
+    $templateCache.put('formio/components/signature/validate.html',
+      '<ng-form>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );
   }
