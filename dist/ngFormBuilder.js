@@ -360,7 +360,7 @@ app.run([
               '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-effect-allowed="copy" style="width:48%;margin: 0 4px 4px 0; float:left;">' +
-                '<button type="button" class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</button>' +
+                '<button type="button" class="btn btn-primary btn-xs btn-block form-builder-comp-button" disabled="disabled" style="opacity:1"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</button>' +
               '</div>' +
             '</accordion-group>' +
           '</accordion>' +
