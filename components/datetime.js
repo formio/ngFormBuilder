@@ -51,7 +51,8 @@ app.config([
           name: 'API',
           template: 'formio/components/datetime/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#datetime'
     });
   }
 ]);

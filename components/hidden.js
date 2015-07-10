@@ -12,7 +12,8 @@ app.config([
           name: 'API',
           template: 'formio/components/hidden/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#hidden'
     });
   }
 ]);

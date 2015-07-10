@@ -15,7 +15,8 @@ app.config([
           name: 'API',
           template: 'formio/components/signature/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#signature'
     });
   }
 ]);

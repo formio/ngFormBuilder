@@ -12,7 +12,10 @@ app.run([
             '</tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
-            '<div class="panel panel-default">' +
+            '<div class="pull-right" ng-if="formComponents[component.type].documentation" style="margin-top:10px; margin-right:20px;">' +
+              '<a ng-href="{{ formComponents[component.type].documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+            '</div>' +
+            '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
               '<div class="panel-heading">Preview</div>' +
               '<div class="panel-body">' +
                 '<formio-component component="component" data="data" formio="formio"></formio-component>' +

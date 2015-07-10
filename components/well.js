@@ -2,7 +2,8 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('well', {
-      fbtemplate: 'formio/formbuilder/well.html'
+      fbtemplate: 'formio/formbuilder/well.html',
+      documentation: 'http://help.form.io/userguide/#well'
     });
   }
 ]);

@@ -15,7 +15,8 @@ app.config([
           name: 'API',
           template: 'formio/components/radio/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#radio'
     });
   }
 ]);
