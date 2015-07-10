@@ -8,7 +8,8 @@ app.config([
           name: 'Display',
           template: 'formio/components/fieldset/display.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#fieldset'
     });
   }
 ]);

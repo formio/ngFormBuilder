@@ -25,7 +25,8 @@ app.config([
           name: 'API',
           template: 'formio/components/resource/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#resource'
     });
   }
 ]);

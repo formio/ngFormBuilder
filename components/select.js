@@ -23,7 +23,8 @@ app.config([
           json: 'Raw JSON',
           url: 'URL'
         };
-      }
+      },
+      documentation: 'http://help.form.io/userguide/#select'
     });
   }
 ]);

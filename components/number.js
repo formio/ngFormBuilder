@@ -15,7 +15,8 @@ app.config([
           name: 'API',
           template: 'formio/components/textfield/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#number'
     });
   }
 ]);
