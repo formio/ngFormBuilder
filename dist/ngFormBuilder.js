@@ -394,7 +394,10 @@ app.run([
             '</tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
-            '<div class="panel panel-default">' +
+            '<div class="pull-right" ng-if="formComponents[component.type].documentation" style="margin-top:10px; margin-right:20px;">' +
+              '<a ng-href="{{ formComponents[component.type].documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+            '</div>' +
+            '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
               '<div class="panel-heading">Preview</div>' +
               '<div class="panel-body">' +
                 '<formio-component component="component" data="data" formio="formio"></formio-component>' +
@@ -772,7 +775,8 @@ app.config([
           name: 'API',
           template: 'formio/components/textfield/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#textfield'
     });
   }
 ]);
@@ -833,7 +837,8 @@ app.config([
           name: 'API',
           template: 'formio/components/address/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#address'
     });
   }
 ]);
@@ -892,7 +897,8 @@ app.config([
           name: 'API',
           template: 'formio/components/textfield/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#button'
     });
   }
 ]);
@@ -942,7 +948,8 @@ app.config([
           name: 'API',
           template: 'formio/components/checkbox/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#checkbox'
     });
   }
 ]);
@@ -980,7 +987,8 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('columns', {
-      fbtemplate: 'formio/formbuilder/columns.html'
+      fbtemplate: 'formio/formbuilder/columns.html',
+      documentation: 'http://help.form.io/userguide/#columns'
     });
   }
 ]);
@@ -1001,7 +1009,8 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
-      fbtemplate: 'formio/formbuilder/content.html'
+      fbtemplate: 'formio/formbuilder/content.html',
+      documentation: 'http://help.form.io/userguide/#content-component'
     });
   }
 ]);
@@ -1067,7 +1076,8 @@ app.config([
           name: 'API',
           template: 'formio/components/datetime/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#datetime'
     });
   }
 ]);
@@ -1181,7 +1191,8 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('email', {
-      views: formioComponentsProvider.$get().components.textfield.views
+      views: formioComponentsProvider.$get().components.textfield.views,
+      documentation: 'http://help.form.io/userguide/#email'
     });
   }
 ]);
@@ -1196,7 +1207,8 @@ app.config([
           name: 'Display',
           template: 'formio/components/fieldset/display.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#fieldset'
     });
   }
 ]);
@@ -1233,7 +1245,8 @@ app.config([
           name: 'API',
           template: 'formio/components/hidden/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#hidden'
     });
   }
 ]);
@@ -1298,7 +1311,8 @@ app.config([
           name: 'API',
           template: 'formio/components/textfield/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#number'
     });
   }
 ]);
@@ -1366,7 +1380,8 @@ app.config([
           name: 'Display',
           template: 'formio/components/panel/display.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#panels'
     });
   }
 ]);
@@ -1399,7 +1414,8 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('password', {
-      views: formioComponentsProvider.$get().components.textfield.views
+      views: formioComponentsProvider.$get().components.textfield.views,
+      documentation: 'http://help.form.io/userguide/#password'
     });
   }
 ]);
@@ -1421,7 +1437,8 @@ app.config([
           name: 'API',
           template: 'formio/components/phoneNumber/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#phonenumber'
     });
   }
 ]);
@@ -1478,7 +1495,8 @@ app.config([
           name: 'API',
           template: 'formio/components/radio/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#radio'
     });
   }
 ]);
@@ -1541,7 +1559,8 @@ app.config([
           name: 'API',
           template: 'formio/components/resource/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#resource'
     });
   }
 ]);
@@ -1616,7 +1635,8 @@ app.config([
           json: 'Raw JSON',
           url: 'URL'
         };
-      }
+      },
+      documentation: 'http://help.form.io/userguide/#select'
     });
   }
 ]);
@@ -1691,7 +1711,8 @@ app.config([
           name: 'API',
           template: 'formio/components/signature/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#signature'
     });
   }
 ]);
@@ -1744,7 +1765,8 @@ app.config([
           name: 'API',
           template: 'formio/components/textfield/api.html'
         }
-      ]
+      ],
+      documentation: 'http://help.form.io/userguide/#textarea'
     });
   }
 ]);
@@ -1753,7 +1775,8 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('well', {
-      fbtemplate: 'formio/formbuilder/well.html'
+      fbtemplate: 'formio/formbuilder/well.html',
+      documentation: 'http://help.form.io/userguide/#well'
     });
   }
 ]);

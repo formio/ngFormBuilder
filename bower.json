@@ -15,7 +15,7 @@
     "tests"
   ],
   "dependencies": {
-    "formio": "~0.0.28",
+    "formio": "~0.0.29",
     "angular-drag-and-drop-lists": "~1.2.0",
     "angular-bootstrap": "~0.12.1",
     "ngDialog": "~0.3.12",
