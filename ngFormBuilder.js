@@ -130,7 +130,11 @@ app.directive('formBuilder', function() {
         // Add a new component.
         $scope.addComponent = function(list, component) {
           component.isNew = true;
-          $scope.editComponent(component);
+
+          // Only edit immediately for components that are not resource comps.
+          if (component.key.indexOf('.') === -1) {
+            $scope.editComponent(component);
+          }
           return component;
         };
 
