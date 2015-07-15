@@ -1,7 +1,7 @@
 {
   "name": "ngFormBuilder",
   "main": "dist/ngFormBuilder.js",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "authors": [
     "Travis Tidwell <travis@form.io>"
   ],
