@@ -20,7 +20,7 @@ app.directive('formBuilder', function() {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
-      app: '=',
+      project: '=',
       form: '='
     },
     controller: [
@@ -36,9 +36,8 @@ app.directive('formBuilder', function() {
         ngDialog,
         Formio
       ) {
-
         // Add the components to the scope.
-        $scope.formio = new Formio('/app/' + $scope.app);
+        $scope.formio = new Formio('/project/' + $scope.project);
         $scope.formComponents = formioComponents.components;
         $scope.formComponentGroups = formioComponents.groups;
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
