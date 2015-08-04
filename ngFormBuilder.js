@@ -16,7 +16,7 @@ app.service('formBuilderTools', function() {
     }
   };
 });
-app.directive('formBuilder', function() {
+app.directive('formBuilder', ['$timeout', function($timeout) {
   return {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
@@ -204,11 +204,16 @@ app.directive('formBuilder', function() {
         $scope.saveSettings = function() {
           ngDialog.closeAll(true);
         };
-
       }
-    ]
+    ],
+    link: function() {
+      $timeout(function() {
+        var child = angular.element('.formcomponents').children()[0];
+        angular.element('.formcomponents').height((angular.element(child).outerHeight() + 20) + 'px');
+      }, 200);
+    }
   };
-});
+}]);
 
 app.run([
   '$rootScope',
