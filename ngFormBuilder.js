@@ -4,7 +4,8 @@ var app = angular.module('ngFormBuilder', [
   'restangular',
   'ngDialog',
   'ui.bootstrap.accordion',
-  'ngCkeditor'
+  'ngCkeditor',
+  'mgcrea.ngStrap.affix'
 ]);
 app.service('formBuilderTools', function() {
   return {
@@ -355,16 +356,18 @@ app.run([
 
     $templateCache.put('formio/formbuilder/builder.html',
       '<div class="row">' +
-        '<div class="col-sm-3">' +
-          '<accordion close-others="true">' +
-            '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
-                'dnd-draggable="component.settings"' +
-                'dnd-effect-allowed="copy" style="width:48%;margin: 0 4px 4px 0; float:left;">' +
-                '<span class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</span>' +
-              '</div>' +
-            '</accordion-group>' +
-          '</accordion>' +
+        '<div class="col-sm-3 formcomponents">' +
+          '<div bs-affix data-offset-top="-50">' +
+            '<accordion close-others="true">' +
+              '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
+                '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
+                  'dnd-draggable="component.settings"' +
+                  'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
+                  '<span class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</span>' +
+                '</div>' +
+              '</accordion-group>' +
+            '</accordion>' +
+          '</div>' +
         '</div>' +
         '<div class="col-sm-9 formbuilder">' +
           '<tabset>' +
