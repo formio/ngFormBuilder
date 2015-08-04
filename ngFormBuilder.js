@@ -210,7 +210,7 @@ app.directive('formBuilder', ['$timeout', function($timeout) {
       $timeout(function() {
         var child = angular.element('.formcomponents').children()[0];
         angular.element('.formcomponents').height((angular.element(child).outerHeight() + 20) + 'px');
-      }, 200);
+      }, 500);
     }
   };
 }]);
