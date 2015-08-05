@@ -41,7 +41,7 @@ app.directive('formBuilder', function() {
         // Add the components to the scope.
         $scope.formio = new Formio('/app/' + $scope.app);
         $scope.formComponents = formioComponents.components;
-        $scope.formComponentGroups = formioComponents.groups;
+        $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
         });
