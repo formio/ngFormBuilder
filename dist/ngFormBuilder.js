@@ -138,6 +138,9 @@ app.directive('formBuilder', ['$timeout', function($timeout) {
           if (!component.key || (component.key.indexOf('.') === -1)) {
             $scope.editComponent(component);
           }
+
+          $scope.$broadcast('ckeditor.refresh');
+
           return component;
         };
 
