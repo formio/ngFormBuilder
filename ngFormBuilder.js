@@ -16,7 +16,7 @@ app.service('formBuilderTools', function() {
     }
   };
 });
-app.directive('formBuilder', function() {
+app.directive('formBuilder', ['$timeout', function($timeout) {
   return {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
@@ -40,7 +40,7 @@ app.directive('formBuilder', function() {
         // Add the components to the scope.
         $scope.formio = new Formio('/project/' + $scope.project);
         $scope.formComponents = formioComponents.components;
-        $scope.formComponentGroups = formioComponents.groups;
+        $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
         });
@@ -135,6 +135,9 @@ app.directive('formBuilder', function() {
           if (!component.key || (component.key.indexOf('.') === -1)) {
             $scope.editComponent(component);
           }
+
+          $scope.$broadcast('ckeditor.refresh');
+
           return component;
         };
 
@@ -203,11 +206,16 @@ app.directive('formBuilder', function() {
         $scope.saveSettings = function() {
           ngDialog.closeAll(true);
         };
-
       }
-    ]
+    ],
+    link: function() {
+      $timeout(function() {
+        var child = angular.element('.formcomponents').children()[0];
+        angular.element('.formcomponents').height((angular.element(child).outerHeight() + 20) + 'px');
+      }, 500);
+    }
   };
-});
+}]);
 
 app.run([
   '$rootScope',

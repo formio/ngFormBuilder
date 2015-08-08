@@ -15,12 +15,16 @@
     "tests"
   ],
   "dependencies": {
-    "formio": "1.0.0",
+    "formio": "git@github.com:formio/ngFormio.git#1abbaa657e7e1ca28d48f12fff6382db4a49af2d",
     "angular-drag-and-drop-lists": "~1.2.0",
     "angular-bootstrap": "~0.12.1",
     "ngDialog": "~0.3.12",
     "lodash": "~3.6.0",
-    "ng-ckeditor": "~0.2.1",
+    "ng-ckeditor": "git@github.com:formio/ng-ckeditor.git",
     "angular-strap": "~2.3.1"
+  },
+  "resolutions": {
+    "angular-bootstrap": "~0.13.0",
+    "angular": "~1.3.15"
   }
 }
