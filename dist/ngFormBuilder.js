@@ -436,14 +436,6 @@ app.constant('FORM_OPTIONS', {
       title: 'Submit'
     },
     {
-      name: 'prevPage',
-      title: 'Previous Page'
-    },
-    {
-      name: 'nextPage',
-      title: 'Next Page'
-    },
-    {
       name: 'reset',
       title: 'Reset'
     }
