@@ -23,7 +23,7 @@ app.directive('formBuilder', ['$timeout', function($timeout) {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
-      app: '=',
+      project: '=',
       form: '='
     },
     controller: [
@@ -39,9 +39,8 @@ app.directive('formBuilder', ['$timeout', function($timeout) {
         ngDialog,
         Formio
       ) {
-
         // Add the components to the scope.
-        $scope.formio = new Formio('/app/' + $scope.app);
+        $scope.formio = new Formio('/project/' + $scope.project);
         $scope.formComponents = formioComponents.components;
         $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
@@ -1553,7 +1552,7 @@ app.config([
     formioComponentsProvider.register('resource', {
       onEdit: function($scope, component, Formio) {
         $scope.resources = [];
-        var loader = new Formio('/app/' + $scope.app);
+        var loader = new Formio('/project/' + $scope.project);
         loader.loadForms({params: {type: 'resource'}}).then(function(resources) {
           $scope.resources = resources;
           if (!$scope.component.resource) {
