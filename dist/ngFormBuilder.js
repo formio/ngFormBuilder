@@ -124,7 +124,11 @@ app.directive('formBuilder', ['$timeout', function($timeout) {
         $scope.removeComponent = function(component) {
           var list = findList($scope.form.components, component);
           if (list) {
-            list.splice(list.indexOf(component), 1);
+            var spliceArgs = [list.indexOf(component), 1];
+            if($scope.formComponents[component.type].keepChildrenOnRemove) {
+              spliceArgs = spliceArgs.concat(component.components || []);
+            }
+            list.splice.apply(list, spliceArgs);
           }
           ngDialog.closeAll(true);
         };
@@ -1222,7 +1226,8 @@ app.config([
           template: 'formio/components/fieldset/display.html'
         }
       ],
-      documentation: 'http://help.form.io/userguide/#fieldset'
+      documentation: 'http://help.form.io/userguide/#fieldset',
+      keepChildrenOnRemove: true
     });
   }
 ]);
