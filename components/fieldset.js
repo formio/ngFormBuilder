@@ -9,7 +9,8 @@ app.config([
           template: 'formio/components/fieldset/display.html'
         }
       ],
-      documentation: 'http://help.form.io/userguide/#fieldset'
+      documentation: 'http://help.form.io/userguide/#fieldset',
+      keepChildrenOnRemove: true
     });
   }
 ]);
