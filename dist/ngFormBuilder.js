@@ -1281,25 +1281,10 @@ app.run([
     // Create the settings markup.
     $templateCache.put('formio/components/hidden/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Name</label>' +
-          '<input type="text" class="form-control" id="label" name="label" ng-model="component.label" placeholder="Enter the name for this hidden field" value="{{ component.label }}">' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="unique" name="unique" ng-model="component.unique" ng-checked="component.unique"> Unique' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="protected" name="protected" ng-model="component.protected" ng-checked="component.protected"> Protected' +
-          '</label>' +
-        '</div>' +
-        '<div class="checkbox">' +
-          '<label>' +
-            '<input type="checkbox" id="persistent" name="persistent" ng-model="component.persistent" ng-checked="component.persistent"> Persistent' +
-          '</label>' +
-        '</div>' +
+        '<form-builder-option property="label" label="Name" placeholder="Enter the name for this hidden field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -1307,10 +1292,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/hidden/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-blur="component.lockKey = true;" ng-required>' +
-        '</div>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
   }
