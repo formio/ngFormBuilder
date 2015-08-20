@@ -1,6 +1,6 @@
 {
   "name": "ngFormBuilder",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
