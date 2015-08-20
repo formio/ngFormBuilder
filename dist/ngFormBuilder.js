@@ -3,7 +3,6 @@
 var app = angular.module('ngFormBuilder', [
   'formio',
   'dndLists',
-  'restangular',
   'ngDialog',
   'ui.bootstrap.accordion',
   'ngCkeditor',
