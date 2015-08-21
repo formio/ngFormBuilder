@@ -9,6 +9,10 @@ app.config([
           template: 'formio/components/hidden/display.html'
         },
         {
+          name: 'Validation',
+          template: 'formio/components/hidden/validate.html'
+        },
+        {
           name: 'API',
           template: 'formio/components/hidden/api.html'
         }
@@ -27,7 +31,6 @@ app.run([
     $templateCache.put('formio/components/hidden/display.html',
       '<ng-form>' +
         '<form-builder-option property="label" label="Name" placeholder="Enter the name for this hidden field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -38,6 +41,14 @@ app.run([
     $templateCache.put('formio/components/hidden/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the Validate markup.
+    $templateCache.put('formio/components/hidden/validate.html',
+      '<ng-form>' +
+      '<form-builder-option property="unique"></form-builder-option>' +
+      '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }

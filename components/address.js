@@ -30,7 +30,6 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -47,6 +46,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/address/validate.html',
       '<ng-form>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );

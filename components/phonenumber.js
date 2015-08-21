@@ -33,7 +33,6 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -50,6 +49,7 @@ app.run([
     // Create the Validation markup.
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
       '</ng-form>'
     );
