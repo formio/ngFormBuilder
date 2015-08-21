@@ -20,8 +20,7 @@
     "angular-bootstrap": "~0.12.1",
     "ngDialog": "~0.3.12",
     "lodash": "~3.6.0",
-    "ng-ckeditor": "git@github.com:formio/ng-ckeditor.git#568baff29b66eddca5c80a6e697c0e3caaf6929f",
-    "angular-strap": "~2.3.1"
+    "ng-ckeditor": "git@github.com:formio/ng-ckeditor.git#568baff29b66eddca5c80a6e697c0e3caaf6929f"
   },
   "resolutions": {
     "angular-bootstrap": "~0.13.0",
