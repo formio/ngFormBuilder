@@ -28,8 +28,6 @@ app.run([
     $templateCache.put('formio/components/checkbox/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -45,6 +43,8 @@ app.run([
     $templateCache.put('formio/components/checkbox/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
   }

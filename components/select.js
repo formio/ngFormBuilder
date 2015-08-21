@@ -56,8 +56,6 @@ app.run([
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -69,6 +67,8 @@ app.run([
           '<label for="key">Property Name</label>' +
           '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
         '</div>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 

@@ -29,8 +29,6 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -39,6 +37,8 @@ app.run([
     $templateCache.put('formio/components/radio/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 

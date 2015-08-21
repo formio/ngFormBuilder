@@ -810,8 +810,6 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -820,6 +818,8 @@ app.run([
     $templateCache.put('formio/components/textfield/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -869,8 +869,6 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -879,6 +877,8 @@ app.run([
     $templateCache.put('formio/components/address/api.html',
       '<ng-form>' +
         '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -978,8 +978,6 @@ app.run([
     $templateCache.put('formio/components/checkbox/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -995,6 +993,8 @@ app.run([
     $templateCache.put('formio/components/checkbox/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1108,8 +1108,6 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the AngularJS date filter."></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -1191,6 +1189,8 @@ app.run([
     $templateCache.put('formio/components/datetime/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -1282,8 +1282,6 @@ app.run([
     $templateCache.put('formio/components/hidden/display.html',
       '<ng-form>' +
         '<form-builder-option property="label" label="Name" placeholder="Enter the name for this hidden field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -1292,6 +1290,8 @@ app.run([
     $templateCache.put('formio/components/hidden/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -1466,8 +1466,6 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -1476,6 +1474,8 @@ app.run([
     $templateCache.put('formio/components/phoneNumber/api.html',
       '<ng-form>' +
         '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -1520,8 +1520,6 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -1530,6 +1528,8 @@ app.run([
     $templateCache.put('formio/components/radio/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
@@ -1679,8 +1679,6 @@ app.run([
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -1692,6 +1690,8 @@ app.run([
           '<label for="key">Property Name</label>' +
           '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
         '</div>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
       '</ng-form>'
     );
 
