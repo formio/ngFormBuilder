@@ -3,8 +3,7 @@ var app = angular.module('ngFormBuilder', [
   'dndLists',
   'ngDialog',
   'ui.bootstrap.accordion',
-  'ngCkeditor',
-  'mgcrea.ngStrap.affix'
+  'ngCkeditor'
 ]);
 app.service('formBuilderTools', function() {
   return {
@@ -15,7 +14,7 @@ app.service('formBuilderTools', function() {
     }
   };
 });
-app.directive('formBuilder', ['$timeout', function($timeout) {
+app.directive('formBuilder', ['debounce', function(debounce) {
   return {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
@@ -217,11 +216,54 @@ app.directive('formBuilder', ['$timeout', function($timeout) {
       }
     ],
     link: function() {
-      $timeout(function() {
-        var child = angular.element('.formcomponents').children()[0];
-        angular.element('.formcomponents').height((angular.element(child).outerHeight() + 20) + 'px');
-      }, 500);
+      var scrollSidebar = debounce(function() {
+        var formComponents = angular.element('.formcomponents');
+        var formBuilder = angular.element('.formbuilder');
+        var maxScroll = formBuilder.outerHeight() > formComponents.outerHeight() ? formBuilder.outerHeight() - formComponents.outerHeight() : 0;
+        // 50 pixels gives space for the fixed header.
+        var scroll = angular.element(window).scrollTop() - formComponents.parent().offset().top + 50;
+        if (scroll < 0) {
+          scroll = 0;
+        }
+        if (scroll > maxScroll) {
+          scroll = maxScroll;
+        }
+        formComponents.css('margin-top', scroll + 'px');
+      }, 100, false);
+      window.onscroll = scrollSidebar;
     }
+  };
+}]);
+
+// Create an AngularJS service called debounce
+app.factory('debounce', ['$timeout','$q', function($timeout, $q) {
+  // The service is actually this function, which we call with the func
+  // that should be debounced and how long to wait in between calls
+  return function debounce(func, wait, immediate) {
+    var timeout;
+    // Create a deferred object that will be resolved when we need to
+    // actually call the func
+    var deferred = $q.defer();
+    return function() {
+      var context = this, args = arguments;
+      var later = function() {
+        timeout = null;
+        if(!immediate) {
+          deferred.resolve(func.apply(context, args));
+          deferred = $q.defer();
+        }
+      };
+      var callNow = immediate && !timeout;
+      if ( timeout ) {
+        $timeout.cancel(timeout);
+      }
+      timeout = $timeout(later, wait);
+      if (callNow) {
+        deferred.resolve(func.apply(context,args));
+        deferred = $q.defer();
+      }
+      return deferred.promise;
+    };
   };
 }]);
 
@@ -375,18 +417,16 @@ app.run([
     $templateCache.put('formio/formbuilder/builder.html',
       '<div class="row">' +
         '<div class="col-sm-3 formcomponents">' +
-          '<div bs-affix data-offset-top="-50">' +
-            '<accordion close-others="true">' +
-              '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-                '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
-                  'dnd-draggable="component.settings"' +
-                  'dnd-dragstart="dragStart()" ' +
-                  'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
-                  '<span class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</span>' +
-                '</div>' +
-              '</accordion-group>' +
-            '</accordion>' +
-          '</div>' +
+          '<accordion close-others="true">' +
+            '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
+              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
+                'dnd-draggable="component.settings"' +
+                'dnd-dragstart="dragStart()" ' +
+                'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
+                '<span class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</span>' +
+              '</div>' +
+            '</accordion-group>' +
+          '</accordion>' +
         '</div>' +
         '<div class="col-sm-9 formbuilder">' +
           '<tabset>' +
