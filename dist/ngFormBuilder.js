@@ -118,8 +118,8 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           return list;
         };
 
-        $scope.dragStart = function() {
-          $scope.dragging = true;
+        $scope.setDragging = function(dragging) {
+          $scope.dragging = dragging;
         };
 
         // Remove a component.
@@ -137,7 +137,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
 
         // Add a new component.
         $scope.addComponent = function(list, component) {
-          $scope.dragging = false;
+          $scope.setDragging(false);
           component.isNew = true;
 
           // Only edit immediately for components that are not resource comps.
@@ -407,14 +407,15 @@ app.run([
         '<li ng-repeat="component in component.components" ' +
           'dnd-draggable="component" ' +
           'dnd-effect-allowed="move" ' +
-          'dnd-dragstart="dragStart()" ' +
+          'dnd-dragstart="setDragging(true)" ' +
+          'dnd-dragend="setDragging(false)" ' +
           'dnd-moved="removeComponent(component)">' +
           '<form-builder-component ng-if="component.input"></form-builder-component>' +
           '<div ng-if="!component.input">' +
             '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
             '<form-builder-element></form-builder-element>' +
           '</div>' +
-          '<div ng-if="dragging" class="dndOverlay"></div>' +
+          '<div ng-if="dragging && formComponents[component.type].hasIFrame" class="dndOverlay"></div>' +
         '</li>' +
       '</ul>'
     );
@@ -426,7 +427,8 @@ app.run([
             '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
               '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
-                'dnd-dragstart="dragStart()" ' +
+                'dnd-dragstart="setDragging(true)" ' +
+                'dnd-dragend="setDragging(false)" ' +
                 'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
                 '<span class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</span>' +
               '</div>' +
@@ -1070,7 +1072,8 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
-      documentation: 'http://help.form.io/userguide/#content-component'
+      documentation: 'http://help.form.io/userguide/#content-component',
+      hasIFrame: true
     });
   }
 ]);
@@ -1458,8 +1461,23 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('password', {
       views: formioComponentsProvider.$get().components.textfield.views,
-      documentation: 'http://help.form.io/userguide/#password'
+      documentation: 'http://help.form.io/userguide/#password',
+      template: 'formio/components/password.html'
     });
+  }
+]);
+app.run([
+  '$templateCache',
+  function(
+    $templateCache
+  ) {
+    // Disable dragging on password inputs because it breaks dndLists
+    var textFieldTmpl = $templateCache.get('formio/components/textfield.html');
+    var passwordTmpl = textFieldTmpl.replace(
+      /<input type="{{ component.inputType }}" /g,
+      '<input type="{{ component.inputType }}" dnd-nodrag '
+    );
+    $templateCache.put('formio/components/password.html', passwordTmpl);
   }
 ]);
 
