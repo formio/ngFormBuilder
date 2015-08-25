@@ -220,22 +220,27 @@ app.directive('formBuilder', ['debounce', function(debounce) {
         };
       }
     ],
-    link: function() {
+    link: function(scope, element) {
       var scrollSidebar = debounce(function() {
         var formComponents = angular.element('.formcomponents');
         var formBuilder = angular.element('.formbuilder');
-        var maxScroll = formBuilder.outerHeight() > formComponents.outerHeight() ? formBuilder.outerHeight() - formComponents.outerHeight() : 0;
-        // 50 pixels gives space for the fixed header.
-        var scroll = angular.element(window).scrollTop() - formComponents.parent().offset().top + 50;
-        if (scroll < 0) {
-          scroll = 0;
+        if (formComponents.length !== 0 && formBuilder.length !== 0) {
+          var maxScroll = formBuilder.outerHeight() > formComponents.outerHeight() ? formBuilder.outerHeight() - formComponents.outerHeight() : 0;
+          // 50 pixels gives space for the fixed header.
+          var scroll = angular.element(window).scrollTop() - formComponents.parent().offset().top + 50;
+          if (scroll < 0) {
+            scroll = 0;
+          }
+          if (scroll > maxScroll) {
+            scroll = maxScroll;
+          }
+          formComponents.css('margin-top', scroll + 'px');
         }
-        if (scroll > maxScroll) {
-          scroll = maxScroll;
-        }
-        formComponents.css('margin-top', scroll + 'px');
       }, 100, false);
       window.onscroll = scrollSidebar;
+      element.on('$destroy', function() {
+        window.onscroll = null;
+      });
     }
   };
 }]);
