@@ -796,8 +796,8 @@ app.directive('valueBuilder', function(){
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value"/></td>' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value" placeholder="Value"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label" placeholder="Label"/></td>' +
                       '<td class="col-xs-2"><button class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
@@ -807,15 +807,17 @@ app.directive('valueBuilder', function(){
     replace: true,
     link: function($scope) {
       $scope.addValue = function() {
-        var value = $scope.data.length + 1;
         $scope.data.push({
-          value: 'value' + value,
-          label: 'Value ' + value
+          value: '',
+          label: ''
         });
       };
       $scope.removeValue = function(index) {
         $scope.data.splice(index, 1);
       };
+      if($scope.data.length === 0) {
+        $scope.addValue();
+      }
     }
   };
 });
