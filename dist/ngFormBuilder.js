@@ -798,11 +798,11 @@ app.directive('valueBuilder', function(){
                     '<tr ng-repeat="v in data track by $index">' +
                       '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value"/></td>' +
                       '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label"/></td>' +
-                      '<td class="col-xs-2"><button class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button class="btn" ng-click="addValue()">Add Value</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">Add Value</button>' +
                 '</div>',
     replace: true,
     link: function($scope) {
