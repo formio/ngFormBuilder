@@ -55,12 +55,12 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           _.each(resources, function(resource) {
 
             // Add the component group.
-            $scope.formComponentGroups[resource.title.toLowerCase()] = {
+            $scope.formComponentGroups[resource.name] = {
               title: resource.title + ' Fields'
             };
 
             // Create a new group for this resource.
-            $scope.formComponentsByGroup[resource.title.toLowerCase()] = {};
+            $scope.formComponentsByGroup[resource.name] = {};
 
             // Iterate through each component.
             _.each(resource.components, function(component) {
@@ -68,7 +68,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
               if (component.type === 'button') { return; }
 
               // Add the component to the list.
-              var resourceKey = resource.title.toLowerCase();
+              var resourceKey = resource.name;
               $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
                 _.clone(formioComponents.components[component.type], true),
                 {
