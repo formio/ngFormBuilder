@@ -5,15 +5,6 @@ var app = angular.module('ngFormBuilder', [
   'ui.bootstrap.accordion',
   'ngCkeditor'
 ]);
-app.service('formBuilderTools', function() {
-  return {
-    toCamelCase: function(input) {
-      return input.toLowerCase().replace(/ (.)/g, function(match, group1) {
-        return group1.toUpperCase();
-      });
-    }
-  };
-});
 app.directive('formBuilder', ['debounce', function(debounce) {
   return {
     replace: true,
@@ -25,13 +16,11 @@ app.directive('formBuilder', ['debounce', function(debounce) {
     controller: [
       '$scope',
       'formioComponents',
-      'formBuilderTools',
       'ngDialog',
       'Formio',
       function(
         $scope,
         formioComponents,
-        formBuilderTools,
         ngDialog,
         Formio
       ) {
@@ -169,12 +158,13 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           });
 
           // Watch the settings label and auto set the key from it.
+          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
           $scope.$watch('component.label', function() {
             if ($scope.component.label && !$scope.component.lockKey) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
-              $scope.component.key = formBuilderTools.toCamelCase($scope.component.label);
+              $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });

@@ -265,7 +265,7 @@ app.directive('formBuilderOptionKey', function(){
       var disableOnLock = attrs.disableOnLock || attrs.disableOnLock === '';
       return '<div class="form-group">' +
                 '<label for="key" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
-                '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ' +
+                '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
                   (disableOnLock ? 'ng-disabled="component.lockKey" ' : 'ng-blur="component.lockKey = true;" ') +
                   'ng-required>' +
               '</div>';
@@ -290,6 +290,27 @@ app.directive('formBuilderOptionKey', function(){
         }
         $scope.component.key = newValue;
       });
+    }
+  };
+});
+
+/*
+* Prevents user inputting invalid api key characters.
+* Valid characters for an api key are alphanumeric and hyphens
+*/
+app.directive('validApiKey', function(){
+  return {
+    require: 'ngModel',
+    link: function(scope, element, attrs, ngModel) {
+      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+      ngModel.$parsers.push(function (inputValue) {
+        var transformedInput = inputValue.replace(invalidRegex, '');
+        if (transformedInput !== inputValue) {
+          ngModel.$setViewValue(transformedInput);
+          ngModel.$render();
+        }
+        return transformedInput;
+     });
     }
   };
 });
