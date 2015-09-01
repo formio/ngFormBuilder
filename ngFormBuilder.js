@@ -75,7 +75,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
               $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
                 _.clone(formioComponents.components[component.type], true),
                 {
-                  title: resource.title + ' ' + component.label,
+                  title:component.label,
                   group: resourceKey,
                   settings: component
                 },
@@ -435,7 +435,9 @@ app.run([
                 'dnd-dragstart="setDragging(true)" ' +
                 'dnd-dragend="setDragging(false)" ' +
                 'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
-                '<span class="btn btn-primary btn-xs btn-block"><i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}</span>' +
+                '<span class="btn btn-primary btn-xs btn-block" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
+                  '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
+                '</span>' +
               '</div>' +
             '</accordion-group>' +
           '</accordion>' +
