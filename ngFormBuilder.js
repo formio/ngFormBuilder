@@ -37,7 +37,10 @@ app.directive('formBuilder', ['debounce', function(debounce) {
       ) {
         // Add the components to the scope.
         $scope.formio = new Formio('/project/' + $scope.project);
-        $scope.formComponents = formioComponents.components;
+        $scope.formComponents = _.cloneDeep(formioComponents.components);
+        _.each($scope.formComponents, function(component) {
+          component.settings.isNew = true;
+        });
         $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
@@ -136,10 +139,9 @@ app.directive('formBuilder', ['debounce', function(debounce) {
         // Add a new component.
         $scope.addComponent = function(list, component) {
           $scope.setDragging(false);
-          component.isNew = true;
 
           // Only edit immediately for components that are not resource comps.
-          if (!component.key || (component.key.indexOf('.') === -1)) {
+          if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
             $scope.editComponent(component);
           }
           else {
