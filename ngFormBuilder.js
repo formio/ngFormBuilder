@@ -420,7 +420,9 @@ app.run([
             '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
             '<form-builder-element></form-builder-element>' +
           '</div>' +
-          '<div ng-if="dragging && formComponents[component.type].hasIFrame" class="dndOverlay"></div>' +
+          // Fix for problematic components that are difficult to drag over
+          // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
+          '<div ng-if="dragging && !formComponents[component.type].noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
       '</ul>'
     );
