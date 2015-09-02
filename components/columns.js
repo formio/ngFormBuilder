@@ -3,7 +3,8 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('columns', {
       fbtemplate: 'formio/formbuilder/columns.html',
-      documentation: 'http://help.form.io/userguide/#columns'
+      documentation: 'http://help.form.io/userguide/#columns',
+      noDndOverlay: true
     });
   }
 ]);

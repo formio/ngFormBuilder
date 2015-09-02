@@ -422,7 +422,9 @@ app.run([
             '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
             '<form-builder-element></form-builder-element>' +
           '</div>' +
-          '<div ng-if="dragging && formComponents[component.type].hasIFrame" class="dndOverlay"></div>' +
+          // Fix for problematic components that are difficult to drag over
+          // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
+          '<div ng-if="dragging && !formComponents[component.type].noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
       '</ul>'
     );
@@ -1061,7 +1063,8 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('columns', {
       fbtemplate: 'formio/formbuilder/columns.html',
-      documentation: 'http://help.form.io/userguide/#columns'
+      documentation: 'http://help.form.io/userguide/#columns',
+      noDndOverlay: true
     });
   }
 ]);
@@ -1083,8 +1086,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
-      documentation: 'http://help.form.io/userguide/#content-component',
-      hasIFrame: true
+      documentation: 'http://help.form.io/userguide/#content-component'
     });
   }
 ]);
@@ -1283,7 +1285,8 @@ app.config([
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
-      keepChildrenOnRemove: true
+      keepChildrenOnRemove: true,
+      noDndOverlay: true
     });
   }
 ]);
@@ -1438,7 +1441,8 @@ app.config([
           template: 'formio/components/panel/display.html'
         }
       ],
-      documentation: 'http://help.form.io/userguide/#panels'
+      documentation: 'http://help.form.io/userguide/#panels',
+      noDndOverlay: true
     });
   }
 ]);
@@ -1848,7 +1852,8 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('well', {
       fbtemplate: 'formio/formbuilder/well.html',
-      documentation: 'http://help.form.io/userguide/#well'
+      documentation: 'http://help.form.io/userguide/#well',
+      noDndOverlay: true
     });
   }
 ]);

@@ -10,7 +10,8 @@ app.config([
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
-      keepChildrenOnRemove: true
+      keepChildrenOnRemove: true,
+      noDndOverlay: true
     });
   }
 ]);
