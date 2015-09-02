@@ -16,7 +16,8 @@ app.config([
           template: 'formio/components/panel/display.html'
         }
       ],
-      documentation: 'http://help.form.io/userguide/#panels'
+      documentation: 'http://help.form.io/userguide/#panels',
+      confirmRemove: true
     });
   }
 ]);

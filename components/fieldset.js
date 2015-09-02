@@ -10,7 +10,7 @@ app.config([
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
-      keepChildrenOnRemove: true
+      confirmRemove: true
     });
   }
 ]);

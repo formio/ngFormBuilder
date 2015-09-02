@@ -125,15 +125,24 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           $scope.dragging = dragging;
         };
 
+        // Show confirm dialog before removing a component
+        $scope.confirmRemoveComponent = function(component) {
+          ngDialog.open({
+            template: 'formio/components/confirm-remove.html',
+            showClose: false
+          }).closePromise.then(function(e) {
+            var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+            if(!cancelled) {
+              $scope.removeComponent(component);
+            }
+          });
+        };
+
         // Remove a component.
         $scope.removeComponent = function(component) {
           var list = findList($scope.form.components, component);
           if (list) {
-            var spliceArgs = [list.indexOf(component), 1];
-            if($scope.formComponents[component.type].keepChildrenOnRemove) {
-              spliceArgs = spliceArgs.concat(component.components || []);
-            }
-            list.splice.apply(list, spliceArgs);
+            list.splice(list.indexOf(component), 1);
           }
           ngDialog.closeAll(true);
         };
@@ -389,7 +398,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/editbuttons.html',
       '<div class="component-btn-group">' +
-        '<button class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component)"><span class="glyphicon glyphicon-remove"></span></button>' +
+        '<button class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="formComponents[component.type].confirmRemove ? confirmRemoveComponent(component) : removeComponent(component)"><span class="glyphicon glyphicon-remove"></span></button>' +
         '<button class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
         '<button ng-if="formComponents[component.type].views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
       '</div>'
@@ -455,6 +464,19 @@ app.run([
           '</tabset>' +
         '</div>' +
       '</div>'
+    );
+
+    // Create the component markup.
+    $templateCache.put('formio/components/confirm-remove.html',
+      '<form id="confirm-remove-dialog">' +
+            '<p>Removing this component will also <strong>remove all of its children</strong>! Are you sure you want to do this?</p>' +
+            '<div>' +
+            '<div class="form-group">' +
+              '<button type="submit" class="btn btn-danger pull-right" ng-click="closeThisDialog(true)">Remove</button>&nbsp;' +
+              '<button type="button" class="btn btn-default pull-right" style="margin-right: 5px;" ng-click="closeThisDialog(false)">Cancel</button>&nbsp;' +
+            '</div>' +
+            '</div>' +
+      '</form>'
     );
   }
 ]);
@@ -1061,7 +1083,8 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('columns', {
       fbtemplate: 'formio/formbuilder/columns.html',
-      documentation: 'http://help.form.io/userguide/#columns'
+      documentation: 'http://help.form.io/userguide/#columns',
+      confirmRemove: true
     });
   }
 ]);
@@ -1283,7 +1306,7 @@ app.config([
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
-      keepChildrenOnRemove: true
+      confirmRemove: true
     });
   }
 ]);
@@ -1438,7 +1461,8 @@ app.config([
           template: 'formio/components/panel/display.html'
         }
       ],
-      documentation: 'http://help.form.io/userguide/#panels'
+      documentation: 'http://help.form.io/userguide/#panels',
+      confirmRemove: true
     });
   }
 ]);
@@ -1848,7 +1872,8 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('well', {
       fbtemplate: 'formio/formbuilder/well.html',
-      documentation: 'http://help.form.io/userguide/#well'
+      documentation: 'http://help.form.io/userguide/#well',
+      confirmRemove: true
     });
   }
 ]);
