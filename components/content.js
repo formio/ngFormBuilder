@@ -3,8 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
-      documentation: 'http://help.form.io/userguide/#content-component',
-      hasIFrame: true
+      documentation: 'http://help.form.io/userguide/#content-component'
     });
   }
 ]);
