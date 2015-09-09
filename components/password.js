@@ -2,7 +2,20 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('password', {
-      views: formioComponentsProvider.$get().components.textfield.views,
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/password/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/textfield/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/textfield/api.html'
+        }
+      ],
       documentation: 'http://help.form.io/userguide/#password',
       template: 'formio/components/password.html'
     });
@@ -20,5 +33,19 @@ app.run([
       '<input type="{{ component.inputType }}" dnd-nodrag '
     );
     $templateCache.put('formio/components/password.html', passwordTmpl);
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/password/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="prefix"></form-builder-option>' +
+        '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
+      '</ng-form>'
+    );
   }
 ]);
