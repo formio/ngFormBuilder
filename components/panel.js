@@ -17,7 +17,8 @@ app.config([
         }
       ],
       documentation: 'http://help.form.io/userguide/#panels',
-      noDndOverlay: true
+      noDndOverlay: true,
+      confirmRemove: true
     });
   }
 ]);

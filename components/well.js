@@ -4,7 +4,8 @@ app.config([
     formioComponentsProvider.register('well', {
       fbtemplate: 'formio/formbuilder/well.html',
       documentation: 'http://help.form.io/userguide/#well',
-      noDndOverlay: true
+      noDndOverlay: true,
+      confirmRemove: true
     });
   }
 ]);
