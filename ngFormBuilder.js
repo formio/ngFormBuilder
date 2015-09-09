@@ -28,12 +28,14 @@ app.directive('formBuilder', ['debounce', function(debounce) {
       'formBuilderTools',
       'ngDialog',
       'Formio',
+      'FormioUtils',
       function(
         $scope,
         formioComponents,
         formBuilderTools,
         ngDialog,
-        Formio
+        Formio,
+        FormioUtils
       ) {
         // Add the components to the scope.
         $scope.formio = new Formio('/project/' + $scope.project);
@@ -66,7 +68,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
             $scope.formComponentsByGroup[resource.name] = {};
 
             // Iterate through each component.
-            _.each(resource.components, function(component) {
+            FormioUtils.eachComponent(resource.components, function(component) {
 
               if (component.type === 'button') { return; }
 
