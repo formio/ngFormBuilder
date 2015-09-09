@@ -7,15 +7,6 @@ var app = angular.module('ngFormBuilder', [
   'ui.bootstrap.accordion',
   'ngCkeditor'
 ]);
-app.service('formBuilderTools', function() {
-  return {
-    toCamelCase: function(input) {
-      return input.toLowerCase().replace(/ (.)/g, function(match, group1) {
-        return group1.toUpperCase();
-      });
-    }
-  };
-});
 app.directive('formBuilder', ['debounce', function(debounce) {
   return {
     replace: true,
@@ -27,14 +18,12 @@ app.directive('formBuilder', ['debounce', function(debounce) {
     controller: [
       '$scope',
       'formioComponents',
-      'formBuilderTools',
       'ngDialog',
       'Formio',
       'FormioUtils',
       function(
         $scope,
         formioComponents,
-        formBuilderTools,
         ngDialog,
         Formio,
         FormioUtils
@@ -175,12 +164,13 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           });
 
           // Watch the settings label and auto set the key from it.
+          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
           $scope.$watch('component.label', function() {
             if ($scope.component.label && !$scope.component.lockKey) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
-              $scope.component.key = formBuilderTools.toCamelCase($scope.component.label);
+              $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });
@@ -728,7 +718,7 @@ app.directive('formBuilderOptionKey', function(){
       var disableOnLock = attrs.disableOnLock || attrs.disableOnLock === '';
       return '<div class="form-group">' +
                 '<label for="key" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
-                '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ' +
+                '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
                   (disableOnLock ? 'ng-disabled="component.lockKey" ' : 'ng-blur="component.lockKey = true;" ') +
                   'ng-required>' +
               '</div>';
@@ -753,6 +743,27 @@ app.directive('formBuilderOptionKey', function(){
         }
         $scope.component.key = newValue;
       });
+    }
+  };
+});
+
+/*
+* Prevents user inputting invalid api key characters.
+* Valid characters for an api key are alphanumeric and hyphens
+*/
+app.directive('validApiKey', function(){
+  return {
+    require: 'ngModel',
+    link: function(scope, element, attrs, ngModel) {
+      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+      ngModel.$parsers.push(function (inputValue) {
+        var transformedInput = inputValue.replace(invalidRegex, '');
+        if (transformedInput !== inputValue) {
+          ngModel.$setViewValue(transformedInput);
+          ngModel.$render();
+        }
+        return transformedInput;
+     });
     }
   };
 });
@@ -1779,10 +1790,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/select/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-        '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 

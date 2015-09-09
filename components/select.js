@@ -66,10 +66,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/select/api.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="key">Property Name</label>' +
-          '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" value="{{ component.key }}" ng-required ng-disabled="component.lockKey">' +
-        '</div>' +
+        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
       '</ng-form>'
     );
 
