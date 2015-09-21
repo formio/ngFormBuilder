@@ -254,19 +254,16 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
 
 /**
 * A directive for a field to edit a component's key.
-* If you want the field to be disabled on when component.lockKey is true,
-* specify a `disable-on-lock` attribute.
 */
 app.directive('formBuilderOptionKey', function(){
   return {
     restrict: 'E',
     replace: true,
     template: function(el, attrs) {
-      var disableOnLock = attrs.disableOnLock || attrs.disableOnLock === '';
       return '<div class="form-group">' +
                 '<label for="key" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
-                  (disableOnLock ? 'ng-disabled="component.lockKey" ' : 'ng-blur="component.lockKey = true;" ') +
+                'ng-disabled="component.key.indexOf(\'.\') != -1" ng-blur="component.lockKey = true;" ' +
                   'ng-required>' +
               '</div>';
     },
@@ -302,7 +299,7 @@ app.directive('validApiKey', function(){
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
-      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-\.]*/g;
+      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
       ngModel.$parsers.push(function (inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {

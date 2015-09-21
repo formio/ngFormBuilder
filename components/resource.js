@@ -63,7 +63,7 @@ app.run([
     // Create the API markup.
     $templateCache.put('formio/components/resource/api.html',
       '<ng-form>' +
-        '<form-builder-option-key disable-on-lock></form-builder-option-key>' +
+        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
