@@ -325,7 +325,7 @@ app.directive('formBuilderElement', [
 ]);
 app.directive('formBuilderList', function() {
   return {
-    scope: false,
+    scope: true,
     restrict: 'E',
     replace: true,
     controller: [
@@ -446,14 +446,9 @@ app.run([
           '</accordion>' +
         '</div>' +
         '<div class="col-sm-9 formbuilder">' +
-          '<tabset>' +
-            '<tab heading="Page 1">' +
               '<div class="dropzone">' +
                 '<form-builder-list></form-builder-list>' +
               '</div>' +
-            '</tab>' +
-            '<tab><tab-heading><i class="glyphicon glyphicon-plus-sign"></i> Add Page</tab-heading></tab>' +
-          '</tabset>' +
         '</div>' +
       '</div>'
     );
