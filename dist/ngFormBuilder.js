@@ -76,7 +76,8 @@ app.directive('formBuilder', ['debounce', function(debounce) {
                   settings: {
                     label: resource.title + ' ' + component.label,
                     key: resourceKey + '.' + component.key,
-                    lockKey: true
+                    lockKey: true,
+                    source: resource._id
                   }
                 }
               );
@@ -732,11 +733,14 @@ app.directive('formBuilderOptionKey', function(){
     restrict: 'E',
     replace: true,
     template: function(el, attrs) {
-      return '<div class="form-group">' +
-                '<label for="key" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
+      return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding()}">' +
+                '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
-                'ng-disabled="component.key.indexOf(\'.\') != -1" ng-blur="component.lockKey = true;" ' +
+                'ng-disabled="component.source" ng-blur="component.lockKey = true;" ' +
                   'ng-required>' +
+                '<p ng-if="shouldWarnAboutEmbedding()" class="help-block"><span class="glyphicon glyphicon-exclamation-sign"></span> ' +
+                  'Using a dot in your Property Name will link this field to a field from a Resource. Doing this manually is not recommended because you will experience unexpected behavior if the Resource field is not found. If you wish to embed a Resource field in your form, use a component from the corresponding Resource Components category on the left.' +
+                '</p>' +
               '</div>';
     },
     link: function($scope) {
@@ -759,7 +763,11 @@ app.directive('formBuilderOptionKey', function(){
         }
         $scope.component.key = newValue;
       });
-    }
+
+      $scope.shouldWarnAboutEmbedding = function() {
+        return !$scope.component.source && $scope.component.key.indexOf('.') !== -1;
+      };
+    },
   };
 });
 
@@ -771,7 +779,7 @@ app.directive('validApiKey', function(){
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
-      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-\.]*/g;
       ngModel.$parsers.push(function (inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {
