@@ -74,7 +74,8 @@ app.directive('formBuilder', ['debounce', function(debounce) {
                   settings: {
                     label: resource.title + ' ' + component.label,
                     key: resourceKey + '.' + component.key,
-                    lockKey: true
+                    lockKey: true,
+                    source: resource._id
                   }
                 }
               );
