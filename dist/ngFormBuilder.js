@@ -30,17 +30,16 @@ app.directive('formBuilder', ['debounce', function(debounce) {
         FormioUtils
       ) {
         // Add the components to the scope.
-        $scope.form = {components:[]};
+        var submitButton = angular.copy(formioComponents.components.button.settings);
+        $scope.form = {components:[submitButton]};
         $scope.formio = new Formio($scope.src);
 
         // Load the form.
         if ($scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
-
-            // Add the submit button to the components.
             if ($scope.form.components.length === 0) {
-              $scope.form.components.push(angular.copy(formioComponents.components.button.settings));
+              $scope.form.components.push(submitButton);
             }
           });
         }
