@@ -59,7 +59,7 @@ app.constant('FORM_OPTIONS', {
     },
     {
       name: 'success',
-      title: 'Succeess'
+      title: 'Success'
     },
     {
       name: 'danger',
