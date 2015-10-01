@@ -526,6 +526,10 @@ app.constant('FORM_OPTIONS', {
     {
       name: 'reset',
       title: 'Reset'
+    },
+    {
+      name: 'oauth',
+      title: 'OAuth'
     }
   ],
   themes: [
