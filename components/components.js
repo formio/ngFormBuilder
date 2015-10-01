@@ -155,12 +155,12 @@ app.constant('COMMON_OPTIONS', {
   leftIcon: {
     label: 'Left Icon',
     placeholder: 'Enter icon classes',
-    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+    tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
   rightIcon: {
     label: 'Right Icon',
     placeholder: 'Enter icon classes',
-    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+    tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
   disableOnInvalid: {
     label: 'Disable on Form Invalid',
