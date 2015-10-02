@@ -11,27 +11,15 @@
   margin: 4px 4px 0 0;
 }
 
-.component-form-group .component-btn-group button.component-settings-button {
-  display: none;
-  z-index: 1001;
-}
-
 .component-form-group.col-xs-6 {
   clear: right;
 }
 
-.component-form-group.highlight {
+li .component-btn-group button.component-settings-button {
+  z-index: 1001;
   -webkit-box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
   -moz-box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
   box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
-}
-
-.component-form-group.highlight .component-btn-group button.component-settings-button {
-  display: inherit;
-}
-
-li .component-btn-group button.component-settings-button {
-  z-index: 1001;
 }
 
 li:not(:hover) .component-btn-group button.component-settings-button {
