@@ -1,6 +1,9 @@
 {
   "name": "ngFormBuilder",
-  "main": "dist/ngFormBuilder.js",
+  "main": [
+    "dist/ngFormBuilder.js",
+    "css/formBuilder.css"
+  ],
   "version": "1.0.0",
   "authors": [
     "Travis Tidwell <travis@form.io>"

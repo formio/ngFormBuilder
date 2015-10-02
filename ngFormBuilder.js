@@ -1,3 +1,5 @@
+/*global window: false, console: false, $: false */
+/*jshint browser: true */
 var app = angular.module('ngFormBuilder', [
   'formio',
   'dndLists',
@@ -10,8 +12,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
-      project: '=',
-      form: '='
+      src: '='
     },
     controller: [
       '$scope',
@@ -27,7 +28,20 @@ app.directive('formBuilder', ['debounce', function(debounce) {
         FormioUtils
       ) {
         // Add the components to the scope.
-        $scope.formio = new Formio('/project/' + $scope.project);
+        var submitButton = angular.copy(formioComponents.components.button.settings);
+        $scope.form = {components:[submitButton]};
+        $scope.formio = new Formio($scope.src);
+
+        // Load the form.
+        if ($scope.formio.formId) {
+          $scope.formio.loadForm().then(function(form) {
+            $scope.form = form;
+            if ($scope.form.components.length === 0) {
+              $scope.form.components.push(submitButton);
+            }
+          });
+        }
+
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component) {
           component.settings.isNew = true;
@@ -36,11 +50,6 @@ app.directive('formBuilder', ['debounce', function(debounce) {
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
         });
-
-        // Add the submit button to the components.
-        if ($scope.form.components.length === 0) {
-          $scope.form.components.push(angular.copy(formioComponents.components.button.settings));
-        }
 
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
@@ -150,7 +159,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           }
 
           $scope.$broadcast('ckeditor.refresh');
-
+          $scope.$emit('formUpdate', $scope.form);
           return component;
         };
 
@@ -219,6 +228,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
 
         $scope.saveSettings = function() {
           ngDialog.closeAll(true);
+          $scope.$emit('formUpdate', $scope.form);
         };
       }
     ],
@@ -396,7 +406,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      '<div class="component-form-group component-type-{{ component.type }}" ng-class="{highlight: hover}" ng-mouseenter="hover = true" ng-mouseleave="hover = false">' +
+      '<div class="component-form-group component-type-{{ component.type }}">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
         '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
       '</div>'
