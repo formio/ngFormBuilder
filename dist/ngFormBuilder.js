@@ -408,7 +408,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      '<div class="component-form-group component-type-{{ component.type }}" ng-class="{highlight: hover}" ng-mouseenter="hover = true" ng-mouseleave="hover = false">' +
+      '<div class="component-form-group component-type-{{ component.type }}">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
         '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
       '</div>'
@@ -542,7 +542,7 @@ app.constant('FORM_OPTIONS', {
     },
     {
       name: 'success',
-      title: 'Succeess'
+      title: 'Success'
     },
     {
       name: 'danger',
@@ -638,12 +638,12 @@ app.constant('COMMON_OPTIONS', {
   leftIcon: {
     label: 'Left Icon',
     placeholder: 'Enter icon classes',
-    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+    tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
   rightIcon: {
     label: 'Right Icon',
     placeholder: 'Enter icon classes',
-    tooltip: 'This is the full icon class string to show the icon. Example: "glyphicon glyphicon-search" or "fa fa-plus"'
+    tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
   disableOnInvalid: {
     label: 'Disable on Form Invalid',
