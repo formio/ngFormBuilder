@@ -1689,8 +1689,7 @@ app.config([
     formioComponentsProvider.register('resource', {
       onEdit: function($scope, component, Formio) {
         $scope.resources = [];
-        var loader = new Formio('/project/' + $scope.project);
-        loader.loadForms({params: {type: 'resource'}}).then(function(resources) {
+        $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
           $scope.resources = resources;
           if (!$scope.component.resource) {
             $scope.component.resource = resources[0]._id;
