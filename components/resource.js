@@ -44,7 +44,7 @@ app.run([
         '</div>' +
         '<form-builder-option property="searchExpression" label="Search Expression" placeholder="The search string regular expression" title="A regular expression to filter the results with."></form-builder-option>' +
         '<div class="form-group">' +
-          '<label for="placeholder">Select Fields</label>' +
+          '<label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
           '<input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
         '</div>' +
         '<div class="form-group">' +
