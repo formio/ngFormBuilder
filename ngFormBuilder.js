@@ -143,6 +143,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           if (list) {
             list.splice(list.indexOf(component), 1);
           }
+          $scope.$emit('formUpdate', $scope.form);
           ngDialog.closeAll(true);
         };
 
