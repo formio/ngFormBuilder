@@ -744,11 +744,10 @@ app.directive('formBuilderOptionKey', function(){
     restrict: 'E',
     replace: true,
     template: function(el, attrs) {
-      return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding()}">' +
+      return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding() || !component.key}">' +
                 '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
-                'ng-disabled="component.source" ng-blur="component.lockKey = true;" ' +
-                  'ng-required>' +
+                'ng-disabled="component.source" ng-blur="onBlur()">' +
                 '<p ng-if="shouldWarnAboutEmbedding()" class="help-block"><span class="glyphicon glyphicon-exclamation-sign"></span> ' +
                   'Using a dot in your Property Name will link this field to a field from a Resource. Doing this manually is not recommended because you will experience unexpected behavior if the Resource field is not found. If you wish to embed a Resource field in your form, use a component from the corresponding Resource Components category on the left.' +
                 '</p>' +
@@ -756,7 +755,9 @@ app.directive('formBuilderOptionKey', function(){
     },
     link: function($scope) {
       var suffixRegex = /(\d+)$/;
-      $scope.$watch('component.key', function(newValue) {
+      // Appends a number to a component.key to keep it unique
+      var uniquify = function() {
+        var newValue = $scope.component.key
         var valid = $scope.form.components.every(function(component) {
           if(component.key === newValue && component !== $scope.component) {
             return false;
@@ -766,14 +767,27 @@ app.directive('formBuilderOptionKey', function(){
         if(valid) {
           return;
         }
-        if(suffixRegex.test(newValue)) {
+        if(newValue.match(suffixRegex)) {
           newValue = newValue.replace(suffixRegex, function(suffix) { return Number(suffix) + 1; });
         }
         else {
           newValue += '2';
         }
         $scope.component.key = newValue;
-      });
+      };
+
+      $scope.$watch('component.key', uniquify);
+
+      $scope.onBlur = function() {
+        $scope.component.lockKey = true;
+
+        // If they try to input an empty key, refill it with default and let uniquify
+        // make it unique
+        if(!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
+          $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
+          uniquify();
+        }
+      }
 
       $scope.shouldWarnAboutEmbedding = function() {
         return !$scope.component.source && $scope.component.key.indexOf('.') !== -1;
