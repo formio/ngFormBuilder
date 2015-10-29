@@ -305,6 +305,7 @@ app.directive('formBuilderOptionKey', function(){
         // make it unique
         if(!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
+          $scope.component.lockKey = false; // Also unlock key
           uniquify();
         }
       };
