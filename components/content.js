@@ -11,7 +11,9 @@ app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/content.html',
-      '<textarea ckeditor ng-model="component.html"><textarea>'
+      '<div class="form-group">' +
+        '<textarea ckeditor ng-model="component.html"><textarea>' +
+      '</div>'
     );
   }
 ]);
