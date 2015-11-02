@@ -263,7 +263,7 @@ app.directive('formBuilderOptionKey', function(){
   return {
     restrict: 'E',
     replace: true,
-    template: function(el, attrs) {
+    template: function() {
       return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding() || !component.key}">' +
                 '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
