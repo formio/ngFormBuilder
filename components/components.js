@@ -273,16 +273,16 @@ app.directive('formBuilderOptionKey', function(){
                 '</p>' +
               '</div>';
     },
-    link: function($scope) {
+    controller: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
       var suffixRegex = /(\d+)$/;
       // Appends a number to a component.key to keep it unique
       var uniquify = function() {
         var newValue = $scope.component.key;
-        var valid = $scope.form.components.every(function(component) {
+        var valid = true;
+        FormioUtils.eachComponent($scope.form.components, function(component) {
           if(component.key === newValue && component !== $scope.component) {
-            return false;
+            valid = false;
           }
-          return true;
         });
         if(valid) {
           return;
@@ -313,7 +313,7 @@ app.directive('formBuilderOptionKey', function(){
       $scope.shouldWarnAboutEmbedding = function() {
         return !$scope.component.source && $scope.component.key.indexOf('.') !== -1;
       };
-    },
+    }],
   };
 });
 
