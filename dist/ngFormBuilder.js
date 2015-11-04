@@ -747,7 +747,7 @@ app.directive('formBuilderOptionKey', function(){
   return {
     restrict: 'E',
     replace: true,
-    template: function(el, attrs) {
+    template: function() {
       return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding() || !component.key}">' +
                 '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
@@ -859,7 +859,7 @@ app.directive('valueBuilder', function(){
       label: '@',
       tooltipText: '@'
     },
-    restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
+    restrict: 'E',
     template: '<div class="form-group">' +
                 '<label form-builder-tooltip="{{ tooltipText }}">{{ label }}</label>' +
                 '<table class="table table-condensed">' +
@@ -894,6 +894,20 @@ app.directive('valueBuilder', function(){
       if($scope.data.length === 0) {
         $scope.addValue();
       }
+      $scope.$watch('data', function(newValue, oldValue) {
+        // Ignore array addition/deletion changes
+        if(newValue.length !== oldValue.length) {
+          return;
+        }
+
+        _.map(newValue, function(entry, i) {
+          if(entry.label !== oldValue[i].label) {// label changed
+            if(entry.value === '' || entry.value === _.camelCase(oldValue[i].label)) {
+              entry.value = _.camelCase(entry.label);
+            }
+          }
+        });
+      }, true);
     }
   };
 });
@@ -1709,7 +1723,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('resource', {
-      onEdit: function($scope, component, Formio) {
+      onEdit: function($scope) {
         $scope.resources = [];
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
           $scope.resources = resources;
