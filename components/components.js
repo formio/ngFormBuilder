@@ -91,6 +91,12 @@ app.constant('FORM_OPTIONS', {
       name: 'lg',
       title: 'Large'
     }
+  ],
+  storage: [
+    {
+      name: 's3',
+      title: 'S3'
+    }
   ]
 });
 
@@ -165,6 +171,11 @@ app.constant('COMMON_OPTIONS', {
     label: 'Right Icon',
     placeholder: 'Enter icon classes',
     tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
+  },
+  dir: {
+    label: 'Directory',
+    placeholder: '(optional) Enter a directory for the files',
+    tooltip: 'This will place all the files uploaded in this field in the directory'
   },
   disableOnInvalid: {
     label: 'Disable on Form Invalid',
