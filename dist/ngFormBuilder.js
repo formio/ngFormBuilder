@@ -669,6 +669,26 @@ app.constant('COMMON_OPTIONS', {
     type: 'checkbox',
     tooltip: 'This will disable this field if the form is invalid.'
   },
+  striped: {
+    label: 'Striped',
+    type: 'checkbox',
+    tooltip: 'This will stripe the table if checked.'
+  },
+  bordered: {
+    label: 'Bordered',
+    type: 'checkbox',
+    tooltip: 'This will border the table if checked.'
+  },
+  hover: {
+    label: 'Hover',
+    type: 'checkbox',
+    tooltip: 'Highlight a row on hover.'
+  },
+  condensed: {
+    label: 'Condensed',
+    type: 'checkbox',
+    tooltip: 'Condense the size of the table.'
+  },
   'validate.required': {
     label: 'Required',
     type: 'checkbox',
@@ -753,6 +773,54 @@ app.directive('formBuilderOption', ['COMMON_OPTIONS', function(COMMON_OPTIONS){
     }
   };
 }]);
+
+/**
+ * A directive for a table builder
+ */
+app.directive('formBuilderTable', function() {
+  return {
+    restrict: 'E',
+    replace: true,
+    template: function() {
+      return '<div class="form-builder-table">' +
+        '  <div class="form-group">' +
+        '    <label for="label">Number of Rows</label>' +
+        '    <input type="number" class="form-control" id="numRows" name="numRows" placeholder="Number of Rows" ng-model="component.numRows">' +
+        '  </div>' +
+        '  <div class="form-group">' +
+        '    <label for="label">Number of Columns</label>' +
+        '    <input type="number" class="form-control" id="numCols" name="numCols" placeholder="Number of Columns" ng-model="component.numCols">' +
+        '  </div>' +
+        '</div>';
+    },
+    controller: [
+      '$scope',
+      function($scope) {
+        var changeTable = function() {
+          if ($scope.component.numRows && $scope.component.numCols) {
+            var tmpTable = [];
+            $scope.component.rows.splice($scope.component.numRows);
+            for (var row = 0; row < $scope.component.numRows; row++) {
+              if ($scope.component.rows[row]) {
+                $scope.component.rows[row].splice($scope.component.numCols);
+              }
+              for (var col = 0; col < $scope.component.numCols; col++) {
+                if (!tmpTable[row]) {
+                  tmpTable[row] = [];
+                }
+                tmpTable[row][col] = {components:[]};
+              }
+            }
+            $scope.component.rows = _.merge(tmpTable, $scope.component.rows);
+          }
+        };
+
+        $scope.$watch('component.numRows', changeTable);
+        $scope.$watch('component.numCols', changeTable);
+      }
+    ]
+  };
+});
 
 /**
 * A directive for a field to edit a component's key.
@@ -1944,12 +2012,14 @@ app.run([
   }
 ]);
 
-/*
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('table', {
       fbtemplate: 'formio/formbuilder/table.html',
+      documentation: 'http://help.form.io/userguide/#table',
+      noDndOverlay: true,
+      confirmRemove: true,
       views: [
         {
           name: 'Display',
@@ -1983,21 +2053,17 @@ app.run([
       '</div>'
     );
 
-    $templateCache.put('formio/components/panel/display.html',
+    $templateCache.put('formio/components/table/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Number of Rows</label>' +
-          '<input type="number" class="form-control" id="numRows" name="numRows" placeholder="Number of Rows" ng-change="component.rows.push()" value="{{ component.rows.length }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Number of Columns</label>' +
-          '<input type="number" class="form-control" id="numCols" name="numCols" placeholder="Number of Columns" ng-change="" value="{{ component.rows[0].length }}">' +
-        '</div>' +
+        '<form-builder-table></form-builder-table>' +
+        '<form-builder-option property="striped"></form-builder-option>' +
+        '<form-builder-option property="bordered"></form-builder-option>' +
+        '<form-builder-option property="hover"></form-builder-option>' +
+        '<form-builder-option property="condensed"></form-builder-option>' +
       '</ng-form>'
     );
   }
 ]);
-*/
 
 app.config([
   'formioComponentsProvider',

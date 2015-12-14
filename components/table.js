@@ -1,9 +1,11 @@
-/*
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('table', {
       fbtemplate: 'formio/formbuilder/table.html',
+      documentation: 'http://help.form.io/userguide/#table',
+      noDndOverlay: true,
+      confirmRemove: true,
       views: [
         {
           name: 'Display',
@@ -37,18 +39,14 @@ app.run([
       '</div>'
     );
 
-    $templateCache.put('formio/components/panel/display.html',
+    $templateCache.put('formio/components/table/display.html',
       '<ng-form>' +
-        '<div class="form-group">' +
-          '<label for="label">Number of Rows</label>' +
-          '<input type="number" class="form-control" id="numRows" name="numRows" placeholder="Number of Rows" ng-change="component.rows.push()" value="{{ component.rows.length }}">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label for="label">Number of Columns</label>' +
-          '<input type="number" class="form-control" id="numCols" name="numCols" placeholder="Number of Columns" ng-change="" value="{{ component.rows[0].length }}">' +
-        '</div>' +
+        '<form-builder-table></form-builder-table>' +
+        '<form-builder-option property="striped"></form-builder-option>' +
+        '<form-builder-option property="bordered"></form-builder-option>' +
+        '<form-builder-option property="hover"></form-builder-option>' +
+        '<form-builder-option property="condensed"></form-builder-option>' +
       '</ng-form>'
     );
   }
 ]);
-*/
