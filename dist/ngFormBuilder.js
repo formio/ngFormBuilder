@@ -581,16 +581,6 @@ app.constant('FORM_OPTIONS', {
       name: 's3',
       title: 'S3'
     }
-  ],
-  acl: [
-    {
-      name: 'private',
-      title: 'Private'
-    },
-    {
-      name: 'public-read',
-      title: 'Public'
-    }
   ]
 });
 
@@ -1423,7 +1413,6 @@ app.config([
     formioComponentsProvider.register('file', {
       onEdit: function($scope) {
         $scope.storage = FORM_OPTIONS.storage;
-        $scope.acls = FORM_OPTIONS.acl;
       },
       views: [
         {
@@ -1456,10 +1445,6 @@ app.run([
           '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title for store in storage" ng-model="component.storage"></select>' +
         '</div>' +
         '<form-builder-option property="dir"></form-builder-option>' +
-        '<div class="form-group">' +
-          '<label for="acl" form-builder-tooltip="Select an access control list for the files.">ACL</label>' +
-          '<select class="form-control" id="acl" name="acl" ng-options="acl.name as acl.title for acl in acls" ng-model="component.acl"></select>' +
-        '</div>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
