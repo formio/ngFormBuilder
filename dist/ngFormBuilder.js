@@ -1848,6 +1848,7 @@ app.run([
         '</ng-switch>' +
 
         '<form-builder-option ng-hide="component.dataSrc == \'values\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
+        '<form-builder-option ng-show="component.dataSrc == \'url\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
         '<div class="form-group">' +
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
