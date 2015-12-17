@@ -96,6 +96,10 @@ app.constant('FORM_OPTIONS', {
     {
       name: 's3',
       title: 'S3'
+    },
+    {
+      name: 'dropbox',
+      title: 'Dropbox'
     }
   ]
 });
