@@ -95,14 +95,28 @@ app.directive('formBuilder', ['debounce', function(debounce) {
         // Find the appropriate list.
         var findList = function(components, component) {
           var i = components.length;
+          var j = 0;
+          var k = 0;
           var list = null;
           outerloop:
           while (i--) {
             if (components[i] === component) {
               return components;
             }
+            else if (components[i].hasOwnProperty('rows')) {
+              j = components[i].rows.length;
+              while (j--) {
+                k = components[i].rows.length;
+                while (k--) {
+                  list = findList(components[i].rows[j][k].components, component);
+                  if (list) {
+                    break outerloop;
+                  }
+                }
+              }
+            }
             else if (components[i].hasOwnProperty('columns')) {
-              var j = components[i].columns.length;
+              j = components[i].columns.length;
               while (j--) {
                 list = findList(components[i].columns[j].components, component);
                 if (list) {
