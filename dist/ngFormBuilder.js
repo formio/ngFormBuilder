@@ -22,12 +22,14 @@ app.directive('formBuilder', ['debounce', function(debounce) {
       'ngDialog',
       'Formio',
       'FormioUtils',
+      'FormioPlugins',
       function(
         $scope,
         formioComponents,
         ngDialog,
         Formio,
-        FormioUtils
+        FormioUtils,
+        FormioPlugins
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
@@ -214,7 +216,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
             formioComponents.components[component.type] &&
             formioComponents.components[component.type].onEdit
           ) {
-            formioComponents.components[component.type].onEdit($scope, component, Formio);
+            formioComponents.components[component.type].onEdit($scope, component, Formio, FormioPlugins);
           }
 
           // Open the dialog.
@@ -588,16 +590,6 @@ app.constant('FORM_OPTIONS', {
     {
       name: 'lg',
       title: 'Large'
-    }
-  ],
-  storage: [
-    {
-      name: 's3',
-      title: 'S3'
-    },
-    {
-      name: 'dropbox',
-      title: 'Dropbox'
     }
   ]
 });
@@ -1491,14 +1483,13 @@ app.run([
 
 app.config([
   'formioComponentsProvider',
-  'FORM_OPTIONS',
   function(
-    formioComponentsProvider,
-    FORM_OPTIONS
+    formioComponentsProvider
   ) {
     formioComponentsProvider.register('file', {
-      onEdit: function($scope) {
-        $scope.storage = FORM_OPTIONS.storage;
+      onEdit: function($scope, component, Formio, FormioPlugins) {
+        // Pull out title and name from the list of storage plugins.
+        $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
       },
       views: [
         {

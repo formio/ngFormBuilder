@@ -1,13 +1,12 @@
 app.config([
   'formioComponentsProvider',
-  'FORM_OPTIONS',
   function(
-    formioComponentsProvider,
-    FORM_OPTIONS
+    formioComponentsProvider
   ) {
     formioComponentsProvider.register('file', {
-      onEdit: function($scope) {
-        $scope.storage = FORM_OPTIONS.storage;
+      onEdit: function($scope, component, Formio, FormioPlugins) {
+        // Pull out title and name from the list of storage plugins.
+        $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
       },
       views: [
         {

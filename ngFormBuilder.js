@@ -20,12 +20,14 @@ app.directive('formBuilder', ['debounce', function(debounce) {
       'ngDialog',
       'Formio',
       'FormioUtils',
+      'FormioPlugins',
       function(
         $scope,
         formioComponents,
         ngDialog,
         Formio,
-        FormioUtils
+        FormioUtils,
+        FormioPlugins
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
@@ -212,7 +214,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
             formioComponents.components[component.type] &&
             formioComponents.components[component.type].onEdit
           ) {
-            formioComponents.components[component.type].onEdit($scope, component, Formio);
+            formioComponents.components[component.type].onEdit($scope, component, Formio, FormioPlugins);
           }
 
           // Open the dialog.
