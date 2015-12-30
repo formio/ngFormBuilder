@@ -38,6 +38,7 @@ app.run([
           '<label for="storage" form-builder-tooltip="Which storage to save the files in.">Storage</label>' +
           '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title for store in storage" ng-model="component.storage"></select>' +
         '</div>' +
+        '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +

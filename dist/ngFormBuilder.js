@@ -666,6 +666,11 @@ app.constant('COMMON_OPTIONS', {
     placeholder: 'Enter icon classes',
     tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
+  url: {
+    label: 'Upload Url',
+    placeholder: 'Enter the url to post the files to.',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#server-side\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#server-side</a> for how to set up the server.'
+  },
   dir: {
     label: 'Directory',
     placeholder: '(optional) Enter a directory for the files',
@@ -1521,6 +1526,7 @@ app.run([
           '<label for="storage" form-builder-tooltip="Which storage to save the files in.">Storage</label>' +
           '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title for store in storage" ng-model="component.storage"></select>' +
         '</div>' +
+        '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
