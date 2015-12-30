@@ -108,7 +108,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
             else if (components[i].hasOwnProperty('rows')) {
               j = components[i].rows.length;
               while (j--) {
-                k = components[i].rows.length;
+                k = components[i].rows[j].length;
                 while (k--) {
                   list = findList(components[i].rows[j][k].components, component);
                   if (list) {
