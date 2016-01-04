@@ -91,12 +91,6 @@ app.constant('FORM_OPTIONS', {
       name: 'lg',
       title: 'Large'
     }
-  ],
-  storage: [
-    {
-      name: 's3',
-      title: 'S3'
-    }
   ]
 });
 
@@ -171,6 +165,11 @@ app.constant('COMMON_OPTIONS', {
     label: 'Right Icon',
     placeholder: 'Enter icon classes',
     tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
+  },
+  url: {
+    label: 'Upload Url',
+    placeholder: 'Enter the url to post the files to.',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#server-side\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#server-side</a> for how to set up the server.'
   },
   dir: {
     label: 'Directory',
