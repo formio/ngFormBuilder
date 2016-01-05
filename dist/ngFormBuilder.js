@@ -968,7 +968,7 @@ app.directive('valueBuilder', function(){
                     '<tr ng-repeat="v in data track by $index">' +
                       '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value" placeholder="Value"/></td>' +
                       '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label" placeholder="Label"/></td>' +
-                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
@@ -1226,6 +1226,61 @@ app.run([
     $templateCache.put('formio/components/checkbox/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+      '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('checkboxes', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/checkboxes/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/checkboxes/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/checkboxes/api.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#checkboxes'
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/checkboxes/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<value-builder data="component.values" label="Checkboxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    // Create the API markup.
+    $templateCache.put('formio/components/checkboxes/api.html',
+      '<ng-form>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the API markup.
+    $templateCache.put('formio/components/checkboxes/validate.html',
+      '<ng-form>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
