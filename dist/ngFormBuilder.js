@@ -722,6 +722,11 @@ app.constant('COMMON_OPTIONS', {
     label: 'Regular Expression Pattern',
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  },
+  'customClass': {
+    label: 'Custom CSS Class',
+    placeholder: 'Custom CSS Class',
+    tooltip: 'Custom CSS class to add to this component.'
   }
 });
 
@@ -1040,6 +1045,7 @@ app.run([
         '<form-builder-option property="inputMask"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
@@ -1099,6 +1105,7 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
@@ -1172,6 +1179,7 @@ app.run([
         '</div>' +
         '<form-builder-option property="leftIcon"></form-builder-option>' +
         '<form-builder-option property="rightIcon"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="block"></form-builder-option>' +
         '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
       '</ng-form>'
@@ -1209,6 +1217,7 @@ app.run([
     $templateCache.put('formio/components/checkbox/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1343,6 +1352,7 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1473,6 +1483,7 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
@@ -1528,6 +1539,7 @@ app.run([
         '</div>' +
         '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -1581,6 +1593,7 @@ app.run([
     $templateCache.put('formio/components/hidden/display.html',
       '<ng-form>' +
         '<form-builder-option property="label" label="Name" placeholder="Enter the name for this hidden field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -1631,6 +1644,7 @@ app.run([
         '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
@@ -1801,6 +1815,7 @@ app.run([
         '<form-builder-option property="inputMask"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
@@ -1856,6 +1871,7 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1935,6 +1951,7 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
@@ -2013,6 +2030,7 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
@@ -2071,6 +2089,7 @@ app.run([
         '<form-builder-option property="height" label="Height" placeholder="Height" title="The height of the signature area."></form-builder-option>' +
         '<form-builder-option property="backgroundColor" label="Background Color" placeholder="Background Color" title="The background color of the signature area."></form-builder-option>' +
         '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
@@ -2135,6 +2154,7 @@ app.run([
     $templateCache.put('formio/components/table/display.html',
       '<ng-form>' +
         '<form-builder-table></form-builder-table>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +

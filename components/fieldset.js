@@ -22,6 +22,7 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
