@@ -956,7 +956,11 @@ app.directive('valueBuilder', function(){
     scope: {
       data: '=',
       label: '@',
-      tooltipText: '@'
+      tooltipText: '@',
+      valueLabel: '@',
+      labelLabel: '@',
+      valueProperty: '@',
+      labelProperty: '@'
     },
     restrict: 'E',
     template: '<div class="form-group">' +
@@ -964,28 +968,33 @@ app.directive('valueBuilder', function(){
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-4">Value</th>' +
-                      '<th class="col-xs-6">Label</th>' +
+                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
+                      '<th class="col-xs-6">{{ labelLabel }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value" placeholder="Value"/></td>' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label" placeholder="Label"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
                       '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">Add Value</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,
     link: function($scope) {
+      $scope.valueProperty = $scope.valueProperty || 'value';
+      $scope.labelProperty = $scope.labelProperty || 'label';
+      $scope.valueLabel = $scope.valueLabel || 'Value';
+      $scope.labelLabel = $scope.labelLabel || 'Label';
+
       $scope.addValue = function() {
-        $scope.data.push({
-          value: '',
-          label: ''
-        });
+        var obj = {};
+        obj[$scope.valueProperty] = '';
+        obj[$scope.labelProperty] = '';
+        $scope.data.push(obj);
       };
       $scope.removeValue = function(index) {
         $scope.data.splice(index, 1);
@@ -1000,9 +1009,9 @@ app.directive('valueBuilder', function(){
         }
 
         _.map(newValue, function(entry, i) {
-          if(entry.label !== oldValue[i].label) {// label changed
-            if(entry.value === '' || entry.value === _.camelCase(oldValue[i].label)) {
-              entry.value = _.camelCase(entry.label);
+          if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+            if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+              entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
             }
           }
         });
@@ -1538,7 +1547,6 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
-        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
@@ -1547,6 +1555,7 @@ app.run([
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
         '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1660,6 +1669,43 @@ app.run([
     $templateCache.put('formio/components/hidden/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('htmlelement', {
+      fbtemplate: 'formio/formbuilder/htmlelement.html',
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/htmlelement/display.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#html-element-component'
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+    $templateCache.put('formio/formbuilder/htmlelement.html',
+      '<formio-html-element component="component"></div>'
+    );
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/htmlelement/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
+        '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
+        '<value-builder data="component.attrs" label="Attributes" tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." value-property="attr" label-property="value" value-label="Attribute" label-label="Value"></value-builder>' +
+        '<div class="form-group">' +
+          '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
+          '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +
+        '</div>' +
       '</ng-form>'
     );
   }
