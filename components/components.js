@@ -222,6 +222,11 @@ app.constant('COMMON_OPTIONS', {
     label: 'Regular Expression Pattern',
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  },
+  'customClass': {
+    label: 'Custom CSS Class',
+    placeholder: 'Custom CSS Class',
+    tooltip: 'Custom CSS class to add to this component.'
   }
 });
 

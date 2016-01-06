@@ -47,6 +47,7 @@ app.run([
         '</div>' +
         '<form-builder-option property="leftIcon"></form-builder-option>' +
         '<form-builder-option property="rightIcon"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="block"></form-builder-option>' +
         '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
       '</ng-form>'
