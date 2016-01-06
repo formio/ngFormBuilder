@@ -1,22 +1,22 @@
 app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
-    formioComponentsProvider.register('radio', {
+    formioComponentsProvider.register('checkboxes', {
       views: [
         {
           name: 'Display',
-          template: 'formio/components/radio/display.html'
+          template: 'formio/components/checkboxes/display.html'
         },
         {
           name: 'Validation',
-          template: 'formio/components/radio/validate.html'
+          template: 'formio/components/checkboxes/validate.html'
         },
         {
           name: 'API',
-          template: 'formio/components/radio/api.html'
+          template: 'formio/components/checkboxes/api.html'
         }
       ],
-      documentation: 'http://help.form.io/userguide/#radio'
+      documentation: 'http://help.form.io/userguide/#checkboxes'
     });
   }
 ]);
@@ -25,11 +25,11 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/radio/display.html',
+    $templateCache.put('formio/components/checkboxes/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
-        '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
-        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
+        '<value-builder data="component.values" label="Checkboxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -37,14 +37,14 @@ app.run([
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/radio/api.html',
+    $templateCache.put('formio/components/checkboxes/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/radio/validate.html',
+    $templateCache.put('formio/components/checkboxes/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
