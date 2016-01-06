@@ -484,7 +484,7 @@ app.directive('valueBuilder', function(){
                 '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,
-    link: function($scope) {
+    link: function($scope, el, attrs) {
       $scope.valueProperty = $scope.valueProperty || 'value';
       $scope.labelProperty = $scope.labelProperty || 'label';
       $scope.valueLabel = $scope.valueLabel || 'Value';
@@ -496,26 +496,31 @@ app.directive('valueBuilder', function(){
         obj[$scope.labelProperty] = '';
         $scope.data.push(obj);
       };
+
       $scope.removeValue = function(index) {
         $scope.data.splice(index, 1);
       };
-      if($scope.data.length === 0) {
+
+      if ($scope.data.length === 0) {
         $scope.addValue();
       }
-      $scope.$watch('data', function(newValue, oldValue) {
-        // Ignore array addition/deletion changes
-        if(newValue.length !== oldValue.length) {
-          return;
-        }
 
-        _.map(newValue, function(entry, i) {
-          if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
-            if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
-              entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
-            }
+      if (!attrs.noAutocompleteValue) {
+        $scope.$watch('data', function(newValue, oldValue) {
+          // Ignore array addition/deletion changes
+          if(newValue.length !== oldValue.length) {
+            return;
           }
-        });
-      }, true);
+
+          _.map(newValue, function(entry, i) {
+            if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+              if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+                entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
+              }
+            }
+          });
+        }, true);
+      }
     }
   };
 });

@@ -25,7 +25,16 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
         '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
-        '<value-builder data="component.attrs" label="Attributes" tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." value-property="attr" label-property="value" value-label="Attribute" label-label="Value"></value-builder>' +
+        '<value-builder ' +
+          'data="component.attrs" ' +
+          'label="Attributes" ' +
+          'tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." ' +
+          'value-property="attr" ' +
+          'label-property="value" ' +
+          'value-label="Attribute" ' +
+          'label-label="Value" ' +
+          'no-autocomplete-value="true" ' +
+          '></value-builder>' +
         '<div class="form-group">' +
           '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
           '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +

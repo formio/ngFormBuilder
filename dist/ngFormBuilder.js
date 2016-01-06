@@ -984,7 +984,7 @@ app.directive('valueBuilder', function(){
                 '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,
-    link: function($scope) {
+    link: function($scope, el, attrs) {
       $scope.valueProperty = $scope.valueProperty || 'value';
       $scope.labelProperty = $scope.labelProperty || 'label';
       $scope.valueLabel = $scope.valueLabel || 'Value';
@@ -996,26 +996,31 @@ app.directive('valueBuilder', function(){
         obj[$scope.labelProperty] = '';
         $scope.data.push(obj);
       };
+
       $scope.removeValue = function(index) {
         $scope.data.splice(index, 1);
       };
-      if($scope.data.length === 0) {
+
+      if ($scope.data.length === 0) {
         $scope.addValue();
       }
-      $scope.$watch('data', function(newValue, oldValue) {
-        // Ignore array addition/deletion changes
-        if(newValue.length !== oldValue.length) {
-          return;
-        }
 
-        _.map(newValue, function(entry, i) {
-          if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
-            if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
-              entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
-            }
+      if (!attrs.noAutocompleteValue) {
+        $scope.$watch('data', function(newValue, oldValue) {
+          // Ignore array addition/deletion changes
+          if(newValue.length !== oldValue.length) {
+            return;
           }
-        });
-      }, true);
+
+          _.map(newValue, function(entry, i) {
+            if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+              if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+                entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
+              }
+            }
+          });
+        }, true);
+      }
     }
   };
 });
@@ -1547,6 +1552,7 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
@@ -1555,7 +1561,6 @@ app.run([
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
         '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
-        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1701,7 +1706,16 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
         '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
-        '<value-builder data="component.attrs" label="Attributes" tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." value-property="attr" label-property="value" value-label="Attribute" label-label="Value"></value-builder>' +
+        '<value-builder ' +
+          'data="component.attrs" ' +
+          'label="Attributes" ' +
+          'tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." ' +
+          'value-property="attr" ' +
+          'label-property="value" ' +
+          'value-label="Attribute" ' +
+          'label-label="Value" ' +
+          'no-autocomplete-value="true" ' +
+          '></value-builder>' +
         '<div class="form-group">' +
           '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
           '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +
