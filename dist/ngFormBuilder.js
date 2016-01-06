@@ -1538,7 +1538,6 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
-        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-list></form-builder-list>' +
       '</fieldset>'
     );
@@ -1547,6 +1546,7 @@ app.run([
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
         '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }
