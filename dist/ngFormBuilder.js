@@ -427,7 +427,7 @@ app.run([
     $templateCache.put('formio/formbuilder/component.html',
       '<div class="component-form-group component-type-{{ component.type }}">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-        '<div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" style="position:inherit"><form-builder-element></form-builder-element></div>' +
+        '<div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" style="position:inherit" ng-style="component.style"><form-builder-element></form-builder-element></div>' +
       '</div>'
     );
 
@@ -535,6 +535,17 @@ app.run([
     $templateCache.put('formio/components/common/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the common Layout tab markup.
+    $templateCache.put('formio/components/common/layout.html',
+      '<ng-form>' +
+        // Need to use array notation to have dash in name
+        '<form-builder-option property="style[\'margin-top\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -739,6 +750,27 @@ app.constant('COMMON_OPTIONS', {
     label: 'Tab Index',
     placeholder: 'Tab Index',
     tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
+  },
+  // Need to use array notation to have dash in name
+  'style[\'margin-top\']': {
+    label: 'Margin Top',
+    placeholder: '0px',
+    tooltip: 'Sets the top margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-right\']': {
+    label: 'Margin Right',
+    placeholder: '0px',
+    tooltip: 'Sets the right margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-bottom\']': {
+    label: 'Margin Bottom',
+    placeholder: '0px',
+    tooltip: 'Sets the bottom margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-left\']': {
+    label: 'Margin Left',
+    placeholder: '0px',
+    tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
   }
 });
 
@@ -1053,6 +1085,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textfield'
@@ -1109,6 +1145,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#address'
@@ -1163,6 +1203,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#button'
@@ -1216,6 +1260,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#checkbox'
@@ -1342,6 +1390,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#datetime'
@@ -1467,6 +1519,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/fieldset/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
@@ -1518,6 +1574,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#file'
@@ -1666,6 +1726,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#number'
@@ -1737,6 +1801,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/panel/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#panels',
@@ -1787,6 +1855,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#password',
@@ -1840,6 +1912,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#phonenumber'
@@ -1893,6 +1969,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#radio'
@@ -1951,6 +2031,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#resource'
@@ -2015,6 +2099,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       onEdit: function($scope) {
@@ -2091,6 +2179,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/selectboxes/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#selectboxes'
@@ -2148,6 +2240,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#signature'
@@ -2192,6 +2288,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/table/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ]
     });
@@ -2250,6 +2350,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textarea'

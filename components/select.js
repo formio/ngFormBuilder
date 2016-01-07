@@ -15,6 +15,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       onEdit: function($scope) {

@@ -10,6 +10,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/table/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ]
     });

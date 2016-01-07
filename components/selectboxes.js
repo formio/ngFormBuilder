@@ -14,6 +14,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/selectboxes/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#selectboxes'
