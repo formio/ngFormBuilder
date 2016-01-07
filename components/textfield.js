@@ -35,7 +35,6 @@ app.run([
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -45,6 +44,7 @@ app.run([
     $templateCache.put('formio/components/textfield/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="validate.minLength"></form-builder-option>' +
         '<form-builder-option property="validate.maxLength"></form-builder-option>' +
         '<form-builder-option property="validate.pattern"></form-builder-option>' +
