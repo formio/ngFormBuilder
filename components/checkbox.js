@@ -32,7 +32,6 @@ app.run([
     $templateCache.put('formio/components/checkbox/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
-        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
