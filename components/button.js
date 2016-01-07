@@ -18,11 +18,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/button/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#button'
@@ -54,12 +54,6 @@ app.run([
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="block"></form-builder-option>' +
         '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    $templateCache.put('formio/components/button/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

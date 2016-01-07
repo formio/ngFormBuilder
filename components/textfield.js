@@ -13,11 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/textfield/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textfield'
@@ -45,13 +45,6 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/textfield/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     $templateCache.put('formio/components/textfield/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -59,12 +52,6 @@ app.run([
         '<form-builder-option property="validate.maxLength"></form-builder-option>' +
         '<form-builder-option property="validate.pattern"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
-      '</ng-form>'
-    );
-
-    $templateCache.put('formio/components/textfield/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

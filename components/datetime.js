@@ -49,11 +49,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/datetime/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/datetime/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#datetime'
@@ -150,23 +150,10 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/datetime/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     $templateCache.put('formio/components/datetime/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
-      '</ng-form>'
-    );
-
-    $templateCache.put('formio/components/datetime/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

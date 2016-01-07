@@ -14,11 +14,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/select/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/select/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       onEdit: function($scope) {
@@ -70,22 +70,9 @@ app.run([
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/select/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/select/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    $templateCache.put('formio/components/select/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

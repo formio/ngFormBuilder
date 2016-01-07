@@ -13,11 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/phoneNumber/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/phoneNumber/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#phonenumber'
@@ -45,23 +45,10 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/phoneNumber/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     // Create the Validation markup.
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    $templateCache.put('formio/components/phoneNumber/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

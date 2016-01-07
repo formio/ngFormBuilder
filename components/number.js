@@ -13,11 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/textfield/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#number'

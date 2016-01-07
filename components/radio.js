@@ -13,11 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/radio/api.html'
+          template: 'formio/components/common/api.html'
         },
         {
           name: 'Display',
-          template: 'formio/components/radio/display.html'
+          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#radio'
@@ -40,26 +40,11 @@ app.run([
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/radio/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     // Create the API markup.
     $templateCache.put('formio/components/radio/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/radio/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }
