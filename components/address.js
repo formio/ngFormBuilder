@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('address', {
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/address/settings.html'
+          name: 'Display',
+          template: 'formio/components/address/display.html'
         },
         {
           name: 'Validation',
@@ -14,10 +14,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#address'
@@ -29,10 +25,12 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/address/settings.html',
+    $templateCache.put('formio/components/address/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +

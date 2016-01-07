@@ -5,8 +5,8 @@ app.config([
       icon: 'fa fa-th-list',
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/select/settings.html'
+          name: 'Display',
+          template: 'formio/components/select/display.html'
         },
         {
           name: 'Validation',
@@ -15,10 +15,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       onEdit: function($scope) {
@@ -37,7 +33,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/select/settings.html',
+    $templateCache.put('formio/components/select/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -60,6 +56,8 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +

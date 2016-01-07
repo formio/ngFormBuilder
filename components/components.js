@@ -37,14 +37,6 @@ app.run([
         '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
-
-    // Create the common Display tab markup
-    $templateCache.put('formio/components/common/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="customClass"></form-builder-option>' +
-        '<form-builder-option property="tabindex"></form-builder-option>' +
-      '</ng-form>'
-    );
   }
 ]);
 

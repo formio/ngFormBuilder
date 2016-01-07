@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('textarea', {
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/textfield/settings.html'
+          name: 'Display',
+          template: 'formio/components/textfield/display.html'
         },
         {
           name: 'Validation',
@@ -14,10 +14,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textarea'

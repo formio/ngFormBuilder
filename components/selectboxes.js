@@ -29,6 +29,8 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Select Boxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +

@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('checkbox', {
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/checkbox/settings.html'
+          name: 'Display',
+          template: 'formio/components/checkbox/display.html'
         },
         {
           name: 'Validation',
@@ -14,10 +14,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#checkbox'
@@ -29,9 +25,11 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/checkbox/settings.html',
+    $templateCache.put('formio/components/checkbox/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +

@@ -13,8 +13,8 @@ app.config([
       },
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/resource/settings.html'
+          name: 'Display',
+          template: 'formio/components/resource/display.html'
         },
         {
           name: 'Validation',
@@ -23,10 +23,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#resource'
@@ -38,7 +34,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/resource/settings.html',
+    $templateCache.put('formio/components/resource/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -58,6 +54,8 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'

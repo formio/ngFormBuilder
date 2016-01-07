@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('number', {
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/number/settings.html'
+          name: 'Display',
+          template: 'formio/components/number/display.html'
         },
         {
           name: 'Validation',
@@ -14,10 +14,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#number'
@@ -29,13 +25,15 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/number/settings.html',
+    $templateCache.put('formio/components/number/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'

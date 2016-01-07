@@ -10,8 +10,8 @@ app.config([
       },
       views: [
         {
-          name: 'Settings',
-          template: 'formio/components/file/settings.html'
+          name: 'Display',
+          template: 'formio/components/file/display.html'
         },
         {
           name: 'Validation',
@@ -20,10 +20,6 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/common/api.html'
-        },
-        {
-          name: 'Display',
-          template: 'formio/components/common/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#file'
@@ -35,7 +31,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/file/settings.html',
+    $templateCache.put('formio/components/file/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<div class="form-group">' +
@@ -44,6 +40,8 @@ app.run([
         '</div>' +
         '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
