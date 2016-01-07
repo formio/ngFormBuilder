@@ -425,7 +425,7 @@ app.run([
     $templateCache.put('formio/formbuilder/component.html',
       '<div class="component-form-group component-type-{{ component.type }}">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-        '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
+        '<div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" style="position:inherit"><form-builder-element></form-builder-element></div>' +
       '</div>'
     );
 
