@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('checkboxes', {
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/checkboxes/display.html'
+          name: 'Settings',
+          template: 'formio/components/checkboxes/settings.html'
         },
         {
           name: 'Validation',
@@ -14,6 +14,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/checkboxes/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/checkboxes/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#checkboxes'
@@ -25,7 +29,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/checkboxes/display.html',
+    $templateCache.put('formio/components/checkboxes/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Checkboxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
@@ -43,11 +47,16 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
     $templateCache.put('formio/components/checkboxes/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/checkboxes/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

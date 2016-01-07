@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('phoneNumber', {
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/phoneNumber/display.html'
+          name: 'Settings',
+          template: 'formio/components/phoneNumber/settings.html'
         },
         {
           name: 'Validation',
@@ -14,6 +14,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/phoneNumber/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/phoneNumber/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#phonenumber'
@@ -25,7 +29,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/phoneNumber/display.html',
+    $templateCache.put('formio/components/phoneNumber/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -52,6 +56,12 @@ app.run([
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/phoneNumber/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

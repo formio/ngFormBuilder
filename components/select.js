@@ -5,8 +5,8 @@ app.config([
       icon: 'fa fa-th-list',
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/select/display.html'
+          name: 'Settings',
+          template: 'formio/components/select/settings.html'
         },
         {
           name: 'Validation',
@@ -15,6 +15,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/select/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/select/display.html'
         }
       ],
       onEdit: function($scope) {
@@ -33,7 +37,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/select/display.html',
+    $templateCache.put('formio/components/select/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -76,6 +80,12 @@ app.run([
     $templateCache.put('formio/components/select/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/select/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

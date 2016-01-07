@@ -32,8 +32,8 @@ app.config([
       },
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/datetime/display.html'
+          name: 'Settings',
+          template: 'formio/components/datetime/settings.html'
         },
         {
           name: 'Date',
@@ -50,6 +50,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/datetime/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/datetime/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#datetime'
@@ -61,7 +65,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/datetime/display.html',
+    $templateCache.put('formio/components/datetime/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -153,11 +157,16 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
     $templateCache.put('formio/components/datetime/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/datetime/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

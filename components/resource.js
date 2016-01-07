@@ -13,8 +13,8 @@ app.config([
       },
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/resource/display.html'
+          name: 'Settings',
+          template: 'formio/components/resource/settings.html'
         },
         {
           name: 'Validation',
@@ -23,6 +23,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/resource/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/resource/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#resource'
@@ -34,7 +38,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/resource/display.html',
+    $templateCache.put('formio/components/resource/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -70,6 +74,12 @@ app.run([
     $templateCache.put('formio/components/resource/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/resource/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

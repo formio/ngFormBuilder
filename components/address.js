@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('address', {
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/address/display.html'
+          name: 'Settings',
+          template: 'formio/components/address/settings.html'
         },
         {
           name: 'Validation',
@@ -14,6 +14,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/address/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/address/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#address'
@@ -25,7 +29,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/address/display.html',
+    $templateCache.put('formio/components/address/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -45,10 +49,15 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
     $templateCache.put('formio/components/address/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/components/address/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
       '</ng-form>'
     );
   }

@@ -4,8 +4,8 @@ app.config([
     formioComponentsProvider.register('number', {
       views: [
         {
-          name: 'Display',
-          template: 'formio/components/number/display.html'
+          name: 'Settings',
+          template: 'formio/components/number/settings.html'
         },
         {
           name: 'Validation',
@@ -14,6 +14,10 @@ app.config([
         {
           name: 'API',
           template: 'formio/components/textfield/api.html'
+        },
+        {
+          name: 'Display',
+          template: 'formio/components/textfield/display.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#number'
@@ -25,7 +29,7 @@ app.run([
   function($templateCache) {
 
     // Create the settings markup.
-    $templateCache.put('formio/components/number/display.html',
+    $templateCache.put('formio/components/number/settings.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
