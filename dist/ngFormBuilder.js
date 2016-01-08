@@ -425,7 +425,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      '<div class="component-form-group component-type-{{ component.type }}">' +
+      '<div class="component-form-group component-type-{{ component.type }} form-builder-component">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
         '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
       '</div>'
@@ -446,11 +446,7 @@ app.run([
           'dnd-dragstart="setDragging(true)" ' +
           'dnd-dragend="setDragging(false)" ' +
           'dnd-moved="removeComponent(component)">' +
-          '<form-builder-component ng-if="component.input"></form-builder-component>' +
-          '<div ng-if="!component.input">' +
-            '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-            '<form-builder-element></form-builder-element>' +
-          '</div>' +
+          '<form-builder-component></form-builder-component>' +
           // Fix for problematic components that are difficult to drag over
           // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
           '<div ng-if="dragging && !formComponents[component.type].noDndOverlay" class="dndOverlay"></div>' +
