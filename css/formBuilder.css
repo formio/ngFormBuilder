@@ -221,3 +221,16 @@ ul.component-list li {
   text-align: left;
 }
 
+/***************************** Layout Styling *****************************/
+
+.form-builder-component .form-field-type-fieldset fieldset {
+  padding: 5px;
+  margin-left: -5px;
+  margin-right: -5px;
+  border: dotted 2px #e8e8e8;
+}
+
+.form-builder-component .form-field-type-columns .formio-column {
+  padding: 10px;
+  border: dotted 2px #e8e8e8; 
+}
