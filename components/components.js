@@ -22,9 +22,9 @@ app.run([
               '</div>' +
             '</div>' +
             '<div class="form-group">' +
-              '<button type="submit" class="btn btn-success" ng-click="saveSettings()">Save</button>&nbsp;' +
-              '<button type="button" class="btn btn-default" ng-click="cancelSettings()" ng-if="!component.isNew">Cancel</button>&nbsp;' +
-              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component)">Remove</button>' +
+              '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
+              '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
+              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">Remove</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
