@@ -12,7 +12,10 @@ app.directive('formBuilder', ['debounce', function(debounce) {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
-      src: '='
+      src: '=',
+      type: '=',
+      onSave: '=',
+      onCancel: '='
     },
     controller: [
       '$scope',
@@ -247,6 +250,8 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           ngDialog.closeAll(true);
           $scope.$emit('formUpdate', $scope.form);
         };
+
+        $scope.capitalize = _.capitalize;
       }
     ],
     link: function(scope, element) {
@@ -459,6 +464,10 @@ app.run([
     $templateCache.put('formio/formbuilder/builder.html',
       '<div class="row">' +
         '<div class="col-sm-3 formcomponents">' +
+          '<div class="form-group">' +
+            '<button type="button" class="btn btn-default" ng-if="onCancel" ng-click="onCancel()">Cancel</button> ' +
+            '<button type="button" class="btn btn-primary" ng-if="onSave" ng-click="onSave()">Save<span ng-if="type"> {{capitalize(type)}}</span></button>' +
+          '</div>' +
           '<accordion close-others="true">' +
             '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
               '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
