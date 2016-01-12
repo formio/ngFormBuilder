@@ -107,6 +107,7 @@ app.directive('formBuilder', ['debounce', function(debounce) {
 
         // Add a new component.
         $scope.$on('formBuilder:add', update);
+        $scope.$on('formBuilder:update', update);
         $scope.$on('formBuilder:remove', update);
         $scope.$on('formBuilder:edit', update);
 
@@ -215,9 +216,9 @@ app.directive('formBuilderElement', [
           $scope,
           formioComponents
         ) {
-          var component = formioComponents.components[$scope.component.type];
-          if (component.fbtemplate) {
-            $scope.template = component.fbtemplate;
+          $scope.formComponent = formioComponents.components[$scope.component.type] || formioComponents.components.custom;
+          if ($scope.formComponent.fbtemplate) {
+            $scope.template = $scope.formComponent.fbtemplate;
           }
         }
       ]
@@ -281,6 +282,13 @@ app.directive('formBuilderList', [
             return component;
           };
 
+          // Allow prototyped scopes to update the original component.
+          $scope.updateComponent = function(newComponent, oldComponent) {
+            var list = $scope.component.components;
+            list.splice(list.indexOf(oldComponent), 1, newComponent);
+            $scope.$emit('update', newComponent);
+          };
+
           var remove = function(component) {
             var list = $scope.component.components;
             list.splice(list.indexOf(component), 1);
@@ -307,8 +315,9 @@ app.directive('formBuilderList', [
 
           // Edit a specific component.
           $scope.editComponent = function(component) {
+            $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
             // No edit view available
-            if (!$scope.formComponents[component.type].hasOwnProperty('views')) {
+            if (!$scope.formComponent.hasOwnProperty('views')) {
               return;
             }
 
@@ -331,10 +340,9 @@ app.directive('formBuilderList', [
               controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
                 // Allow the component to add custom logic to the edit page.
                 if (
-                  formioComponents.components[component.type] &&
-                  formioComponents.components[component.type].onEdit
+                  $scope.formComponent && $scope.formComponent.onEdit
                 ) {
-                  formioComponents.components[component.type].onEdit($scope, component, Formio, FormioPlugins);
+                  $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
                 }
 
                 $scope.$watch('component.multiple', function(value) {
@@ -379,6 +387,39 @@ app.directive('formBuilderList', [
     };
   }
 ]);
+
+app.directive('jsonInput', function () {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, elem, attr, ctrl) {
+      ctrl.$parsers.push(function(input) {
+        try {
+          var obj = JSON.parse(input);
+          ctrl.$setValidity('jsonInput', true);
+          return obj;
+        } catch (e) {
+          ctrl.$setValidity('jsonInput', false);
+          return undefined;
+        }
+      });
+      ctrl.$formatters.push(function(data) {
+        if (data === null) {
+          ctrl.$setValidity('jsonInput', false);
+          return "";
+        }
+        try {
+          var str = angular.toJson(data, true);
+          ctrl.$setValidity('jsonInput', true);
+          return str;
+        } catch (e) {
+          ctrl.$setValidity('jsonInput', false);
+          return "";
+        }
+      });
+    }
+  };
+});
 
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -432,9 +473,9 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/editbuttons.html',
       '<div class="component-btn-group">' +
-        '<button type="button" class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponents[component.type].confirmRemove)"><span class="glyphicon glyphicon-remove"></span></button>' +
+        '<button type="button" class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponent.confirmRemove)"><span class="glyphicon glyphicon-remove"></span></button>' +
         '<button type="button" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
-        '<button type="button" ng-if="formComponents[component.type].views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
+        '<button type="button" ng-if="formComponent.views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
       '</div>'
     );
 
@@ -463,7 +504,7 @@ app.run([
           '<form-builder-component></form-builder-component>' +
           // Fix for problematic components that are difficult to drag over
           // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
-          '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponents[component.type].noDndOverlay" class="dndOverlay"></div>' +
+          '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
       '</ul>'
     );
@@ -522,12 +563,12 @@ app.run([
         '<div class="row">' +
           '<div class="col-xs-6">' +
             '<tabset>' +
-              '<tab ng-repeat="view in formComponents[component.type].views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
+              '<tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
             '</tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
-            '<div class="pull-right" ng-if="formComponents[component.type].documentation" style="margin-top:10px; margin-right:20px;">' +
-              '<a ng-href="{{ formComponents[component.type].documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+            '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
+              '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
             '</div>' +
             '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
               '<div class="panel-heading">Preview</div>' +
@@ -1348,6 +1389,59 @@ app.run([
       '<div class="form-group">' +
         '<textarea ckeditor ng-model="component.html"><textarea>' +
       '</div>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('custom', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/custom/display.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#custom'
+    });
+  }
+]);
+
+app.controller('customComponent', [
+  '$scope',
+  'formioComponents',
+  function(
+    $scope,
+    formioComponents
+  ) {
+    // Because of the weirdnesses of prototype inheritence, components can't update themselves, only their properties.
+    $scope.$watch('component', function(newValue, oldValue) {
+      if (newValue) {
+        // Don't allow a type of a real type.
+        newValue.type = (formioComponents.components.hasOwnProperty(newValue.type) ? 'custom' : newValue.type);
+        // Ensure some key settings are set.
+        newValue.key = newValue.key || newValue.type;
+        newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
+        newValue.persistent = (newValue.hasOwnProperty('persistent') ? newValue.persistent : true);
+        $scope.updateComponent(newValue, oldValue);
+      }
+    });
+  }
+]);
+
+app.run([
+  '$templateCache',
+  function($templateCache) {
+    // Create the settings markup.
+    $templateCache.put('formio/components/custom/display.html',
+      '<ng-form>' +
+      '<div class="form-group">' +
+      '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
+      '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">Custom Element JSON</label>' +
+      '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="component" placeholder="{}" rows="10"></textarea>' +
+      '</div>' +
+      '</ng-form>'
     );
   }
 ]);

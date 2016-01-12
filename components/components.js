@@ -8,12 +8,12 @@ app.run([
         '<div class="row">' +
           '<div class="col-xs-6">' +
             '<tabset>' +
-              '<tab ng-repeat="view in formComponents[component.type].views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
+              '<tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
             '</tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
-            '<div class="pull-right" ng-if="formComponents[component.type].documentation" style="margin-top:10px; margin-right:20px;">' +
-              '<a ng-href="{{ formComponents[component.type].documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+            '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
+              '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
             '</div>' +
             '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
               '<div class="panel-heading">Preview</div>' +
