@@ -14,7 +14,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/well.html',
       '<div class="well">' +
-        '<form-builder-list></form-builder-list>' +
+        '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
       '</div>'
     );
   }
