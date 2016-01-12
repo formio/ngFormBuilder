@@ -19,7 +19,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/file/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#file'
@@ -41,6 +45,7 @@ app.run([
         '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -48,14 +53,6 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/file/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/file/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +

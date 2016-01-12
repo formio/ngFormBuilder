@@ -427,7 +427,7 @@ app.run([
     $templateCache.put('formio/formbuilder/component.html',
       '<div class="component-form-group component-type-{{ component.type }}">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-        '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
+        '<div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" style="position:inherit" ng-style="component.style"><form-builder-element></form-builder-element></div>' +
       '</div>'
     );
 
@@ -529,6 +529,24 @@ app.run([
           '</div>' +
         '</div>' +
       '</form>'
+    );
+
+    // Create the common API tab markup.
+    $templateCache.put('formio/components/common/api.html',
+      '<ng-form>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the common Layout tab markup.
+    $templateCache.put('formio/components/common/layout.html',
+      '<ng-form>' +
+        // Need to use array notation to have dash in name
+        '<form-builder-option property="style[\'margin-top\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
+      '</ng-form>'
     );
   }
 ]);
@@ -727,6 +745,32 @@ app.constant('COMMON_OPTIONS', {
     label: 'Custom CSS Class',
     placeholder: 'Custom CSS Class',
     tooltip: 'Custom CSS class to add to this component.'
+  },
+  'tabindex': {
+    label: 'Tab Index',
+    placeholder: 'Tab Index',
+    tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
+  },
+  // Need to use array notation to have dash in name
+  'style[\'margin-top\']': {
+    label: 'Margin Top',
+    placeholder: '0px',
+    tooltip: 'Sets the top margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-right\']': {
+    label: 'Margin Right',
+    placeholder: '0px',
+    tooltip: 'Sets the right margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-bottom\']': {
+    label: 'Margin Bottom',
+    placeholder: '0px',
+    tooltip: 'Sets the bottom margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-left\']': {
+    label: 'Margin Left',
+    placeholder: '0px',
+    tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
   }
 });
 
@@ -1040,7 +1084,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textfield'
@@ -1060,25 +1108,18 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/textfield/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/textfield/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="validate.minLength"></form-builder-option>' +
         '<form-builder-option property="validate.maxLength"></form-builder-option>' +
         '<form-builder-option property="validate.pattern"></form-builder-option>' +
@@ -1103,7 +1144,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/address/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#address'
@@ -1120,25 +1165,18 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/address/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/address/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1164,7 +1202,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#button'
@@ -1194,6 +1236,7 @@ app.run([
         '<form-builder-option property="leftIcon"></form-builder-option>' +
         '<form-builder-option property="rightIcon"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="block"></form-builder-option>' +
         '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
       '</ng-form>'
@@ -1216,7 +1259,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/checkbox/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#checkbox'
@@ -1232,78 +1279,16 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/checkbox/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/checkbox/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
-      '</ng-form>'
-    );
-  }
-]);
-
-app.config([
-  'formioComponentsProvider',
-  function(formioComponentsProvider) {
-    formioComponentsProvider.register('checkboxes', {
-      views: [
-        {
-          name: 'Display',
-          template: 'formio/components/checkboxes/display.html'
-        },
-        {
-          name: 'Validation',
-          template: 'formio/components/checkboxes/validate.html'
-        },
-        {
-          name: 'API',
-          template: 'formio/components/checkboxes/api.html'
-        }
-      ],
-      documentation: 'http://help.form.io/userguide/#checkboxes'
-    });
-  }
-]);
-app.run([
-  '$templateCache',
-  function($templateCache) {
-
-    // Create the settings markup.
-    $templateCache.put('formio/components/checkboxes/display.html',
-      '<ng-form>' +
-        '<form-builder-option property="label"></form-builder-option>' +
-        '<value-builder data="component.values" label="Checkboxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
-        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
-        '<form-builder-option property="protected"></form-builder-option>' +
-        '<form-builder-option property="persistent"></form-builder-option>' +
-        '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/checkboxes/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/checkboxes/validate.html',
-      '<ng-form>' +
-        '<form-builder-option property="validate.required"></form-builder-option>' +
-        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -1404,7 +1389,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/datetime/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#datetime'
@@ -1422,6 +1411,7 @@ app.run([
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1501,14 +1491,6 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/datetime/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/datetime/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -1537,6 +1519,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/fieldset/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
@@ -1587,7 +1573,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/file/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#file'
@@ -1609,6 +1599,7 @@ app.run([
         '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -1616,14 +1607,6 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/file/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/file/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -1644,8 +1627,12 @@ app.config([
           template: 'formio/components/hidden/display.html'
         },
         {
+          name: 'Validation',
+          template: 'formio/components/hidden/validation.html'
+        },
+        {
           name: 'API',
-          template: 'formio/components/hidden/api.html'
+          template: 'formio/components/common/api.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#hidden'
@@ -1663,17 +1650,15 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label" label="Name" placeholder="Enter the name for this hidden field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/hidden/api.html',
+    $templateCache.put('formio/components/hidden/validation.html',
       '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1740,7 +1725,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#number'
@@ -1760,6 +1749,7 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
@@ -1811,6 +1801,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/panel/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#panels',
@@ -1839,6 +1833,7 @@ app.run([
           '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1859,7 +1854,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#password',
@@ -1887,7 +1886,8 @@ app.run([
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1911,7 +1911,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/phoneNumber/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#phonenumber'
@@ -1931,18 +1935,11 @@ app.run([
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/phoneNumber/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -1950,6 +1947,7 @@ app.run([
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1970,7 +1968,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/radio/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#radio'
@@ -1986,21 +1988,14 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
-        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/radio/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     // Create the API markup.
     $templateCache.put('formio/components/radio/validate.html',
       '<ng-form>' +
@@ -2035,7 +2030,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/resource/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#resource'
@@ -2068,14 +2067,9 @@ app.run([
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-    // Create the API markup.
-    $templateCache.put('formio/components/resource/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -2104,7 +2098,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/select/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       onEdit: function($scope) {
@@ -2147,8 +2145,8 @@ app.run([
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -2156,16 +2154,71 @@ app.run([
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/select/api.html',
+    $templateCache.put('formio/components/select/validate.html',
+      '<ng-form>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+      '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('selectboxes', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/selectboxes/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/selectboxes/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/selectboxes/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#selectboxes'
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/selectboxes/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<value-builder data="component.values" label="Select Boxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    // Create the API markup.
+    $templateCache.put('formio/components/selectboxes/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/select/validate.html',
+    $templateCache.put('formio/components/selectboxes/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -2186,7 +2239,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/signature/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#signature'
@@ -2207,13 +2264,6 @@ app.run([
         '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/signature/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -2238,6 +2288,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/table/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ]
     });
@@ -2295,7 +2349,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textarea'

@@ -7,6 +7,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/fieldset/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',

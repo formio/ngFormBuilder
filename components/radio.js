@@ -13,7 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/radio/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#radio'
@@ -29,21 +33,14 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
-        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/radio/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     // Create the API markup.
     $templateCache.put('formio/components/radio/validate.html',
       '<ng-form>' +

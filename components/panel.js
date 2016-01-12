@@ -14,6 +14,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/panel/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#panels',
@@ -42,6 +46,7 @@ app.run([
           '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }

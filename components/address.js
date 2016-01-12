@@ -13,7 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/address/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#address'
@@ -30,25 +34,18 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/address/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/address/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
       '</ng-form>'
     );
   }

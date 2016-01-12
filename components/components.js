@@ -30,6 +30,24 @@ app.run([
         '</div>' +
       '</form>'
     );
+
+    // Create the common API tab markup.
+    $templateCache.put('formio/components/common/api.html',
+      '<ng-form>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the common Layout tab markup.
+    $templateCache.put('formio/components/common/layout.html',
+      '<ng-form>' +
+        // Need to use array notation to have dash in name
+        '<form-builder-option property="style[\'margin-top\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
+      '</ng-form>'
+    );
   }
 ]);
 
@@ -227,6 +245,32 @@ app.constant('COMMON_OPTIONS', {
     label: 'Custom CSS Class',
     placeholder: 'Custom CSS Class',
     tooltip: 'Custom CSS class to add to this component.'
+  },
+  'tabindex': {
+    label: 'Tab Index',
+    placeholder: 'Tab Index',
+    tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
+  },
+  // Need to use array notation to have dash in name
+  'style[\'margin-top\']': {
+    label: 'Margin Top',
+    placeholder: '0px',
+    tooltip: 'Sets the top margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-right\']': {
+    label: 'Margin Right',
+    placeholder: '0px',
+    tooltip: 'Sets the right margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-bottom\']': {
+    label: 'Margin Bottom',
+    placeholder: '0px',
+    tooltip: 'Sets the bottom margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-left\']': {
+    label: 'Margin Left',
+    placeholder: '0px',
+    tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
   }
 });
 
