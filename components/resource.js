@@ -22,7 +22,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/resource/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#resource'
@@ -54,14 +58,10 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-    // Create the API markup.
-    $templateCache.put('formio/components/resource/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 

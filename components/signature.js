@@ -13,7 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/signature/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#signature'
@@ -32,14 +36,8 @@ app.run([
         '<form-builder-option property="height" label="Height" placeholder="Height" title="The height of the signature area."></form-builder-option>' +
         '<form-builder-option property="backgroundColor" label="Background Color" placeholder="Background Color" title="The background color of the signature area."></form-builder-option>' +
         '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/signature/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 

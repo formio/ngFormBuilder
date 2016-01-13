@@ -10,6 +10,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/table/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ]
     });
@@ -31,7 +35,7 @@ app.run([
           '<tbody>' +
             '<tr ng-repeat="row in component.rows">' +
               '<td ng-repeat="component in row">' +
-                '<form-builder-list></form-builder-list>' +
+                '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
               '</td>' +
             '</tr>' +
           '</tbody>' +
@@ -42,6 +46,7 @@ app.run([
     $templateCache.put('formio/components/table/display.html',
       '<ng-form>' +
         '<form-builder-table></form-builder-table>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +

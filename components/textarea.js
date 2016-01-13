@@ -13,7 +13,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textarea'

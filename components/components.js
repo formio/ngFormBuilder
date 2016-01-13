@@ -8,12 +8,12 @@ app.run([
         '<div class="row">' +
           '<div class="col-xs-6">' +
             '<tabset>' +
-              '<tab ng-repeat="view in formComponents[component.type].views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
+              '<tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
             '</tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
-            '<div class="pull-right" ng-if="formComponents[component.type].documentation" style="margin-top:10px; margin-right:20px;">' +
-              '<a ng-href="{{ formComponents[component.type].documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+            '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
+              '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
             '</div>' +
             '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
               '<div class="panel-heading">Preview</div>' +
@@ -22,13 +22,31 @@ app.run([
               '</div>' +
             '</div>' +
             '<div class="form-group">' +
-              '<button type="submit" class="btn btn-success" ng-click="saveSettings()">Save</button>&nbsp;' +
-              '<button type="button" class="btn btn-default" ng-click="cancelSettings()" ng-if="!component.isNew">Cancel</button>&nbsp;' +
-              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component)">Remove</button>' +
+              '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
+              '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
+              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">Remove</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</form>'
+    );
+
+    // Create the common API tab markup.
+    $templateCache.put('formio/components/common/api.html',
+      '<ng-form>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the common Layout tab markup.
+    $templateCache.put('formio/components/common/layout.html',
+      '<ng-form>' +
+        // Need to use array notation to have dash in name
+        '<form-builder-option property="style[\'margin-top\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
+      '</ng-form>'
     );
   }
 ]);
@@ -90,12 +108,6 @@ app.constant('FORM_OPTIONS', {
     {
       name: 'lg',
       title: 'Large'
-    }
-  ],
-  storage: [
-    {
-      name: 's3',
-      title: 'S3'
     }
   ]
 });
@@ -172,6 +184,11 @@ app.constant('COMMON_OPTIONS', {
     placeholder: 'Enter icon classes',
     tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
+  url: {
+    label: 'Upload Url',
+    placeholder: 'Enter the url to post the files to.',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#server-side\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#server-side</a> for how to set up the server.'
+  },
   dir: {
     label: 'Directory',
     placeholder: '(optional) Enter a directory for the files',
@@ -223,6 +240,37 @@ app.constant('COMMON_OPTIONS', {
     label: 'Regular Expression Pattern',
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  },
+  'customClass': {
+    label: 'Custom CSS Class',
+    placeholder: 'Custom CSS Class',
+    tooltip: 'Custom CSS class to add to this component.'
+  },
+  'tabindex': {
+    label: 'Tab Index',
+    placeholder: 'Tab Index',
+    tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
+  },
+  // Need to use array notation to have dash in name
+  'style[\'margin-top\']': {
+    label: 'Margin Top',
+    placeholder: '0px',
+    tooltip: 'Sets the top margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-right\']': {
+    label: 'Margin Right',
+    placeholder: '0px',
+    tooltip: 'Sets the right margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-bottom\']': {
+    label: 'Margin Bottom',
+    placeholder: '0px',
+    tooltip: 'Sets the bottom margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-left\']': {
+    label: 'Margin Left',
+    placeholder: '0px',
+    tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
   }
 });
 
@@ -452,7 +500,11 @@ app.directive('valueBuilder', function(){
     scope: {
       data: '=',
       label: '@',
-      tooltipText: '@'
+      tooltipText: '@',
+      valueLabel: '@',
+      labelLabel: '@',
+      valueProperty: '@',
+      labelProperty: '@'
     },
     restrict: 'E',
     template: '<div class="form-group">' +
@@ -460,49 +512,59 @@ app.directive('valueBuilder', function(){
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-4">Value</th>' +
-                      '<th class="col-xs-6">Label</th>' +
+                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
+                      '<th class="col-xs-6">{{ labelLabel }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value" placeholder="Value"/></td>' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label" placeholder="Label"/></td>' +
-                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
+                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">Add Value</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,
-    link: function($scope) {
+    link: function($scope, el, attrs) {
+      $scope.valueProperty = $scope.valueProperty || 'value';
+      $scope.labelProperty = $scope.labelProperty || 'label';
+      $scope.valueLabel = $scope.valueLabel || 'Value';
+      $scope.labelLabel = $scope.labelLabel || 'Label';
+
       $scope.addValue = function() {
-        $scope.data.push({
-          value: '',
-          label: ''
-        });
+        var obj = {};
+        obj[$scope.valueProperty] = '';
+        obj[$scope.labelProperty] = '';
+        $scope.data.push(obj);
       };
+
       $scope.removeValue = function(index) {
         $scope.data.splice(index, 1);
       };
-      if($scope.data.length === 0) {
+
+      if ($scope.data.length === 0) {
         $scope.addValue();
       }
-      $scope.$watch('data', function(newValue, oldValue) {
-        // Ignore array addition/deletion changes
-        if(newValue.length !== oldValue.length) {
-          return;
-        }
 
-        _.map(newValue, function(entry, i) {
-          if(entry.label !== oldValue[i].label) {// label changed
-            if(entry.value === '' || entry.value === _.camelCase(oldValue[i].label)) {
-              entry.value = _.camelCase(entry.label);
-            }
+      if (!attrs.noAutocompleteValue) {
+        $scope.$watch('data', function(newValue, oldValue) {
+          // Ignore array addition/deletion changes
+          if(newValue.length !== oldValue.length) {
+            return;
           }
-        });
-      }, true);
+
+          _.map(newValue, function(entry, i) {
+            if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+              if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+                entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
+              }
+            }
+          });
+        }, true);
+      }
     }
   };
 });

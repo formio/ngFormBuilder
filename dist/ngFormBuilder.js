@@ -14,7 +14,10 @@ app.directive('formBuilder', ['debounce', function(debounce) {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
-      src: '='
+      src: '=',
+      type: '=',
+      onSave: '=',
+      onCancel: '='
     },
     controller: [
       '$scope',
@@ -22,12 +25,16 @@ app.directive('formBuilder', ['debounce', function(debounce) {
       'ngDialog',
       'Formio',
       'FormioUtils',
+      'FormioPlugins',
+      'dndDragIframeWorkaround',
       function(
         $scope,
         formioComponents,
         ngDialog,
         Formio,
-        FormioUtils
+        FormioUtils,
+        FormioPlugins,
+        dndDragIframeWorkaround
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
@@ -94,159 +101,26 @@ app.directive('formBuilder', ['debounce', function(debounce) {
           });
         });
 
-        // Find the appropriate list.
-        var findList = function(components, component) {
-          var i = components.length;
-          var j = 0;
-          var k = 0;
-          var list = null;
-          outerloop:
-          while (i--) {
-            if (components[i] === component) {
-              return components;
-            }
-            else if (components[i].hasOwnProperty('rows')) {
-              j = components[i].rows.length;
-              while (j--) {
-                k = components[i].rows.length;
-                while (k--) {
-                  list = findList(components[i].rows[j][k].components, component);
-                  if (list) {
-                    break outerloop;
-                  }
-                }
-              }
-            }
-            else if (components[i].hasOwnProperty('columns')) {
-              j = components[i].columns.length;
-              while (j--) {
-                list = findList(components[i].columns[j].components, component);
-                if (list) {
-                  break outerloop;
-                }
-              }
-            }
-            else if (components[i].hasOwnProperty('components')) {
-              list = findList(components[i].components, component);
-              if (list) {
-                break;
-              }
-            }
-          }
-          return list;
-        };
-
-        $scope.setDragging = function(dragging) {
-          $scope.dragging = dragging;
-        };
-
-        // Show confirm dialog before removing a component
-        $scope.confirmRemoveComponent = function(component) {
-          ngDialog.open({
-            template: 'formio/components/confirm-remove.html',
-            showClose: false
-          }).closePromise.then(function(e) {
-            var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-            if(!cancelled) {
-              $scope.removeComponent(component);
-            }
-          });
-        };
-
-        // Remove a component.
-        $scope.removeComponent = function(component) {
-          var list = findList($scope.form.components, component);
-          if (list) {
-            list.splice(list.indexOf(component), 1);
-          }
+        var update = function() {
           $scope.$emit('formUpdate', $scope.form);
-          ngDialog.closeAll(true);
         };
 
         // Add a new component.
-        $scope.addComponent = function(list, component) {
-          $scope.setDragging(false);
-
-          // Only edit immediately for components that are not resource comps.
-          if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
-            $scope.editComponent(component);
-          }
-          else {
-            component.isNew = false;
-          }
-
-          $scope.$broadcast('ckeditor.refresh');
-          $scope.$emit('formUpdate', $scope.form);
-          return component;
-        };
-
-        // Edit a specific component.
-        $scope.editComponent = function(component) {
-          // Set the active component.
-          $scope.component = component;
-          $scope.data = {};
-          if (component.key) {
-            $scope.data[component.key] = '';
-          }
-          $scope.previousSettings = angular.copy(component);
-          if (!$scope.formComponents[component.type].hasOwnProperty('views')) {
-            return;
-          }
-
-          $scope.$watch('component.multiple', function(value) {
-            $scope.data[$scope.component.key] = value ? [''] : '';
-          });
-
-          // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
-          $scope.$watch('component.label', function() {
-            if ($scope.component.label && !$scope.component.lockKey) {
-              if ($scope.data.hasOwnProperty($scope.component.key)) {
-                delete $scope.data[$scope.component.key];
-              }
-              $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
-              $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
-            }
-          });
-
-          // Allow the component to add custom logic to the edit page.
-          if (
-            formioComponents.components[component.type] &&
-            formioComponents.components[component.type].onEdit
-          ) {
-            formioComponents.components[component.type].onEdit($scope, component, Formio);
-          }
-
-          // Open the dialog.
-          ngDialog.open({
-            template: 'formio/components/settings.html',
-            scope: $scope,
-            className: 'ngdialog-theme-default component-settings'
-          }).closePromise.then(function (e) {
-            var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-            if (cancelled) {
-              if($scope.component.isNew) {
-                $scope.removeComponent($scope.component);
-              }
-              else {
-                // Revert to old settings, but use the same object reference
-                _.assign($scope.component, $scope.previousSettings);
-              }
-            }
-            else {
-              delete $scope.component.isNew;
-            }
-          });
-        };
-
-        $scope.cancelSettings = function() {
-          ngDialog.closeAll(false);
-        };
+        $scope.$on('formBuilder:add', update);
+        $scope.$on('formBuilder:update', update);
+        $scope.$on('formBuilder:remove', update);
+        $scope.$on('formBuilder:edit', update);
 
         $scope.saveSettings = function() {
           ngDialog.closeAll(true);
           $scope.$emit('formUpdate', $scope.form);
         };
+
+        $scope.capitalize = _.capitalize;
+
+        // Add to scope so it can be used in templates
+        $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
+
       }
     ],
     link: function(scope, element) {
@@ -342,35 +216,208 @@ app.directive('formBuilderElement', [
           $scope,
           formioComponents
         ) {
-          var component = formioComponents.components[$scope.component.type];
-          if (component.fbtemplate) {
-            $scope.template = component.fbtemplate;
+          $scope.formComponent = formioComponents.components[$scope.component.type] || formioComponents.components.custom;
+          if ($scope.formComponent.fbtemplate) {
+            $scope.template = $scope.formComponent.fbtemplate;
           }
         }
       ]
     });
   }
 ]);
-app.directive('formBuilderList', function() {
-  return {
-    scope: true,
-    restrict: 'E',
-    replace: true,
-    controller: [
-      '$scope',
-      function(
-        $scope
-      ) {
-        if (!$scope.component && $scope.form) {
-          $scope.component = $scope.form;
-          $scope.$watch('form', function(form) {
-            if (!form) { return; }
-            $scope.component = $scope.form;
-          });
+app.directive('formBuilderList', [
+  'formioComponents',
+  'ngDialog',
+  'dndDragIframeWorkaround',
+  function(
+    formioComponents,
+    ngDialog,
+    dndDragIframeWorkaround
+  ) {
+    return {
+      scope: {
+        component: '=',
+        formio: '=',
+        form: '=',
+        // # of items needed in the list before hiding the
+        // drag and drop prompt div
+        hideDndBoxCount: '='
+      },
+      restrict: 'E',
+      replace: true,
+      controller: [
+        '$scope',
+        function(
+          $scope
+        ) {
+          if(!_.isNumber($scope.hideDndBoxCount)) {
+            $scope.hideDndBoxCount = 1;
+          }
+
+          $scope.formComponents = formioComponents.components;
+
+          // Components depend on this existing
+          $scope.data = {};
+
+          $scope.emit = function(event) {
+            var args = [].slice.call(arguments);
+            args[0] = 'formBuilder:' + args[0];
+            $scope.$emit.apply($scope, args);
+          };
+
+          $scope.addComponent = function(component) {
+            // Only edit immediately for components that are not resource comps.
+            if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
+              $scope.editComponent(component);
+            }
+            else {
+              component.isNew = false;
+            }
+
+            // Refresh all CKEditor instances
+            $scope.$broadcast('ckeditor.refresh');
+
+            dndDragIframeWorkaround.isDragging = false;
+            $scope.emit('add');
+            return component;
+          };
+
+          // Allow prototyped scopes to update the original component.
+          $scope.updateComponent = function(newComponent, oldComponent) {
+            var list = $scope.component.components;
+            list.splice(list.indexOf(oldComponent), 1, newComponent);
+            $scope.$emit('update', newComponent);
+          };
+
+          var remove = function(component) {
+            var list = $scope.component.components;
+            list.splice(list.indexOf(component), 1);
+            $scope.emit('remove', component);
+          };
+
+          $scope.removeComponent = function(component, shouldConfirm) {
+            if (shouldConfirm) {
+              // Show confirm dialog before removing a component
+              ngDialog.open({
+                template: 'formio/components/confirm-remove.html',
+                showClose: false
+              }).closePromise.then(function(e) {
+                var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+                if(!cancelled) {
+                  remove(component);
+                }
+              });
+            }
+            else {
+              remove(component);
+            }
+          };
+
+          // Edit a specific component.
+          $scope.editComponent = function(component) {
+            $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
+            // No edit view available
+            if (!$scope.formComponent.hasOwnProperty('views')) {
+              return;
+            }
+
+            // Create child isolate scope for dialog
+            var childScope = $scope.$new(false);
+            childScope.component = component;
+            childScope.data = {};
+
+            if (component.key) {
+              childScope.data[component.key] = component.multiple ? [''] : '';
+            }
+
+            var previousSettings = angular.copy(component);
+
+            // Open the dialog.
+            ngDialog.open({
+              template: 'formio/components/settings.html',
+              scope: childScope,
+              className: 'ngdialog-theme-default component-settings',
+              controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
+                // Allow the component to add custom logic to the edit page.
+                if (
+                  $scope.formComponent && $scope.formComponent.onEdit
+                ) {
+                  $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
+                }
+
+                $scope.$watch('component.multiple', function(value) {
+                  $scope.data[$scope.component.key] = value ? [''] : '';
+                });
+
+                // Watch the settings label and auto set the key from it.
+                var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+                $scope.$watch('component.label', function() {
+                  if ($scope.component.label && !$scope.component.lockKey) {
+                    if ($scope.data.hasOwnProperty($scope.component.key)) {
+                      delete $scope.data[$scope.component.key];
+                    }
+                    $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
+                    $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+                  }
+                });
+              }]
+            }).closePromise.then(function (e) {
+              var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+              if (cancelled) {
+                if(component.isNew) {
+                  remove(component);
+                }
+                else {
+                  // Revert to old settings, but use the same object reference
+                  _.assign(component, previousSettings);
+                }
+              }
+              else {
+                delete component.isNew;
+                $scope.emit('edit', component);
+              }
+            });
+          };
+
+          // Add to scope so it can be used in templates
+          $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
         }
-      }
-    ],
-    templateUrl: 'formio/formbuilder/list.html'
+      ],
+      templateUrl: 'formio/formbuilder/list.html'
+    };
+  }
+]);
+
+app.directive('jsonInput', function () {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, elem, attr, ctrl) {
+      ctrl.$parsers.push(function(input) {
+        try {
+          var obj = JSON.parse(input);
+          ctrl.$setValidity('jsonInput', true);
+          return obj;
+        } catch (e) {
+          ctrl.$setValidity('jsonInput', false);
+          return undefined;
+        }
+      });
+      ctrl.$formatters.push(function(data) {
+        if (data === null) {
+          ctrl.$setValidity('jsonInput', false);
+          return "";
+        }
+        try {
+          var str = angular.toJson(data, true);
+          ctrl.$setValidity('jsonInput', true);
+          return str;
+        } catch (e) {
+          ctrl.$setValidity('jsonInput', false);
+          return "";
+        }
+      });
+    }
   };
 });
 
@@ -411,29 +458,39 @@ app.directive('formBuilderTooltip', function() {
   };
 });
 
+/**
+ * This workaround handles the fact that iframes capture mouse drag
+ * events. This interferes with dragging over components like the
+ * Content component. As a workaround, we keep track of the isDragging
+ * flag here to overlay iframes with a div while dragging.
+ */
+app.value('dndDragIframeWorkaround', {
+  isDragging: false
+});
+
 app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/editbuttons.html',
       '<div class="component-btn-group">' +
-        '<button type="button" class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="formComponents[component.type].confirmRemove ? confirmRemoveComponent(component) : removeComponent(component)"><span class="glyphicon glyphicon-remove"></span></button>' +
+        '<button type="button" class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponent.confirmRemove)"><span class="glyphicon glyphicon-remove"></span></button>' +
         '<button type="button" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
-        '<button type="button" ng-if="formComponents[component.type].views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
+        '<button type="button" ng-if="formComponent.views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
       '</div>'
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      '<div class="component-form-group component-type-{{ component.type }}">' +
+      '<div class="component-form-group component-type-{{ component.type }} form-builder-component">' +
         '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-        '<div class="form-group has-feedback" style="position:inherit"><form-builder-element></form-builder-element></div>' +
+        '<div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" id="form-group-{{ component.key }}" style="position:inherit" ng-style="component.style"><form-builder-element></form-builder-element></div>' +
       '</div>'
     );
 
     $templateCache.put('formio/formbuilder/list.html',
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
-        'dnd-drop="addComponent(component.components, item)">' +
-        '<li ng-if="component.components.length <= 1">' +
+        'dnd-drop="addComponent(item)">' +
+        '<li ng-if="component.components.length < hideDndBoxCount">' +
           '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
@@ -441,17 +498,13 @@ app.run([
         '<li ng-repeat="component in component.components" ' +
           'dnd-draggable="component" ' +
           'dnd-effect-allowed="move" ' +
-          'dnd-dragstart="setDragging(true)" ' +
-          'dnd-dragend="setDragging(false)" ' +
-          'dnd-moved="removeComponent(component)">' +
-          '<form-builder-component ng-if="component.input"></form-builder-component>' +
-          '<div ng-if="!component.input">' +
-            '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-            '<form-builder-element></form-builder-element>' +
-          '</div>' +
+          'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
+          'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
+          'dnd-moved="removeComponent(component, false)">' +
+          '<form-builder-component></form-builder-component>' +
           // Fix for problematic components that are difficult to drag over
           // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
-          '<div ng-if="dragging && !formComponents[component.type].noDndOverlay" class="dndOverlay"></div>' +
+          '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
       '</ul>'
     );
@@ -459,12 +512,16 @@ app.run([
     $templateCache.put('formio/formbuilder/builder.html',
       '<div class="row">' +
         '<div class="col-sm-3 formcomponents">' +
+          '<div class="form-group">' +
+            '<button type="button" class="btn btn-default" ng-if="onCancel" ng-click="onCancel()">Cancel</button> ' +
+            '<button type="button" class="btn btn-primary" ng-if="onSave" ng-click="onSave()">Save<span ng-if="type"> {{capitalize(type)}}</span></button>' +
+          '</div>' +
           '<accordion close-others="true">' +
             '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
               '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
-                'dnd-dragstart="setDragging(true)" ' +
-                'dnd-dragend="setDragging(false)" ' +
+                'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
+                'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
                 'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
                 '<span class="btn btn-primary btn-xs btn-block" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
                   '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
@@ -475,7 +532,7 @@ app.run([
         '</div>' +
         '<div class="col-sm-9 formbuilder">' +
               '<div class="dropzone">' +
-                '<form-builder-list></form-builder-list>' +
+                '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2"></form-builder-list>' +
               '</div>' +
         '</div>' +
       '</div>'
@@ -506,12 +563,12 @@ app.run([
         '<div class="row">' +
           '<div class="col-xs-6">' +
             '<tabset>' +
-              '<tab ng-repeat="view in formComponents[component.type].views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
+              '<tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
             '</tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
-            '<div class="pull-right" ng-if="formComponents[component.type].documentation" style="margin-top:10px; margin-right:20px;">' +
-              '<a ng-href="{{ formComponents[component.type].documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+            '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
+              '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
             '</div>' +
             '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
               '<div class="panel-heading">Preview</div>' +
@@ -520,13 +577,31 @@ app.run([
               '</div>' +
             '</div>' +
             '<div class="form-group">' +
-              '<button type="submit" class="btn btn-success" ng-click="saveSettings()">Save</button>&nbsp;' +
-              '<button type="button" class="btn btn-default" ng-click="cancelSettings()" ng-if="!component.isNew">Cancel</button>&nbsp;' +
-              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component)">Remove</button>' +
+              '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
+              '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
+              '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">Remove</button>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</form>'
+    );
+
+    // Create the common API tab markup.
+    $templateCache.put('formio/components/common/api.html',
+      '<ng-form>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+      '</ng-form>'
+    );
+
+    // Create the common Layout tab markup.
+    $templateCache.put('formio/components/common/layout.html',
+      '<ng-form>' +
+        // Need to use array notation to have dash in name
+        '<form-builder-option property="style[\'margin-top\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
+        '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
+      '</ng-form>'
     );
   }
 ]);
@@ -588,12 +663,6 @@ app.constant('FORM_OPTIONS', {
     {
       name: 'lg',
       title: 'Large'
-    }
-  ],
-  storage: [
-    {
-      name: 's3',
-      title: 'S3'
     }
   ]
 });
@@ -670,6 +739,11 @@ app.constant('COMMON_OPTIONS', {
     placeholder: 'Enter icon classes',
     tooltip: 'This is the full icon class string to show the icon. Example: \'glyphicon glyphicon-search\' or \'fa fa-plus\''
   },
+  url: {
+    label: 'Upload Url',
+    placeholder: 'Enter the url to post the files to.',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#server-side\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#server-side</a> for how to set up the server.'
+  },
   dir: {
     label: 'Directory',
     placeholder: '(optional) Enter a directory for the files',
@@ -721,6 +795,37 @@ app.constant('COMMON_OPTIONS', {
     label: 'Regular Expression Pattern',
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  },
+  'customClass': {
+    label: 'Custom CSS Class',
+    placeholder: 'Custom CSS Class',
+    tooltip: 'Custom CSS class to add to this component.'
+  },
+  'tabindex': {
+    label: 'Tab Index',
+    placeholder: 'Tab Index',
+    tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
+  },
+  // Need to use array notation to have dash in name
+  'style[\'margin-top\']': {
+    label: 'Margin Top',
+    placeholder: '0px',
+    tooltip: 'Sets the top margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-right\']': {
+    label: 'Margin Right',
+    placeholder: '0px',
+    tooltip: 'Sets the right margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-bottom\']': {
+    label: 'Margin Bottom',
+    placeholder: '0px',
+    tooltip: 'Sets the bottom margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'style[\'margin-left\']': {
+    label: 'Margin Left',
+    placeholder: '0px',
+    tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
   }
 });
 
@@ -950,7 +1055,11 @@ app.directive('valueBuilder', function(){
     scope: {
       data: '=',
       label: '@',
-      tooltipText: '@'
+      tooltipText: '@',
+      valueLabel: '@',
+      labelLabel: '@',
+      valueProperty: '@',
+      labelProperty: '@'
     },
     restrict: 'E',
     template: '<div class="form-group">' +
@@ -958,49 +1067,59 @@ app.directive('valueBuilder', function(){
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-4">Value</th>' +
-                      '<th class="col-xs-6">Label</th>' +
+                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
+                      '<th class="col-xs-6">{{ labelLabel }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value" placeholder="Value"/></td>' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.label" placeholder="Label"/></td>' +
-                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
+                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">Add Value</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,
-    link: function($scope) {
+    link: function($scope, el, attrs) {
+      $scope.valueProperty = $scope.valueProperty || 'value';
+      $scope.labelProperty = $scope.labelProperty || 'label';
+      $scope.valueLabel = $scope.valueLabel || 'Value';
+      $scope.labelLabel = $scope.labelLabel || 'Label';
+
       $scope.addValue = function() {
-        $scope.data.push({
-          value: '',
-          label: ''
-        });
+        var obj = {};
+        obj[$scope.valueProperty] = '';
+        obj[$scope.labelProperty] = '';
+        $scope.data.push(obj);
       };
+
       $scope.removeValue = function(index) {
         $scope.data.splice(index, 1);
       };
-      if($scope.data.length === 0) {
+
+      if ($scope.data.length === 0) {
         $scope.addValue();
       }
-      $scope.$watch('data', function(newValue, oldValue) {
-        // Ignore array addition/deletion changes
-        if(newValue.length !== oldValue.length) {
-          return;
-        }
 
-        _.map(newValue, function(entry, i) {
-          if(entry.label !== oldValue[i].label) {// label changed
-            if(entry.value === '' || entry.value === _.camelCase(oldValue[i].label)) {
-              entry.value = _.camelCase(entry.label);
-            }
+      if (!attrs.noAutocompleteValue) {
+        $scope.$watch('data', function(newValue, oldValue) {
+          // Ignore array addition/deletion changes
+          if(newValue.length !== oldValue.length) {
+            return;
           }
-        });
-      }, true);
+
+          _.map(newValue, function(entry, i) {
+            if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+              if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+                entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
+              }
+            }
+          });
+        }, true);
+      }
     }
   };
 });
@@ -1020,7 +1139,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textfield'
@@ -1039,25 +1162,19 @@ app.run([
         '<form-builder-option property="inputMask"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/textfield/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/textfield/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="validate.minLength"></form-builder-option>' +
         '<form-builder-option property="validate.maxLength"></form-builder-option>' +
         '<form-builder-option property="validate.pattern"></form-builder-option>' +
@@ -1082,7 +1199,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/address/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#address'
@@ -1098,25 +1219,19 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/address/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/address/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1142,7 +1257,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#button'
@@ -1171,6 +1290,8 @@ app.run([
         '</div>' +
         '<form-builder-option property="leftIcon"></form-builder-option>' +
         '<form-builder-option property="rightIcon"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="block"></form-builder-option>' +
         '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
       '</ng-form>'
@@ -1193,7 +1314,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/checkbox/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#checkbox'
@@ -1208,20 +1333,14 @@ app.run([
     $templateCache.put('formio/components/checkbox/display.html',
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/checkbox/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/checkbox/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -1247,7 +1366,7 @@ app.run([
     $templateCache.put('formio/formbuilder/columns.html',
       '<div class="row">' +
         '<div class="col-xs-6 component-form-group" ng-repeat="component in component.columns">' +
-          '<form-builder-list></form-builder-list>' +
+          '<form-builder-list class="formio-column" component="component" form="form" formio="formio"></form-builder-list>' +
         '</div>' +
       '</div>'
     );
@@ -1259,7 +1378,12 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
-      documentation: 'http://help.form.io/userguide/#content-component'
+      documentation: 'http://help.form.io/userguide/#content-component',
+      controller: function(settings, $scope) {
+        $scope.$watch('component.html', function() {
+          $scope.$emit('formBuilder:update');
+        });
+      }
     });
   }
 ]);
@@ -1270,6 +1394,59 @@ app.run([
       '<div class="form-group">' +
         '<textarea ckeditor ng-model="component.html"><textarea>' +
       '</div>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('custom', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/custom/display.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#custom'
+    });
+  }
+]);
+
+app.controller('customComponent', [
+  '$scope',
+  'formioComponents',
+  function(
+    $scope,
+    formioComponents
+  ) {
+    // Because of the weirdnesses of prototype inheritence, components can't update themselves, only their properties.
+    $scope.$watch('component', function(newValue, oldValue) {
+      if (newValue) {
+        // Don't allow a type of a real type.
+        newValue.type = (formioComponents.components.hasOwnProperty(newValue.type) ? 'custom' : newValue.type);
+        // Ensure some key settings are set.
+        newValue.key = newValue.key || newValue.type;
+        newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
+        newValue.persistent = (newValue.hasOwnProperty('persistent') ? newValue.persistent : true);
+        $scope.updateComponent(newValue, oldValue);
+      }
+    });
+  }
+]);
+
+app.run([
+  '$templateCache',
+  function($templateCache) {
+    // Create the settings markup.
+    $templateCache.put('formio/components/custom/display.html',
+      '<ng-form>' +
+      '<div class="form-group">' +
+      '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
+      '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">Custom Element JSON</label>' +
+      '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="component" placeholder="{}" rows="10"></textarea>' +
+      '</div>' +
+      '</ng-form>'
     );
   }
 ]);
@@ -1325,7 +1502,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/datetime/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#datetime'
@@ -1342,6 +1523,8 @@ app.run([
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1421,14 +1604,6 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/datetime/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/datetime/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -1457,6 +1632,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/fieldset/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#fieldset',
@@ -1472,7 +1651,7 @@ app.run([
     $templateCache.put('formio/formbuilder/fieldset.html',
       '<fieldset>' +
         '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
-        '<form-builder-list></form-builder-list>' +
+        '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
       '</fieldset>'
     );
 
@@ -1480,6 +1659,7 @@ app.run([
     $templateCache.put('formio/components/fieldset/display.html',
       '<ng-form>' +
         '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1487,14 +1667,13 @@ app.run([
 
 app.config([
   'formioComponentsProvider',
-  'FORM_OPTIONS',
   function(
-    formioComponentsProvider,
-    FORM_OPTIONS
+    formioComponentsProvider
   ) {
     formioComponentsProvider.register('file', {
-      onEdit: function($scope) {
-        $scope.storage = FORM_OPTIONS.storage;
+      onEdit: function($scope, component, Formio, FormioPlugins) {
+        // Pull out title and name from the list of storage plugins.
+        $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
       },
       views: [
         {
@@ -1507,7 +1686,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/file/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#file'
@@ -1526,7 +1709,10 @@ app.run([
           '<label for="storage" form-builder-tooltip="Which storage to save the files in.">Storage</label>' +
           '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title for store in storage" ng-model="component.storage"></select>' +
         '</div>' +
+        '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
         '<form-builder-option property="dir"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -1534,14 +1720,6 @@ app.run([
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/file/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
     $templateCache.put('formio/components/file/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
@@ -1562,8 +1740,12 @@ app.config([
           template: 'formio/components/hidden/display.html'
         },
         {
+          name: 'Validation',
+          template: 'formio/components/hidden/validation.html'
+        },
+        {
           name: 'API',
-          template: 'formio/components/hidden/api.html'
+          template: 'formio/components/common/api.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#hidden'
@@ -1580,17 +1762,62 @@ app.run([
     $templateCache.put('formio/components/hidden/display.html',
       '<ng-form>' +
         '<form-builder-option property="label" label="Name" placeholder="Enter the name for this hidden field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
 
-    // Create the API markup.
-    $templateCache.put('formio/components/hidden/api.html',
+    $templateCache.put('formio/components/hidden/validation.html',
       '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+      '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('htmlelement', {
+      fbtemplate: 'formio/formbuilder/htmlelement.html',
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/htmlelement/display.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#html-element-component'
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+    $templateCache.put('formio/formbuilder/htmlelement.html',
+      '<formio-html-element component="component"></div>'
+    );
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/htmlelement/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
+        '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
+        '<value-builder ' +
+          'data="component.attrs" ' +
+          'label="Attributes" ' +
+          'tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." ' +
+          'value-property="attr" ' +
+          'label-property="value" ' +
+          'value-label="Attribute" ' +
+          'label-label="Value" ' +
+          'no-autocomplete-value="true" ' +
+          '></value-builder>' +
+        '<div class="form-group">' +
+          '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
+          '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +
+        '</div>' +
       '</ng-form>'
     );
   }
@@ -1611,7 +1838,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#number'
@@ -1630,6 +1861,8 @@ app.run([
         '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
@@ -1660,7 +1893,7 @@ app.run([
   '$templateCache',
   function($templateCache) {
     $templateCache.put('formio/formbuilder/page.html',
-      '<form-builder-list></form-builder-list>'
+      '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>'
     );
   }
 ]);
@@ -1681,6 +1914,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/panel/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#panels',
@@ -1696,7 +1933,7 @@ app.run([
       '<div class="panel panel-{{ component.theme }}">' +
         '<div ng-if="component.title" class="panel-heading"><h3 class="panel-title">{{ component.title }}</h3></div>' +
         '<div class="panel-body">' +
-          '<form-builder-list></form-builder-list>' +
+          '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
         '</div>' +
       '</div>'
     );
@@ -1709,6 +1946,7 @@ app.run([
           '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
           '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1729,7 +1967,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#password',
@@ -1757,7 +1999,8 @@ app.run([
         '<form-builder-option property="placeholder"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -1781,7 +2024,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/phoneNumber/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#phonenumber'
@@ -1800,18 +2047,12 @@ app.run([
         '<form-builder-option property="inputMask"></form-builder-option>' +
         '<form-builder-option property="prefix"></form-builder-option>' +
         '<form-builder-option property="suffix"></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/phoneNumber/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -1819,6 +2060,7 @@ app.run([
     $templateCache.put('formio/components/phoneNumber/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
       '</ng-form>'
     );
   }
@@ -1839,7 +2081,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/radio/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#radio'
@@ -1855,19 +2101,14 @@ app.run([
       '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
       '</ng-form>'
     );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/radio/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
-      '</ng-form>'
-    );
-
     // Create the API markup.
     $templateCache.put('formio/components/radio/validate.html',
       '<ng-form>' +
@@ -1902,7 +2143,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/resource/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#resource'
@@ -1934,14 +2179,10 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-    // Create the API markup.
-    $templateCache.put('formio/components/resource/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -1970,7 +2211,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/select/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       onEdit: function($scope) {
@@ -2012,8 +2257,9 @@ app.run([
           '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
           '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
         '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
         '<form-builder-option property="multiple"></form-builder-option>' +
-        '<form-builder-option property="unique"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -2021,16 +2267,71 @@ app.run([
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/select/api.html',
+    $templateCache.put('formio/components/select/validate.html',
+      '<ng-form>' +
+        '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="unique"></form-builder-option>' +
+      '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('selectboxes', {
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/selectboxes/display.html'
+        },
+        {
+          name: 'Validation',
+          template: 'formio/components/selectboxes/validate.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/selectboxes/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#selectboxes'
+    });
+  }
+]);
+app.run([
+  '$templateCache',
+  function($templateCache) {
+
+    // Create the settings markup.
+    $templateCache.put('formio/components/selectboxes/display.html',
+      '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<value-builder data="component.values" label="Select Boxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="tabindex"></form-builder-option>' +
+        '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    // Create the API markup.
+    $templateCache.put('formio/components/selectboxes/api.html',
       '<ng-form>' +
         '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
     // Create the API markup.
-    $templateCache.put('formio/components/select/validate.html',
+    $templateCache.put('formio/components/selectboxes/validate.html',
       '<ng-form>' +
         '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
       '</ng-form>'
     );
   }
@@ -2051,7 +2352,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/signature/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#signature'
@@ -2070,14 +2375,8 @@ app.run([
         '<form-builder-option property="height" label="Height" placeholder="Height" title="The height of the signature area."></form-builder-option>' +
         '<form-builder-option property="backgroundColor" label="Background Color" placeholder="Background Color" title="The background color of the signature area."></form-builder-option>' +
         '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-      '</ng-form>'
-    );
-
-    // Create the API markup.
-    $templateCache.put('formio/components/signature/api.html',
-      '<ng-form>' +
-        '<form-builder-option-key></form-builder-option-key>' +
       '</ng-form>'
     );
 
@@ -2102,6 +2401,10 @@ app.config([
         {
           name: 'Display',
           template: 'formio/components/table/display.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ]
     });
@@ -2123,7 +2426,7 @@ app.run([
           '<tbody>' +
             '<tr ng-repeat="row in component.rows">' +
               '<td ng-repeat="component in row">' +
-                '<form-builder-list></form-builder-list>' +
+                '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
               '</td>' +
             '</tr>' +
           '</tbody>' +
@@ -2134,6 +2437,7 @@ app.run([
     $templateCache.put('formio/components/table/display.html',
       '<ng-form>' +
         '<form-builder-table></form-builder-table>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +
@@ -2158,7 +2462,11 @@ app.config([
         },
         {
           name: 'API',
-          template: 'formio/components/textfield/api.html'
+          template: 'formio/components/common/api.html'
+        },
+        {
+          name: 'Layout',
+          template: 'formio/components/common/layout.html'
         }
       ],
       documentation: 'http://help.form.io/userguide/#textarea'
@@ -2182,7 +2490,7 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/well.html',
       '<div class="well">' +
-        '<form-builder-list></form-builder-list>' +
+        '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
       '</div>'
     );
   }
