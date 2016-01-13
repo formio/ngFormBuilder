@@ -3,7 +3,12 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
-      documentation: 'http://help.form.io/userguide/#content-component'
+      documentation: 'http://help.form.io/userguide/#content-component',
+      controller: function(settings, $scope) {
+        $scope.$watch('component.html', function() {
+          $scope.$emit('formBuilder:update');
+        });
+      }
     });
   }
 ]);
