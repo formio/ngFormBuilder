@@ -562,9 +562,9 @@ app.run([
       '<form id="component-settings" novalidate>' +
         '<div class="row">' +
           '<div class="col-xs-6">' +
-            '<tabset>' +
-              '<tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></tab>' +
-            '</tabset>' +
+            '<uib-tabset>' +
+              '<uib-tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></uib-tab>' +
+            '</uib-tabset>' +
           '</div>' +
           '<div class="col-xs-6">' +
             '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
