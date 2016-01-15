@@ -514,8 +514,8 @@ app.run([
             '<button type="button" class="btn btn-default" ng-if="onCancel" ng-click="onCancel()">Cancel</button> ' +
             '<button type="button" class="btn btn-primary" ng-if="onSave" ng-click="onSave()">Save<span ng-if="type"> {{capitalize(type)}}</span></button>' +
           '</div>' +
-          '<accordion close-others="true">' +
-            '<accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
+          '<uib-accordion close-others="true">' +
+            '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
               '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
@@ -525,8 +525,8 @@ app.run([
                   '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
                 '</span>' +
               '</div>' +
-            '</accordion-group>' +
-          '</accordion>' +
+            '</uib-accordion-group>' +
+          '</uib-accordion>' +
         '</div>' +
         '<div class="col-sm-9 formbuilder">' +
               '<div class="dropzone">' +
