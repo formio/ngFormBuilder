@@ -233,15 +233,153 @@ app.directive('formBuilderElement', [
   }
 ]);
 
-app.directive('formBuilderList', [
+app.controller('formBuilderDnd', [
+  '$scope',
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
   function(
+    $scope,
     formioComponents,
     ngDialog,
     dndDragIframeWorkaround
   ) {
+    if(!_.isNumber($scope.hideDndBoxCount)) {
+      $scope.hideDndBoxCount = 1;
+    }
+
+    $scope.formComponents = formioComponents.components;
+
+    // Components depend on this existing
+    $scope.data = {};
+
+    $scope.emit = function(event) {
+      var args = [].slice.call(arguments);
+      args[0] = 'formBuilder:' + args[0];
+      $scope.$emit.apply($scope, args);
+    };
+
+    $scope.addComponent = function(component) {
+      // Only edit immediately for components that are not resource comps.
+      if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
+        $scope.editComponent(component);
+      }
+      else {
+        component.isNew = false;
+      }
+
+      // Refresh all CKEditor instances
+      $scope.$broadcast('ckeditor.refresh');
+
+      dndDragIframeWorkaround.isDragging = false;
+      $scope.emit('add');
+      return component;
+    };
+
+    // Allow prototyped scopes to update the original component.
+    $scope.updateComponent = function(newComponent, oldComponent) {
+      var list = $scope.component.components;
+      list.splice(list.indexOf(oldComponent), 1, newComponent);
+      $scope.$emit('update', newComponent);
+    };
+
+    var remove = function(component) {
+      var list = $scope.component.components;
+      list.splice(list.indexOf(component), 1);
+      $scope.emit('remove', component);
+    };
+
+    $scope.removeComponent = function(component, shouldConfirm) {
+      if (shouldConfirm) {
+        // Show confirm dialog before removing a component
+        ngDialog.open({
+          template: 'formio/components/confirm-remove.html',
+          showClose: false
+        }).closePromise.then(function(e) {
+          var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+          if(!cancelled) {
+            remove(component);
+          }
+        });
+      }
+      else {
+        remove(component);
+      }
+    };
+
+    // Edit a specific component.
+    $scope.editComponent = function(component) {
+      $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
+      // No edit view available
+      if (!$scope.formComponent.hasOwnProperty('views')) {
+        return;
+      }
+
+      // Create child isolate scope for dialog
+      var childScope = $scope.$new(false);
+      childScope.component = component;
+      childScope.data = {};
+
+      if (component.key) {
+        childScope.data[component.key] = component.multiple ? [''] : '';
+      }
+
+      var previousSettings = angular.copy(component);
+
+      // Open the dialog.
+      ngDialog.open({
+        template: 'formio/components/settings.html',
+        scope: childScope,
+        className: 'ngdialog-theme-default component-settings',
+        controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
+          // Allow the component to add custom logic to the edit page.
+          if (
+            $scope.formComponent && $scope.formComponent.onEdit
+          ) {
+            $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
+          }
+
+          $scope.$watch('component.multiple', function(value) {
+            $scope.data[$scope.component.key] = value ? [''] : '';
+          });
+
+          // Watch the settings label and auto set the key from it.
+          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+          $scope.$watch('component.label', function() {
+            if ($scope.component.label && !$scope.component.lockKey) {
+              if ($scope.data.hasOwnProperty($scope.component.key)) {
+                delete $scope.data[$scope.component.key];
+              }
+              $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
+              $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+            }
+          });
+        }]
+      }).closePromise.then(function (e) {
+        var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+        if (cancelled) {
+          if(component.isNew) {
+            remove(component);
+          }
+          else {
+            // Revert to old settings, but use the same object reference
+            _.assign(component, previousSettings);
+          }
+        }
+        else {
+          delete component.isNew;
+          $scope.emit('edit', component);
+        }
+      });
+    };
+
+    // Add to scope so it can be used in templates
+    $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
+  }
+]);
+
+app.directive('formBuilderList', [
+  function() {
     return {
       scope: {
         component: '=',
@@ -253,158 +391,14 @@ app.directive('formBuilderList', [
       },
       restrict: 'E',
       replace: true,
-      controller: [
-        '$scope',
-        function(
-          $scope
-        ) {
-          if(!_.isNumber($scope.hideDndBoxCount)) {
-            $scope.hideDndBoxCount = 1;
-          }
-
-          $scope.formComponents = formioComponents.components;
-
-          // Components depend on this existing
-          $scope.data = {};
-
-          $scope.emit = function(event) {
-            var args = [].slice.call(arguments);
-            args[0] = 'formBuilder:' + args[0];
-            $scope.$emit.apply($scope, args);
-          };
-
-          $scope.addComponent = function(component) {
-            // Only edit immediately for components that are not resource comps.
-            if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
-              $scope.editComponent(component);
-            }
-            else {
-              component.isNew = false;
-            }
-
-            // Refresh all CKEditor instances
-            $scope.$broadcast('ckeditor.refresh');
-
-            dndDragIframeWorkaround.isDragging = false;
-            $scope.emit('add');
-            return component;
-          };
-
-          // Allow prototyped scopes to update the original component.
-          $scope.updateComponent = function(newComponent, oldComponent) {
-            var list = $scope.component.components;
-            list.splice(list.indexOf(oldComponent), 1, newComponent);
-            $scope.$emit('update', newComponent);
-          };
-
-          var remove = function(component) {
-            var list = $scope.component.components;
-            list.splice(list.indexOf(component), 1);
-            $scope.emit('remove', component);
-          };
-
-          $scope.removeComponent = function(component, shouldConfirm) {
-            if (shouldConfirm) {
-              // Show confirm dialog before removing a component
-              ngDialog.open({
-                template: 'formio/components/confirm-remove.html',
-                showClose: false
-              }).closePromise.then(function(e) {
-                var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-                if(!cancelled) {
-                  remove(component);
-                }
-              });
-            }
-            else {
-              remove(component);
-            }
-          };
-
-          // Edit a specific component.
-          $scope.editComponent = function(component) {
-            $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
-            // No edit view available
-            if (!$scope.formComponent.hasOwnProperty('views')) {
-              return;
-            }
-
-            // Create child isolate scope for dialog
-            var childScope = $scope.$new(false);
-            childScope.component = component;
-            childScope.data = {};
-
-            if (component.key) {
-              childScope.data[component.key] = component.multiple ? [''] : '';
-            }
-
-            var previousSettings = angular.copy(component);
-
-            // Open the dialog.
-            ngDialog.open({
-              template: 'formio/components/settings.html',
-              scope: childScope,
-              className: 'ngdialog-theme-default component-settings',
-              controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
-                // Allow the component to add custom logic to the edit page.
-                if (
-                  $scope.formComponent && $scope.formComponent.onEdit
-                ) {
-                  $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
-                }
-
-                $scope.$watch('component.multiple', function(value) {
-                  $scope.data[$scope.component.key] = value ? [''] : '';
-                });
-
-                // Watch the settings label and auto set the key from it.
-                var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
-                $scope.$watch('component.label', function() {
-                  if ($scope.component.label && !$scope.component.lockKey) {
-                    if ($scope.data.hasOwnProperty($scope.component.key)) {
-                      delete $scope.data[$scope.component.key];
-                    }
-                    $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
-                    $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
-                  }
-                });
-              }]
-            }).closePromise.then(function (e) {
-              var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-              if (cancelled) {
-                if(component.isNew) {
-                  remove(component);
-                }
-                else {
-                  // Revert to old settings, but use the same object reference
-                  _.assign(component, previousSettings);
-                }
-              }
-              else {
-                delete component.isNew;
-                $scope.emit('edit', component);
-              }
-            });
-          };
-
-          // Add to scope so it can be used in templates
-          $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
-        }
-      ],
+      controller: 'formBuilderDnd',
       templateUrl: 'formio/formbuilder/list.html'
     };
   }
 ]);
 
 app.directive('formBuilderRow', [
-  'formioComponents',
-  'ngDialog',
-  'dndDragIframeWorkaround',
-  function(
-    formioComponents,
-    ngDialog,
-    dndDragIframeWorkaround
-  ) {
+  function() {
     return {
       scope: {
         component: '=',
@@ -413,141 +407,7 @@ app.directive('formBuilderRow', [
       },
       restrict: 'E',
       replace: true,
-      controller: [
-        '$scope',
-        function(
-          $scope
-        ) {
-
-          $scope.formComponents = formioComponents.components;
-
-          // Components depend on this existing
-          $scope.data = {};
-
-          $scope.emit = function(event) {
-            var args = [].slice.call(arguments);
-            args[0] = 'formBuilder:' + args[0];
-            $scope.$emit.apply($scope, args);
-          };
-
-          $scope.addComponent = function(component) {
-            // Only edit immediately for components that are not resource comps.
-            if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
-              $scope.editComponent(component);
-            }
-            else {
-              component.isNew = false;
-            }
-
-            // Refresh all CKEditor instances
-            $scope.$broadcast('ckeditor.refresh');
-
-            dndDragIframeWorkaround.isDragging = false;
-            $scope.emit('add');
-            return component;
-          };
-
-          // Allow prototyped scopes to update the original component.
-          $scope.updateComponent = function(newComponent, oldComponent) {
-            var list = $scope.component.components;
-            list.splice(list.indexOf(oldComponent), 1, newComponent);
-            $scope.$emit('update', newComponent);
-          };
-
-          var remove = function(component) {
-            var list = $scope.component.components;
-            list.splice(list.indexOf(component), 1);
-            $scope.emit('remove', component);
-          };
-
-          $scope.removeComponent = function(component, shouldConfirm) {
-            if (shouldConfirm) {
-              // Show confirm dialog before removing a component
-              ngDialog.open({
-                template: 'formio/components/confirm-remove.html',
-                showClose: false
-              }).closePromise.then(function(e) {
-                var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-                if(!cancelled) {
-                  remove(component);
-                }
-              });
-            }
-            else {
-              remove(component);
-            }
-          };
-
-          // Edit a specific component.
-          $scope.editComponent = function(component) {
-            $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
-            // No edit view available
-            if (!$scope.formComponent.hasOwnProperty('views')) {
-              return;
-            }
-
-            // Create child isolate scope for dialog
-            var childScope = $scope.$new(false);
-            childScope.component = component;
-            childScope.data = {};
-
-            if (component.key) {
-              childScope.data[component.key] = component.multiple ? [''] : '';
-            }
-
-            var previousSettings = angular.copy(component);
-
-            // Open the dialog.
-            ngDialog.open({
-              template: 'formio/components/settings.html',
-              scope: childScope,
-              className: 'ngdialog-theme-default component-settings',
-              controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
-                // Allow the component to add custom logic to the edit page.
-                if (
-                  $scope.formComponent && $scope.formComponent.onEdit
-                ) {
-                  $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
-                }
-
-                $scope.$watch('component.multiple', function(value) {
-                  $scope.data[$scope.component.key] = value ? [''] : '';
-                });
-
-                // Watch the settings label and auto set the key from it.
-                var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
-                $scope.$watch('component.label', function() {
-                  if ($scope.component.label && !$scope.component.lockKey) {
-                    if ($scope.data.hasOwnProperty($scope.component.key)) {
-                      delete $scope.data[$scope.component.key];
-                    }
-                    $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
-                    $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
-                  }
-                });
-              }]
-            }).closePromise.then(function (e) {
-              var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-              if (cancelled) {
-                if(component.isNew) {
-                  remove(component);
-                }
-                else {
-                  // Revert to old settings, but use the same object reference
-                  _.assign(component, previousSettings);
-                }
-              }
-              else {
-                delete component.isNew;
-                $scope.emit('edit', component);
-              }
-            });
-          };
-
-          // Add to scope so it can be used in templates
-          $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
-        }
-      ],
+      controller: 'formBuilderDnd',
       templateUrl: 'formio/formbuilder/row.html'
     };
   }
@@ -675,13 +535,14 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/row.html',
-      '<div class="formbuilder-datagrid">' +
+      '<div class="formbuilder-row">' +
+      '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
       '<ul class="component-row formbuilder-group" ' +
         'dnd-list="component.components"' +
         'dnd-drop="addComponent(item)"' +
         'dnd-horizontal-list="true">' +
         '<li ng-repeat="component in component.components" ' +
-          'class="formbuilder-row pull-left" ' +
+          'class="formbuilder-group-row pull-left" ' +
           'dnd-draggable="component" ' +
           'dnd-effect-allowed="move" ' +
           'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
@@ -692,13 +553,17 @@ app.run([
             // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
           '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
-        '<li class="formbuilder-row pull-left">' +
-          '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
+        '<li class="formbuilder-group-row form-builder-drop pull-left" ng-if="component.components.length < hideDndBoxCount">' +
+          '<div class="alert alert-info" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
         '</li>' +
       '</ul>' +
       '<div style="clear:both;"></div>' +
+      '<div>' +
+      '<a ng-click="addRow()" class="btn btn-primary">' +
+      '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" }}</a>' +
+      '</div>' +
       '</div>'
     );
 
@@ -998,6 +863,11 @@ app.constant('COMMON_OPTIONS', {
     label: 'Tab Index',
     placeholder: 'Tab Index',
     tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
+  },
+  'addAnother': {
+    label: 'Add Another Text',
+    placeholder: 'Add Another',
+    tooltip: 'Set the text of the Add Another button.'
   },
   // Need to use array notation to have dash in name
   'style[\'margin-top\']': {
@@ -1672,6 +1542,7 @@ app.run([
     $templateCache.put('formio/components/datagrid/display.html',
       '<ng-form>' +
       '<form-builder-option property="label"></form-builder-option>' +
+      '<form-builder-option property="addAnother"></form-builder-option>' +
       '<form-builder-option property="customClass"></form-builder-option>' +
       '<form-builder-option property="protected"></form-builder-option>' +
       '<form-builder-option property="persistent"></form-builder-option>' +

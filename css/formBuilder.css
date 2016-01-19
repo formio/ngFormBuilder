@@ -1,5 +1,9 @@
+.component-form-group {
+  position: relative;
+}
+
 .component-btn-group {
-  position:absolute;
+  position: absolute;
   right: 0;
   z-index: 1000;
 }
@@ -230,23 +234,27 @@ ul.component-list li {
   border: dotted 2px #e8e8e8;
 }
 
+.form-builder-component .form-field-type-datagrid .formbuilder-row {
+  padding: 5px;
+  border: dotted 2px #e8e8e8;
+}
+
 .form-builder-component .form-field-type-columns .formio-column {
   padding: 10px;
   border: dotted 2px #e8e8e8; 
 }
 
 /****************************** Data Grid Styling *************************/
-
 ul.formbuilder-group {
   padding: 0;
 }
 
-ul.formbuilder-group li.formbuilder-row {
+ul.formbuilder-group li.formbuilder-group-row {
   margin: 0 10px;
   min-width: 100px;
 }
 
-ul.formbuilder-group li.formbuilder-row:first-child {
+ul.formbuilder-group li.formbuilder-group-row:first-child {
   margin-left: 0;
 }
 
@@ -255,3 +263,7 @@ ul.formbuilder-group li.dndPlaceholder {
   float: left;
 }
 
+ul.formbuilder-group li.form-builder-drop div {
+  text-align:center;
+  margin-bottom: 5px;
+}
