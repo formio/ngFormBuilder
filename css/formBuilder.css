@@ -234,3 +234,24 @@ ul.component-list li {
   padding: 10px;
   border: dotted 2px #e8e8e8; 
 }
+
+/****************************** Data Grid Styling *************************/
+
+ul.formbuilder-group {
+  padding: 0;
+}
+
+ul.formbuilder-group li.formbuilder-row {
+  margin: 0 10px;
+  min-width: 100px;
+}
+
+ul.formbuilder-group li.formbuilder-row:first-child {
+  margin-left: 0;
+}
+
+ul.formbuilder-group li.dndPlaceholder {
+  width: 150px;
+  float: left;
+}
+

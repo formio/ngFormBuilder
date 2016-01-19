@@ -225,6 +225,7 @@ app.directive('formBuilderElement', [
     });
   }
 ]);
+
 app.directive('formBuilderList', [
   'formioComponents',
   'ngDialog',
@@ -388,6 +389,163 @@ app.directive('formBuilderList', [
   }
 ]);
 
+app.directive('formBuilderRow', [
+  'formioComponents',
+  'ngDialog',
+  'dndDragIframeWorkaround',
+  function(
+    formioComponents,
+    ngDialog,
+    dndDragIframeWorkaround
+  ) {
+    return {
+      scope: {
+        component: '=',
+        formio: '=',
+        form: '='
+      },
+      restrict: 'E',
+      replace: true,
+      controller: [
+        '$scope',
+        function(
+          $scope
+        ) {
+
+          $scope.formComponents = formioComponents.components;
+
+          // Components depend on this existing
+          $scope.data = {};
+
+          $scope.emit = function(event) {
+            var args = [].slice.call(arguments);
+            args[0] = 'formBuilder:' + args[0];
+            $scope.$emit.apply($scope, args);
+          };
+
+          $scope.addComponent = function(component) {
+            // Only edit immediately for components that are not resource comps.
+            if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
+              $scope.editComponent(component);
+            }
+            else {
+              component.isNew = false;
+            }
+
+            // Refresh all CKEditor instances
+            $scope.$broadcast('ckeditor.refresh');
+
+            dndDragIframeWorkaround.isDragging = false;
+            $scope.emit('add');
+            return component;
+          };
+
+          // Allow prototyped scopes to update the original component.
+          $scope.updateComponent = function(newComponent, oldComponent) {
+            var list = $scope.component.components;
+            list.splice(list.indexOf(oldComponent), 1, newComponent);
+            $scope.$emit('update', newComponent);
+          };
+
+          var remove = function(component) {
+            var list = $scope.component.components;
+            list.splice(list.indexOf(component), 1);
+            $scope.emit('remove', component);
+          };
+
+          $scope.removeComponent = function(component, shouldConfirm) {
+            if (shouldConfirm) {
+              // Show confirm dialog before removing a component
+              ngDialog.open({
+                template: 'formio/components/confirm-remove.html',
+                showClose: false
+              }).closePromise.then(function(e) {
+                var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+                if(!cancelled) {
+                  remove(component);
+                }
+              });
+            }
+            else {
+              remove(component);
+            }
+          };
+
+          // Edit a specific component.
+          $scope.editComponent = function(component) {
+            $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
+            // No edit view available
+            if (!$scope.formComponent.hasOwnProperty('views')) {
+              return;
+            }
+
+            // Create child isolate scope for dialog
+            var childScope = $scope.$new(false);
+            childScope.component = component;
+            childScope.data = {};
+
+            if (component.key) {
+              childScope.data[component.key] = component.multiple ? [''] : '';
+            }
+
+            var previousSettings = angular.copy(component);
+
+            // Open the dialog.
+            ngDialog.open({
+              template: 'formio/components/settings.html',
+              scope: childScope,
+              className: 'ngdialog-theme-default component-settings',
+              controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
+                // Allow the component to add custom logic to the edit page.
+                if (
+                  $scope.formComponent && $scope.formComponent.onEdit
+                ) {
+                  $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
+                }
+
+                $scope.$watch('component.multiple', function(value) {
+                  $scope.data[$scope.component.key] = value ? [''] : '';
+                });
+
+                // Watch the settings label and auto set the key from it.
+                var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+                $scope.$watch('component.label', function() {
+                  if ($scope.component.label && !$scope.component.lockKey) {
+                    if ($scope.data.hasOwnProperty($scope.component.key)) {
+                      delete $scope.data[$scope.component.key];
+                    }
+                    $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
+                    $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+                  }
+                });
+              }]
+            }).closePromise.then(function (e) {
+              var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+              if (cancelled) {
+                if(component.isNew) {
+                  remove(component);
+                }
+                else {
+                  // Revert to old settings, but use the same object reference
+                  _.assign(component, previousSettings);
+                }
+              }
+              else {
+                delete component.isNew;
+                $scope.emit('edit', component);
+              }
+            });
+          };
+
+          // Add to scope so it can be used in templates
+          $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
+        }
+      ],
+      templateUrl: 'formio/formbuilder/row.html'
+    };
+  }
+]);
+
 app.directive('jsonInput', function () {
   return {
     restrict: 'A',
@@ -507,6 +665,34 @@ app.run([
           '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
       '</ul>'
+    );
+
+    $templateCache.put('formio/formbuilder/row.html',
+      '<div class="formbuilder-datagrid">' +
+      '<ul class="component-row formbuilder-group" ' +
+        'dnd-list="component.components"' +
+        'dnd-drop="addComponent(item)"' +
+        'dnd-horizontal-list="true">' +
+        '<li ng-repeat="component in component.components" ' +
+          'class="formbuilder-row pull-left" ' +
+          'dnd-draggable="component" ' +
+          'dnd-effect-allowed="move" ' +
+          'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
+          'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
+          'dnd-moved="removeComponent(component, false)">' +
+          '<form-builder-component></form-builder-component>' +
+            // Fix for problematic components that are difficult to drag over
+            // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
+          '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
+        '</li>' +
+        '<li class="formbuilder-row pull-left">' +
+          '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
+            'Drag and Drop a form component' +
+          '</div>' +
+        '</li>' +
+      '</ul>' +
+      '<div style="clear:both;"></div>' +
+      '</div>'
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
@@ -1447,6 +1633,47 @@ app.run([
       '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="component" placeholder="{}" rows="10"></textarea>' +
       '</div>' +
       '</ng-form>'
+    );
+  }
+]);
+
+app.config([
+  'formioComponentsProvider',
+  function(formioComponentsProvider) {
+    formioComponentsProvider.register('datagrid', {
+      fbtemplate: 'formio/formbuilder/datagrid.html',
+      views: [
+        {
+          name: 'Display',
+          template: 'formio/components/datagrid/display.html'
+        },
+        {
+          name: 'API',
+          template: 'formio/components/common/api.html'
+        }
+      ],
+      documentation: 'http://help.form.io/userguide/#datagrid',
+      noDndOverlay: true,
+      confirmRemove: true
+    });
+  }
+]);
+
+app.run([
+  '$templateCache',
+  function($templateCache) {
+    $templateCache.put('formio/components/datagrid/display.html',
+      '<ng-form>' +
+      '<form-builder-option property="label"></form-builder-option>' +
+      '<form-builder-option property="customClass"></form-builder-option>' +
+      '<form-builder-option property="protected"></form-builder-option>' +
+      '<form-builder-option property="persistent"></form-builder-option>' +
+      '<form-builder-option property="tableView"></form-builder-option>' +
+      '</ng-form>'
+    );
+
+    $templateCache.put('formio/formbuilder/datagrid.html',
+      '<form-builder-row class="formio-row" component="component" form="form" formio="formio"></form-builder-row>'
     );
   }
 ]);
