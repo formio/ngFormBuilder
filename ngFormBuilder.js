@@ -123,6 +123,13 @@ app.directive('formBuilder', ['debounce', function(debounce) {
     ],
     link: function(scope, element) {
       var scrollSidebar = debounce(function() {
+        // Disable all buttons within the form.
+        angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
+        scope.$watch('form', function() {
+          angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
+        }, true);
+
+        // Make the left column follow the form.
         var formComponents = angular.element('.formcomponents');
         var formBuilder = angular.element('.formbuilder');
         if (formComponents.length !== 0 && formBuilder.length !== 0) {
@@ -629,9 +636,9 @@ app.run([
   function($templateCache) {
     $templateCache.put('formio/formbuilder/editbuttons.html',
       '<div class="component-btn-group">' +
-        '<button type="button" class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponent.confirmRemove)"><span class="glyphicon glyphicon-remove"></span></button>' +
-        '<button type="button" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" disabled="disabled"><span class="glyphicon glyphicon glyphicon-move"></span></button>' +
-        '<button type="button" ng-if="formComponent.views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></button>' +
+        '<div class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponent.confirmRemove)"><span class="glyphicon glyphicon-remove"></span></div>' +
+        '<div class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000"><span class="glyphicon glyphicon glyphicon-move"></span></div>' +
+        '<div ng-if="formComponent.views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></div>' +
       '</div>'
     );
 
