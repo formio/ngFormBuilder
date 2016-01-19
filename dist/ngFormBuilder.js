@@ -1545,6 +1545,11 @@ app.run([
       '<form-builder-option property="label"></form-builder-option>' +
       '<form-builder-option property="addAnother"></form-builder-option>' +
       '<form-builder-option property="customClass"></form-builder-option>' +
+      '<form-builder-option property="customClass"></form-builder-option>' +
+      '<form-builder-option property="striped"></form-builder-option>' +
+      '<form-builder-option property="bordered"></form-builder-option>' +
+      '<form-builder-option property="hover"></form-builder-option>' +
+      '<form-builder-option property="condensed"></form-builder-option>' +
       '<form-builder-option property="protected"></form-builder-option>' +
       '<form-builder-option property="persistent"></form-builder-option>' +
       '<form-builder-option property="tableView"></form-builder-option>' +
