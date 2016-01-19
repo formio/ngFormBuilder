@@ -251,6 +251,11 @@ app.constant('COMMON_OPTIONS', {
     placeholder: 'Tab Index',
     tooltip: 'Sets the tabindex attribute of this component to override the tab order of the form. See the <a href=\'https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex\'>MDN documentation</a> on tabindex for more information.'
   },
+  'addAnother': {
+    label: 'Add Another Text',
+    placeholder: 'Add Another',
+    tooltip: 'Set the text of the Add Another button.'
+  },
   // Need to use array notation to have dash in name
   'style[\'margin-top\']': {
     label: 'Margin Top',
