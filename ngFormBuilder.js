@@ -560,7 +560,8 @@ app.run([
       '<div style="clear:both;"></div>' +
       '<div>' +
       '<a ng-click="addRow()" class="btn btn-primary">' +
-      '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" }}</a>' +
+        '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" }}' +
+      '</a>' +
       '</div>' +
       '</div>'
     );
