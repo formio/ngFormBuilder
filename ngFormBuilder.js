@@ -551,7 +551,7 @@ app.run([
             // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
           '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
-        '<li class="formbuilder-group-row form-builder-drop pull-left" ng-if="component.components.length < hideDndBoxCount">' +
+        '<li class="formbuilder-group-row form-builder-drop" ng-if="component.components.length < hideDndBoxCount">' +
           '<div class="alert alert-info" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
