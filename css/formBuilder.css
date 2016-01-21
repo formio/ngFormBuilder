@@ -260,6 +260,7 @@ ul.formbuilder-group li.formbuilder-group-row:first-child {
 
 ul.formbuilder-group li.dndPlaceholder {
   width: 150px;
+  height: 51px;
   float: left;
 }
 
