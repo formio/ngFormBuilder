@@ -571,7 +571,7 @@ app.run([
         '<div class="col-sm-3 formcomponents">' +
           '<div class="form-group">' +
             '<button type="button" class="btn btn-default" ng-if="onCancel" ng-click="onCancel()">Cancel</button> ' +
-            '<button type="button" class="btn btn-primary" ng-if="onSave" ng-click="onSave()">Save<span ng-if="type"> {{capitalize(type)}}</span></button>' +
+            '<button type="button" class="btn btn-primary" ng-if="onSave" ng-click="onSave()">{{onCancel ? "Save" : "Create"}}<span ng-if="type"> {{capitalize(type)}}</span></button>' +
           '</div>' +
           '<uib-accordion close-others="true">' +
             '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
