@@ -35,9 +35,13 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/container.html',
-      '<h4 style="margin:0;">{{ component.label}}</h4>' +
-      '<div style="border:2px dashed #e8e8e8;" class="well">' +
+      '<div class="panel panel-default">' +
+      '<div class="panel-heading">' +
+      '<h3 class="panel-title">{{ component.label}}</h3>' +
+      '</div>' +
+      '<div class="panel-body">' +
       '<form-builder-list class="formio-row" component="component" form="form" formio="formio"></form-builder-list>' +
+      '</div>' +
       '</div>'
     );
   }
