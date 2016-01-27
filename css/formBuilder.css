@@ -272,3 +272,14 @@ ul.formbuilder-group li.form-builder-drop div {
   text-align:center;
   margin-bottom: 5px;
 }
+
+/***************************** Form Component Buttons *********************/
+
+.formcomponents .formcomponentcontainer {
+  margin: 0 2px 2px 0;
+}
+
+.formcomponents .formcomponent {
+  text-align: left;
+  padding-left: 15px;
+}

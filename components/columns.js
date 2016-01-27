@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('columns', {
       fbtemplate: 'formio/formbuilder/columns.html',
+      icon: 'fa fa-columns',
       documentation: 'http://help.form.io/userguide/#columns',
       noDndOverlay: true,
       confirmRemove: true

@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('phoneNumber', {
+      icon: 'fa fa-phone-square',
       views: [
         {
           name: 'Display',

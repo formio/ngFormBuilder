@@ -8,6 +8,7 @@ app.config([
         // Pull out title and name from the list of storage plugins.
         $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
       },
+      icon: 'fa fa-file',
       views: [
         {
           name: 'Display',

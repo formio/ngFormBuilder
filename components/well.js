@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('well', {
       fbtemplate: 'formio/formbuilder/well.html',
+      icon: 'fa fa-square-o',
       documentation: 'http://help.form.io/userguide/#well',
       noDndOverlay: true,
       confirmRemove: true

@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('hidden', {
       fbtemplate: 'formio/formbuilder/hidden.html',
+      icon: 'fa fa-user-secret',
       views: [
         {
           name: 'Display',

@@ -570,26 +570,23 @@ app.run([
 
     $templateCache.put('formio/formbuilder/builder.html',
       '<div class="row">' +
-        '<div class="col-sm-3 formcomponents">' +
-          '<div class="form-group">' +
-            '<button type="button" class="btn btn-default" ng-if="onCancel" ng-click="onCancel()">Cancel</button> ' +
-            '<button type="button" class="btn btn-primary" ng-if="onSave" ng-click="onSave()">{{onCancel ? "Save" : "Create"}}<span ng-if="type"> {{capitalize(type)}}</span></button>' +
-          '</div>' +
+        '<div class="col-sm-2 formcomponents">' +
           '<uib-accordion close-others="true">' +
             '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
               '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
                 'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
-                'dnd-effect-allowed="copy" style="width:48%; margin: 0 2px 2px 0; float:left;">' +
-                '<span class="btn btn-primary btn-xs btn-block" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
+                'dnd-effect-allowed="copy" ' +
+                'class="formcomponentcontainer">' +
+                '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
                   '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
                 '</span>' +
               '</div>' +
             '</uib-accordion-group>' +
           '</uib-accordion>' +
         '</div>' +
-        '<div class="col-sm-9 formbuilder">' +
+        '<div class="col-sm-10 formbuilder">' +
               '<div class="dropzone">' +
                 '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2"></form-builder-list>' +
               '</div>' +
@@ -1252,6 +1249,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('address', {
+      icon: 'fa fa-home',
       views: [
         {
           name: 'Display',
@@ -1314,6 +1312,7 @@ app.config([
         $scope.sizes = FORM_OPTIONS.sizes;
         $scope.themes = FORM_OPTIONS.themes;
       },
+      icon: 'fa fa-stop',
       views: [
         {
           name: 'Display',
@@ -1367,6 +1366,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('checkbox', {
+      icon: 'fa fa-check-square',
       views: [
         {
           name: 'Display',
@@ -1418,6 +1418,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('columns', {
       fbtemplate: 'formio/formbuilder/columns.html',
+      icon: 'fa fa-columns',
       documentation: 'http://help.form.io/userguide/#columns',
       noDndOverlay: true,
       confirmRemove: true
@@ -1442,6 +1443,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
+      icon: 'fa fa-html5',
       documentation: 'http://help.form.io/userguide/#content-component',
       controller: function(settings, $scope) {
         $scope.$watch('component.html', function() {
@@ -1466,6 +1468,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('custom', {
+      icon: 'fa fa-cubes',
       views: [
         {
           name: 'Display',
@@ -1520,6 +1523,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('datagrid', {
       fbtemplate: 'formio/formbuilder/datagrid.html',
+      icon: 'fa fa-list',
       views: [
         {
           name: 'Display',
@@ -1594,6 +1598,7 @@ app.config([
           }
         ];
       },
+      icon: 'fa fa-clock-o',
       views: [
         {
           name: 'Display',
@@ -1728,6 +1733,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('email', {
+      icon: 'fa fa-at',
       views: formioComponentsProvider.$get().components.textfield.views,
       documentation: 'http://help.form.io/userguide/#email'
     });
@@ -1739,6 +1745,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('fieldset', {
       fbtemplate: 'formio/formbuilder/fieldset.html',
+      icon: 'fa fa-th-large',
       views: [
         {
           name: 'Display',
@@ -1786,6 +1793,7 @@ app.config([
         // Pull out title and name from the list of storage plugins.
         $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
       },
+      icon: 'fa fa-file',
       views: [
         {
           name: 'Display',
@@ -1845,6 +1853,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('hidden', {
       fbtemplate: 'formio/formbuilder/hidden.html',
+      icon: 'fa fa-user-secret',
       views: [
         {
           name: 'Display',
@@ -1893,6 +1902,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('htmlelement', {
       fbtemplate: 'formio/formbuilder/htmlelement.html',
+      icon: 'fa fa-code',
       views: [
         {
           name: 'Display',
@@ -1938,6 +1948,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('number', {
+      icon: 'fa fa-hashtag',
       views: [
         {
           name: 'Display',
@@ -2018,6 +2029,7 @@ app.config([
   ) {
     formioComponentsProvider.register('panel', {
       fbtemplate: 'formio/formbuilder/panel.html',
+      icon: 'fa fa-list-alt',
       onEdit: function($scope) {
         $scope.themes = FORM_OPTIONS.themes;
       },
@@ -2067,6 +2079,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('password', {
+      icon: 'fa fa-asterisk',
       views: [
         {
           name: 'Display',
@@ -2124,6 +2137,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('phoneNumber', {
+      icon: 'fa fa-phone-square',
       views: [
         {
           name: 'Display',
@@ -2181,6 +2195,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('radio', {
+      icon: 'fa fa-list-ul',
       views: [
         {
           name: 'Display',
@@ -2243,6 +2258,7 @@ app.config([
           }
         });
       },
+      icon: 'fa fa-files-o',
       views: [
         {
           name: 'Display',
@@ -2391,6 +2407,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('selectboxes', {
+      icon: 'fa fa-plus-square',
       views: [
         {
           name: 'Display',
@@ -2452,6 +2469,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('signature', {
+      icon: 'fa fa-pencil',
       views: [
         {
           name: 'Display',
@@ -2508,6 +2526,7 @@ app.config([
       documentation: 'http://help.form.io/userguide/#table',
       noDndOverlay: true,
       confirmRemove: true,
+      icon: 'fa fa-table',
       views: [
         {
           name: 'Display',
@@ -2562,6 +2581,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('textarea', {
+      icon: 'fa fa-font',
       views: [
         {
           name: 'Display',
@@ -2590,6 +2610,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('well', {
       fbtemplate: 'formio/formbuilder/well.html',
+      icon: 'fa fa-square-o',
       documentation: 'http://help.form.io/userguide/#well',
       noDndOverlay: true,
       confirmRemove: true

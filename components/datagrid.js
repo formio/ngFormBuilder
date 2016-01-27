@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('datagrid', {
       fbtemplate: 'formio/formbuilder/datagrid.html',
+      icon: 'fa fa-list',
       views: [
         {
           name: 'Display',

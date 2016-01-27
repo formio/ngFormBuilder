@@ -11,6 +11,7 @@ app.config([
           }
         });
       },
+      icon: 'fa fa-files-o',
       views: [
         {
           name: 'Display',

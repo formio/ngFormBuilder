@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('textarea', {
+      icon: 'fa fa-font',
       views: [
         {
           name: 'Display',

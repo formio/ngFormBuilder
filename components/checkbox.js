@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('checkbox', {
+      icon: 'fa fa-check-square',
       views: [
         {
           name: 'Display',

@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('number', {
+      icon: 'fa fa-hashtag',
       views: [
         {
           name: 'Display',

@@ -30,6 +30,7 @@ app.config([
           }
         ];
       },
+      icon: 'fa fa-clock-o',
       views: [
         {
           name: 'Display',

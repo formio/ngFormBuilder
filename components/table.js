@@ -6,6 +6,7 @@ app.config([
       documentation: 'http://help.form.io/userguide/#table',
       noDndOverlay: true,
       confirmRemove: true,
+      icon: 'fa fa-table',
       views: [
         {
           name: 'Display',

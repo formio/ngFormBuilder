@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('password', {
+      icon: 'fa fa-asterisk',
       views: [
         {
           name: 'Display',
