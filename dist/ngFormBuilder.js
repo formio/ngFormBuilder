@@ -244,9 +244,7 @@ app.controller('formBuilderDnd', [
     ngDialog,
     dndDragIframeWorkaround
   ) {
-    if(!_.isNumber($scope.hideDndBoxCount)) {
-      $scope.hideDndBoxCount = 1;
-    }
+    $scope.hideCount = (_.isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
 
     $scope.formComponents = formioComponents.components;
 
@@ -403,7 +401,10 @@ app.directive('formBuilderRow', [
       scope: {
         component: '=',
         formio: '=',
-        form: '='
+        form: '=',
+        // # of items needed in the list before hiding the
+        // drag and drop prompt div
+        hideDndBoxCount: '='
       },
       restrict: 'E',
       replace: true,
@@ -514,8 +515,8 @@ app.run([
     $templateCache.put('formio/formbuilder/list.html',
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
-        'dnd-drop="addComponent(item)">' +
-        '<li ng-if="component.components.length < hideDndBoxCount">' +
+        'dnd-drop="addComponent(item)">{{component.components.length}} < {{ hideCount }}' +
+        '<li ng-if="component.components.length < hideCount">' +
           '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
@@ -553,7 +554,7 @@ app.run([
             // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
           '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
         '</li>' +
-        '<li class="formbuilder-group-row form-builder-drop" ng-if="component.components.length < hideDndBoxCount">' +
+        '<li class="formbuilder-group-row form-builder-drop" ng-if="component.components.length < hideCount">' +
           '<div class="alert alert-info" role="alert">' +
             'Drag and Drop a form component' +
           '</div>' +
