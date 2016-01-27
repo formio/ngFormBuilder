@@ -515,7 +515,7 @@ app.run([
     $templateCache.put('formio/formbuilder/list.html',
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
-        'dnd-drop="addComponent(item)">{{component.components.length}} < {{ hideCount }}' +
+        'dnd-drop="addComponent(item)">' +
         '<li ng-if="component.components.length < hideCount">' +
           '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
