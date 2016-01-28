@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('signature', {
+      icon: 'fa fa-pencil',
       views: [
         {
           name: 'Display',

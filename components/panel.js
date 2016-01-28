@@ -7,6 +7,7 @@ app.config([
   ) {
     formioComponentsProvider.register('panel', {
       fbtemplate: 'formio/formbuilder/panel.html',
+      icon: 'fa fa-list-alt',
       onEdit: function($scope) {
         $scope.themes = FORM_OPTIONS.themes;
       },

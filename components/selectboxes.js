@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('selectboxes', {
+      icon: 'fa fa-plus-square',
       views: [
         {
           name: 'Display',

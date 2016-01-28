@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('content', {
       fbtemplate: 'formio/formbuilder/content.html',
+      icon: 'fa fa-html5',
       documentation: 'http://help.form.io/userguide/#content-component',
       controller: function(settings, $scope) {
         $scope.$watch('component.html', function() {

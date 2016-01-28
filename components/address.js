@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('address', {
+      icon: 'fa fa-home',
       views: [
         {
           name: 'Display',

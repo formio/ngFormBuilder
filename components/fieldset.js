@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('fieldset', {
       fbtemplate: 'formio/formbuilder/fieldset.html',
+      icon: 'fa fa-th-large',
       views: [
         {
           name: 'Display',

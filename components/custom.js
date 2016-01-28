@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('custom', {
+      icon: 'fa fa-cubes',
       views: [
         {
           name: 'Display',

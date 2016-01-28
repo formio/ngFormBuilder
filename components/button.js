@@ -11,6 +11,7 @@ app.config([
         $scope.sizes = FORM_OPTIONS.sizes;
         $scope.themes = FORM_OPTIONS.themes;
       },
+      icon: 'fa fa-stop',
       views: [
         {
           name: 'Display',

@@ -2,6 +2,7 @@ app.config([
   'formioComponentsProvider',
   function(formioComponentsProvider) {
     formioComponentsProvider.register('radio', {
+      icon: 'fa fa-list-ul',
       views: [
         {
           name: 'Display',

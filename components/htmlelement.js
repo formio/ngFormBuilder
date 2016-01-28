@@ -3,6 +3,7 @@ app.config([
   function(formioComponentsProvider) {
     formioComponentsProvider.register('htmlelement', {
       fbtemplate: 'formio/formbuilder/htmlelement.html',
+      icon: 'fa fa-code',
       views: [
         {
           name: 'Display',
