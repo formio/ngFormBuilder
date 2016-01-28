@@ -29,7 +29,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
@@ -49,4 +48,4 @@ module.exports = function(app) {
       );
     }
   ]);
-}
+};

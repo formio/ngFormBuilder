@@ -162,4 +162,4 @@ module.exports = {
       placeholder: '0px',
       tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
     }
-  }
+  };

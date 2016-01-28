@@ -2,7 +2,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the component markup.
       $templateCache.put('formio/components/settings.html',
         '<form id="component-settings" novalidate>' +
@@ -51,4 +50,4 @@ module.exports = function(app) {
       );
     }
   ]);
-}
+};

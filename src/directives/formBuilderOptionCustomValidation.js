@@ -1,7 +1,7 @@
 /**
 * A directive for editing a component's custom validation.
 */
-module.exports = function(){
+module.exports = function() {
   return {
     restrict: 'E',
     replace: true,

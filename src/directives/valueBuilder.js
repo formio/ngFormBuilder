@@ -1,7 +1,7 @@
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
 */
-module.exports = function(){
+module.exports = function() {
   return {
     scope: {
       data: '=',
@@ -58,13 +58,13 @@ module.exports = function(){
       if (!attrs.noAutocompleteValue) {
         $scope.$watch('data', function(newValue, oldValue) {
           // Ignore array addition/deletion changes
-          if(newValue.length !== oldValue.length) {
+          if (newValue.length !== oldValue.length) {
             return;
           }
 
           _.map(newValue, function(entry, i) {
-            if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
-              if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+            if (entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+              if (entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
                 entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
               }
             }

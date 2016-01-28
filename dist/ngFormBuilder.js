@@ -31,7 +31,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/address/display.html',
         '<ng-form>' +
@@ -53,7 +52,7 @@ module.exports = function(app) {
         '</ng-form>'
       );
     }
-  ]);  
+  ]);
 };
 
 },{}],2:[function(require,module,exports){
@@ -94,7 +93,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/button/display.html',
         '<ng-form>' +
@@ -120,8 +118,8 @@ module.exports = function(app) {
         '</ng-form>'
       );
     }
-  ]);  
-}
+  ]);
+};
 
 },{}],3:[function(require,module,exports){
 "use strict";
@@ -156,7 +154,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
@@ -176,7 +173,7 @@ module.exports = function(app) {
       );
     }
   ]);
-}
+};
 
 },{}],4:[function(require,module,exports){
 "use strict";
@@ -205,7 +202,7 @@ module.exports = function(app) {
       );
     }
   ]);
-}
+};
 
 },{}],5:[function(require,module,exports){
 "use strict";
@@ -213,7 +210,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the component markup.
       $templateCache.put('formio/components/settings.html',
         '<form id="component-settings" novalidate>' +
@@ -262,7 +258,7 @@ module.exports = function(app) {
       );
     }
   ]);
-}
+};
 
 },{}],6:[function(require,module,exports){
 "use strict";
@@ -307,7 +303,7 @@ module.exports = function(app) {
       );
     }
   ]);
-}
+};
 
 },{}],7:[function(require,module,exports){
 "use strict";
@@ -337,8 +333,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],8:[function(require,module,exports){
 "use strict";
@@ -396,8 +391,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],9:[function(require,module,exports){
 "use strict";
@@ -449,8 +443,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],10:[function(require,module,exports){
 "use strict";
@@ -521,7 +514,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/datetime/display.html',
         '<ng-form>' +
@@ -617,8 +609,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],11:[function(require,module,exports){
 "use strict";
@@ -633,8 +624,7 @@ module.exports = function(app) {
       });
     }
   ]);
-  
-}
+};
 
 },{}],12:[function(require,module,exports){
 "use strict";
@@ -681,8 +671,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],13:[function(require,module,exports){
 "use strict";
@@ -695,7 +684,9 @@ module.exports = function(app) {
       formioComponentsProvider.register('file', {
         onEdit: function($scope, component, Formio, FormioPlugins) {
           // Pull out title and name from the list of storage plugins.
-          $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
+          $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
+            return _.pick(storage, ['title', 'name']);
+          });
         },
         icon: 'fa fa-file',
         views: [
@@ -723,7 +714,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/file/display.html',
         '<ng-form>' +
@@ -751,8 +741,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],14:[function(require,module,exports){
 "use strict";
@@ -784,7 +773,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       $templateCache.put('formio/formbuilder/hidden.html', '<span class="hidden-element-text">{{ component.label }}</span>');
 
       // Create the settings markup.
@@ -805,8 +793,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],15:[function(require,module,exports){
 "use strict";
@@ -857,8 +844,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],16:[function(require,module,exports){
 "use strict";
@@ -932,7 +918,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/number/display.html',
         '<ng-form>' +
@@ -959,9 +944,7 @@ module.exports = function(app) {
       );
     }
   ]);
-
-  
-}
+};
 
 },{}],18:[function(require,module,exports){
 "use strict";
@@ -982,8 +965,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],19:[function(require,module,exports){
 "use strict";
@@ -1042,8 +1024,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],20:[function(require,module,exports){
 "use strict";
@@ -1105,8 +1086,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],21:[function(require,module,exports){
 "use strict";
@@ -1141,7 +1121,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/phoneNumber/display.html',
         '<ng-form>' +
@@ -1168,8 +1147,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],22:[function(require,module,exports){
 "use strict";
@@ -1204,7 +1182,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
@@ -1227,8 +1204,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],23:[function(require,module,exports){
 "use strict";
@@ -1272,7 +1248,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/resource/display.html',
         '<ng-form>' +
@@ -1309,8 +1284,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],24:[function(require,module,exports){
 "use strict";
@@ -1352,7 +1326,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/select/display.html',
         '<ng-form>' +
@@ -1395,8 +1368,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],25:[function(require,module,exports){
 "use strict";
@@ -1431,7 +1403,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/selectboxes/display.html',
         '<ng-form>' +
@@ -1462,8 +1433,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],26:[function(require,module,exports){
 "use strict";
@@ -1498,7 +1468,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/signature/display.html',
         '<ng-form>' +
@@ -1520,8 +1489,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],27:[function(require,module,exports){
 "use strict";
@@ -1584,8 +1552,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],28:[function(require,module,exports){
 "use strict";
@@ -1617,8 +1584,7 @@ module.exports = function(app) {
       });
     }
   ]);
-  
-}
+};
 
 },{}],29:[function(require,module,exports){
 "use strict";
@@ -1652,7 +1618,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/textfield/display.html',
         '<ng-form>' +
@@ -1682,8 +1647,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],30:[function(require,module,exports){
 "use strict";
@@ -1710,8 +1674,7 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
 
 },{}],31:[function(require,module,exports){
 "use strict";
@@ -1879,7 +1842,7 @@ module.exports = {
       placeholder: '0px',
       tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
     }
-  }
+  };
 
 },{}],32:[function(require,module,exports){
 "use strict";
@@ -1943,6 +1906,7 @@ module.exports = {
     }
   ]
 };
+
 },{}],33:[function(require,module,exports){
 "use strict";
 module.exports = ['debounce', function(debounce) {
@@ -1998,10 +1962,8 @@ module.exports = ['debounce', function(debounce) {
 
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
-
           // Iterate through all resources.
           _.each(resources, function(resource) {
-
             // Add the component group.
             $scope.formComponentGroups[resource.name] = {
               title: resource.title + ' Fields'
@@ -2012,8 +1974,7 @@ module.exports = ['debounce', function(debounce) {
 
             // Iterate through each component.
             FormioUtils.eachComponent(resource.components, function(component) {
-
-              if (component.type === 'button') { return; }
+              if (component.type === 'button') return;
 
               // Add the component to the list.
               var resourceKey = resource.name;
@@ -2056,7 +2017,6 @@ module.exports = ['debounce', function(debounce) {
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
-
       }
     ],
     link: function(scope, element) {
@@ -2089,7 +2049,8 @@ module.exports = ['debounce', function(debounce) {
       });
     }
   };
-}]
+}];
+
 },{}],34:[function(require,module,exports){
 "use strict";
 /**
@@ -2105,6 +2066,7 @@ module.exports = [
     });
   }
 ];
+
 },{}],35:[function(require,module,exports){
 "use strict";
 module.exports = [
@@ -2169,7 +2131,7 @@ module.exports = [
           showClose: false
         }).closePromise.then(function(e) {
           var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-          if(!cancelled) {
+          if (!cancelled) {
             remove(component);
           }
         });
@@ -2227,10 +2189,10 @@ module.exports = [
             }
           });
         }]
-      }).closePromise.then(function (e) {
+      }).closePromise.then(function(e) {
         var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
         if (cancelled) {
-          if(component.isNew) {
+          if (component.isNew) {
             remove(component);
           }
           else {
@@ -2249,6 +2211,7 @@ module.exports = [
     $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
   }
 ];
+
 },{}],36:[function(require,module,exports){
 "use strict";
 module.exports = [
@@ -2272,6 +2235,7 @@ module.exports = [
     });
   }
 ];
+
 },{}],37:[function(require,module,exports){
 "use strict";
 module.exports = [
@@ -2292,6 +2256,7 @@ module.exports = [
     };
   }
 ];
+
 },{}],38:[function(require,module,exports){
 "use strict";
 /**
@@ -2304,7 +2269,7 @@ module.exports = [
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS){
+module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   return {
     restrict: 'E',
     require: 'property',
@@ -2329,14 +2294,14 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS){
       angular.forEach(attrs.$attr, function(key) {
         inputAttrs[key] = attrs[key];
         // Allow specifying tooltip via title attr
-        if(key.toLowerCase() === 'title') {
+        if (key.toLowerCase() === 'title') {
           tooltip = attrs[key];
         }
       });
       input.attr(inputAttrs);
 
       // Checkboxes have a slightly different layout
-      if(inputAttrs.type.toLowerCase() === 'checkbox') {
+      if (inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
                 '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
@@ -2358,7 +2323,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS){
 /**
 * A directive for editing a component's custom validation.
 */
-module.exports = function(){
+module.exports = function() {
   return {
     restrict: 'E',
     replace: true,
@@ -2387,7 +2352,7 @@ module.exports = function(){
 /**
 * A directive for a field to edit a component's key.
 */
-module.exports = function(){
+module.exports = function() {
   return {
     restrict: 'E',
     replace: true,
@@ -2408,15 +2373,17 @@ module.exports = function(){
         var newValue = $scope.component.key;
         var valid = true;
         FormioUtils.eachComponent($scope.form.components, function(component) {
-          if(component.key === newValue && component !== $scope.component) {
+          if (component.key === newValue && component !== $scope.component) {
             valid = false;
           }
         });
-        if(valid) {
+        if (valid) {
           return;
         }
-        if(newValue.match(suffixRegex)) {
-          newValue = newValue.replace(suffixRegex, function(suffix) { return Number(suffix) + 1; });
+        if (newValue.match(suffixRegex)) {
+          newValue = newValue.replace(suffixRegex, function(suffix) {
+            return Number(suffix) + 1;
+          });
         }
         else {
           newValue += '2';
@@ -2431,7 +2398,7 @@ module.exports = function(){
 
         // If they try to input an empty key, refill it with default and let uniquify
         // make it unique
-        if(!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
+        if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key
           uniquify();
@@ -2441,7 +2408,7 @@ module.exports = function(){
       $scope.shouldWarnAboutEmbedding = function() {
         return !$scope.component.source && $scope.component.key.indexOf('.') !== -1;
       };
-    }],
+    }]
   };
 };
 
@@ -2465,6 +2432,7 @@ module.exports = [
     };
   }
 ];
+
 },{}],42:[function(require,module,exports){
 "use strict";
 /**
@@ -2527,7 +2495,7 @@ module.exports = function() {
     restrict: 'A',
     replace: false,
     link: function($scope, el, attrs) {
-      if(attrs.formBuilderTooltip || attrs.title) {
+      if (attrs.formBuilderTooltip || attrs.title) {
         var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
         tooltip.popover({
           html: true,
@@ -2535,15 +2503,15 @@ module.exports = function() {
           placement: 'right',
           content: attrs.title || attrs.formBuilderTooltip
         }).on('mouseenter', function() {
-          var $self = $(this);
+          var $self = angular.element(this);
           $self.popover('show');
           $self.siblings('.popover').on('mouseleave', function() {
             $self.popover('hide');
           });
         }).on('mouseleave', function() {
-          var $self = $(this);
+          var $self = angular.element(this);
           setTimeout(function() {
-            if(!$('.popover:hover').length) {
+            if (!angular.element('.popover:hover').length) {
               $self.popover('hide');
             }
           }, 100);
@@ -2553,19 +2521,21 @@ module.exports = function() {
     }
   };
 };
+
 },{}],44:[function(require,module,exports){
 "use strict";
-module.exports = function () {
+module.exports = function() {
   return {
     restrict: 'A',
     require: 'ngModel',
-    link: function (scope, elem, attr, ctrl) {
+    link: function(scope, elem, attr, ctrl) {
       ctrl.$parsers.push(function(input) {
         try {
           var obj = JSON.parse(input);
           ctrl.$setValidity('jsonInput', true);
           return obj;
-        } catch (e) {
+        }
+        catch (e) {
           ctrl.$setValidity('jsonInput', false);
           return undefined;
         }
@@ -2573,32 +2543,34 @@ module.exports = function () {
       ctrl.$formatters.push(function(data) {
         if (data === null) {
           ctrl.$setValidity('jsonInput', false);
-          return "";
+          return '';
         }
         try {
           var str = angular.toJson(data, true);
           ctrl.$setValidity('jsonInput', true);
           return str;
-        } catch (e) {
+        }
+        catch (e) {
           ctrl.$setValidity('jsonInput', false);
-          return "";
+          return '';
         }
       });
     }
   };
 };
+
 },{}],45:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
 * Valid characters for an api key are alphanumeric and hyphens
 */
-module.exports = function(){
+module.exports = function() {
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
       var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-\.\[\]]*/g;
-      ngModel.$parsers.push(function (inputValue) {
+      ngModel.$parsers.push(function(inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {
           ngModel.$setViewValue(transformedInput);
@@ -2615,7 +2587,7 @@ module.exports = function(){
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
 */
-module.exports = function(){
+module.exports = function() {
   return {
     scope: {
       data: '=',
@@ -2672,13 +2644,13 @@ module.exports = function(){
       if (!attrs.noAutocompleteValue) {
         $scope.$watch('data', function(newValue, oldValue) {
           // Ignore array addition/deletion changes
-          if(newValue.length !== oldValue.length) {
+          if (newValue.length !== oldValue.length) {
             return;
           }
 
           _.map(newValue, function(entry, i) {
-            if(entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
-              if(entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
+            if (entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
+              if (entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
                 entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
               }
             }
@@ -2704,7 +2676,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
       var context = this, args = arguments;
       var later = function() {
         timeout = null;
-        if(!immediate) {
+        if (!immediate) {
           deferred.resolve(func.apply(context, args));
           deferred = $q.defer();
         }
@@ -2722,6 +2694,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
     };
   };
 }];
+
 },{}],48:[function(require,module,exports){
 "use strict";
 /*global window: false, console: false, $: false */
@@ -2767,8 +2740,6 @@ app.directive('formBuilderOptionCustomValidation', require('./directives/formBui
 app.directive('formBuilderTooltip', require('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', require('./directives/valueBuilder'));
-
-
 
 /**
  * This workaround handles the fact that iframes capture mouse drag

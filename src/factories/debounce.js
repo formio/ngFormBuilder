@@ -11,7 +11,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
       var context = this, args = arguments;
       var later = function() {
         timeout = null;
-        if(!immediate) {
+        if (!immediate) {
           deferred.resolve(func.apply(context, args));
           deferred = $q.defer();
         }

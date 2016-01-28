@@ -26,7 +26,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       $templateCache.put('formio/formbuilder/hidden.html', '<span class="hidden-element-text">{{ component.label }}</span>');
 
       // Create the settings markup.
@@ -47,5 +46,4 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};

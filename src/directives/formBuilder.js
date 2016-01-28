@@ -51,10 +51,8 @@ module.exports = ['debounce', function(debounce) {
 
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
-
           // Iterate through all resources.
           _.each(resources, function(resource) {
-
             // Add the component group.
             $scope.formComponentGroups[resource.name] = {
               title: resource.title + ' Fields'
@@ -65,8 +63,7 @@ module.exports = ['debounce', function(debounce) {
 
             // Iterate through each component.
             FormioUtils.eachComponent(resource.components, function(component) {
-
-              if (component.type === 'button') { return; }
+              if (component.type === 'button') return;
 
               // Add the component to the list.
               var resourceKey = resource.name;
@@ -109,7 +106,6 @@ module.exports = ['debounce', function(debounce) {
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
-
       }
     ],
     link: function(scope, element) {
@@ -142,4 +138,4 @@ module.exports = ['debounce', function(debounce) {
       });
     }
   };
-}]
+}];

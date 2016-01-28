@@ -29,7 +29,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
@@ -52,5 +51,4 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};

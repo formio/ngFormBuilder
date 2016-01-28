@@ -53,5 +53,4 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};

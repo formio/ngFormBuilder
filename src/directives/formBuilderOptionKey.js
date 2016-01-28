@@ -1,7 +1,7 @@
 /**
 * A directive for a field to edit a component's key.
 */
-module.exports = function(){
+module.exports = function() {
   return {
     restrict: 'E',
     replace: true,
@@ -22,15 +22,17 @@ module.exports = function(){
         var newValue = $scope.component.key;
         var valid = true;
         FormioUtils.eachComponent($scope.form.components, function(component) {
-          if(component.key === newValue && component !== $scope.component) {
+          if (component.key === newValue && component !== $scope.component) {
             valid = false;
           }
         });
-        if(valid) {
+        if (valid) {
           return;
         }
-        if(newValue.match(suffixRegex)) {
-          newValue = newValue.replace(suffixRegex, function(suffix) { return Number(suffix) + 1; });
+        if (newValue.match(suffixRegex)) {
+          newValue = newValue.replace(suffixRegex, function(suffix) {
+            return Number(suffix) + 1;
+          });
         }
         else {
           newValue += '2';
@@ -45,7 +47,7 @@ module.exports = function(){
 
         // If they try to input an empty key, refill it with default and let uniquify
         // make it unique
-        if(!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
+        if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key
           uniquify();
@@ -55,6 +57,6 @@ module.exports = function(){
       $scope.shouldWarnAboutEmbedding = function() {
         return !$scope.component.source && $scope.component.key.indexOf('.') !== -1;
       };
-    }],
+    }]
   };
 };

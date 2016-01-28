@@ -60,7 +60,7 @@ module.exports = [
           showClose: false
         }).closePromise.then(function(e) {
           var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
-          if(!cancelled) {
+          if (!cancelled) {
             remove(component);
           }
         });
@@ -118,10 +118,10 @@ module.exports = [
             }
           });
         }]
-      }).closePromise.then(function (e) {
+      }).closePromise.then(function(e) {
         var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
         if (cancelled) {
-          if(component.isNew) {
+          if (component.isNew) {
             remove(component);
           }
           else {

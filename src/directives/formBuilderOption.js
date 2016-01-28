@@ -8,7 +8,7 @@
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS){
+module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   return {
     restrict: 'E',
     require: 'property',
@@ -33,14 +33,14 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS){
       angular.forEach(attrs.$attr, function(key) {
         inputAttrs[key] = attrs[key];
         // Allow specifying tooltip via title attr
-        if(key.toLowerCase() === 'title') {
+        if (key.toLowerCase() === 'title') {
           tooltip = attrs[key];
         }
       });
       input.attr(inputAttrs);
 
       // Checkboxes have a slightly different layout
-      if(inputAttrs.type.toLowerCase() === 'checkbox') {
+      if (inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
                 '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +

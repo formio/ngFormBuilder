@@ -7,7 +7,9 @@ module.exports = function(app) {
       formioComponentsProvider.register('file', {
         onEdit: function($scope, component, Formio, FormioPlugins) {
           // Pull out title and name from the list of storage plugins.
-          $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {return _.pick(storage, ['title', 'name']);});
+          $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
+            return _.pick(storage, ['title', 'name']);
+          });
         },
         icon: 'fa fa-file',
         views: [
@@ -35,7 +37,6 @@ module.exports = function(app) {
   app.run([
     '$templateCache',
     function($templateCache) {
-
       // Create the settings markup.
       $templateCache.put('formio/components/file/display.html',
         '<ng-form>' +
@@ -63,5 +64,4 @@ module.exports = function(app) {
       );
     }
   ]);
-  
-}
+};
