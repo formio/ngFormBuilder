@@ -32,7 +32,9 @@ app.run([
 
     $templateCache.put('formio/formbuilder/container.html',
       '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
-      '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>'
+      '<div class="formio-container-component">' +
+      '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
+      '</div>'
     );
   }
 ]);
