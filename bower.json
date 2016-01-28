@@ -18,7 +18,7 @@
     "tests"
   ],
   "dependencies": {
-    "formio": "~0.8.4",
+    "formio": "~0.9.0",
     "angular-drag-and-drop-lists": "~1.3.0",
     "angular-bootstrap": "~1.1.0",
     "lodash": "~3.10.1",
