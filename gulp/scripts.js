@@ -1,14 +1,23 @@
-module.exports = function (gulp, plugins) {
-  return function () {
-    return gulp.src(require('./sources').js)
-      .pipe(plugins.concat('ngFormBuilder.js'))
-      .pipe(plugins.wrapper({
-        header: "(function () {\n'use strict';\n",
-        footer: '})();'
-      }))
+var path = require('path');
+module.exports = function(gulp, plugins) {
+
+  return function() {
+    var bundle = plugins.browserify({
+      entries: './src/ngFormBuilder.js',
+      debug: false
+    });
+
+    return bundle
+      .bundle()
+      .pipe(plugins.source('ngFormBuilder.js'))
       .pipe(gulp.dest('dist/'))
       .pipe(plugins.rename('ngFormBuilder.min.js'))
-      .pipe(plugins.uglify())
-      .pipe(gulp.dest('dist/'));
+      .pipe(plugins.streamify(plugins.uglify()))
+      .pipe(gulp.dest('dist/'))
+      .on('error', function(err){
+        console.log(err);
+        this.emit('end');
+      });
   };
+
 };
