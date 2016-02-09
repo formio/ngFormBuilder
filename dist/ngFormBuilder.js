@@ -2087,7 +2087,7 @@ module.exports = [
     // Components depend on this existing
     $scope.data = {};
 
-    $scope.emit = function(event) {
+    $scope.emit = function() {
       var args = [].slice.call(arguments);
       args[0] = 'formBuilder:' + args[0];
       $scope.$emit.apply($scope, args);
@@ -2458,6 +2458,7 @@ module.exports = function() {
       '$scope',
       function($scope) {
         var changeTable = function() {
+          /*eslint-disable max-depth */
           if ($scope.component.numRows && $scope.component.numCols) {
             var tmpTable = [];
             $scope.component.rows.splice($scope.component.numRows);
@@ -2473,6 +2474,7 @@ module.exports = function() {
               }
             }
             $scope.component.rows = _.merge(tmpTable, $scope.component.rows);
+            /*eslint-enable max-depth */
           }
         };
 
@@ -2697,7 +2699,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],48:[function(require,module,exports){
 "use strict";
-/*global window: false, console: false, $: false */
+/*global window: false, console: false */
 /*jshint browser: true */
 var app = angular.module('ngFormBuilder', [
   'formio',

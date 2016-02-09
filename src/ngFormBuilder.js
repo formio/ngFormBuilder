@@ -1,4 +1,4 @@
-/*global window: false, console: false, $: false */
+/*global window: false, console: false */
 /*jshint browser: true */
 var app = angular.module('ngFormBuilder', [
   'formio',
