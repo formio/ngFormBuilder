@@ -38,5 +38,13 @@
       "strictify",
       "brfs"
     ]
+  },
+  "dependencies": {
+    "angular-drag-and-drop-lists": "^1.4.0",
+    "angular-ui-bootstrap": "^1.1.2",
+    "formio": "github:formio/ngFormio",
+    "lodash": "^4.3.0",
+    "ng-ckeditor": "github:formio/ng-ckeditor",
+    "ng-dialog": "^0.5.6"
   }
 }
