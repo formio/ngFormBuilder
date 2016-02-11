@@ -21,6 +21,7 @@ module.exports = function() {
       '$scope',
       function($scope) {
         var changeTable = function() {
+          /*eslint-disable max-depth */
           if ($scope.component.numRows && $scope.component.numCols) {
             var tmpTable = [];
             $scope.component.rows.splice($scope.component.numRows);
@@ -36,6 +37,7 @@ module.exports = function() {
               }
             }
             $scope.component.rows = _.merge(tmpTable, $scope.component.rows);
+            /*eslint-enable max-depth */
           }
         };
 

@@ -16,7 +16,7 @@ module.exports = [
     // Components depend on this existing
     $scope.data = {};
 
-    $scope.emit = function(event) {
+    $scope.emit = function() {
       var args = [].slice.call(arguments);
       args[0] = 'formBuilder:' + args[0];
       $scope.$emit.apply($scope, args);
