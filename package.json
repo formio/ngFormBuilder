@@ -45,6 +45,6 @@
     "lodash": "^4.3.0",
     "ng-ckeditor": "github:formio/ng-ckeditor",
     "ng-dialog": "^0.5.6",
-    "ng-formio": "^1.2.0"
+    "ng-formio": "^1.0.1"
   }
 }
