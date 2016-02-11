@@ -1,6 +1,6 @@
 {
-  "name": "ngFormBuilder",
-  "version": "1.1.4",
+  "name": "ng-formio-builder",
+  "version": "1.6.0",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
@@ -38,5 +38,13 @@
       "strictify",
       "brfs"
     ]
+  },
+  "dependencies": {
+    "angular-drag-and-drop-lists": "^1.4.0",
+    "angular-ui-bootstrap": "^1.1.2",
+    "lodash": "^4.3.0",
+    "ng-ckeditor": "github:formio/ng-ckeditor",
+    "ng-dialog": "^0.5.6",
+    "ng-formio": "^1.2.0"
   }
 }

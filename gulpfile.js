@@ -9,7 +9,10 @@ plugins.runSeq = require('run-sequence');
 
 gulp.task('clean', require('del').bind(null, ['dist']));
 gulp.task('eslint', require('./gulp/eslint')(gulp, plugins));
-gulp.task('scripts', require('./gulp/scripts')(gulp, plugins));
+gulp.task('scripts:basic', require('./gulp/scripts')(gulp, plugins));
+gulp.task('scripts:full', require('./gulp/scripts-full')(gulp, plugins));
+gulp.task('scripts:complete', require('./gulp/scripts-complete')(gulp, plugins));
+gulp.task('scripts', ['scripts:basic', 'scripts:complete', 'scripts:full']);
 gulp.task('build', function(cb) {
   plugins.runSeq(['clean', 'eslint'], 'scripts', cb)
 });
