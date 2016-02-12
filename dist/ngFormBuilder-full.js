@@ -86385,7 +86385,6 @@ module.exports = [
 
 },{}],127:[function(require,module,exports){
 "use strict";
-/*eslint no-console: 0*/
 module.exports = [
   '$scope',
   'formioComponents',
@@ -86411,7 +86410,6 @@ module.exports = [
     };
 
     $scope.addComponent = function(component) {
-      console.log('add', component);
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
@@ -86430,21 +86428,18 @@ module.exports = [
 
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, oldComponent) {
-      console.log('update', newComponent);
       var list = $scope.component.components;
       list.splice(list.indexOf(oldComponent), 1, newComponent);
       $scope.$emit('update', newComponent);
     };
 
     var remove = function(component) {
-      console.log('remove');
       var list = $scope.component.components;
       list.splice(list.indexOf(component), 1);
       $scope.emit('remove', component);
     };
 
     $scope.removeComponent = function(component, shouldConfirm) {
-      console.log('remove2');
       if (shouldConfirm) {
         // Show confirm dialog before removing a component
         ngDialog.open({
@@ -86464,7 +86459,6 @@ module.exports = [
 
     // Edit a specific component.
     $scope.editComponent = function(component) {
-      console.log('edit', component);
       $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
       // No edit view available
       if (!$scope.formComponent.hasOwnProperty('views')) {
