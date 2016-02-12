@@ -68,7 +68,7 @@ module.exports = ['debounce', function(debounce) {
               // Add the component to the list.
               var resourceKey = resource.name;
               $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
-                _.clone(formioComponents.components[component.type], true),
+                _.cloneDeep(formioComponents.components[component.type], true),
                 {
                   title:component.label,
                   group: resourceKey,

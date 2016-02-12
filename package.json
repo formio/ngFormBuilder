@@ -40,6 +40,7 @@
     ]
   },
   "dependencies": {
+    "angular": "^1.5.0",
     "angular-drag-and-drop-lists": "^1.4.0",
     "angular-ui-bootstrap": "^1.1.2",
     "lodash": "^4.3.0",

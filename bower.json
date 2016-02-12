@@ -1,4 +1,4 @@
-{
+  {
   "name": "ng-formio-builder",
   "main": [
     "dist/ngFormBuilder.js",
