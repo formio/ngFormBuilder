@@ -22,7 +22,8 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
-    $scope.addComponent = function(component) {
+    $scope.addComponent = function(component, index) {
+
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
@@ -36,7 +37,31 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
-      return component;
+
+      // Make sure that they don't ever add a component on the bottom of the submit button.
+      var lastComponent = $scope.component.components[$scope.component.components.length - 1];
+      if (
+        (lastComponent) &&
+        (lastComponent.type === 'button') &&
+        (lastComponent.action === 'submit')
+      ) {
+
+        // There is only one element on the page.
+        if ($scope.component.components.length === 1) {
+          index = 0;
+        }
+        else if (index >= $scope.component.components.length) {
+          index--;
+        }
+      }
+
+      // Add the component to the components array.
+      $scope.$apply(function() {
+        $scope.component.components.splice(index, 0, component);
+      });
+
+      // Return true since this will tell the drag-and-drop list component to not insert into its own array.
+      return true;
     };
 
     // Allow prototyped scopes to update the original component.

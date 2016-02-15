@@ -7,22 +7,7 @@ module.exports = function(gulp, plugins) {
       debug: true
     });
 
-    bundle.transform({
-      global: true
-    }, 'uglifyify');
-
-    var build = function() {
-      return bundle
-        .bundle()
-        .pipe(plugins.source('ngFormBuilder.js'))
-        .pipe(plugins.rename('ngFormBuilder.min.js'))
-        .pipe(gulp.dest('dist/'))
-        .on('error', function(err){
-          console.log(err);
-          this.emit('end');
-        });
-    };
-
+    var build = require('./scripts')(gulp, plugins, bundle);
     bundle = plugins.watchify(bundle);
     bundle.on('update', function(files) {
       console.log('Changed files: ', files.map(path.relative.bind(path, process.cwd())).join(', '));

@@ -48700,8 +48700,11 @@ module.exports = ['debounce', function(debounce) {
         }
 
         $scope.formComponents = _.cloneDeep(formioComponents.components);
-        _.each($scope.formComponents, function(component) {
+        _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
+          if (component.settings.hasOwnProperty('builder') && !component.settings.builder) {
+            delete $scope.formComponents[key];
+          }
         });
         $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
@@ -48726,8 +48729,8 @@ module.exports = ['debounce', function(debounce) {
 
               // Add the component to the list.
               var resourceKey = resource.name;
-              $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
-                _.clone(formioComponents.components[component.type], true),
+              $scope.formComponentsByGroup[resourceKey][component.key] = _.merge(
+                _.cloneDeep(formioComponents.components[component.type], true),
                 {
                   title:component.label,
                   group: resourceKey,
@@ -48736,7 +48739,7 @@ module.exports = ['debounce', function(debounce) {
                 {
                   settings: {
                     label: component.label,
-                    key: resourceKey + '.' + component.key,
+                    key: component.key,
                     lockKey: true,
                     source: resource._id
                   }
