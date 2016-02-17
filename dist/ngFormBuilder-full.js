@@ -87039,6 +87039,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],138:[function(require,module,exports){
 "use strict";
+require('angular');
 require('ng-formio/src/formio-full.js');
 require('angular-drag-and-drop-lists');
 require('ng-ckeditor/ng-ckeditor');
@@ -87046,7 +87047,7 @@ require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":139,"angular-drag-and-drop-lists":2,"lodash":30,"ng-ckeditor/ng-ckeditor":32,"ng-dialog":33,"ng-formio/src/formio-full.js":78}],139:[function(require,module,exports){
+},{"./ngFormBuilder.js":139,"angular":11,"angular-drag-and-drop-lists":2,"lodash":30,"ng-ckeditor/ng-ckeditor":32,"ng-dialog":33,"ng-formio/src/formio-full.js":78}],139:[function(require,module,exports){
 "use strict";
 /*global window: false, console: false */
 /*jshint browser: true */

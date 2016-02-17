@@ -49490,13 +49490,14 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(require,module,exports){
 "use strict";
+require('angular');
 require('angular-drag-and-drop-lists');
 require('ng-ckeditor/ng-ckeditor');
 require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":55,"angular-drag-and-drop-lists":1,"lodash":4,"ng-ckeditor/ng-ckeditor":5,"ng-dialog":6}],55:[function(require,module,exports){
+},{"./ngFormBuilder.js":55,"angular":3,"angular-drag-and-drop-lists":1,"lodash":4,"ng-ckeditor/ng-ckeditor":5,"ng-dialog":6}],55:[function(require,module,exports){
 "use strict";
 /*global window: false, console: false */
 /*jshint browser: true */
