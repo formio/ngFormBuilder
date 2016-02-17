@@ -23,7 +23,6 @@ module.exports = [
     };
 
     $scope.addComponent = function(component, index) {
-
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
@@ -45,7 +44,6 @@ module.exports = [
         (lastComponent.type === 'button') &&
         (lastComponent.action === 'submit')
       ) {
-
         // There is only one element on the page.
         if ($scope.component.components.length === 1) {
           index = 0;
