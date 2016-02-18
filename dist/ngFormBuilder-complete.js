@@ -45876,7 +45876,7 @@ module.exports = angular;
                     };
 
                     var setupListeners = function() {
-                      instance.on('pasteState',   setModelData);
+                      //instance.on('pasteState',   setModelData);
                       instance.on('change',       setModelData);
                       instance.on('blur',         setModelData);
                       //instance.on('key',          setModelData); // for source view
@@ -48700,48 +48700,58 @@ module.exports = ['debounce', function(debounce) {
         }
 
         $scope.formComponents = _.cloneDeep(formioComponents.components);
-        _.each($scope.formComponents, function(component) {
+        _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
+          if (component.settings.hasOwnProperty('builder') && !component.settings.builder) {
+            delete $scope.formComponents[key];
+          }
         });
+
         $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
         });
 
+        $scope.formComponentsByGroup.resource = {};
+        $scope.formComponentGroups.resource = {
+          title: 'Existing Resource Fields',
+          panelClass: 'subgroup-accordion-container',
+          subgroups: {}
+        };
+
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
           // Iterate through all resources.
           _.each(resources, function(resource) {
-            // Add the component group.
-            $scope.formComponentGroups[resource.name] = {
-              title: resource.title + ' Fields'
-            };
+            var resourceKey = resource.name;
 
-            // Create a new group for this resource.
-            $scope.formComponentsByGroup[resource.name] = {};
+            // Add a legend for this resource.
+            $scope.formComponentsByGroup.resource[resourceKey] = [];
+            $scope.formComponentGroups.resource.subgroups[resourceKey] = {
+              title: resource.title
+            };
 
             // Iterate through each component.
             FormioUtils.eachComponent(resource.components, function(component) {
               if (component.type === 'button') return;
 
-              // Add the component to the list.
-              var resourceKey = resource.name;
-              $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
+              $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
                 _.cloneDeep(formioComponents.components[component.type], true),
                 {
-                  title:component.label,
-                  group: resourceKey,
+                  title: component.label,
+                  group: 'resource',
+                  subgroup: resourceKey,
                   settings: component
                 },
                 {
                   settings: {
                     label: component.label,
-                    key: resourceKey + '.' + component.key,
+                    key: component.key,
                     lockKey: true,
                     source: resource._id
                   }
                 }
-              );
+              ));
             });
           });
         });
@@ -48762,6 +48772,16 @@ module.exports = ['debounce', function(debounce) {
         };
 
         $scope.capitalize = _.capitalize;
+
+        // Set the root list height to the height of the formbuilder for ease of form building.
+        (function setRootListHeight() {
+          var listHeight = angular.element('.rootlist').height('inherit').height();
+          var builderHeight = angular.element('.formbuilder').height();
+          if ((builderHeight - listHeight) > 100) {
+            angular.element('.rootlist').height(builderHeight);
+          }
+          setTimeout(setRootListHeight, 1000);
+        })();
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
@@ -48841,7 +48861,7 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
-    $scope.addComponent = function(component) {
+    $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
@@ -48855,7 +48875,30 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
-      return component;
+
+      // Make sure that they don't ever add a component on the bottom of the submit button.
+      var lastComponent = $scope.component.components[$scope.component.components.length - 1];
+      if (
+        (lastComponent) &&
+        (lastComponent.type === 'button') &&
+        (lastComponent.action === 'submit')
+      ) {
+        // There is only one element on the page.
+        if ($scope.component.components.length === 1) {
+          index = 0;
+        }
+        else if (index >= $scope.component.components.length) {
+          index--;
+        }
+      }
+
+      // Add the component to the components array.
+      $scope.$apply(function() {
+        $scope.component.components.splice(index, 0, component);
+      });
+
+      // Return true since this will tell the drag-and-drop list component to not insert into its own array.
+      return true;
     };
 
     // Allow prototyped scopes to update the original component.
@@ -49538,7 +49581,7 @@ app.run([
     $templateCache.put('formio/formbuilder/list.html',
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
-        'dnd-drop="addComponent(item)">' +
+        'dnd-drop="addComponent(item, index)">' +
         '<li ng-if="component.components.length < hideCount">' +
           '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
@@ -49588,26 +49631,40 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
-      '<div class="row">' +
+      '<div class="row formbuilder">' +
         '<div class="col-sm-2 formcomponents">' +
           '<uib-accordion close-others="true">' +
-            '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
+            '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" panel-class="panel-default {{ group.panelClass }}">' +
+              '<uib-accordion close-others="true" ng-if="group.subgroups">' +
+                '<uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" panel-class="panel-default subgroup-accordion">' +
+                  '<div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"' +
+                    'dnd-draggable="component.settings"' +
+                    'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
+                    'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
+                    'dnd-effect-allowed="copy" ' +
+                    'class="formcomponentcontainer">' +
+                      '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
+                        '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
+                      '</span>' +
+                  '</div>' +
+                '</uib-accordion-group>' +
+              '</uib-accordion>' +
+              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="!group.subgroup && component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
                 'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
                 'dnd-effect-allowed="copy" ' +
                 'class="formcomponentcontainer">' +
-                '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
-                  '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
-                '</span>' +
+                  '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
+                    '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
+                  '</span>' +
               '</div>' +
             '</uib-accordion-group>' +
           '</uib-accordion>' +
         '</div>' +
         '<div class="col-sm-10 formbuilder">' +
               '<div class="dropzone">' +
-                '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2"></form-builder-list>' +
+                '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2" class="rootlist"></form-builder-list>' +
               '</div>' +
         '</div>' +
       '</div>'
