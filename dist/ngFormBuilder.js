@@ -16091,7 +16091,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
-          '<value-builder data="component.values" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+          '<value-builder data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
@@ -17270,7 +17270,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
-      var input = angular.element('<input></input>');
+      var input = angular.element('<input>');
       var inputAttrs = {
         id: property,
         name: property,
@@ -17581,6 +17581,7 @@ module.exports = function() {
   return {
     scope: {
       data: '=',
+      default: '=',
       label: '@',
       tooltipText: '@',
       valueLabel: '@',
@@ -17607,6 +17608,8 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
+                '<label form-builder-tooltip="The value to assign to this component before user interaction.">Default Value</label><br>' +
+                '<input type="text" class="form-control" value="" ng-model="default"><br>' +
                 '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,

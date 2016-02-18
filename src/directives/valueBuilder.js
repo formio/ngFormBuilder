@@ -5,6 +5,7 @@ module.exports = function() {
   return {
     scope: {
       data: '=',
+      default: '=',
       label: '@',
       tooltipText: '@',
       valueLabel: '@',
@@ -31,6 +32,8 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
+                '<label form-builder-tooltip="The value to assign to this component before user interaction.">Default Value</label><br>' +
+                '<input type="text" class="form-control" value="" ng-model="default"><br>' +
                 '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
                 '</div>',
     replace: true,
