@@ -36,6 +36,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textfield/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
