@@ -4,13 +4,19 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('container', {
         fbtemplate: 'formio/formbuilder/container.html',
-        views: [{
-          name: 'Display',
-          template: 'formio/components/container/display.html'
-        }, {
-          name: 'API',
-          template: 'formio/components/common/api.html'
-        }],
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/container/display.html'
+          }, {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
         documentation: 'http://help.form.io/userguide/#container',
         noDndOverlay: true,
         confirmRemove: true

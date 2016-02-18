@@ -7,7 +7,13 @@ module.exports = function(app) {
         icon: 'fa fa-square-o',
         documentation: 'http://help.form.io/userguide/#well',
         noDndOverlay: true,
-        confirmRemove: true
+        confirmRemove: true,
+        views: [
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ]
       });
     }
   ]);

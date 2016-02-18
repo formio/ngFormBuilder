@@ -8,6 +8,10 @@ module.exports = function(app) {
           {
             name: 'Display',
             template: 'formio/components/custom/display.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#custom'

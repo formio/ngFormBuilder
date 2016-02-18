@@ -14922,6 +14922,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#address'
@@ -14984,6 +14988,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#button'
@@ -15045,6 +15053,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#checkbox'
@@ -15087,7 +15099,13 @@ module.exports = function(app) {
         icon: 'fa fa-columns',
         documentation: 'http://help.form.io/userguide/#columns',
         noDndOverlay: true,
-        confirmRemove: true
+        confirmRemove: true,
+        views: [
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ]
       });
     }
   ]);
@@ -15174,13 +15192,19 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('container', {
         fbtemplate: 'formio/formbuilder/container.html',
-        views: [{
-          name: 'Display',
-          template: 'formio/components/container/display.html'
-        }, {
-          name: 'API',
-          template: 'formio/components/common/api.html'
-        }],
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/container/display.html'
+          }, {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
         documentation: 'http://help.form.io/userguide/#container',
         noDndOverlay: true,
         confirmRemove: true
@@ -15225,7 +15249,13 @@ module.exports = function(app) {
           $scope.$watch('component.html', function() {
             $scope.$emit('formBuilder:update');
           });
-        }
+        },
+        views: [
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ]
       });
     }
   ]);
@@ -15253,6 +15283,10 @@ module.exports = function(app) {
           {
             name: 'Display',
             template: 'formio/components/custom/display.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#custom'
@@ -15316,6 +15350,10 @@ module.exports = function(app) {
           {
             name: 'API',
             template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#datagrid',
@@ -15411,6 +15449,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#datetime'
@@ -15549,6 +15591,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#fieldset',
@@ -15611,6 +15657,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#file'
@@ -15670,6 +15720,10 @@ module.exports = function(app) {
           {
             name: 'API',
             template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#hidden'
@@ -15714,6 +15768,10 @@ module.exports = function(app) {
           {
             name: 'Display',
             template: 'formio/components/htmlelement/display.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#html-element-component'
@@ -15741,7 +15799,7 @@ module.exports = function(app) {
             'value-label="Attribute" ' +
             'label-label="Value" ' +
             'no-autocomplete-value="true" ' +
-            '></value-builder>' +
+          '></value-builder>' +
           '<div class="form-group">' +
             '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
             '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +
@@ -15815,6 +15873,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#number'
@@ -15897,6 +15959,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#panels',
@@ -15956,6 +16022,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#password',
@@ -16018,6 +16088,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#phonenumber'
@@ -16079,6 +16153,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#radio'
@@ -16145,6 +16223,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#resource'
@@ -16216,6 +16298,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         onEdit: function($scope) {
@@ -16300,6 +16386,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#selectboxes'
@@ -16365,6 +16455,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#signature'
@@ -16417,6 +16511,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ]
       });
@@ -16484,6 +16582,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#textarea'
@@ -16571,7 +16673,13 @@ module.exports = function(app) {
         icon: 'fa fa-square-o',
         documentation: 'http://help.form.io/userguide/#well',
         noDndOverlay: true,
-        confirmRemove: true
+        confirmRemove: true,
+        views: [
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ]
       });
     }
   ]);

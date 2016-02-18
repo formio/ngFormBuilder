@@ -56,6 +56,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#datetime'
