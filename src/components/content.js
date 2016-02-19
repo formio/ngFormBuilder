@@ -13,6 +13,10 @@ module.exports = function(app) {
         },
         views: [
           {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
           }

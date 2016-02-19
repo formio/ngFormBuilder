@@ -11,6 +11,10 @@ module.exports = function(app) {
             template: 'formio/components/htmlelement/display.html'
           },
           {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
           }

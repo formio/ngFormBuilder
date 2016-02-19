@@ -15252,6 +15252,10 @@ module.exports = function(app) {
         },
         views: [
           {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
           }
@@ -15593,6 +15597,10 @@ module.exports = function(app) {
             template: 'formio/components/common/layout.html'
           },
           {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
           }
@@ -15768,6 +15776,10 @@ module.exports = function(app) {
           {
             name: 'Display',
             template: 'formio/components/htmlelement/display.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
           },
           {
             name: 'Conditional',
@@ -15959,6 +15971,10 @@ module.exports = function(app) {
           {
             name: 'Layout',
             template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
           },
           {
             name: 'Conditional',
@@ -16513,6 +16529,10 @@ module.exports = function(app) {
             template: 'formio/components/common/layout.html'
           },
           {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
           }
@@ -16675,6 +16695,10 @@ module.exports = function(app) {
         noDndOverlay: true,
         confirmRemove: true,
         views: [
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
           {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
