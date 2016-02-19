@@ -41,48 +41,58 @@ module.exports = ['debounce', function(debounce) {
         }
 
         $scope.formComponents = _.cloneDeep(formioComponents.components);
-        _.each($scope.formComponents, function(component) {
+        _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
+          if (component.settings.hasOwnProperty('builder') && !component.settings.builder) {
+            delete $scope.formComponents[key];
+          }
         });
+
         $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
         });
 
+        $scope.formComponentsByGroup.resource = {};
+        $scope.formComponentGroups.resource = {
+          title: 'Existing Resource Fields',
+          panelClass: 'subgroup-accordion-container',
+          subgroups: {}
+        };
+
         // Get the resource fields.
         $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
           // Iterate through all resources.
           _.each(resources, function(resource) {
-            // Add the component group.
-            $scope.formComponentGroups[resource.name] = {
-              title: resource.title + ' Fields'
-            };
+            var resourceKey = resource.name;
 
-            // Create a new group for this resource.
-            $scope.formComponentsByGroup[resource.name] = {};
+            // Add a legend for this resource.
+            $scope.formComponentsByGroup.resource[resourceKey] = [];
+            $scope.formComponentGroups.resource.subgroups[resourceKey] = {
+              title: resource.title
+            };
 
             // Iterate through each component.
             FormioUtils.eachComponent(resource.components, function(component) {
               if (component.type === 'button') return;
 
-              // Add the component to the list.
-              var resourceKey = resource.name;
-              $scope.formComponentsByGroup[resourceKey][resourceKey + '.' + component.key] = _.merge(
+              $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
                 _.cloneDeep(formioComponents.components[component.type], true),
                 {
-                  title:component.label,
-                  group: resourceKey,
+                  title: component.label,
+                  group: 'resource',
+                  subgroup: resourceKey,
                   settings: component
                 },
                 {
                   settings: {
                     label: component.label,
-                    key: resourceKey + '.' + component.key,
+                    key: component.key,
                     lockKey: true,
                     source: resource._id
                   }
                 }
-              );
+              ));
             });
           });
         });
@@ -103,6 +113,16 @@ module.exports = ['debounce', function(debounce) {
         };
 
         $scope.capitalize = _.capitalize;
+
+        // Set the root list height to the height of the formbuilder for ease of form building.
+        (function setRootListHeight() {
+          var listHeight = angular.element('.rootlist').height('inherit').height();
+          var builderHeight = angular.element('.formbuilder').height();
+          if ((builderHeight - listHeight) > 100) {
+            angular.element('.rootlist').height(builderHeight);
+          }
+          setTimeout(setRootListHeight, 1000);
+        })();
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;

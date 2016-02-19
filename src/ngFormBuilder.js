@@ -82,7 +82,7 @@ app.run([
     $templateCache.put('formio/formbuilder/list.html',
       '<ul class="component-list" ' +
         'dnd-list="component.components"' +
-        'dnd-drop="addComponent(item)">' +
+        'dnd-drop="addComponent(item, index)">' +
         '<li ng-if="component.components.length < hideCount">' +
           '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
             'Drag and Drop a form component' +
@@ -132,26 +132,40 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
-      '<div class="row">' +
+      '<div class="row formbuilder">' +
         '<div class="col-sm-2 formcomponents">' +
           '<uib-accordion close-others="true">' +
-            '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first">' +
-              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="component.title"' +
+            '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" panel-class="panel-default {{ group.panelClass }}">' +
+              '<uib-accordion close-others="true" ng-if="group.subgroups">' +
+                '<uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" panel-class="panel-default subgroup-accordion">' +
+                  '<div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"' +
+                    'dnd-draggable="component.settings"' +
+                    'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
+                    'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
+                    'dnd-effect-allowed="copy" ' +
+                    'class="formcomponentcontainer">' +
+                      '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
+                        '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
+                      '</span>' +
+                  '</div>' +
+                '</uib-accordion-group>' +
+              '</uib-accordion>' +
+              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="!group.subgroup && component.title"' +
                 'dnd-draggable="component.settings"' +
                 'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
                 'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
                 'dnd-effect-allowed="copy" ' +
                 'class="formcomponentcontainer">' +
-                '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
-                  '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
-                '</span>' +
+                  '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
+                    '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
+                  '</span>' +
               '</div>' +
             '</uib-accordion-group>' +
           '</uib-accordion>' +
         '</div>' +
         '<div class="col-sm-10 formbuilder">' +
               '<div class="dropzone">' +
-                '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2"></form-builder-list>' +
+                '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2" class="rootlist"></form-builder-list>' +
               '</div>' +
         '</div>' +
       '</div>'

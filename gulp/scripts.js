@@ -1,8 +1,6 @@
-var path = require('path');
-module.exports = function(gulp, plugins) {
-
+module.exports = function(gulp, plugins, bundle) {
   return function() {
-    var bundle = plugins.browserify({
+    bundle = bundle || plugins.browserify({
       entries: './src/ngFormBuilder.js',
       debug: false
     });
@@ -19,5 +17,4 @@ module.exports = function(gulp, plugins) {
         this.emit('end');
       });
   };
-
 };

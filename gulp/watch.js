@@ -1,29 +1,25 @@
 'use strict';
 
+var path = require('path');
+
 module.exports = function(gulp, plugins) {
-  var b = plugins.watchify(
-    plugins.browserify({
+  return function() {
+    var bundle = plugins.browserify({
       entries: './src/ngFormBuilder.js',
-      debug: false
-    })
-  );
+      debug: true
+    });
 
-  var bundle = function() {
-    console.log('writing: dist/ngFormBuilder.js and dist/ngFormBuilder.min.js');
+    var build = require('./scripts')(gulp, plugins, bundle);
+    bundle = plugins.watchify(bundle);
+    bundle.on('update', function(files) {
+      console.log('Changed files: ', files.map(path.relative.bind(path, process.cwd())).join(', '));
+      console.log('Rebuilding dist/ngFormBuilder.js...');
+      build();
+    });
+    bundle.on('log', function(msg) {
+      console.log(msg);
+    });
 
-    return b
-      .bundle()
-      .pipe(plugins.source('ngFormBuilder.js'))
-      .pipe(gulp.dest('dist/'))
-      .pipe(plugins.rename('ngFormBuilder.min.js'))
-      .pipe(plugins.streamify(plugins.uglify()))
-      .pipe(gulp.dest('dist/'))
-      .on('error', function(err) {
-        console.log(err);
-        this.emit('end');
-      });
+    return build();
   };
-
-  b.on('update', bundle);
-  return bundle;
 };
