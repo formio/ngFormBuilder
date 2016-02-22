@@ -3,7 +3,7 @@ module.exports = function(app) {
     'formioComponentsProvider',
     function(formioComponentsProvider) {
       formioComponentsProvider.register('resource', {
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.resources = [];
           $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
             $scope.resources = resources;
@@ -11,7 +11,7 @@ module.exports = function(app) {
               $scope.component.resource = resources[0]._id;
             }
           });
-        },
+        }],
         icon: 'fa fa-files-o',
         views: [
           {

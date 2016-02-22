@@ -66,11 +66,11 @@ module.exports = function(app) {
       FORM_OPTIONS
     ) {
       formioComponentsProvider.register('button', {
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.actions = FORM_OPTIONS.actions;
           $scope.sizes = FORM_OPTIONS.sizes;
           $scope.themes = FORM_OPTIONS.themes;
-        },
+        }],
         icon: 'fa fa-stop',
         views: [
           {
@@ -452,7 +452,7 @@ module.exports = function(app) {
     'formioComponentsProvider',
     function(formioComponentsProvider) {
       formioComponentsProvider.register('datetime', {
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.setFormat = function() {
             if ($scope.component.enableDate && $scope.component.enableTime) {
               $scope.component.format = 'yyyy-MM-dd HH:mm';
@@ -479,7 +479,7 @@ module.exports = function(app) {
               label: 'Year'
             }
           ];
-        },
+        }],
         icon: 'fa fa-clock-o',
         views: [
           {
@@ -682,12 +682,16 @@ module.exports = function(app) {
       formioComponentsProvider
     ) {
       formioComponentsProvider.register('file', {
-        onEdit: function($scope, component, Formio, FormioPlugins) {
-          // Pull out title and name from the list of storage plugins.
-          $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
-            return _.pick(storage, ['title', 'name']);
-          });
-        },
+        onEdit: [
+          '$scope',
+          'FormioPlugins',
+          function($scope, FormioPlugins) {
+            // Pull out title and name from the list of storage plugins.
+            $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
+              return _.pick(storage, ['title', 'name']);
+            });
+          }
+        ],
         icon: 'fa fa-file',
         views: [
           {
@@ -980,9 +984,9 @@ module.exports = function(app) {
       formioComponentsProvider.register('panel', {
         fbtemplate: 'formio/formbuilder/panel.html',
         icon: 'fa fa-list-alt',
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.themes = FORM_OPTIONS.themes;
-        },
+        }],
         views: [
           {
             name: 'Display',
@@ -1213,7 +1217,7 @@ module.exports = function(app) {
     'formioComponentsProvider',
     function(formioComponentsProvider) {
       formioComponentsProvider.register('resource', {
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.resources = [];
           $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
             $scope.resources = resources;
@@ -1221,7 +1225,7 @@ module.exports = function(app) {
               $scope.component.resource = resources[0]._id;
             }
           });
-        },
+        }],
         icon: 'fa fa-files-o',
         views: [
           {
@@ -1312,13 +1316,95 @@ module.exports = function(app) {
             template: 'formio/components/common/layout.html'
           }
         ],
-        onEdit: function($scope) {
+        onEdit: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
           $scope.dataSources = {
             values: 'Values',
             json: 'Raw JSON',
-            url: 'URL'
+            url: 'URL',
+            resource: 'Resource'
           };
-        },
+          $scope.resources = [];
+          $scope.resourceFields = [];
+
+          // Returns only input fields we are interested in.
+          var getInputFields = function(components) {
+            var fields = [];
+            FormioUtils.eachComponent(components, function(component) {
+              if (component.key && component.input && (component.type !== 'button')) {
+                var comp = _.clone(component);
+                if (!comp.label) {
+                  comp.label = comp.key;
+                }
+                fields.push(comp);
+              }
+            });
+            return fields;
+          };
+
+          $scope.formFields = getInputFields($scope.form.components);
+
+          // Loads the selected fields.
+          var loadFields = function() {
+            if (!$scope.component.data.resource || ($scope.resources.length === 0)) {
+              return;
+            }
+            var selected = null;
+            $scope.resourceFields = [];
+            if ($scope.formio.projectId) {
+              $scope.component.data.project = $scope.formio.projectId;
+            }
+            for (var index in $scope.resources) {
+              if ($scope.resources[index]._id.toString() === $scope.component.data.resource) {
+                selected = $scope.resources[index];
+                break;
+              }
+            }
+            if (selected) {
+              var fields = getInputFields(selected.components);
+              for (var i in fields) {
+                var field = fields[i];
+                var title = field.label || field.key;
+                $scope.resourceFields.push({
+                  property: 'data.' + field.key,
+                  title: title
+                });
+              }
+              if (!$scope.component.valueProperty && $scope.resourceFields.length) {
+                $scope.component.valueProperty = $scope.resourceFields[0].property;
+              }
+            }
+          };
+
+          $scope.$watch('component.dataSrc', function(source) {
+            if (($scope.resources.length === 0) && (source === 'resource')) {
+              $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+                $scope.resources = resources;
+                loadFields();
+              });
+            }
+          });
+
+          // Trigger when the resource changes.
+          $scope.$watch('component.data.resource', function(resourceId) {
+            if (!resourceId) {
+              return;
+            }
+            loadFields();
+          });
+
+          // Update other parameters when the value property changes.
+          $scope.$watch('component.valueProperty', function(property) {
+            if (!property) {
+              return;
+            }
+            if ($scope.component.dataSrc === 'resource') {
+              $scope.component.searchField = property;
+              $scope.component.template = '<span>{{ item.' + property + ' }}</span>';
+            }
+          });
+
+          loadFields();
+        }],
         documentation: 'http://help.form.io/userguide/#select'
       });
     }
@@ -1342,11 +1428,23 @@ module.exports = function(app) {
             '</div>' +
             '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
+            '<div class="form-group" ng-switch-when="resource">' +
+              '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+              '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.data.resource"></select>' +
+            '</div>' +
           '</ng-switch>' +
-
-          '<form-builder-option ng-hide="component.dataSrc == \'values\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
+          '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
+          '<div class="form-group" ng-hide="component.dataSrc !== \'resource\' || !component.data.resource || resourceFields.length == 0">' +
+            '<label for="placeholder" form-builder-tooltip="The field to use as the value.">Value</label>' +
+            '<select class="form-control" id="valueProperty" name="valueProperty" ng-options="value.property as value.title for value in resourceFields" ng-model="component.valueProperty"></select>' +
+          '</div>' +
+          '<div class="form-group" ng-hide="component.dataSrc !== \'resource\'">' +
+            '<label for="placeholder" form-builder-tooltip="Refresh this field when this field changes.">Refresh On</label>' +
+            '<select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
+          '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
-          '<div class="form-group">' +
+          '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
+          '<div class="form-group" ng-show="component.dataSrc !== \'resource\'">' +
             '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
@@ -2208,12 +2306,12 @@ module.exports = [
         template: 'formio/components/settings.html',
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
-        controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
+        controller: ['$scope', 'Formio', 'FormioPlugins', '$controller', function($scope, Formio, FormioPlugins, $controller) {
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit
           ) {
-            $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
+            $controller($scope.formComponent.onEdit, {$scope: $scope});
           }
 
           $scope.$watch('component.multiple', function(value) {

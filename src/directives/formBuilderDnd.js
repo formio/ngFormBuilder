@@ -117,12 +117,12 @@ module.exports = [
         template: 'formio/components/settings.html',
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
-        controller: ['$scope', 'Formio', 'FormioPlugins', function($scope, Formio, FormioPlugins) {
+        controller: ['$scope', 'Formio', 'FormioPlugins', '$controller', function($scope, Formio, FormioPlugins, $controller) {
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit
           ) {
-            $scope.formComponent.onEdit($scope, component, Formio, FormioPlugins);
+            $controller($scope.formComponent.onEdit, {$scope: $scope});
           }
 
           $scope.$watch('component.multiple', function(value) {
