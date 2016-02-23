@@ -48,6 +48,11 @@ module.exports = function(app) {
           '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
         '</ng-form>'
       );
+
+      // Create the common Layout tab markup.
+      $templateCache.put('formio/components/common/conditional.html',
+        '<form-builder-conditional></form-builder-conditional>'
+      );
     }
   ]);
 };

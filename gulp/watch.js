@@ -1,6 +1,8 @@
-var path = require('path');
-module.exports = function(gulp, plugins) {
+'use strict';
 
+var path = require('path');
+
+module.exports = function(gulp, plugins) {
   return function() {
     var bundle = plugins.browserify({
       entries: './src/ngFormBuilder.js',
@@ -20,5 +22,4 @@ module.exports = function(gulp, plugins) {
 
     return build();
   };
-
 };

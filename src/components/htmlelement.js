@@ -9,6 +9,14 @@ module.exports = function(app) {
           {
             name: 'Display',
             template: 'formio/components/htmlelement/display.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#html-element-component'
@@ -36,7 +44,7 @@ module.exports = function(app) {
             'value-label="Attribute" ' +
             'label-label="Value" ' +
             'no-autocomplete-value="true" ' +
-            '></value-builder>' +
+          '></value-builder>' +
           '<div class="form-group">' +
             '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
             '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +

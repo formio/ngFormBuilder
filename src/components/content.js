@@ -10,7 +10,17 @@ module.exports = function(app) {
           $scope.$watch('component.html', function() {
             $scope.$emit('formBuilder:update');
           });
-        }
+        },
+        views: [
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ]
       });
     }
   ]);

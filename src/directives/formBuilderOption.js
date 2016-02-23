@@ -21,7 +21,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
-      var input = angular.element('<input></input>');
+      var input = angular.element('<input>');
       var inputAttrs = {
         id: property,
         name: property,
