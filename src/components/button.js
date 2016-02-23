@@ -7,11 +7,11 @@ module.exports = function(app) {
       FORM_OPTIONS
     ) {
       formioComponentsProvider.register('button', {
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.actions = FORM_OPTIONS.actions;
           $scope.sizes = FORM_OPTIONS.sizes;
           $scope.themes = FORM_OPTIONS.themes;
-        },
+        }],
         icon: 'fa fa-stop',
         views: [
           {

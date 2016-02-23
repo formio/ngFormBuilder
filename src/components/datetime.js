@@ -3,7 +3,7 @@ module.exports = function(app) {
     'formioComponentsProvider',
     function(formioComponentsProvider) {
       formioComponentsProvider.register('datetime', {
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.setFormat = function() {
             if ($scope.component.enableDate && $scope.component.enableTime) {
               $scope.component.format = 'yyyy-MM-dd HH:mm';
@@ -30,7 +30,7 @@ module.exports = function(app) {
               label: 'Year'
             }
           ];
-        },
+        }],
         icon: 'fa fa-clock-o',
         views: [
           {

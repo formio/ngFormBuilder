@@ -9,9 +9,9 @@ module.exports = function(app) {
       formioComponentsProvider.register('panel', {
         fbtemplate: 'formio/formbuilder/panel.html',
         icon: 'fa fa-list-alt',
-        onEdit: function($scope) {
+        onEdit: ['$scope', function($scope) {
           $scope.themes = FORM_OPTIONS.themes;
-        },
+        }],
         views: [
           {
             name: 'Display',

@@ -5,12 +5,16 @@ module.exports = function(app) {
       formioComponentsProvider
     ) {
       formioComponentsProvider.register('file', {
-        onEdit: function($scope, component, Formio, FormioPlugins) {
-          // Pull out title and name from the list of storage plugins.
-          $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
-            return _.pick(storage, ['title', 'name']);
-          });
-        },
+        onEdit: [
+          '$scope',
+          'FormioPlugins',
+          function($scope, FormioPlugins) {
+            // Pull out title and name from the list of storage plugins.
+            $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
+              return _.pick(storage, ['title', 'name']);
+            });
+          }
+        ],
         icon: 'fa fa-file',
         views: [
           {
