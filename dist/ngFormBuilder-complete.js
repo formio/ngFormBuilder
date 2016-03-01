@@ -48252,6 +48252,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<value-builder data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
@@ -49923,7 +49924,6 @@ module.exports = function() {
   return {
     scope: {
       data: '=',
-      default: '=',
       label: '@',
       tooltipText: '@',
       valueLabel: '@',
@@ -49950,12 +49950,8 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<div ng-if="default !== undefined">' +
-                  '<label form-builder-tooltip="The value to assign to this component before user interaction.">Default Value</label><br>' +
-                  '<input type="text" class="form-control" value="" ng-model="default"><br>' +
-                '</div>' +
                 '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
-                '</div>',
+              '</div>',
     replace: true,
     link: function($scope, el, attrs) {
       $scope.valueProperty = $scope.valueProperty || 'value';
