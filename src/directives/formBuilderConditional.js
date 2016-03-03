@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('formio-utils');
 
 module.exports = [
   function() {
@@ -37,11 +38,12 @@ module.exports = [
           ];
 
           // Filter the list of available form components for conditional logic.
-          $scope._components = _(_.get($scope, 'form.components') || [])
-            .reject(function(c) {
-              return !c.input || (c.type === 'button');
-            })
-            .value();
+          $scope._components = _.get($scope, 'form.components') || [];
+          $scope._components = utils.flattenComponents($scope._components);
+          // Remove non-input/button fields because they don't make sense.
+          $scope._components = _.reject($scope._components, function(c) {
+            return !c.input || (c.type === 'button');
+          });
 
           // Default and watch the show logic.
           $scope.component.conditional.show = $scope.component.conditional.show || null;

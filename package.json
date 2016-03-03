@@ -43,6 +43,7 @@
     "angular": "^1.5.0",
     "angular-drag-and-drop-lists": "^1.4.0",
     "angular-ui-bootstrap": "^1.1.2",
+    "formio-utils": "^0.1.5",
     "lodash": "^4.3.0",
     "ng-ckeditor": "github:formio/ng-ckeditor",
     "ng-dialog": "^0.5.6",
