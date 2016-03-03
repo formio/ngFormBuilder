@@ -70,9 +70,10 @@ module.exports = [
     };
 
     var remove = function(component) {
-      var list = $scope.component.components;
-      list.splice(list.indexOf(component), 1);
-      $scope.emit('remove', component);
+      if ($scope.component.components.indexOf(component) !== -1) {
+        $scope.component.components.splice($scope.component.components.indexOf(component), 1);
+        $scope.emit('remove', component);
+      }
     };
 
     $scope.removeComponent = function(component, shouldConfirm) {
