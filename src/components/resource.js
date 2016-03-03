@@ -5,7 +5,8 @@ module.exports = function(app) {
       formioComponentsProvider.register('resource', {
         onEdit: ['$scope', function($scope) {
           $scope.resources = [];
-          $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+          $scope.component.project = $scope.formio.projectId;
+          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
             $scope.resources = resources;
             if (!$scope.component.resource) {
               $scope.component.resource = resources[0]._id;
