@@ -1,8 +1,76 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = {
+  /**
+   * Iterate through each component within a form.
+   * @param components
+   * @param fn
+   */
+  eachComponent: function eachComponent(components, fn) {
+    if (!components) return;
+
+    components.forEach(function(component) {
+      if (component.columns && Array.isArray(component.columns)) {
+        component.columns.forEach(function(column) {
+          eachComponent(column.components, fn);
+        });
+      }
+
+      else if (component.rows && Array.isArray(component.rows)) {
+        [].concat.apply([], component.rows).forEach(function(row) {
+          eachComponent(row.components, fn);
+        });
+      }
+
+      else if (component.components && Array.isArray(component.components)) {
+        eachComponent(component.components, fn);
+      }
+
+      else {
+        fn(component);
+      }
+      // If the component is a tree, be sure to add it back in as well.
+      if (component.tree) {
+        fn(component);
+      }
+    });
+  },
+
+  /**
+   * Get a component by its key
+   * @param components
+   * @param key The key of the component to get
+   * @returns The component that matches the given key, or undefined if not found.
+   */
+  getComponent: function getComponent(components, key) {
+    var result;
+    module.exports.eachComponent(components, function(component) {
+      if (component.key === key) {
+        result = component;
+      }
+    });
+    return result;
+  },
+
+  /**
+   * Flatten the form components for data manipulation.
+   * @param components
+   * @param flattened
+   * @returns {*|{}}
+   */
+  flattenComponents: function flattenComponents(components) {
+    var flattened = {};
+    module.exports.eachComponent(components, function(component) {
+      flattened[component.key] = component;
+    });
+    return flattened;
+  }
+};
+
+},{}],2:[function(require,module,exports){
 (function (global){
 /**
  * @license
- * lodash 4.5.1 (Custom Build) <https://lodash.com/>
+ * lodash 4.4.0 (Custom Build) <https://lodash.com/>
  * Build: `lodash -d -o ./foo/lodash.js`
  * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -15,7 +83,7 @@
   var undefined;
 
   /** Used as the semantic version number. */
-  var VERSION = '4.5.1';
+  var VERSION = '4.4.0';
 
   /** Used to compose bitmasks for wrapper metadata. */
   var BIND_FLAG = 1,
@@ -1036,26 +1104,6 @@
   }
 
   /**
-   * Gets the number of `placeholder` occurrences in `array`.
-   *
-   * @private
-   * @param {Array} array The array to inspect.
-   * @param {*} placeholder The placeholder to search for.
-   * @returns {number} Returns the placeholder count.
-   */
-  function countHolders(array, placeholder) {
-    var length = array.length,
-        result = 0;
-
-    while (length--) {
-      if (array[length] === placeholder) {
-        result++;
-      }
-    }
-    return result;
-  }
-
-  /**
    * Used by `_.deburr` to convert latin-1 supplementary letters to basic latin letters.
    *
    * @private
@@ -1193,8 +1241,7 @@
         result = [];
 
     while (++index < length) {
-      var value = array[index];
-      if (value === placeholder || value === PLACEHOLDER) {
+      if (array[index] === placeholder) {
         array[index] = PLACEHOLDER;
         result[++resIndex] = index;
       }
@@ -1453,26 +1500,25 @@
      * The wrapper methods that are **not** chainable by default are:
      * `add`, `attempt`, `camelCase`, `capitalize`, `ceil`, `clamp`, `clone`,
      * `cloneDeep`, `cloneDeepWith`, `cloneWith`, `deburr`, `endsWith`, `eq`,
-     * `escape`, `escapeRegExp`, `every`, `find`, `findIndex`, `findKey`, `findLast`,
-     * `findLastIndex`, `findLastKey`, `floor`, `forEach`, `forEachRight`, `forIn`,
-     * `forInRight`, `forOwn`, `forOwnRight`, `get`, `gt`, `gte`, `has`, `hasIn`,
-     * `head`, `identity`, `includes`, `indexOf`, `inRange`, `invoke`, `isArguments`,
-     * `isArray`, `isArrayBuffer`, `isArrayLike`, `isArrayLikeObject`, `isBoolean`,
-     * `isBuffer`, `isDate`, `isElement`, `isEmpty`, `isEqual`, `isEqualWith`,
-     * `isError`, `isFinite`, `isFunction`, `isInteger`, `isLength`, `isMap`,
-     * `isMatch`, `isMatchWith`, `isNaN`, `isNative`, `isNil`, `isNull`, `isNumber`,
-     * `isObject`, `isObjectLike`, `isPlainObject`, `isRegExp`, `isSafeInteger`,
-     * `isSet`, `isString`, `isUndefined`, `isTypedArray`, `isWeakMap`, `isWeakSet`,
-     * `join`, `kebabCase`, `last`, `lastIndexOf`, `lowerCase`, `lowerFirst`,
-     * `lt`, `lte`, `max`, `maxBy`, `mean`, `min`, `minBy`, `noConflict`, `noop`,
-     * `now`, `pad`, `padEnd`, `padStart`, `parseInt`, `pop`, `random`, `reduce`,
-     * `reduceRight`, `repeat`, `result`, `round`, `runInContext`, `sample`,
-     * `shift`, `size`, `snakeCase`, `some`, `sortedIndex`, `sortedIndexBy`,
-     * `sortedLastIndex`, `sortedLastIndexBy`, `startCase`, `startsWith`, `subtract`,
-     * `sum`, `sumBy`, `template`, `times`, `toLower`, `toInteger`, `toLength`,
-     * `toNumber`, `toSafeInteger`, `toString`, `toUpper`, `trim`, `trimEnd`,
-     * `trimStart`, `truncate`, `unescape`, `uniqueId`, `upperCase`, `upperFirst`,
-     * `value`, and `words`
+     * `escape`, `escapeRegExp`, `every`, `find`, `findIndex`, `findKey`,
+     * `findLast`, `findLastIndex`, `findLastKey`, `floor`, `forEach`, `forEachRight`,
+     * `forIn`, `forInRight`, `forOwn`, `forOwnRight`, `get`, `gt`, `gte`, `has`,
+     * `hasIn`, `head`, `identity`, `includes`, `indexOf`, `inRange`, `invoke`,
+     * `isArguments`, `isArray`, `isArrayLike`, `isArrayLikeObject`, `isBoolean`,
+     * `isDate`, `isElement`, `isEmpty`, `isEqual`, `isEqualWith`, `isError`,
+     * `isFinite`, `isFunction`, `isInteger`, `isLength`, `isMatch`, `isMatchWith`,
+     * `isNaN`, `isNative`, `isNil`, `isNull`, `isNumber`, `isObject`, `isObjectLike`,
+     * `isPlainObject`, `isRegExp`, `isSafeInteger`, `isString`, `isUndefined`,
+     * `isTypedArray`, `join`, `kebabCase`, `last`, `lastIndexOf`, `lowerCase`,
+     * `lowerFirst`, `lt`, `lte`, `max`, `maxBy`, `mean`, `min`, `minBy`,
+     * `noConflict`, `noop`, `now`, `pad`, `padEnd`, `padStart`, `parseInt`,
+     * `pop`, `random`, `reduce`, `reduceRight`, `repeat`, `result`, `round`,
+     * `runInContext`, `sample`, `shift`, `size`, `snakeCase`, `some`, `sortedIndex`,
+     * `sortedIndexBy`, `sortedLastIndex`, `sortedLastIndexBy`, `startCase`,
+     * `startsWith`, `subtract`, `sum`, `sumBy`, `template`, `times`, `toLower`,
+     * `toInteger`, `toLength`, `toNumber`, `toSafeInteger`, `toString`, `toUpper`,
+     * `trim`, `trimEnd`, `trimStart`, `truncate`, `unescape`, `uniqueId`,
+     * `upperCase`, `upperFirst`, `value`, and `words`
      *
      * @name _
      * @constructor
@@ -2184,7 +2230,8 @@
      */
     function assignValue(object, key, value) {
       var objValue = object[key];
-      if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+      if ((!eq(objValue, value) ||
+            (eq(objValue, objectProto[key]) && !hasOwnProperty.call(object, key))) ||
           (value === undefined && !(key in object))) {
         object[key] = value;
       }
@@ -2341,10 +2388,9 @@
             return copySymbols(value, baseAssign(result, value));
           }
         } else {
-          if (!cloneableTags[tag]) {
-            return object ? value : {};
-          }
-          result = initCloneByTag(value, tag, isDeep);
+          return cloneableTags[tag]
+            ? initCloneByTag(value, tag, isDeep)
+            : (object ? value : {});
         }
       }
       // Check for circular references and return its corresponding clone.
@@ -3894,28 +3940,23 @@
      * @param {Array|Object} args The provided arguments.
      * @param {Array} partials The arguments to prepend to those provided.
      * @param {Array} holders The `partials` placeholder indexes.
-     * @params {boolean} [isCurried] Specify composing for a curried function.
      * @returns {Array} Returns the new array of composed arguments.
      */
-    function composeArgs(args, partials, holders, isCurried) {
-      var argsIndex = -1,
-          argsLength = args.length,
-          holdersLength = holders.length,
+    function composeArgs(args, partials, holders) {
+      var holdersLength = holders.length,
+          argsIndex = -1,
+          argsLength = nativeMax(args.length - holdersLength, 0),
           leftIndex = -1,
           leftLength = partials.length,
-          rangeLength = nativeMax(argsLength - holdersLength, 0),
-          result = Array(leftLength + rangeLength),
-          isUncurried = !isCurried;
+          result = Array(leftLength + argsLength);
 
       while (++leftIndex < leftLength) {
         result[leftIndex] = partials[leftIndex];
       }
       while (++argsIndex < holdersLength) {
-        if (isUncurried || argsIndex < argsLength) {
-          result[holders[argsIndex]] = args[argsIndex];
-        }
+        result[holders[argsIndex]] = args[argsIndex];
       }
-      while (rangeLength--) {
+      while (argsLength--) {
         result[leftIndex++] = args[argsIndex++];
       }
       return result;
@@ -3929,21 +3970,18 @@
      * @param {Array|Object} args The provided arguments.
      * @param {Array} partials The arguments to append to those provided.
      * @param {Array} holders The `partials` placeholder indexes.
-     * @params {boolean} [isCurried] Specify composing for a curried function.
      * @returns {Array} Returns the new array of composed arguments.
      */
-    function composeArgsRight(args, partials, holders, isCurried) {
-      var argsIndex = -1,
-          argsLength = args.length,
-          holdersIndex = -1,
+    function composeArgsRight(args, partials, holders) {
+      var holdersIndex = -1,
           holdersLength = holders.length,
+          argsIndex = -1,
+          argsLength = nativeMax(args.length - holdersLength, 0),
           rightIndex = -1,
           rightLength = partials.length,
-          rangeLength = nativeMax(argsLength - holdersLength, 0),
-          result = Array(rangeLength + rightLength),
-          isUncurried = !isCurried;
+          result = Array(argsLength + rightLength);
 
-      while (++argsIndex < rangeLength) {
+      while (++argsIndex < argsLength) {
         result[argsIndex] = args[argsIndex];
       }
       var offset = argsIndex;
@@ -3951,9 +3989,7 @@
         result[offset + rightIndex] = partials[rightIndex];
       }
       while (++holdersIndex < holdersLength) {
-        if (isUncurried || argsIndex < argsLength) {
-          result[offset + holders[holdersIndex]] = args[argsIndex++];
-        }
+        result[offset + holders[holdersIndex]] = args[argsIndex++];
       }
       return result;
     }
@@ -4237,9 +4273,10 @@
 
       function wrapper() {
         var length = arguments.length,
-            args = Array(length),
             index = length,
-            placeholder = getPlaceholder(wrapper);
+            args = Array(length),
+            fn = (this && this !== root && this instanceof wrapper) ? Ctor : func,
+            placeholder = lodash.placeholder || wrapper.placeholder;
 
         while (index--) {
           args[index] = arguments[index];
@@ -4249,13 +4286,9 @@
           : replaceHolders(args, placeholder);
 
         length -= holders.length;
-        if (length < arity) {
-          return createRecurryWrapper(
-            func, bitmask, createHybridWrapper, wrapper.placeholder, undefined,
-            args, holders, undefined, undefined, arity - length);
-        }
-        var fn = (this && this !== root && this instanceof wrapper) ? Ctor : func;
-        return apply(fn, this, args);
+        return length < arity
+          ? createRecurryWrapper(func, bitmask, createHybridWrapper, placeholder, undefined, args, holders, undefined, undefined, arity - length)
+          : apply(fn, this, args);
       }
       return wrapper;
     }
@@ -4343,7 +4376,8 @@
       var isAry = bitmask & ARY_FLAG,
           isBind = bitmask & BIND_FLAG,
           isBindKey = bitmask & BIND_KEY_FLAG,
-          isCurried = bitmask & (CURRY_FLAG | CURRY_RIGHT_FLAG),
+          isCurry = bitmask & CURRY_FLAG,
+          isCurryRight = bitmask & CURRY_RIGHT_FLAG,
           isFlip = bitmask & FLIP_FLAG,
           Ctor = isBindKey ? undefined : createCtorWrapper(func);
 
@@ -4355,34 +4389,33 @@
         while (index--) {
           args[index] = arguments[index];
         }
-        if (isCurried) {
-          var placeholder = getPlaceholder(wrapper),
-              holdersCount = countHolders(args, placeholder);
-        }
         if (partials) {
-          args = composeArgs(args, partials, holders, isCurried);
+          args = composeArgs(args, partials, holders);
         }
         if (partialsRight) {
-          args = composeArgsRight(args, partialsRight, holdersRight, isCurried);
+          args = composeArgsRight(args, partialsRight, holdersRight);
         }
-        length -= holdersCount;
-        if (isCurried && length < arity) {
-          var newHolders = replaceHolders(args, placeholder);
-          return createRecurryWrapper(
-            func, bitmask, createHybridWrapper, wrapper.placeholder, thisArg,
-            args, newHolders, argPos, ary, arity - length
-          );
+        if (isCurry || isCurryRight) {
+          var placeholder = lodash.placeholder || wrapper.placeholder,
+              argsHolders = replaceHolders(args, placeholder);
+
+          length -= argsHolders.length;
+          if (length < arity) {
+            return createRecurryWrapper(
+              func, bitmask, createHybridWrapper, placeholder, thisArg, args,
+              argsHolders, argPos, ary, arity - length
+            );
+          }
         }
         var thisBinding = isBind ? thisArg : this,
             fn = isBindKey ? thisBinding[func] : func;
 
-        length = args.length;
         if (argPos) {
           args = reorder(args, argPos);
-        } else if (isFlip && length > 1) {
+        } else if (isFlip && args.length > 1) {
           args.reverse();
         }
-        if (isAry && ary < length) {
+        if (isAry && ary < args.length) {
           args.length = ary;
         }
         if (this && this !== root && this instanceof wrapper) {
@@ -4520,7 +4553,7 @@
      * @param {Function} func The function to wrap.
      * @param {number} bitmask The bitmask of wrapper flags. See `createWrapper` for more details.
      * @param {Function} wrapFunc The function to create the `func` wrapper.
-     * @param {*} placeholder The placeholder value.
+     * @param {*} placeholder The placeholder to replace.
      * @param {*} [thisArg] The `this` binding of `func`.
      * @param {Array} [partials] The arguments to prepend to those provided to the new function.
      * @param {Array} [holders] The `partials` placeholder indexes.
@@ -4532,7 +4565,7 @@
     function createRecurryWrapper(func, bitmask, wrapFunc, placeholder, thisArg, partials, holders, argPos, ary, arity) {
       var isCurry = bitmask & CURRY_FLAG,
           newArgPos = argPos ? copyArray(argPos) : undefined,
-          newHolders = isCurry ? holders : undefined,
+          newsHolders = isCurry ? holders : undefined,
           newHoldersRight = isCurry ? undefined : holders,
           newPartials = isCurry ? partials : undefined,
           newPartialsRight = isCurry ? undefined : partials;
@@ -4544,7 +4577,7 @@
         bitmask &= ~(BIND_FLAG | BIND_KEY_FLAG);
       }
       var newData = [
-        func, bitmask, thisArg, newPartials, newHolders, newPartialsRight,
+        func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight,
         newHoldersRight, newArgPos, ary, arity
       ];
 
@@ -4966,18 +4999,6 @@
     }
 
     /**
-     * Gets the argument placeholder value for `func`.
-     *
-     * @private
-     * @param {Function} func The function to inspect.
-     * @returns {*} Returns the placeholder value.
-     */
-    function getPlaceholder(func) {
-      var object = hasOwnProperty.call(lodash, 'placeholder') ? lodash : func;
-      return object.placeholder;
-    }
-
-    /**
      * Creates an array of the own symbol properties of `object`.
      *
      * @private
@@ -5103,9 +5124,11 @@
      * @returns {Object} Returns the initialized clone.
      */
     function initCloneObject(object) {
-      return (isFunction(object.constructor) && !isPrototype(object))
-        ? baseCreate(getPrototypeOf(object))
-        : {};
+      if (isPrototype(object)) {
+        return {};
+      }
+      var Ctor = object.constructor;
+      return baseCreate(isFunction(Ctor) ? Ctor.prototype : undefined);
     }
 
     /**
@@ -5252,7 +5275,7 @@
      */
     function isPrototype(value) {
       var Ctor = value && value.constructor,
-          proto = (isFunction(Ctor) && Ctor.prototype) || objectProto;
+          proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
 
       return value === proto;
     }
@@ -5291,9 +5314,9 @@
           isCommon = newBitmask < (BIND_FLAG | BIND_KEY_FLAG | ARY_FLAG);
 
       var isCombo =
-        ((srcBitmask == ARY_FLAG) && (bitmask == CURRY_FLAG)) ||
-        ((srcBitmask == ARY_FLAG) && (bitmask == REARG_FLAG) && (data[7].length <= source[8])) ||
-        ((srcBitmask == (ARY_FLAG | REARG_FLAG)) && (source[7].length <= source[8]) && (bitmask == CURRY_FLAG));
+        (srcBitmask == ARY_FLAG && (bitmask == CURRY_FLAG)) ||
+        (srcBitmask == ARY_FLAG && (bitmask == REARG_FLAG) && (data[7].length <= source[8])) ||
+        (srcBitmask == (ARY_FLAG | REARG_FLAG) && (source[7].length <= source[8]) && (bitmask == CURRY_FLAG));
 
       // Exit early if metadata can't be merged.
       if (!(isCommon || isCombo)) {
@@ -5303,7 +5326,7 @@
       if (srcBitmask & BIND_FLAG) {
         data[2] = source[2];
         // Set when currying a bound function.
-        newBitmask |= bitmask & BIND_FLAG ? 0 : CURRY_BOUND_FLAG;
+        newBitmask |= (bitmask & BIND_FLAG) ? 0 : CURRY_BOUND_FLAG;
       }
       // Compose partial arguments.
       var value = source[3];
@@ -6235,8 +6258,7 @@
      * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
      * for equality comparisons.
      *
-     * **Note:** Unlike `_.without`, this method mutates `array`. Use `_.remove`
-     * to remove elements from an array by predicate.
+     * **Note:** Unlike `_.without`, this method mutates `array`.
      *
      * @static
      * @memberOf _
@@ -6341,11 +6363,10 @@
 
     /**
      * Removes all elements from `array` that `predicate` returns truthy for
-     * and returns an array of the removed elements. The predicate is invoked
-     * with three arguments: (value, index, array).
+     * and returns an array of the removed elements. The predicate is invoked with
+     * three arguments: (value, index, array).
      *
-     * **Note:** Unlike `_.filter`, this method mutates `array`. Use `_.pull`
-     * to pull elements from an array by value.
+     * **Note:** Unlike `_.filter`, this method mutates `array`.
      *
      * @static
      * @memberOf _
@@ -8508,7 +8529,9 @@
     var bind = rest(function(func, thisArg, partials) {
       var bitmask = BIND_FLAG;
       if (partials.length) {
-        var holders = replaceHolders(partials, getPlaceholder(bind));
+        var placeholder = lodash.placeholder || bind.placeholder,
+            holders = replaceHolders(partials, placeholder);
+
         bitmask |= PARTIAL_FLAG;
       }
       return createWrapper(func, bitmask, thisArg, partials, holders);
@@ -8561,7 +8584,9 @@
     var bindKey = rest(function(object, key, partials) {
       var bitmask = BIND_FLAG | BIND_KEY_FLAG;
       if (partials.length) {
-        var holders = replaceHolders(partials, getPlaceholder(bindKey));
+        var placeholder = lodash.placeholder || bindKey.placeholder,
+            holders = replaceHolders(partials, placeholder);
+
         bitmask |= PARTIAL_FLAG;
       }
       return createWrapper(key, bitmask, object, partials, holders);
@@ -8610,7 +8635,7 @@
     function curry(func, arity, guard) {
       arity = guard ? undefined : arity;
       var result = createWrapper(func, CURRY_FLAG, undefined, undefined, undefined, undefined, undefined, arity);
-      result.placeholder = curry.placeholder;
+      result.placeholder = lodash.placeholder || curry.placeholder;
       return result;
     }
 
@@ -8654,7 +8679,7 @@
     function curryRight(func, arity, guard) {
       arity = guard ? undefined : arity;
       var result = createWrapper(func, CURRY_RIGHT_FLAG, undefined, undefined, undefined, undefined, undefined, arity);
-      result.placeholder = curryRight.placeholder;
+      result.placeholder = lodash.placeholder || curryRight.placeholder;
       return result;
     }
 
@@ -9078,7 +9103,9 @@
      * // => 'hi fred'
      */
     var partial = rest(function(func, partials) {
-      var holders = replaceHolders(partials, getPlaceholder(partial));
+      var placeholder = lodash.placeholder || partial.placeholder,
+          holders = replaceHolders(partials, placeholder);
+
       return createWrapper(func, PARTIAL_FLAG, undefined, partials, holders);
     });
 
@@ -9114,7 +9141,9 @@
      * // => 'hello fred'
      */
     var partialRight = rest(function(func, partials) {
-      var holders = replaceHolders(partials, getPlaceholder(partialRight));
+      var placeholder = lodash.placeholder || partialRight.placeholder,
+          holders = replaceHolders(partials, placeholder);
+
       return createWrapper(func, PARTIAL_RIGHT_FLAG, undefined, partials, holders);
     });
 
@@ -9913,8 +9942,9 @@
       if (!isObjectLike(value)) {
         return false;
       }
+      var Ctor = value.constructor;
       return (objectToString.call(value) == errorTag) ||
-        (typeof value.message == 'string' && typeof value.name == 'string');
+        (typeof Ctor == 'function' && objectToString.call(Ctor.prototype) == errorTag);
     }
 
     /**
@@ -10327,7 +10357,10 @@
           objectToString.call(value) != objectTag || isHostObject(value)) {
         return false;
       }
-      var proto = getPrototypeOf(value);
+      var proto = objectProto;
+      if (typeof value.constructor == 'function') {
+        proto = getPrototypeOf(value);
+      }
       if (proto === null) {
         return true;
       }
@@ -11541,8 +11574,7 @@
     /**
      * The opposite of `_.mapValues`; this method creates an object with the
      * same values as `object` and keys generated by running each own enumerable
-     * property of `object` through `iteratee`. The iteratee is invoked with
-     * three arguments: (value, key, object).
+     * property of `object` through `iteratee`.
      *
      * @static
      * @memberOf _
@@ -11570,7 +11602,7 @@
     /**
      * Creates an object with the same keys as `object` and values generated by
      * running each own enumerable property of `object` through `iteratee`. The
-     * iteratee is invoked with three arguments: (value, key, object).
+     * iteratee function is invoked with three arguments: (value, key, object).
      *
      * @static
      * @memberOf _
@@ -11703,10 +11735,9 @@
     });
 
     /**
-     * The opposite of `_.pickBy`; this method creates an object composed of
-     * the own and inherited enumerable properties of `object` that `predicate`
-     * doesn't return truthy for. The predicate is invoked with two arguments:
-     * (value, key).
+     * The opposite of `_.pickBy`; this method creates an object composed of the
+     * own and inherited enumerable properties of `object` that `predicate`
+     * doesn't return truthy for.
      *
      * @static
      * @memberOf _
@@ -11722,7 +11753,7 @@
      * // => { 'b': '2' }
      */
     function omitBy(object, predicate) {
-      predicate = getIteratee(predicate);
+      predicate = getIteratee(predicate, 2);
       return basePickBy(object, function(value, key) {
         return !predicate(value, key);
       });
@@ -11767,7 +11798,7 @@
      * // => { 'a': 1, 'c': 3 }
      */
     function pickBy(object, predicate) {
-      return object == null ? {} : basePickBy(object, getIteratee(predicate));
+      return object == null ? {} : basePickBy(object, getIteratee(predicate, 2));
     }
 
     /**
@@ -11957,7 +11988,7 @@
           if (isArr) {
             accumulator = isArray(object) ? new Ctor : [];
           } else {
-            accumulator = isFunction(Ctor) ? baseCreate(getPrototypeOf(object)) : {};
+            accumulator = baseCreate(isFunction(Ctor) ? Ctor.prototype : undefined);
           }
         } else {
           accumulator = {};
@@ -13953,8 +13984,8 @@
     var rangeRight = createRange(true);
 
     /**
-     * Invokes the iteratee `n` times, returning an array of the results of
-     * each invocation. The iteratee is invoked with one argument; (index).
+     * Invokes the iteratee function `n` times, returning an array of the results
+     * of each invocation. The iteratee is invoked with one argument; (index).
      *
      * @static
      * @memberOf _
@@ -14935,7 +14966,7 @@
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -14996,7 +15027,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15066,7 +15097,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15125,7 +15156,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15160,7 +15191,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -15221,7 +15252,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15272,7 +15303,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15312,7 +15343,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15374,7 +15405,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15430,7 +15461,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15600,7 +15631,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15615,7 +15646,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15670,7 +15701,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15748,7 +15779,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15804,7 +15835,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15863,7 +15894,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -15902,7 +15933,7 @@ require('./panel')(app);
 require('./table')(app);
 require('./well')(app);
 
-},{"./address":2,"./button":3,"./checkbox":4,"./columns":5,"./components":6,"./container":7,"./content":8,"./custom":9,"./datagrid":10,"./datetime":11,"./email":12,"./fieldset":13,"./file":14,"./hidden":15,"./htmlelement":16,"./number":18,"./page":19,"./panel":20,"./password":21,"./phonenumber":22,"./radio":23,"./resource":24,"./select":25,"./selectboxes":26,"./signature":27,"./table":28,"./textarea":29,"./textfield":30,"./well":31}],18:[function(require,module,exports){
+},{"./address":3,"./button":4,"./checkbox":5,"./columns":6,"./components":7,"./container":8,"./content":9,"./custom":10,"./datagrid":11,"./datetime":12,"./email":13,"./fieldset":14,"./file":15,"./hidden":16,"./htmlelement":17,"./number":19,"./page":20,"./panel":21,"./password":22,"./phonenumber":23,"./radio":24,"./resource":25,"./select":26,"./selectboxes":27,"./signature":28,"./table":29,"./textarea":30,"./textfield":31,"./well":32}],19:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15967,7 +15998,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -15988,7 +16019,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16055,7 +16086,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16121,7 +16152,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16186,7 +16217,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16248,7 +16279,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16333,7 +16364,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16515,7 +16546,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16584,7 +16615,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16644,7 +16675,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16715,7 +16746,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16751,7 +16782,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16819,7 +16850,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16856,7 +16887,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -17029,7 +17060,7 @@ module.exports = {
   }
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -17092,7 +17123,7 @@ module.exports = {
   ]
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 module.exports = ['debounce', function(debounce) {
   return {
@@ -17256,7 +17287,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -17272,11 +17303,12 @@ module.exports = [
   }
 ];
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 'use strict';
 
 var _ = require('lodash');
+var utils = require('formio-utils');
 
 module.exports = [
   function() {
@@ -17313,11 +17345,12 @@ module.exports = [
           ];
 
           // Filter the list of available form components for conditional logic.
-          $scope._components = _(_.get($scope, 'form.components') || [])
-            .reject(function(c) {
-              return !c.input || (c.type === 'button');
-            })
-            .value();
+          $scope._components = _.get($scope, 'form.components') || [];
+          $scope._components = utils.flattenComponents($scope._components);
+          // Remove non-input/button fields because they don't make sense.
+          $scope._components = _.reject($scope._components, function(c) {
+            return !c.input || (c.type === 'button');
+          });
 
           // Default and watch the show logic.
           $scope.component.conditional.show = $scope.component.conditional.show || null;
@@ -17351,7 +17384,7 @@ module.exports = [
   }
 ];
 
-},{"lodash":1}],37:[function(require,module,exports){
+},{"formio-utils":1,"lodash":2}],38:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$scope',
@@ -17519,7 +17552,7 @@ module.exports = [
   }
 ];
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -17543,7 +17576,7 @@ module.exports = [
   }
 ];
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -17564,7 +17597,7 @@ module.exports = [
   }
 ];
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -17625,7 +17658,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   };
 }];
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -17654,7 +17687,7 @@ module.exports = function() {
   };
 };
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -17719,7 +17752,7 @@ module.exports = function() {
   };
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -17740,7 +17773,7 @@ module.exports = [
   }
 ];
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -17792,7 +17825,7 @@ module.exports = function() {
   };
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -17831,7 +17864,7 @@ module.exports = function() {
   };
 };
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -17868,7 +17901,7 @@ module.exports = function() {
   };
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -17891,7 +17924,7 @@ module.exports = function() {
   };
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -17970,7 +18003,7 @@ module.exports = function() {
   };
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -18004,7 +18037,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 /*global window: false, console: false */
 /*jshint browser: true */
@@ -18196,4 +18229,4 @@ app.run([
 
 require('./components');
 
-},{"./components":17,"./constants/commonOptions":32,"./constants/formOptions":33,"./directives/formBuilder":34,"./directives/formBuilderComponent":35,"./directives/formBuilderConditional":36,"./directives/formBuilderDnd":37,"./directives/formBuilderElement":38,"./directives/formBuilderList":39,"./directives/formBuilderOption":40,"./directives/formBuilderOptionCustomValidation":41,"./directives/formBuilderOptionKey":42,"./directives/formBuilderRow":43,"./directives/formBuilderTable":44,"./directives/formBuilderTooltip":45,"./directives/jsonInput":46,"./directives/validApiKey":47,"./directives/valueBuilder":48,"./factories/debounce":49}]},{},[50]);
+},{"./components":18,"./constants/commonOptions":33,"./constants/formOptions":34,"./directives/formBuilder":35,"./directives/formBuilderComponent":36,"./directives/formBuilderConditional":37,"./directives/formBuilderDnd":38,"./directives/formBuilderElement":39,"./directives/formBuilderList":40,"./directives/formBuilderOption":41,"./directives/formBuilderOptionCustomValidation":42,"./directives/formBuilderOptionKey":43,"./directives/formBuilderRow":44,"./directives/formBuilderTable":45,"./directives/formBuilderTooltip":46,"./directives/jsonInput":47,"./directives/validApiKey":48,"./directives/valueBuilder":49,"./factories/debounce":50}]},{},[51]);

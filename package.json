@@ -1,6 +1,6 @@
 {
   "name": "ng-formio-builder",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
@@ -42,6 +42,7 @@
   "dependencies": {
     "angular": "^1.5.0",
     "angular-drag-and-drop-lists": "^1.4.0",
+    "formio-utils": "^0.1.5",
     "angular-ui-bootstrap": "^1.2.1",
     "lodash": "^4.5.1",
     "ng-ckeditor": "github:formio/ng-ckeditor",
