@@ -10,6 +10,10 @@ module.exports = function(app) {
         confirmRemove: true,
         views: [
           {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
             name: 'Conditional',
             template: 'formio/components/common/conditional.html'
           }
