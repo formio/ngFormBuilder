@@ -88021,6 +88021,12 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
           tooltip = attrs[key];
         }
       });
+
+      // Add min/max value floor values for validation.
+      if (property === 'validate.minLength' || property === 'validate.maxLength') {
+        inputAttrs.min = 0;
+      }
+
       input.attr(inputAttrs);
 
       // Checkboxes have a slightly different layout
