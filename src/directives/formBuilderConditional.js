@@ -33,6 +33,7 @@ module.exports = [
 
           // The available logic functions.
           $scope._booleans = [
+            {value: '', label: ''},
             {value: true, label: 'Display'},
             {value: false, label: 'Hide'}
           ];
@@ -45,31 +46,28 @@ module.exports = [
             return !c.input || (c.type === 'button');
           });
 
+          // Add default item to the components list.
+          $scope._components.unshift('');
+
           // Default and watch the show logic.
           $scope.component.conditional.show = $scope.component.conditional.show || null;
           $scope._boolean = $scope.component.conditional.show;
-          $scope.$watch('_boolean', function(newVal, oldVal) {
-            if (newVal !== oldVal) {
-              $scope.component.conditional.show = newVal;
-            }
+          $scope.$watch('_boolean', function(newVal) {
+            $scope.component.conditional.show = newVal || false;
           });
 
           // Default and watch the when logic.
           $scope.component.conditional.when = $scope.component.conditional.when || null;
           $scope._component = $scope.component.conditional.when;
-          $scope.$watch('_component', function(newVal, oldVal) {
-            if (newVal !== oldVal) {
-              $scope.component.conditional.when = newVal;
-            }
+          $scope.$watch('_component', function(newVal) {
+            $scope.component.conditional.when = newVal;
           });
 
           // Default and watch the search logic.
           $scope.component.conditional.eq = $scope.component.conditional.eq || '';
           $scope._searchValue = $scope.component.conditional.eq;
-          $scope.$watch('_searchValue', function(newVal, oldVal) {
-            if (newVal !== oldVal) {
-              $scope.component.conditional.eq = newVal;
-            }
+          $scope.$watch('_searchValue', function(newVal) {
+            $scope.component.conditional.eq = newVal;
           });
         }
       ]
