@@ -88526,16 +88526,6 @@ app.constant('COMMON_OPTIONS', require('./constants/commonOptions'));
 
 app.factory('debounce', require('./factories/debounce'));
 
-app.directive('staticInclude', function($http, $templateCache, $compile) {
-  return function(scope, element, attrs) {
-    var templatePath = attrs.src;
-    $http.get(templatePath, {cache: $templateCache}).success(function(response) {
-      var contents = element.html(response).contents();
-      $compile(contents)(scope);
-    });
-  };
-});
-
 app.directive('formBuilder', require('./directives/formBuilder'));
 
 app.directive('formBuilderComponent', require('./directives/formBuilderComponent'));
