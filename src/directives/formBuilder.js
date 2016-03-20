@@ -27,18 +27,86 @@ module.exports = ['debounce', function(debounce) {
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
-        $scope.form = {components:[submitButton]};
+        $scope.form = {components:[submitButton], page: 0};
         $scope.formio = new Formio($scope.src);
+
+        var setNumPages = function() {
+          var numPages = 0;
+          $scope.form.components.forEach(function(component) {
+            if (component.type === 'panel') {
+              numPages++;
+            }
+          });
+
+          $scope.form.numPages = numPages;
+
+          // Make sure the page doesn't excede the end.
+          if ($scope.form.page >= numPages) {
+            $scope.form.page = numPages - 1;
+          }
+        };
 
         // Load the form.
         if ($scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
+            $scope.form.page = 0;
             if ($scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
           });
         }
+
+        // Make sure they can switch back and forth between wizard and pages.
+        $scope.$on('formDisplay', function(event, display) {
+          $scope.form.display = display;
+          $scope.form.page = 0;
+        });
+
+        // Return the form pages.
+        $scope.pages = function() {
+          var pages = [];
+          $scope.form.components.forEach(function(component) {
+            if (component.type === 'panel') {
+              pages.push(component.title);
+            }
+          });
+          return pages;
+        };
+
+        // Show the form page.
+        $scope.showPage = function(page) {
+          var i = 0;
+          for (i = 0; i < $scope.form.components.length; i++) {
+            var component = $scope.form.components[i];
+            if (component.type === 'panel') {
+              if (i === page) {
+                break;
+              }
+            }
+          }
+          $scope.form.page = i;
+        };
+
+        $scope.newPage = function() {
+          var index = $scope.form.numPages;
+          var pageNum = index + 1;
+          var component = {
+            type: 'panel',
+            title: 'Page ' + pageNum,
+            isNew: true,
+            components: [],
+            input: false,
+            key: 'page' + pageNum
+          };
+          $scope.form.numPages++;
+          $scope.form.components.splice(index, 0, component);
+        };
+
+        // Ensure the number of pages is always correct.
+        $scope.$watch('form.components.length', function() {
+          setNumPages();
+        });
 
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component, key) {

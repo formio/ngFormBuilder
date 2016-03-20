@@ -49366,18 +49366,86 @@ module.exports = ['debounce', function(debounce) {
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
-        $scope.form = {components:[submitButton]};
+        $scope.form = {components:[submitButton], page: 0};
         $scope.formio = new Formio($scope.src);
+
+        var setNumPages = function() {
+          var numPages = 0;
+          $scope.form.components.forEach(function(component) {
+            if (component.type === 'panel') {
+              numPages++;
+            }
+          });
+
+          $scope.form.numPages = numPages;
+
+          // Make sure the page doesn't excede the end.
+          if ($scope.form.page >= numPages) {
+            $scope.form.page = numPages - 1;
+          }
+        };
 
         // Load the form.
         if ($scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
+            $scope.form.page = 0;
             if ($scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
           });
         }
+
+        // Make sure they can switch back and forth between wizard and pages.
+        $scope.$on('formDisplay', function(event, display) {
+          $scope.form.display = display;
+          $scope.form.page = 0;
+        });
+
+        // Return the form pages.
+        $scope.pages = function() {
+          var pages = [];
+          $scope.form.components.forEach(function(component) {
+            if (component.type === 'panel') {
+              pages.push(component.title);
+            }
+          });
+          return pages;
+        };
+
+        // Show the form page.
+        $scope.showPage = function(page) {
+          var i = 0;
+          for (i = 0; i < $scope.form.components.length; i++) {
+            var component = $scope.form.components[i];
+            if (component.type === 'panel') {
+              if (i === page) {
+                break;
+              }
+            }
+          }
+          $scope.form.page = i;
+        };
+
+        $scope.newPage = function() {
+          var index = $scope.form.numPages;
+          var pageNum = index + 1;
+          var component = {
+            type: 'panel',
+            title: 'Page ' + pageNum,
+            isNew: true,
+            components: [],
+            input: false,
+            key: 'page' + pageNum
+          };
+          $scope.form.numPages++;
+          $scope.form.components.splice(index, 0, component);
+        };
+
+        // Ensure the number of pages is always correct.
+        $scope.$watch('form.components.length', function() {
+          setNumPages();
+        });
 
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component, key) {
@@ -49798,7 +49866,8 @@ module.exports = [
         form: '=',
         // # of items needed in the list before hiding the
         // drag and drop prompt div
-        hideDndBoxCount: '='
+        hideDndBoxCount: '=',
+        rootList: '='
       },
       restrict: 'E',
       replace: true,
@@ -50267,6 +50336,8 @@ require('./ngFormBuilder.js');
 "use strict";
 /*global window: false, console: false */
 /*jshint browser: true */
+
+
 var app = angular.module('ngFormBuilder', [
   'formio',
   'dndLists',
@@ -50280,6 +50351,16 @@ app.constant('FORM_OPTIONS', require('./constants/formOptions'));
 app.constant('COMMON_OPTIONS', require('./constants/commonOptions'));
 
 app.factory('debounce', require('./factories/debounce'));
+
+app.directive('staticInclude', function($http, $templateCache, $compile) {
+  return function(scope, element, attrs) {
+    var templatePath = attrs.src;
+    $http.get(templatePath, {cache: $templateCache}).success(function(response) {
+      var contents = element.html(response).contents();
+      $compile(contents)(scope);
+    });
+  };
+});
 
 app.directive('formBuilder', require('./directives/formBuilder'));
 
@@ -50332,123 +50413,27 @@ app.run([
     });
 
     $templateCache.put('formio/formbuilder/editbuttons.html',
-      '<div class="component-btn-group">' +
-        '<div class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponent.confirmRemove)"><span class="glyphicon glyphicon-remove"></span></div>' +
-        '<div class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000"><span class="glyphicon glyphicon glyphicon-move"></span></div>' +
-        '<div ng-if="formComponent.views" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></div>' +
-      '</div>'
+      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"formComponent.views\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      '<div class="component-form-group component-type-{{ component.type }} form-builder-component">' +
-        '<div ng-include="\'formio/formbuilder/editbuttons.html\'"></div>' +
-        '<div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" id="form-group-{{ component.key }}" style="position:inherit" ng-style="component.style"><form-builder-element></form-builder-element></div>' +
-      '</div>'
+      "<div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n  <div ng-include=\"'formio/formbuilder/editbuttons.html'\"></div>\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\"><form-builder-element></form-builder-element></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/list.html',
-      '<ul class="component-list" ' +
-        'dnd-list="component.components"' +
-        'dnd-drop="addComponent(item, index)">' +
-        '<li ng-if="component.components.length < hideCount">' +
-          '<div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">' +
-            'Drag and Drop a form component' +
-          '</div>' +
-        '</li>' +
-        '<li ng-repeat="component in component.components" ' +
-          'dnd-draggable="component" ' +
-          'dnd-effect-allowed="move" ' +
-          'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
-          'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
-          'dnd-moved="removeComponent(component, false)">' +
-          '<form-builder-component></form-builder-component>' +
-          // Fix for problematic components that are difficult to drag over
-          // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
-          '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
-        '</li>' +
-      '</ul>'
+      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
     );
 
     $templateCache.put('formio/formbuilder/row.html',
-      '<div class="formbuilder-row">' +
-      '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
-      '<ul class="component-row formbuilder-group" ' +
-        'dnd-list="component.components"' +
-        'dnd-drop="addComponent(item)"' +
-        'dnd-horizontal-list="true">' +
-        '<li ng-repeat="component in component.components" ' +
-          'class="formbuilder-group-row pull-left" ' +
-          'dnd-draggable="component" ' +
-          'dnd-effect-allowed="move" ' +
-          'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
-          'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
-          'dnd-moved="removeComponent(component, false)">' +
-          '<form-builder-component></form-builder-component>' +
-            // Fix for problematic components that are difficult to drag over
-            // This is either because of iframes or issue #126 in angular-drag-and-drop-lists
-          '<div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>' +
-        '</li>' +
-        '<li class="formbuilder-group-row form-builder-drop" ng-if="component.components.length < hideCount">' +
-          '<div class="alert alert-info" role="alert">' +
-            'Drag and Drop a form component' +
-          '</div>' +
-        '</li>' +
-      '</ul>' +
-      '<div style="clear:both;"></div>' +
-      '</div>'
+      "<div class=\"formbuilder-row\">\n  <label ng-if=\"component.label\" class=\"control-label\">{{ component.label }}</label>\n  <ul class=\"component-row formbuilder-group\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item)\"\n      dnd-horizontal-list=\"true\">\n    <li ng-repeat=\"component in component.components\"\n        class=\"formbuilder-group-row pull-left\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\">\n      <form-builder-component></form-builder-component>\n      <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n    </li>\n    <li class=\"formbuilder-group-row form-builder-drop\" ng-if=\"component.components.length < hideCount\">\n      <div class=\"alert alert-info\" role=\"alert\">\n        Drag and Drop a form component\n      </div>\n    </li>\n  </ul>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
-      '<div class="row formbuilder">' +
-        '<div class="col-sm-2 formcomponents">' +
-          '<uib-accordion close-others="true">' +
-            '<uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" panel-class="panel-default {{ group.panelClass }}">' +
-              '<uib-accordion close-others="true" ng-if="group.subgroups">' +
-                '<uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" panel-class="panel-default subgroup-accordion">' +
-                  '<div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"' +
-                    'dnd-draggable="component.settings"' +
-                    'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
-                    'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
-                    'dnd-effect-allowed="copy" ' +
-                    'class="formcomponentcontainer">' +
-                      '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
-                        '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
-                      '</span>' +
-                  '</div>' +
-                '</uib-accordion-group>' +
-              '</uib-accordion>' +
-              '<div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="!group.subgroup && component.title"' +
-                'dnd-draggable="component.settings"' +
-                'dnd-dragstart="dndDragIframeWorkaround.isDragging = true" ' +
-                'dnd-dragend="dndDragIframeWorkaround.isDragging = false" ' +
-                'dnd-effect-allowed="copy" ' +
-                'class="formcomponentcontainer">' +
-                  '<span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">' +
-                    '<i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}' +
-                  '</span>' +
-              '</div>' +
-            '</uib-accordion-group>' +
-          '</uib-accordion>' +
-        '</div>' +
-        '<div class="col-sm-10 formbuilder">' +
-              '<div class="dropzone">' +
-                '<form-builder-list component="form" form="form" formio="formio" hide-dnd-box-count="2" class="rootlist"></form-builder-list>' +
-              '</div>' +
-        '</div>' +
-      '</div>'
+      "<div class=\"row formbuilder\">\n  <div class=\"col-sm-2 formcomponents\">\n    <uib-accordion close-others=\"true\">\n      <uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title }}\" is-open=\"$first\" panel-class=\"panel-default {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title }}\" is-open=\"$first\" panel-class=\"panel-default subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n              </span>\n            </div>\n          </uib-accordion-group>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n          </span>\n        </div>\n      </uib-accordion-group>\n    </uib-accordion>\n  </div>\n  <div class=\"col-sm-10 formbuilder\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === form.page), 'label-primary': ($index !== form.page)}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <form-builder-list component=\"form\" form=\"form\" formio=\"formio\" hide-dnd-box-count=\"2\" root-list=\"true\" class=\"rootlist\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
     );
 
-    // Create the component markup.
     $templateCache.put('formio/components/confirm-remove.html',
-      '<form id="confirm-remove-dialog">' +
-            '<p>Removing this component will also <strong>remove all of its children</strong>! Are you sure you want to do this?</p>' +
-            '<div>' +
-            '<div class="form-group">' +
-              '<button type="submit" class="btn btn-danger pull-right" ng-click="closeThisDialog(true)">Remove</button>&nbsp;' +
-              '<button type="button" class="btn btn-default pull-right" style="margin-right: 5px;" ng-click="closeThisDialog(false)">Cancel</button>&nbsp;' +
-            '</div>' +
-            '</div>' +
-      '</form>'
+      "<form id=\"confirm-remove-dialog\">\n  <p>Removing this component will also <strong>remove all of its children</strong>! Are you sure you want to do this?</p>\n  <div>\n    <div class=\"form-group\">\n      <button type=\"submit\" class=\"btn btn-danger pull-right\" ng-click=\"closeThisDialog(true)\">Remove</button>&nbsp;\n      <button type=\"button\" class=\"btn btn-default pull-right\" style=\"margin-right: 5px;\" ng-click=\"closeThisDialog(false)\">Cancel</button>&nbsp;\n    </div>\n  </div>\n</form>\n"
     );
   }
 ]);
