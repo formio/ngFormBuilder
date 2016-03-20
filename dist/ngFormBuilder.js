@@ -17346,6 +17346,10 @@ module.exports = ['debounce', function(debounce) {
         $scope.formio = new Formio($scope.src);
 
         var setNumPages = function() {
+          if ($scope.form.display !== 'wizard') {
+            return;
+          }
+
           var numPages = 0;
           $scope.form.components.forEach(function(component) {
             if (component.type === 'panel') {
@@ -17355,8 +17359,13 @@ module.exports = ['debounce', function(debounce) {
 
           $scope.form.numPages = numPages;
 
+          // Add a page if none is found.
+          if (numPages === 0) {
+            $scope.newPage();
+          }
+
           // Make sure the page doesn't excede the end.
-          if ($scope.form.page >= numPages) {
+          if ((numPages > 0) && ($scope.form.page >= numPages)) {
             $scope.form.page = numPages - 1;
           }
         };
@@ -17376,6 +17385,7 @@ module.exports = ['debounce', function(debounce) {
         $scope.$on('formDisplay', function(event, display) {
           $scope.form.display = display;
           $scope.form.page = 0;
+          setNumPages();
         });
 
         // Return the form pages.
