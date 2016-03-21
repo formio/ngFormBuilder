@@ -1,0 +1,24 @@
+<div class="formbuilder-row">
+  <label ng-if="component.label" class="control-label">{{ component.label }}</label>
+  <ul class="component-row formbuilder-group"
+      dnd-list="component.components"
+      dnd-drop="addComponent(item)"
+      dnd-horizontal-list="true">
+    <li ng-repeat="component in component.components"
+        class="formbuilder-group-row pull-left"
+        dnd-draggable="component"
+        dnd-effect-allowed="move"
+        dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
+        dnd-dragend="dndDragIframeWorkaround.isDragging = false"
+        dnd-moved="removeComponent(component, false)">
+      <form-builder-component></form-builder-component>
+      <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
+    </li>
+    <li class="formbuilder-group-row form-builder-drop" ng-if="component.components.length < hideCount">
+      <div class="alert alert-info" role="alert">
+        Drag and Drop a form component
+      </div>
+    </li>
+  </ul>
+  <div style="clear:both;"></div>
+</div>

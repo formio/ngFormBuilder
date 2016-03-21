@@ -1,0 +1,19 @@
+<ul class="component-list"
+    dnd-list="component.components"
+    dnd-drop="addComponent(item, index)">
+  <li ng-if="component.components.length < hideCount">
+    <div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">
+      Drag and Drop a form component
+    </div>
+  </li>
+  <li ng-repeat="component in component.components"
+      ng-if="!rootList || !form.display || (form.display === 'form') || (form.page === $index)"
+      dnd-draggable="component"
+      dnd-effect-allowed="move"
+      dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
+      dnd-dragend="dndDragIframeWorkaround.isDragging = false"
+      dnd-moved="removeComponent(component, false)">
+    <form-builder-component></form-builder-component>
+    <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
+  </li>
+</ul>
