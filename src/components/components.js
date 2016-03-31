@@ -12,6 +12,7 @@ module.exports = function(app) {
               '</uib-tabset>' +
             '</div>' +
             '<div class="col-xs-6">' +
+              '<p class="pull-left" ng-if="formComponent.title" style="margin-top:10px;">{{formComponent.title}} Component</p>' +
               '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
                 '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
               '</div>' +
