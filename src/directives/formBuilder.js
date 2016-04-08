@@ -78,7 +78,12 @@ module.exports = ['debounce', function(debounce) {
           var pages = [];
           $scope.form.components.forEach(function(component) {
             if (component.type === 'panel') {
-              pages.push(component.title);
+              if (component.title) {
+                pages.push(component.title);
+              }
+              else {
+                pages.push('Page ' + (pages.length + 1));
+              }
             }
           });
           return pages;
