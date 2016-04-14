@@ -86611,15 +86611,22 @@ module.exports = function(app) {
       $templateCache.put('formio/components/settings.html',
         '<form id="component-settings" novalidate>' +
           '<div class="row">' +
+            '<div class="col-md-6">' +
+              '<p class="lead" ng-if="formComponent.title" style="margin-top:10px;">{{formComponent.title}} Component</p>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+              '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
+                '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="row">' +
             '<div class="col-xs-6">' +
               '<uib-tabset>' +
                 '<uib-tab ng-repeat="view in formComponent.views" heading="{{ view.name }}"><ng-include src="view.template"></ng-include></uib-tab>' +
               '</uib-tabset>' +
             '</div>' +
             '<div class="col-xs-6">' +
-              '<div class="pull-right" ng-if="formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
-                '<a ng-href="{{ formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
-              '</div>' +
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
                 '<div class="panel-heading">Preview</div>' +
                 '<div class="panel-body">' +
@@ -88622,7 +88629,12 @@ module.exports = ['debounce', function(debounce) {
           var pages = [];
           $scope.form.components.forEach(function(component) {
             if (component.type === 'panel') {
-              pages.push(component.title);
+              if (component.title) {
+                pages.push(component.title);
+              }
+              else {
+                pages.push('Page ' + (pages.length + 1));
+              }
             }
           });
           return pages;
