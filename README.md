@@ -10,7 +10,7 @@ provide a good example of how this form builder works.
 The form builder can be embedded within your application using the following embed code.
 
 ```
-<formio-builder form="myform"></formio-builder>
+<form-builder form="myform"></form-builder>
 ```
 
 Where ```myform``` would be a form object that is placed on the scope of the controller containing the form builder.

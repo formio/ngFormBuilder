@@ -6,6 +6,12 @@ plugins.source = require('vinyl-source-stream');
 plugins.browserify = require('browserify');
 plugins.watchify = require('watchify');
 plugins.runSeq = require('run-sequence');
+plugins.packageJson = require('./package.json');
+
+var template = '/*! ng-formio-builder v<%= data.version %> | https://npmcdn.com/ng-formio-builder@<%= data.version %>/LICENSE.txt */';
+template += "\n";
+template += '<%= data.contents %>';
+plugins.template = template;
 
 gulp.task('clean', require('del').bind(null, ['dist']));
 gulp.task('eslint', require('./gulp/eslint')(gulp, plugins));

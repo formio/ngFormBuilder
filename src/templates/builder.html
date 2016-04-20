@@ -2,7 +2,7 @@
   <div class="col-xs-4 col-sm-3 col-md-2 formcomponents">
     <uib-accordion close-others="true">
       <uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" panel-class="panel-default {{ group.panelClass }}">
-        <uib-accordion close-others="true" ng-if="group.subgroups">
+        <uib-accordion close-others="true" ng-if="group.subgroups.length">
           <uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" panel-class="panel-default subgroup-accordion">
             <div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"
                 dnd-draggable="component.settings"
@@ -29,7 +29,7 @@
       </uib-accordion-group>
     </uib-accordion>
   </div>
-  <div class="col-xs-8 col-sm-9 col-md-10 formbuilder">
+  <div class="col-xs-8 col-sm-9 col-md-10 formarea">
     <ol class="breadcrumb" ng-if="form.display === 'wizard'">
       <li ng-repeat="title in pages() track by $index"><a class="label" style="font-size:1em;" ng-class="{'label-info': ($index === form.page), 'label-primary': ($index !== form.page)}" ng-click="showPage($index)">{{ title }}</a></li>
       <li><a class="label label-success" style="font-size:1em;" ng-click="newPage()" data-toggle="tooltip" title="Create Page"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> page</a></li>
