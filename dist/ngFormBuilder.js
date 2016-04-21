@@ -19293,6 +19293,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],51:[function(require,module,exports){
 "use strict";
+/*! ng-formio-builder v1.10.2 | https://npmcdn.com/ng-formio-builder@1.10.2/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 

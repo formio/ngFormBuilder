@@ -91065,7 +91065,6 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],149:[function(require,module,exports){
 "use strict";
-require('angular');
 require('ng-formio/src/formio-full.js');
 require('angular-drag-and-drop-lists');
 require('ng-ckeditor/ng-ckeditor');
@@ -91073,8 +91072,9 @@ require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":150,"angular":10,"angular-drag-and-drop-lists":2,"lodash":28,"ng-ckeditor/ng-ckeditor":30,"ng-dialog":31,"ng-formio/src/formio-full.js":88}],150:[function(require,module,exports){
+},{"./ngFormBuilder.js":150,"angular-drag-and-drop-lists":2,"lodash":28,"ng-ckeditor/ng-ckeditor":30,"ng-dialog":31,"ng-formio/src/formio-full.js":88}],150:[function(require,module,exports){
 "use strict";
+/*! ng-formio-builder v1.10.2 | https://npmcdn.com/ng-formio-builder@1.10.2/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
