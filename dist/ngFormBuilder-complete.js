@@ -80202,7 +80202,7 @@ module.exports = ['debounce', function(debounce) {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
-      form: '=',
+      form: '=?',
       src: '=',
       type: '=',
       onSave: '=',
@@ -80237,6 +80237,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
 
         var setNumPages = function() {
+          if (!$scope.form) {
+            return;
+          }
           if ($scope.form.display !== 'wizard') {
             return;
           }
