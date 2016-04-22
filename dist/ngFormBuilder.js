@@ -16501,6 +16501,68 @@ module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
     function(formioComponentsProvider) {
+      formioComponentsProvider.register('currency', {
+        icon: 'fa fa-usd',
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/currency/display.html'
+          },
+          {
+            name: 'Validation',
+            template: 'formio/components/currency/validate.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Layout',
+            template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
+        documentation: 'http://help.form.io/userguide/#currency'
+      });
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      // Create the settings markup.
+      $templateCache.put('formio/components/currency/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="prefix"></form-builder-option>' +
+          '<form-builder-option property="suffix"></form-builder-option>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+
+      // Create the API markup.
+      $templateCache.put('formio/components/currency/validate.html',
+        '<ng-form>' +
+          '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
+        '</ng-form>'
+      );
+    }
+  ]);
+};
+
+},{}],11:[function(require,module,exports){
+"use strict";
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
       formioComponentsProvider.register('custom', {
         icon: 'fa fa-cubes',
         views: [
@@ -16557,7 +16619,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16613,7 +16675,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16783,7 +16845,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16798,7 +16860,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16853,7 +16915,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16931,7 +16993,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -16987,7 +17049,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17046,7 +17108,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -17069,6 +17131,7 @@ require('./email')(app);
 require('./phonenumber')(app);
 require('./address')(app);
 require('./datetime')(app);
+require('./currency')(app);
 require('./hidden')(app);
 require('./resource')(app);
 require('./file')(app);
@@ -17085,7 +17148,7 @@ require('./panel')(app);
 require('./table')(app);
 require('./well')(app);
 
-},{"./address":3,"./button":4,"./checkbox":5,"./columns":6,"./components":7,"./container":8,"./content":9,"./custom":10,"./datagrid":11,"./datetime":12,"./email":13,"./fieldset":14,"./file":15,"./hidden":16,"./htmlelement":17,"./number":19,"./page":20,"./panel":21,"./password":22,"./phonenumber":23,"./radio":24,"./resource":25,"./select":26,"./selectboxes":27,"./signature":28,"./table":29,"./textarea":30,"./textfield":31,"./well":32}],19:[function(require,module,exports){
+},{"./address":3,"./button":4,"./checkbox":5,"./columns":6,"./components":7,"./container":8,"./content":9,"./currency":10,"./custom":11,"./datagrid":12,"./datetime":13,"./email":14,"./fieldset":15,"./file":16,"./hidden":17,"./htmlelement":18,"./number":20,"./page":21,"./panel":22,"./password":23,"./phonenumber":24,"./radio":25,"./resource":26,"./select":27,"./selectboxes":28,"./signature":29,"./table":30,"./textarea":31,"./textfield":32,"./well":33}],20:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17150,7 +17213,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17171,7 +17234,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17238,7 +17301,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17304,7 +17367,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17370,7 +17433,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17432,7 +17495,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17517,7 +17580,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17700,7 +17763,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17769,7 +17832,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17829,7 +17892,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17900,7 +17963,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17936,7 +17999,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -18004,7 +18067,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -18041,7 +18104,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -18219,7 +18282,7 @@ module.exports = {
   }
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -18282,7 +18345,7 @@ module.exports = {
   ]
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 module.exports = ['debounce', function(debounce) {
   return {
@@ -18529,7 +18592,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -18545,7 +18608,7 @@ module.exports = [
   }
 ];
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 'use strict';
 
@@ -18624,7 +18687,7 @@ module.exports = [
   }
 ];
 
-},{"formio-utils":1,"lodash":2}],38:[function(require,module,exports){
+},{"formio-utils":1,"lodash":2}],39:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$scope',
@@ -18793,7 +18856,7 @@ module.exports = [
   }
 ];
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -18817,7 +18880,7 @@ module.exports = [
   }
 ];
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -18839,7 +18902,7 @@ module.exports = [
   }
 ];
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -18906,7 +18969,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   };
 }];
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -18935,7 +18998,7 @@ module.exports = function() {
   };
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -19000,7 +19063,7 @@ module.exports = function() {
   };
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -19021,7 +19084,7 @@ module.exports = [
   }
 ];
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -19073,7 +19136,7 @@ module.exports = function() {
   };
 };
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -19112,7 +19175,7 @@ module.exports = function() {
   };
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -19149,7 +19212,7 @@ module.exports = function() {
   };
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -19172,7 +19235,7 @@ module.exports = function() {
   };
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -19251,7 +19314,7 @@ module.exports = function() {
   };
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -19285,7 +19348,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 "use strict";
 /*global window: false, console: false */
 /*jshint browser: true */
@@ -19383,4 +19446,4 @@ app.run([
 
 require('./components');
 
-},{"./components":18,"./constants/commonOptions":33,"./constants/formOptions":34,"./directives/formBuilder":35,"./directives/formBuilderComponent":36,"./directives/formBuilderConditional":37,"./directives/formBuilderDnd":38,"./directives/formBuilderElement":39,"./directives/formBuilderList":40,"./directives/formBuilderOption":41,"./directives/formBuilderOptionCustomValidation":42,"./directives/formBuilderOptionKey":43,"./directives/formBuilderRow":44,"./directives/formBuilderTable":45,"./directives/formBuilderTooltip":46,"./directives/jsonInput":47,"./directives/validApiKey":48,"./directives/valueBuilder":49,"./factories/debounce":50}]},{},[51]);
+},{"./components":19,"./constants/commonOptions":34,"./constants/formOptions":35,"./directives/formBuilder":36,"./directives/formBuilderComponent":37,"./directives/formBuilderConditional":38,"./directives/formBuilderDnd":39,"./directives/formBuilderElement":40,"./directives/formBuilderList":41,"./directives/formBuilderOption":42,"./directives/formBuilderOptionCustomValidation":43,"./directives/formBuilderOptionKey":44,"./directives/formBuilderRow":45,"./directives/formBuilderTable":46,"./directives/formBuilderTooltip":47,"./directives/jsonInput":48,"./directives/validApiKey":49,"./directives/valueBuilder":50,"./factories/debounce":51}]},{},[52]);
