@@ -55,6 +55,9 @@ module.exports = function() {
       };
 
       $scope.shouldWarnAboutEmbedding = function() {
+        if (!$scope.component || !$scope.component.key) {
+          return false;
+        }
         return !$scope.component.source && $scope.component.key.indexOf('.') !== -1;
       };
     }]
