@@ -89145,6 +89145,68 @@ module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
     function(formioComponentsProvider) {
+      formioComponentsProvider.register('currency', {
+        icon: 'fa fa-usd',
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/currency/display.html'
+          },
+          {
+            name: 'Validation',
+            template: 'formio/components/currency/validate.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Layout',
+            template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
+        documentation: 'http://help.form.io/userguide/#currency'
+      });
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      // Create the settings markup.
+      $templateCache.put('formio/components/currency/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="prefix"></form-builder-option>' +
+          '<form-builder-option property="suffix"></form-builder-option>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+
+      // Create the API markup.
+      $templateCache.put('formio/components/currency/validate.html',
+        '<ng-form>' +
+          '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
+        '</ng-form>'
+      );
+    }
+  ]);
+};
+
+},{}],111:[function(require,module,exports){
+"use strict";
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
       formioComponentsProvider.register('custom', {
         icon: 'fa fa-cubes',
         views: [
@@ -89201,7 +89263,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89257,7 +89319,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],112:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89427,7 +89489,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],113:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89442,7 +89504,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],114:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89497,7 +89559,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89575,7 +89637,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],116:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89631,7 +89693,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89690,7 +89752,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],118:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -89713,6 +89775,7 @@ require('./email')(app);
 require('./phonenumber')(app);
 require('./address')(app);
 require('./datetime')(app);
+require('./currency')(app);
 require('./hidden')(app);
 require('./resource')(app);
 require('./file')(app);
@@ -89729,7 +89792,7 @@ require('./panel')(app);
 require('./table')(app);
 require('./well')(app);
 
-},{"./address":103,"./button":104,"./checkbox":105,"./columns":106,"./components":107,"./container":108,"./content":109,"./custom":110,"./datagrid":111,"./datetime":112,"./email":113,"./fieldset":114,"./file":115,"./hidden":116,"./htmlelement":117,"./number":119,"./page":120,"./panel":121,"./password":122,"./phonenumber":123,"./radio":124,"./resource":125,"./select":126,"./selectboxes":127,"./signature":128,"./table":129,"./textarea":130,"./textfield":131,"./well":132}],119:[function(require,module,exports){
+},{"./address":103,"./button":104,"./checkbox":105,"./columns":106,"./components":107,"./container":108,"./content":109,"./currency":110,"./custom":111,"./datagrid":112,"./datetime":113,"./email":114,"./fieldset":115,"./file":116,"./hidden":117,"./htmlelement":118,"./number":120,"./page":121,"./panel":122,"./password":123,"./phonenumber":124,"./radio":125,"./resource":126,"./select":127,"./selectboxes":128,"./signature":129,"./table":130,"./textarea":131,"./textfield":132,"./well":133}],120:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89794,7 +89857,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89815,7 +89878,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89882,7 +89945,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89948,7 +90011,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],123:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90014,7 +90077,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],124:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90076,7 +90139,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],125:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90161,7 +90224,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90344,7 +90407,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],127:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90413,7 +90476,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90473,7 +90536,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],129:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90544,7 +90607,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],130:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90580,7 +90643,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],131:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90648,7 +90711,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],132:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90685,7 +90748,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],133:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -90863,7 +90926,7 @@ module.exports = {
   }
 };
 
-},{}],134:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -90926,7 +90989,7 @@ module.exports = {
   ]
 };
 
-},{}],135:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 module.exports = ['debounce', function(debounce) {
@@ -91186,7 +91249,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -91202,7 +91265,7 @@ module.exports = [
   }
 ];
 
-},{}],137:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 "use strict";
 'use strict';
 
@@ -91281,7 +91344,7 @@ module.exports = [
   }
 ];
 
-},{"formio-utils":26,"lodash":29}],138:[function(require,module,exports){
+},{"formio-utils":26,"lodash":29}],139:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$scope',
@@ -91450,7 +91513,7 @@ module.exports = [
   }
 ];
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -91470,7 +91533,7 @@ module.exports = [
   }
 ];
 
-},{}],140:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -91492,7 +91555,7 @@ module.exports = [
   }
 ];
 
-},{}],141:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -91559,7 +91622,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   };
 }];
 
-},{}],142:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -91588,7 +91651,7 @@ module.exports = function() {
   };
 };
 
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -91656,7 +91719,7 @@ module.exports = function() {
   };
 };
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -91677,7 +91740,7 @@ module.exports = [
   }
 ];
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -91729,7 +91792,7 @@ module.exports = function() {
   };
 };
 
-},{}],146:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -91768,7 +91831,7 @@ module.exports = function() {
   };
 };
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -91805,7 +91868,7 @@ module.exports = function() {
   };
 };
 
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -91828,7 +91891,7 @@ module.exports = function() {
   };
 };
 
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -91907,7 +91970,7 @@ module.exports = function() {
   };
 };
 
-},{}],150:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -91941,7 +92004,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],151:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 "use strict";
 require('ng-formio/src/formio-full.js');
 require('angular-drag-and-drop-lists');
@@ -91950,7 +92013,7 @@ require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":152,"angular-drag-and-drop-lists":2,"lodash":29,"ng-ckeditor/ng-ckeditor":31,"ng-dialog":32,"ng-formio/src/formio-full.js":90}],152:[function(require,module,exports){
+},{"./ngFormBuilder.js":153,"angular-drag-and-drop-lists":2,"lodash":29,"ng-ckeditor/ng-ckeditor":31,"ng-dialog":32,"ng-formio/src/formio-full.js":90}],153:[function(require,module,exports){
 "use strict";
 /*! ng-formio-builder v1.11.2 | https://npmcdn.com/ng-formio-builder@1.11.2/LICENSE.txt */
 /*global window: false, console: false */
@@ -92049,4 +92112,4 @@ app.run([
 
 require('./components');
 
-},{"./components":118,"./constants/commonOptions":133,"./constants/formOptions":134,"./directives/formBuilder":135,"./directives/formBuilderComponent":136,"./directives/formBuilderConditional":137,"./directives/formBuilderDnd":138,"./directives/formBuilderElement":139,"./directives/formBuilderList":140,"./directives/formBuilderOption":141,"./directives/formBuilderOptionCustomValidation":142,"./directives/formBuilderOptionKey":143,"./directives/formBuilderRow":144,"./directives/formBuilderTable":145,"./directives/formBuilderTooltip":146,"./directives/jsonInput":147,"./directives/validApiKey":148,"./directives/valueBuilder":149,"./factories/debounce":150}]},{},[151]);
+},{"./components":119,"./constants/commonOptions":134,"./constants/formOptions":135,"./directives/formBuilder":136,"./directives/formBuilderComponent":137,"./directives/formBuilderConditional":138,"./directives/formBuilderDnd":139,"./directives/formBuilderElement":140,"./directives/formBuilderList":141,"./directives/formBuilderOption":142,"./directives/formBuilderOptionCustomValidation":143,"./directives/formBuilderOptionKey":144,"./directives/formBuilderRow":145,"./directives/formBuilderTable":146,"./directives/formBuilderTooltip":147,"./directives/jsonInput":148,"./directives/validApiKey":149,"./directives/valueBuilder":150,"./factories/debounce":151}]},{},[152]);
