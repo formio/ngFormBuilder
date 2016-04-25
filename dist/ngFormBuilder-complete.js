@@ -2050,7 +2050,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":92}],2:[function(require,module,exports){
+},{"_process":94}],2:[function(require,module,exports){
 /**
  * angular-drag-and-drop-lists v1.4.0
  *
@@ -3339,7 +3339,7 @@ return /******/ (function(modules) { // webpackBootstrap
 ;
 },{}],4:[function(require,module,exports){
 (function (global){
-/* angular-moment.js / v1.0.0-beta.5 / (c) 2013, 2014, 2015, 2016 Uri Shaked / MIT Licence */
+/* angular-moment.js / v1.0.0-beta.6 / (c) 2013, 2014, 2015, 2016 Uri Shaked / MIT Licence */
 
 'format amd';
 /* global define */
@@ -3519,7 +3519,9 @@ return /******/ (function(modules) { // webpackBootstrap
 				 * @description
 				 * Specify the format of the date when displayed as full date. null by default.
 				 */
-				fullDateFormat: null
+				fullDateFormat: null,
+
+				fullDateThresholdUnit: 'day'
 			})
 
 		/**
@@ -3538,6 +3540,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					var titleFormat = amTimeAgoConfig.titleFormat;
 					var fullDateThreshold = amTimeAgoConfig.fullDateThreshold;
 					var fullDateFormat = amTimeAgoConfig.fullDateFormat;
+					var fullDateThresholdUnit = amTimeAgoConfig.fullDateThresholdUnit;
+
 					var localDate = new Date().getTime();
 					var modelName = attr.amTimeAgo;
 					var currentFrom;
@@ -3567,8 +3571,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 
 					function updateTime(momentInstance) {
-						var daysAgo = getNow().diff(momentInstance, 'day');
-						var showFullDate = fullDateThreshold && daysAgo >= fullDateThreshold;
+						var timeAgo = getNow().diff(momentInstance, fullDateThresholdUnit);
+						var showFullDate = fullDateThreshold && timeAgo >= fullDateThreshold;
 
 						if (showFullDate) {
 							element.text(momentInstance.format(fullDateFormat));
@@ -3656,6 +3660,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 					attr.$observe('amFullDateFormat', function (newValue) {
 						fullDateFormat = newValue;
+						updateMoment();
+					});
+
+					attr.$observe('amFullDateThresholdUnit', function (newValue) {
+						fullDateThresholdUnit = newValue;
 						updateMoment();
 					});
 
@@ -3851,13 +3860,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * @module angularMoment
 		 */
 			.filter('amCalendar', ['moment', 'amMoment', 'angularMomentConfig', function (moment, amMoment, angularMomentConfig) {
-				function amCalendarFilter(value) {
+				function amCalendarFilter(value, referenceTime, formats) {
 					if (isUndefinedOrNull(value)) {
 						return '';
 					}
 
 					var date = amMoment.preprocessDate(value);
-					return date.isValid() ? date.calendar() : '';
+					return date.isValid() ? date.calendar(referenceTime, formats) : '';
 				}
 
 				// Since AngularJS 1.3, filters have to explicitly define being stateful
@@ -4067,13 +4076,13 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":9,"moment":27}],5:[function(require,module,exports){
+},{"angular":9,"moment":28}],5:[function(require,module,exports){
 /**
- * @license AngularJS v1.5.3
+ * @license AngularJS v1.5.5
  * (c) 2010-2016 Google, Inc. http://angularjs.org
  * License: MIT
  */
-(function(window, angular, undefined) {'use strict';
+(function(window, angular) {'use strict';
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *     Any commits to this file should be reviewed with security in mind.  *
@@ -4419,7 +4428,7 @@ function htmlParser(html, handler) {
     mXSSAttempts--;
 
     // strip custom-namespaced attributes on IE<=11
-    if (document.documentMode <= 11) {
+    if (window.document.documentMode) {
       stripCustomNsAttrs(inertBodyElement);
     }
     html = inertBodyElement.innerHTML; //trigger mXSS
@@ -4559,7 +4568,7 @@ function htmlSanitizeWriter(buf, uriValidator) {
  * @param node Root element to process
  */
 function stripCustomNsAttrs(node) {
-  if (node.nodeType === Node.ELEMENT_NODE) {
+  if (node.nodeType === window.Node.ELEMENT_NODE) {
     var attrs = node.attributes;
     for (var i = 0, l = attrs.length; i < l; i++) {
       var attrNode = attrs[i];
@@ -5529,11 +5538,11 @@ angular.module('ui.mask', [])
 }());
 },{}],8:[function(require,module,exports){
 /**
- * @license AngularJS v1.5.3
+ * @license AngularJS v1.5.5
  * (c) 2010-2016 Google, Inc. http://angularjs.org
  * License: MIT
  */
-(function(window, document, undefined) {'use strict';
+(function(window) {'use strict';
 
 /**
  * @description
@@ -5587,7 +5596,7 @@ function minErr(module, ErrorConstructor) {
       return match;
     });
 
-    message += '\nhttp://errors.angularjs.org/1.5.3/' +
+    message += '\nhttp://errors.angularjs.org/1.5.5/' +
       (module ? module + '/' : '') + code;
 
     for (i = SKIP_INDEXES, paramPrefix = '?'; i < templateArgs.length; i++, paramPrefix = '&') {
@@ -5701,6 +5710,7 @@ function minErr(module, ErrorConstructor) {
  * @ngdoc module
  * @name ng
  * @module ng
+ * @installation
  * @description
  *
  * # ng (core module)
@@ -5767,7 +5777,7 @@ var
  * documentMode is an IE-only property
  * http://msdn.microsoft.com/en-us/library/ie/cc196988(v=vs.85).aspx
  */
-msie = document.documentMode;
+msie = window.document.documentMode;
 
 
 /**
@@ -6577,6 +6587,41 @@ function shallowCopy(src, dst) {
  * @param {*} o1 Object or value to compare.
  * @param {*} o2 Object or value to compare.
  * @returns {boolean} True if arguments are equal.
+ *
+ * @example
+   <example module="equalsExample" name="equalsExample">
+     <file name="index.html">
+      <div ng-controller="ExampleController">
+        <form novalidate>
+          <h3>User 1</h3>
+          Name: <input type="text" ng-model="user1.name">
+          Age: <input type="number" ng-model="user1.age">
+
+          <h3>User 2</h3>
+          Name: <input type="text" ng-model="user2.name">
+          Age: <input type="number" ng-model="user2.age">
+
+          <div>
+            <br/>
+            <input type="button" value="Compare" ng-click="compare()">
+          </div>
+          User 1: <pre>{{user1 | json}}</pre>
+          User 2: <pre>{{user2 | json}}</pre>
+          Equal: <pre>{{result}}</pre>
+        </form>
+      </div>
+    </file>
+    <file name="script.js">
+        angular.module('equalsExample', []).controller('ExampleController', ['$scope', function($scope) {
+          $scope.user1 = {};
+          $scope.user2 = {};
+          $scope.result;
+          $scope.compare = function() {
+            $scope.result = angular.equals($scope.user1, $scope.user2);
+          };
+        }]);
+    </file>
+  </example>
  */
 function equals(o1, o2) {
   if (o1 === o2) return true;
@@ -6623,8 +6668,8 @@ var csp = function() {
   if (!isDefined(csp.rules)) {
 
 
-    var ngCspElement = (document.querySelector('[ng-csp]') ||
-                    document.querySelector('[data-ng-csp]'));
+    var ngCspElement = (window.document.querySelector('[ng-csp]') ||
+                    window.document.querySelector('[data-ng-csp]'));
 
     if (ngCspElement) {
       var ngCspAttribute = ngCspElement.getAttribute('ng-csp') ||
@@ -6699,7 +6744,7 @@ var jq = function() {
   var i, ii = ngAttrPrefixes.length, prefix, name;
   for (i = 0; i < ii; ++i) {
     prefix = ngAttrPrefixes[i];
-    if (el = document.querySelector('[' + prefix.replace(':', '\\:') + 'jq]')) {
+    if (el = window.document.querySelector('[' + prefix.replace(':', '\\:') + 'jq]')) {
       name = el.getAttribute(prefix + 'jq');
       break;
     }
@@ -6764,7 +6809,7 @@ function toJsonReplacer(key, value) {
     val = undefined;
   } else if (isWindow(value)) {
     val = '$WINDOW';
-  } else if (value &&  document === value) {
+  } else if (value &&  window.document === value) {
     val = '$DOCUMENT';
   } else if (isScope(value)) {
     val = '$SCOPE';
@@ -7216,11 +7261,11 @@ function bootstrap(element, modules, config) {
     element = jqLite(element);
 
     if (element.injector()) {
-      var tag = (element[0] === document) ? 'document' : startingTag(element);
+      var tag = (element[0] === window.document) ? 'document' : startingTag(element);
       //Encode angle brackets to prevent input from being sanitized to empty string #8683
       throw ngMinErr(
           'btstrpd',
-          "App Already Bootstrapped with this Element '{0}'",
+          "App already bootstrapped with this element '{0}'",
           tag.replace(/</,'&lt;').replace(/>/,'&gt;'));
     }
 
@@ -7667,9 +7712,9 @@ function setupModuleLoader(window) {
            * @ngdoc method
            * @name angular.Module#decorator
            * @module ng
-           * @param {string} The name of the service to decorate.
-           * @param {Function} This function will be invoked when the service needs to be
-           *                                    instantiated and should return the decorated service instance.
+           * @param {string} name The name of the service to decorate.
+           * @param {Function} decorFn This function will be invoked when the service needs to be
+           *                           instantiated and should return the decorated service instance.
            * @description
            * See {@link auto.$provide#decorator $provide.decorator()}.
            */
@@ -7973,11 +8018,11 @@ function toDebugString(obj) {
  * - `codeName` – `{string}` – Code name of the release, such as "jiggling-armfat".
  */
 var version = {
-  full: '1.5.3',    // all of these placeholder strings will be replaced by grunt's
+  full: '1.5.5',    // all of these placeholder strings will be replaced by grunt's
   major: 1,    // package task
   minor: 5,
-  dot: 3,
-  codeName: 'diplohaplontic-meiosis'
+  dot: 5,
+  codeName: 'material-conspiration'
 };
 
 
@@ -8234,6 +8279,9 @@ function publishExternalAPI(angular) {
  * - `inheritedData()` - same as `data()`, but walks up the DOM until a value is found or the top
  *   parent element is reached.
  *
+ * @knownIssue You cannot spy on `angular.element` if you are using Jasmine version 1.x. See
+ * https://github.com/angular/angular.js/issues/14251 for more information.
+ *
  * @param {string|DOMElement} element HTML string or DOMElement to be wrapped into jQuery.
  * @returns {Object} jQuery object.
  */
@@ -8360,7 +8408,7 @@ function jqLiteBuildFragment(html, context) {
 }
 
 function jqLiteParseHTML(html, context) {
-  context = context || document;
+  context = context || window.document;
   var parsed;
 
   if ((parsed = SINGLE_TAG_REGEXP.exec(html))) {
@@ -8386,7 +8434,7 @@ function jqLiteWrapNode(node, wrapper) {
 
 
 // IE9-11 has no method "contains" in SVG element and in Node.prototype. Bug #10259.
-var jqLiteContains = Node.prototype.contains || function(arg) {
+var jqLiteContains = window.Node.prototype.contains || function(arg) {
   // jshint bitwise: false
   return !!(this.compareDocumentPosition(arg) & 16);
   // jshint bitwise: true
@@ -8658,8 +8706,8 @@ var JQLitePrototype = JQLite.prototype = {
     }
 
     // check if document is already loaded
-    if (document.readyState === 'complete') {
-      setTimeout(trigger);
+    if (window.document.readyState === 'complete') {
+      window.setTimeout(trigger);
     } else {
       this.on('DOMContentLoaded', trigger); // works for modern browsers and IE9
       // we can not use jqLite since we are not done loading and jQuery could be loaded later.
@@ -9349,6 +9397,7 @@ var $$HashMapProvider = [function() {
 /**
  * @ngdoc module
  * @name auto
+ * @installation
  * @description
  *
  * Implicit module which gets automatically added to each {@link auto.$injector $injector}.
@@ -9362,7 +9411,7 @@ var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 var $injectorMinErr = minErr('$injector');
 
 function extractArgs(fn) {
-  var fnText = fn.toString().replace(STRIP_COMMENTS, ''),
+  var fnText = Function.prototype.toString.call(fn).replace(STRIP_COMMENTS, ''),
       args = fnText.match(ARROW_ARG) || fnText.match(FN_ARGS);
   return args;
 }
@@ -10782,6 +10831,9 @@ var $AnimateProvider = ['$provide', function($provide) {
        * // remove all the animation event listeners listening for `enter`
        * $animate.off('enter');
        *
+       * // remove listeners for all animation events from the container element
+       * $animate.off(container);
+       *
        * // remove all the animation event listeners listening for `enter` on the given element and its children
        * $animate.off('enter', container);
        *
@@ -10790,7 +10842,9 @@ var $AnimateProvider = ['$provide', function($provide) {
        * $animate.off('enter', container, callback);
        * ```
        *
-       * @param {string} event the animation event (e.g. enter, leave, move, addClass, removeClass, etc...)
+       * @param {string|DOMElement} event|container the animation event (e.g. enter, leave, move,
+       * addClass, removeClass, etc...), or the container element. If it is the element, all other
+       * arguments are ignored.
        * @param {DOMElement=} container the container element the event listener was placed on
        * @param {Function=} callback the callback function that was registered as the listener
        */
@@ -12363,8 +12417,8 @@ function $TemplateCacheProvider() {
  *   this element). This is a good place to put initialization code for your controller.
  * * `$onChanges(changesObj)` - Called whenever one-way (`<`) or interpolation (`@`) bindings are updated. The
  *   `changesObj` is a hash whose keys are the names of the bound properties that have changed, and the values are an
- *   object of the form `{ currentValue: ..., previousValue: ... }`. Use this hook to trigger updates within a component
- *   such as cloning the bound value to prevent accidental mutation of the outer value.
+ *   object of the form `{ currentValue, previousValue, isFirstChange() }`. Use this hook to trigger updates within a
+ *   component such as cloning the bound value to prevent accidental mutation of the outer value.
  * * `$onDestroy()` - Called on a controller when its containing scope is destroyed. Use this hook for releasing
  *   external resources, watches and event handlers. Note that components have their `$onDestroy()` hooks called in
  *   the same order as the `$scope.$broadcast` events are triggered, which is top down. This means that parent
@@ -12911,6 +12965,9 @@ function $TemplateCacheProvider() {
 
 var $compileMinErr = minErr('$compile');
 
+function UNINITIALIZED_VALUE() {}
+var _UNINITIALIZED_VALUE = new UNINITIALIZED_VALUE();
+
 /**
  * @ngdoc provider
  * @name $compileProvider
@@ -12935,7 +12992,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
   function parseIsolateBindings(scope, directiveName, isController) {
     var LOCAL_REGEXP = /^\s*([@&<]|=(\*?))(\??)\s*(\w*)\s*$/;
 
-    var bindings = {};
+    var bindings = createMap();
 
     forEach(scope, function(definition, scopeName) {
       if (definition in bindingCache) {
@@ -13109,6 +13166,9 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
    *      See {@link ng.$compile#-bindtocontroller- `bindToController`}.
    *    - `transclude` – `{boolean=}` – whether {@link $compile#transclusion content transclusion} is enabled.
    *      Disabled by default.
+   *    - `require` - `{Object<string, string>=}` - requires the controllers of other directives and binds them to
+   *      this component's controller. The object keys specify the property names under which the required
+   *      controllers (object values) will be bound. See {@link ng.$compile#-require- `require`}.
    *    - `$...` – additional properties to attach to the directive factory function and the controller
    *      constructor function. (This is used by the component router to annotate)
    *
@@ -13154,7 +13214,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
    * See also {@link ng.$compileProvider#directive $compileProvider.directive()}.
    */
   this.component = function registerComponent(name, options) {
-    var controller = options.controller || noop;
+    var controller = options.controller || function() {};
 
     function factory($injector) {
       function makeInjectable(fn) {
@@ -13168,7 +13228,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
       }
 
       var template = (!options.template && !options.templateUrl ? '' : options.template);
-      return {
+      var ddo = {
         controller: controller,
         controllerAs: identifierForController(options.controller) || options.controllerAs || '$ctrl',
         template: makeInjectable(template),
@@ -13179,14 +13239,27 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         restrict: 'E',
         require: options.require
       };
+
+      // Copy annotations (starting with $) over to the DDO
+      forEach(options, function(val, key) {
+        if (key.charAt(0) === '$') ddo[key] = val;
+      });
+
+      return ddo;
     }
 
-    // Copy any annotation properties (starting with $) over to the factory function
+    // TODO(pete) remove the following `forEach` before we release 1.6.0
+    // The component-router@0.2.0 looks for the annotations on the controller constructor
+    // Nothing in Angular looks for annotations on the factory function but we can't remove
+    // it from 1.5.x yet.
+
+    // Copy any annotation properties (starting with $) over to the factory and controller constructor functions
     // These could be used by libraries such as the new component router
     forEach(options, function(val, key) {
       if (key.charAt(0) === '$') {
         factory[key] = val;
-        controller[key] = val;
+        // Don't try to copy over annotations to named controller
+        if (isFunction(controller)) controller[key] = val;
       }
     });
 
@@ -13323,7 +13396,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
              $controller,   $rootScope,   $sce,   $animate,   $$sanitizeUri) {
 
     var SIMPLE_ATTR_NAME = /^\w/;
-    var specialAttrHolder = document.createElement('div');
+    var specialAttrHolder = window.document.createElement('div');
 
 
 
@@ -13654,7 +13727,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
       if (debugInfoEnabled) {
         content = ' ' + (directiveName || '') + ': ' + (comment || '') + ' ';
       }
-      return document.createComment(content);
+      return window.document.createComment(content);
     };
 
     return compile;
@@ -13677,7 +13750,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         var domNode = $compileNodes[i];
 
         if (domNode.nodeType === NODE_TYPE_TEXT && domNode.nodeValue.match(NOT_EMPTY) /* non-empty */) {
-          jqLiteWrapNode(domNode, $compileNodes[i] = document.createElement('span'));
+          jqLiteWrapNode(domNode, $compileNodes[i] = window.document.createElement('span'));
         }
       }
 
@@ -14370,7 +14443,9 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
             replaceDirective = directive;
           }
 
+          /* jshint -W021 */
           nodeLinkFn = compileTemplateUrl(directives.splice(i, directives.length - i), $compileNode,
+          /* jshint +W021 */
               templateAttrs, jqCollection, hasTranscludeDirective && childTranscludeFn, preLinkFns, postLinkFns, {
                 controllerDirectives: controllerDirectives,
                 newScopeDirective: (newScopeDirective !== directive) && newScopeDirective,
@@ -14434,7 +14509,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
 
       function nodeLinkFn(childLinkFn, scope, linkNode, $rootElement, boundTranscludeFn) {
         var i, ii, linkFn, isolateScope, controllerScope, elementControllers, transcludeFn, $element,
-            attrs, removeScopeBindingWatches, removeControllerBindingWatches;
+            attrs, scopeBindingInfo;
 
         if (compileNode === linkNode) {
           attrs = templateAttrs;
@@ -14473,11 +14548,11 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
           compile.$$addScopeClass($element, true);
           isolateScope.$$isolateBindings =
               newIsolateScopeDirective.$$isolateBindings;
-          removeScopeBindingWatches = initializeDirectiveBindings(scope, attrs, isolateScope,
+          scopeBindingInfo = initializeDirectiveBindings(scope, attrs, isolateScope,
                                         isolateScope.$$isolateBindings,
                                         newIsolateScopeDirective);
-          if (removeScopeBindingWatches) {
-            isolateScope.$on('$destroy', removeScopeBindingWatches);
+          if (scopeBindingInfo.removeWatches) {
+            isolateScope.$on('$destroy', scopeBindingInfo.removeWatches);
           }
         }
 
@@ -14488,8 +14563,10 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
           var bindings = controllerDirective.$$bindings.bindToController;
 
           if (controller.identifier && bindings) {
-            removeControllerBindingWatches =
+            controller.bindingInfo =
               initializeDirectiveBindings(controllerScope, attrs, controller.instance, bindings, controllerDirective);
+          } else {
+            controller.bindingInfo = {};
           }
 
           var controllerResult = controller();
@@ -14498,8 +14575,8 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
             // from setupControllers
             controller.instance = controllerResult;
             $element.data('$' + controllerDirective.name + 'Controller', controllerResult);
-            removeControllerBindingWatches && removeControllerBindingWatches();
-            removeControllerBindingWatches =
+            controller.bindingInfo.removeWatches && controller.bindingInfo.removeWatches();
+            controller.bindingInfo =
               initializeDirectiveBindings(controllerScope, attrs, controller.instance, bindings, controllerDirective);
           }
         }
@@ -14515,6 +14592,9 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         // Handle the init and destroy lifecycle hooks on all controllers that have them
         forEach(elementControllers, function(controller) {
           var controllerInstance = controller.instance;
+          if (isFunction(controllerInstance.$onChanges)) {
+            controllerInstance.$onChanges(controller.bindingInfo.initialChanges);
+          }
           if (isFunction(controllerInstance.$onInit)) {
             controllerInstance.$onInit();
           }
@@ -14971,7 +15051,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
       switch (type) {
       case 'svg':
       case 'math':
-        var wrapper = document.createElement('div');
+        var wrapper = window.document.createElement('div');
         wrapper.innerHTML = '<' + type + '>' + template + '</' + type + '>';
         return wrapper.childNodes[0].childNodes;
       default:
@@ -15115,7 +15195,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
       // - remove them from the DOM
       // - allow them to still be traversed with .nextSibling
       // - allow a single fragment.qSA to fetch all elements being removed
-      var fragment = document.createDocumentFragment();
+      var fragment = window.document.createDocumentFragment();
       for (i = 0; i < removeCount; i++) {
         fragment.appendChild(elementsToRemove[i]);
       }
@@ -15161,6 +15241,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
     // only occurs for isolate scopes and new scopes with controllerAs.
     function initializeDirectiveBindings(scope, attrs, destination, bindings, directive) {
       var removeWatchCollection = [];
+      var initialChanges = {};
       var changes;
       forEach(bindings, function initializeBinding(definition, scopeName) {
         var attrName = definition.attrName,
@@ -15176,7 +15257,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
               destination[scopeName] = attrs[attrName] = void 0;
             }
             attrs.$observe(attrName, function(value) {
-              if (isString(value)) {
+              if (isString(value) || isBoolean(value)) {
                 var oldValue = destination[scopeName];
                 recordChanges(scopeName, value, oldValue);
                 destination[scopeName] = value;
@@ -15193,6 +15274,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
               // the value to boolean rather than a string, so we special case this situation
               destination[scopeName] = lastValue;
             }
+            initialChanges[scopeName] = new SimpleChange(_UNINITIALIZED_VALUE, destination[scopeName]);
             break;
 
           case '=':
@@ -15248,11 +15330,16 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
             parentGet = $parse(attrs[attrName]);
 
             destination[scopeName] = parentGet(scope);
+            initialChanges[scopeName] = new SimpleChange(_UNINITIALIZED_VALUE, destination[scopeName]);
 
-            removeWatch = scope.$watch(parentGet, function parentValueWatchAction(newParentValue) {
-              var oldValue = destination[scopeName];
-              recordChanges(scopeName, newParentValue, oldValue);
-              destination[scopeName] = newParentValue;
+            removeWatch = scope.$watch(parentGet, function parentValueWatchAction(newValue, oldValue) {
+              if (newValue === oldValue) {
+                // If the new and old values are identical then this is the first time the watch has been triggered
+                // So instead we use the current value on the destination as the old value
+                oldValue = destination[scopeName];
+              }
+              recordChanges(scopeName, newValue, oldValue);
+              destination[scopeName] = newValue;
             }, parentGet.literal);
 
             removeWatchCollection.push(removeWatch);
@@ -15289,7 +15376,7 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
             previousValue = changes[key].previousValue;
           }
           // Store this change
-          changes[key] = {previousValue: previousValue, currentValue: currentValue};
+          changes[key] = new SimpleChange(previousValue, currentValue);
         }
       }
 
@@ -15299,14 +15386,24 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
         changes = undefined;
       }
 
-      return removeWatchCollection.length && function removeWatches() {
-        for (var i = 0, ii = removeWatchCollection.length; i < ii; ++i) {
-          removeWatchCollection[i]();
+      return {
+        initialChanges: initialChanges,
+        removeWatches: removeWatchCollection.length && function removeWatches() {
+          for (var i = 0, ii = removeWatchCollection.length; i < ii; ++i) {
+            removeWatchCollection[i]();
+          }
         }
       };
     }
   }];
 }
+
+function SimpleChange(previous, current) {
+  this.previousValue = previous;
+  this.currentValue = current;
+}
+SimpleChange.prototype.isFirstChange = function() { return this.previousValue === _UNINITIALIZED_VALUE; };
+
 
 var PREFIX_REGEXP = /^((?:x|data)[\:\-_])/i;
 /**
@@ -16247,7 +16344,7 @@ function $HttpProvider() {
      * That means changes to the properties of `data` are not local to the transform function (since Javascript passes objects by reference).
      * For example, when calling `$http.get(url, $scope.myObject)`, modifications to the object's properties in a transformRequest
      * function will be reflected on the scope and in any templates where the object is data-bound.
-     * To prevent his, transform functions should have no side-effects.
+     * To prevent this, transform functions should have no side-effects.
      * If you need to modify properties, it is recommended to make a copy of the data, or create new object to return.
      * </div>
      *
@@ -16493,6 +16590,12 @@ function $HttpProvider() {
      *    - **headers** – `{Object}` – Map of strings or functions which return strings representing
      *      HTTP headers to send to the server. If the return value of a function is null, the
      *      header will not be sent. Functions accept a config object as an argument.
+     *    - **eventHandlers** - `{Object}` - Event listeners to be bound to the XMLHttpRequest object.
+     *      To bind events to the XMLHttpRequest upload object, use `uploadEventHandlers`.
+     *      The handler will be called in the context of a `$apply` block.
+     *    - **uploadEventHandlers** - `{Object}` - Event listeners to be bound to the XMLHttpRequest upload
+     *      object. To bind events to the XMLHttpRequest object, use `eventHandlers`.
+     *      The handler will be called in the context of a `$apply` block.
      *    - **xsrfHeaderName** – `{string}` – Name of HTTP header to populate with the XSRF token.
      *    - **xsrfCookieName** – `{string}` – Name of cookie containing the XSRF token.
      *    - **transformRequest** –
@@ -16951,10 +17054,34 @@ function $HttpProvider() {
         }
 
         $httpBackend(config.method, url, reqData, done, reqHeaders, config.timeout,
-            config.withCredentials, config.responseType);
+            config.withCredentials, config.responseType,
+            createApplyHandlers(config.eventHandlers),
+            createApplyHandlers(config.uploadEventHandlers));
       }
 
       return promise;
+
+      function createApplyHandlers(eventHandlers) {
+        if (eventHandlers) {
+          var applyHandlers = {};
+          forEach(eventHandlers, function(eventHandler, key) {
+            applyHandlers[key] = function(event) {
+              if (useApplyAsync) {
+                $rootScope.$applyAsync(callEventHandler);
+              } else if ($rootScope.$$phase) {
+                callEventHandler();
+              } else {
+                $rootScope.$apply(callEventHandler);
+              }
+
+              function callEventHandler() {
+                eventHandler(event);
+              }
+            };
+          });
+          return applyHandlers;
+        }
+      }
 
 
       /**
@@ -17076,7 +17203,7 @@ function $HttpBackendProvider() {
 
 function createHttpBackend($browser, createXhr, $browserDefer, callbacks, rawDocument) {
   // TODO(vojta): fix the signature
-  return function(method, url, post, callback, headers, timeout, withCredentials, responseType) {
+  return function(method, url, post, callback, headers, timeout, withCredentials, responseType, eventHandlers, uploadEventHandlers) {
     $browser.$$incOutstandingRequestCount();
     url = url || $browser.url();
 
@@ -17135,6 +17262,14 @@ function createHttpBackend($browser, createXhr, $browserDefer, callbacks, rawDoc
 
       xhr.onerror = requestError;
       xhr.onabort = requestError;
+
+      forEach(eventHandlers, function(value, key) {
+          xhr.addEventListener(key, value);
+      });
+
+      forEach(uploadEventHandlers, function(value, key) {
+        xhr.upload.addEventListener(key, value);
+      });
 
       if (withCredentials) {
         xhr.withCredentials = true;
@@ -19114,7 +19249,7 @@ Lexer.prototype = {
         this.readString(ch);
       } else if (this.isNumber(ch) || ch === '.' && this.isNumber(this.peek())) {
         this.readNumber();
-      } else if (this.isIdent(ch)) {
+      } else if (this.isIdentifierStart(this.peekMultichar())) {
         this.readIdent();
       } else if (this.is(ch, '(){}[].,;:?')) {
         this.tokens.push({index: this.index, text: ch});
@@ -19158,10 +19293,47 @@ Lexer.prototype = {
             ch === '\n' || ch === '\v' || ch === '\u00A0');
   },
 
-  isIdent: function(ch) {
+  isIdentifierStart: function(ch) {
+    return this.options.isIdentifierStart ?
+        this.options.isIdentifierStart(ch, this.codePointAt(ch)) :
+        this.isValidIdentifierStart(ch);
+  },
+
+  isValidIdentifierStart: function(ch) {
     return ('a' <= ch && ch <= 'z' ||
             'A' <= ch && ch <= 'Z' ||
             '_' === ch || ch === '$');
+  },
+
+  isIdentifierContinue: function(ch) {
+    return this.options.isIdentifierContinue ?
+        this.options.isIdentifierContinue(ch, this.codePointAt(ch)) :
+        this.isValidIdentifierContinue(ch);
+  },
+
+  isValidIdentifierContinue: function(ch, cp) {
+    return this.isValidIdentifierStart(ch, cp) || this.isNumber(ch);
+  },
+
+  codePointAt: function(ch) {
+    if (ch.length === 1) return ch.charCodeAt(0);
+    /*jshint bitwise: false*/
+    return (ch.charCodeAt(0) << 10) + ch.charCodeAt(1) - 0x35FDC00;
+    /*jshint bitwise: true*/
+  },
+
+  peekMultichar: function() {
+    var ch = this.text.charAt(this.index);
+    var peek = this.peek();
+    if (!peek) {
+      return ch;
+    }
+    var cp1 = ch.charCodeAt(0);
+    var cp2 = peek.charCodeAt(0);
+    if (cp1 >= 0xD800 && cp1 <= 0xDBFF && cp2 >= 0xDC00 && cp2 <= 0xDFFF) {
+      return ch + peek;
+    }
+    return ch;
   },
 
   isExpOperator: function(ch) {
@@ -19212,12 +19384,13 @@ Lexer.prototype = {
 
   readIdent: function() {
     var start = this.index;
+    this.index += this.peekMultichar().length;
     while (this.index < this.text.length) {
-      var ch = this.text.charAt(this.index);
-      if (!(this.isIdent(ch) || this.isNumber(ch))) {
+      var ch = this.peekMultichar();
+      if (!this.isIdentifierContinue(ch)) {
         break;
       }
-      this.index++;
+      this.index += ch.length;
     }
     this.tokens.push({
       index: start,
@@ -20147,7 +20320,13 @@ ASTCompiler.prototype = {
   },
 
   nonComputedMember: function(left, right) {
-    return left + '.' + right;
+    var SAFE_IDENTIFIER = /[$_a-zA-Z][$_a-zA-Z0-9]*/;
+    var UNSAFE_CHARACTERS = /[^$_a-zA-Z0-9]/g;
+    if (SAFE_IDENTIFIER.test(right)) {
+      return left + '.' + right;
+    } else {
+      return left  + '["' + right.replace(UNSAFE_CHARACTERS, this.stringEscapeFn) + '"]';
+    }
   },
 
   computedMember: function(left, right) {
@@ -20710,6 +20889,7 @@ function $ParseProvider() {
     'null': null,
     'undefined': undefined
   };
+  var identStart, identContinue;
 
   /**
    * @ngdoc method
@@ -20726,17 +20906,50 @@ function $ParseProvider() {
     literals[literalName] = literalValue;
   };
 
+ /**
+  * @ngdoc method
+  * @name $parseProvider#setIdentifierFns
+  * @description
+  *
+  * Allows defining the set of characters that are allowed in Angular expressions. The function
+  * `identifierStart` will get called to know if a given character is a valid character to be the
+  * first character for an identifier. The function `identifierContinue` will get called to know if
+  * a given character is a valid character to be a follow-up identifier character. The functions
+  * `identifierStart` and `identifierContinue` will receive as arguments the single character to be
+  * identifier and the character code point. These arguments will be `string` and `numeric`. Keep in
+  * mind that the `string` parameter can be two characters long depending on the character
+  * representation. It is expected for the function to return `true` or `false`, whether that
+  * character is allowed or not.
+  *
+  * Since this function will be called extensivelly, keep the implementation of these functions fast,
+  * as the performance of these functions have a direct impact on the expressions parsing speed.
+  *
+  * @param {function=} identifierStart The function that will decide whether the given character is
+  *   a valid identifier start character.
+  * @param {function=} identifierContinue The function that will decide whether the given character is
+  *   a valid identifier continue character.
+  */
+  this.setIdentifierFns = function(identifierStart, identifierContinue) {
+    identStart = identifierStart;
+    identContinue = identifierContinue;
+    return this;
+  };
+
   this.$get = ['$filter', function($filter) {
     var noUnsafeEval = csp().noUnsafeEval;
     var $parseOptions = {
           csp: noUnsafeEval,
           expensiveChecks: false,
-          literals: copy(literals)
+          literals: copy(literals),
+          isIdentifierStart: isFunction(identStart) && identStart,
+          isIdentifierContinue: isFunction(identContinue) && identContinue
         },
         $parseOptionsExpensive = {
           csp: noUnsafeEval,
           expensiveChecks: true,
-          literals: copy(literals)
+          literals: copy(literals),
+          isIdentifierStart: isFunction(identStart) && identStart,
+          isIdentifierContinue: isFunction(identContinue) && identContinue
         };
     var runningChecksEnabled = false;
 
@@ -24531,7 +24744,7 @@ function $TimeoutProvider() {
 // doesn't know about mocked locations and resolves URLs to the real document - which is
 // exactly the behavior needed here.  There is little value is mocking these out for this
 // service.
-var urlParsingNode = document.createElement("a");
+var urlParsingNode = window.document.createElement("a");
 var originUrl = urlResolve(window.location.href);
 
 
@@ -25231,7 +25444,9 @@ function currencyFilter($locale) {
  * @param {(number|string)=} fractionSize Number of decimal places to round the number to.
  * If this is not provided then the fraction size is computed from the current locale's number
  * formatting pattern. In the case of the default locale, it will be 3.
- * @returns {string} Number rounded to fractionSize and places a “,” after each third digit.
+ * @returns {string} Number rounded to `fractionSize` appropriately formatted based on the current
+ *                   locale (e.g., in the en_US locale it will have "." as the decimal separator and
+ *                   include "," group separators after each third digit).
  *
  * @example
    <example module="numberFilterExample">
@@ -29460,7 +29675,11 @@ function classDirective(name, selector) {
               updateClasses(oldClasses, newClasses);
             }
           }
-          oldVal = shallowCopy(newVal);
+          if (isArray(newVal)) {
+            oldVal = newVal.map(function(v) { return shallowCopy(v); });
+          } else {
+            oldVal = shallowCopy(newVal);
+          }
         }
       }
     };
@@ -31176,7 +31395,7 @@ var ngIncludeFillContentDirective = ['$compile',
           // support innerHTML, so detect this here and try to generate the contents
           // specially.
           $element.empty();
-          $compile(jqLiteBuildFragment(ctrl.template, document).childNodes)(scope,
+          $compile(jqLiteBuildFragment(ctrl.template, window.document).childNodes)(scope,
               function namespaceAdaptedClone(clone) {
             $element.append(clone);
           }, {futureParentElement: $element});
@@ -33090,7 +33309,7 @@ var NG_OPTIONS_REGEXP = /^\s*([\s\S]+?)(?:\s+as\s+([\s\S]+?))?(?:\s+group\s+by\s
 // jshint maxlen: 100
 
 
-var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
+var ngOptionsDirective = ['$compile', '$document', '$parse', function($compile, $document, $parse) {
 
   function parseOptionsExpression(optionsExp, selectElement, scope) {
 
@@ -33251,8 +33470,8 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
 
   // we can't just jqLite('<option>') since jqLite is not smart enough
   // to create it in <select> and IE barfs otherwise.
-  var optionTemplate = document.createElement('option'),
-      optGroupTemplate = document.createElement('optgroup');
+  var optionTemplate = window.document.createElement('option'),
+      optGroupTemplate = window.document.createElement('optgroup');
 
     function ngOptionsPostLink(scope, selectElement, attr, ctrls) {
 
@@ -33277,7 +33496,10 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
 
       var options;
       var ngOptions = parseOptionsExpression(attr.ngOptions, selectElement, scope);
-
+      // This stores the newly created options before they are appended to the select.
+      // Since the contents are removed from the fragment when it is appended,
+      // we only need to create it once.
+      var listFragment = $document[0].createDocumentFragment();
 
       var renderEmptyOption = function() {
         if (!providedEmptyOption) {
@@ -33312,7 +33534,7 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
         selectCtrl.writeValue = function writeNgOptionsValue(value) {
           var option = options.getOptionFromViewValue(value);
 
-          if (option && !option.disabled) {
+          if (option) {
             // Don't update the option when it is already selected.
             // For example, the browser will select the first option by default. In that case,
             // most properties are set automatically - except the `selected` attribute, which we
@@ -33374,7 +33596,7 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
           if (value) {
             value.forEach(function(item) {
               var option = options.getOptionFromViewValue(item);
-              if (option && !option.disabled) option.element.selected = true;
+              if (option) option.element.selected = true;
             });
           }
         };
@@ -33426,6 +33648,8 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
         emptyOption = jqLite(optionTemplate.cloneNode(false));
       }
 
+      selectElement.empty();
+
       // We need to do this here to ensure that the options object is defined
       // when we first hit it in writeNgOptionsValue
       updateOptions();
@@ -33434,6 +33658,12 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
       scope.$watchCollection(ngOptions.getWatchables, updateOptions);
 
       // ------------------------------------------------------------------ //
+
+      function addOptionElement(option, parent) {
+        var optionElement = optionTemplate.cloneNode(false);
+        parent.appendChild(optionElement);
+        updateOptionElement(option, optionElement);
+      }
 
 
       function updateOptionElement(option, element) {
@@ -33451,133 +33681,66 @@ var ngOptionsDirective = ['$compile', '$parse', function($compile, $parse) {
         if (option.value !== element.value) element.value = option.selectValue;
       }
 
-      function addOrReuseElement(parent, current, type, templateElement) {
-        var element;
-        // Check whether we can reuse the next element
-        if (current && lowercase(current.nodeName) === type) {
-          // The next element is the right type so reuse it
-          element = current;
-        } else {
-          // The next element is not the right type so create a new one
-          element = templateElement.cloneNode(false);
-          if (!current) {
-            // There are no more elements so just append it to the select
-            parent.appendChild(element);
-          } else {
-            // The next element is not a group so insert the new one
-            parent.insertBefore(element, current);
-          }
-        }
-        return element;
-      }
-
-
-      function removeExcessElements(current) {
-        var next;
-        while (current) {
-          next = current.nextSibling;
-          jqLiteRemove(current);
-          current = next;
-        }
-      }
-
-
-      function skipEmptyAndUnknownOptions(current) {
-        var emptyOption_ = emptyOption && emptyOption[0];
-        var unknownOption_ = unknownOption && unknownOption[0];
-
-        // We cannot rely on the extracted empty option being the same as the compiled empty option,
-        // because the compiled empty option might have been replaced by a comment because
-        // it had an "element" transclusion directive on it (such as ngIf)
-        if (emptyOption_ || unknownOption_) {
-          while (current &&
-                (current === emptyOption_ ||
-                current === unknownOption_ ||
-                current.nodeType === NODE_TYPE_COMMENT ||
-                (nodeName_(current) === 'option' && current.value === ''))) {
-            current = current.nextSibling;
-          }
-        }
-        return current;
-      }
-
-
       function updateOptions() {
-
         var previousValue = options && selectCtrl.readValue();
+
+        // We must remove all current options, but cannot simply set innerHTML = null
+        // since the providedEmptyOption might have an ngIf on it that inserts comments which we
+        // must preserve.
+        // Instead, iterate over the current option elements and remove them or their optgroup
+        // parents
+        if (options) {
+
+          for (var i = options.items.length - 1; i >= 0; i--) {
+            var option = options.items[i];
+            if (option.group) {
+              jqLiteRemove(option.element.parentNode);
+            } else {
+              jqLiteRemove(option.element);
+            }
+          }
+        }
 
         options = ngOptions.getOptions();
 
-        var groupMap = {};
-        var currentElement = selectElement[0].firstChild;
+        var groupElementMap = {};
 
         // Ensure that the empty option is always there if it was explicitly provided
         if (providedEmptyOption) {
           selectElement.prepend(emptyOption);
         }
 
-        currentElement = skipEmptyAndUnknownOptions(currentElement);
-
-        options.items.forEach(function updateOption(option) {
-          var group;
+        options.items.forEach(function addOption(option) {
           var groupElement;
-          var optionElement;
 
           if (isDefined(option.group)) {
 
             // This option is to live in a group
             // See if we have already created this group
-            group = groupMap[option.group];
+            groupElement = groupElementMap[option.group];
 
-            if (!group) {
+            if (!groupElement) {
 
-              // We have not already created this group
-              groupElement = addOrReuseElement(selectElement[0],
-                                               currentElement,
-                                               'optgroup',
-                                               optGroupTemplate);
-              // Move to the next element
-              currentElement = groupElement.nextSibling;
+              groupElement = optGroupTemplate.cloneNode(false);
+              listFragment.appendChild(groupElement);
 
               // Update the label on the group element
               groupElement.label = option.group;
 
               // Store it for use later
-              group = groupMap[option.group] = {
-                groupElement: groupElement,
-                currentOptionElement: groupElement.firstChild
-              };
-
+              groupElementMap[option.group] = groupElement;
             }
 
-            // So now we have a group for this option we add the option to the group
-            optionElement = addOrReuseElement(group.groupElement,
-                                              group.currentOptionElement,
-                                              'option',
-                                              optionTemplate);
-            updateOptionElement(option, optionElement);
-            // Move to the next element
-            group.currentOptionElement = optionElement.nextSibling;
+            addOptionElement(option, groupElement);
 
           } else {
 
             // This option is not in a group
-            optionElement = addOrReuseElement(selectElement[0],
-                                              currentElement,
-                                              'option',
-                                              optionTemplate);
-            updateOptionElement(option, optionElement);
-            // Move to the next element
-            currentElement = optionElement.nextSibling;
+            addOptionElement(option, listFragment);
           }
         });
 
-
-        // Now remove all excess options and group
-        Object.keys(groupMap).forEach(function(key) {
-          removeExcessElements(groupMap[key].currentOptionElement);
-        });
-        removeExcessElements(currentElement);
+        selectElement[0].appendChild(listFragment);
 
         ngModelCtrl.$render();
 
@@ -35272,7 +35435,7 @@ var SelectController =
   //
   // We can't just jqLite('<option>') since jqLite is not smart enough
   // to create it in <select> and IE barfs otherwise.
-  self.unknownOption = jqLite(document.createElement('option'));
+  self.unknownOption = jqLite(window.document.createElement('option'));
   self.renderUnknownOption = function(val) {
     var unknownVal = '? ' + hashKey(val) + ' ?';
     self.unknownOption.val(unknownVal);
@@ -36235,11 +36398,11 @@ $provide.value("$locale", {
 });
 }]);
 
-  jqLite(document).ready(function() {
-    angularInit(document, bootstrap);
+  jqLite(window.document).ready(function() {
+    angularInit(window.document, bootstrap);
   });
 
-})(window, document);
+})(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
 },{}],9:[function(require,module,exports){
@@ -36248,475 +36411,565 @@ module.exports = angular;
 
 },{"./angular":8}],10:[function(require,module,exports){
 // https://github.com/Gillardo/bootstrap-ui-datetime-picker
-// Version: 2.0.5
-// Released: 2015-12-30 
+// Version: 2.3.1
+// Released: 2016-04-07 
 angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bootstrap.position'])
     .constant('uiDatetimePickerConfig', {
         dateFormat: 'yyyy-MM-dd HH:mm',
-        defaultTime: '00:00 PM',
+        defaultTime: '00:00:00',
         html5Types: {
             date: 'yyyy-MM-dd',
             'datetime-local': 'yyyy-MM-ddTHH:mm:ss.sss',
             'month': 'yyyy-MM'
         },
+        initialPicker: 'date',
+        reOpenDefault: false,
         enableDate: true,
         enableTime: true,
-        todayText: 'Today',
-        nowText: 'Now',
-        clearText: 'Clear',
-        closeText: 'Done',
-        dateText: 'Date',
-        timeText: 'Time',
+        buttonBar: {
+            show: true,
+            now: {
+                show: true,
+                text: 'Now'
+            },
+            today: {
+                show: true,
+                text: 'Today'
+            },
+            clear: {
+                show: true,
+                text: 'Clear'
+            },
+            date: {
+                show: true,
+                text: 'Date'
+            },
+            time: {
+                show: true,
+                text: 'Time'
+            },
+            close: {
+                show: true,
+                text: 'Close'
+            }
+        },
         closeOnDateSelection: true,
         appendToBody: false,
-        showButtonBar: true,
-        altInputFormats: []
+        altInputFormats: [],
+        ngModelOptions: { }
     })
-    .directive('datetimePicker', ['$compile', '$parse', '$document', '$timeout', '$uibPosition', 'dateFilter', 'uibDateParser', 'uiDatetimePickerConfig', '$rootScope',
-        function ($compile, $parse, $document, $timeout, $uibPosition, dateFilter, uibDateParser, uiDatetimePickerConfig, $rootScope) {
-            return {
-                restrict: 'A',
-                require: 'ngModel',
-                scope: {
-                    isOpen: '=?',
-                    enableDate: '=?',
-                    enableTime: '=?',
-                    todayText: '@',
-                    nowText: '@',
-                    dateText: '@',
-                    timeText: '@',
-                    clearText: '@',
-                    closeText: '@',
-                    dateDisabled: '&'
-                },
-                link: function (scope, element, attrs, ngModel) {
-                    var dateFormat = uiDatetimePickerConfig.dateFormat,
-                        closeOnDateSelection = angular.isDefined(attrs.closeOnDateSelection) ? scope.$parent.$eval(attrs.closeOnDateSelection) : uiDatetimePickerConfig.closeOnDateSelection,
-                        appendToBody = angular.isDefined(attrs.datepickerAppendToBody) ? scope.$parent.$eval(attrs.datepickerAppendToBody) : uiDatetimePickerConfig.appendToBody,
-                        altInputFormats = angular.isDefined(attrs.altInputFormats) ? scope.$parent.$eval(attrs.altInputFormats) : uiDatetimePickerConfig.altInputFormats;
+    .controller('DateTimePickerController', ['$scope', '$element', '$attrs', '$compile', '$parse', '$document', '$timeout', '$uibPosition', 'dateFilter', 'uibDateParser', 'uiDatetimePickerConfig', '$rootScope',
+        function ($scope, $element, $attrs, $compile, $parse, $document, $timeout, $uibPosition, dateFilter, uibDateParser, uiDatetimePickerConfig, $rootScope) {
+            var dateFormat = uiDatetimePickerConfig.dateFormat,
+                ngModel, ngModelOptions, $popup, cache = {}, watchListeners = [],
+                closeOnDateSelection = angular.isDefined($attrs.closeOnDateSelection) ? $scope.$parent.$eval($attrs.closeOnDateSelection) : uiDatetimePickerConfig.closeOnDateSelection,
+                appendToBody = angular.isDefined($attrs.datepickerAppendToBody) ? $scope.$parent.$eval($attrs.datepickerAppendToBody) : uiDatetimePickerConfig.appendToBody,
+                altInputFormats = angular.isDefined($attrs.altInputFormats) ? $scope.$parent.$eval($attrs.altInputFormats) : uiDatetimePickerConfig.altInputFormats;
 
-                    scope.dpData = {};
-                    scope.tpData = {};
-                    scope.showButtonBar = angular.isDefined(attrs.showButtonBar) ? scope.$parent.$eval(attrs.showButtonBar) : uiDatetimePickerConfig.showButtonBar;
+            this.init = function(_ngModel) {
+                ngModel = _ngModel;
+                ngModelOptions = ngModel.$options || uiDatetimePickerConfig.ngModelOptions;
 
-                    // determine which pickers should be available. Defaults to date and time
-                    scope.enableDate = angular.isDefined(scope.enableDate) ? scope.enableDate : uiDatetimePickerConfig.enableDate;
-                    scope.enableTime = angular.isDefined(scope.enableTime) ? scope.enableTime : uiDatetimePickerConfig.enableTime;
+                $scope.buttonBar = angular.isDefined($attrs.buttonBar) ? $scope.$parent.$eval($attrs.buttonBar) : uiDatetimePickerConfig.buttonBar;
 
-                    // default picker view
-                    scope.showPicker = scope.enableDate ? 'date' : 'time';
+                // determine which pickers should be available. Defaults to date and time
+                $scope.enableDate = angular.isDefined($scope.enableDate) ? $scope.enableDate : uiDatetimePickerConfig.enableDate;
+                $scope.enableTime = angular.isDefined($scope.enableTime) ? $scope.enableTime : uiDatetimePickerConfig.enableTime;
 
-                    var isHtml5DateInput = false;
+                // determine default picker
+                $scope.initialPicker = angular.isDefined($attrs.initialPicker) ? $attrs.initialPicker : ($scope.enableDate ? uiDatetimePickerConfig.initialPicker : 'time');
 
-                    if (uiDatetimePickerConfig.html5Types[attrs.type]) {
-                        dateFormat = uiDatetimePickerConfig.html5Types[attrs.type];
-                        isHtml5DateInput = true;
-                    } else {
-                        dateFormat = attrs.datepickerPopup || uiDatetimePickerConfig.dateFormat;
-                        attrs.$observe('datetimePicker', function(value) {
-                            var newDateFormat = value || uiDatetimePickerConfig.dateFormat;
+                // determine the picker to open when control is re-opened
+                $scope.reOpenDefault = angular.isDefined($attrs.reOpenDefault) ? $attrs.reOpenDefault : uiDatetimePickerConfig.reOpenDefault;
 
-                            if (newDateFormat !== dateFormat) {
-                                dateFormat = newDateFormat;
-                                ngModel.$modelValue = null;
+                // check if an illegal combination of options exists
+                if ($scope.initialPicker == 'date' && !$scope.enableDate) {
+                    throw new Error("datetimePicker can't have initialPicker set to date and have enableDate set to false.");
+                }
 
-                                if (!dateFormat) {
-                                    throw new Error('datetimePicker must have a date format specified.');
-                                }
-                            }
-                        });
-                    }
+                // default picker view
+                $scope.showPicker = !$scope.enableDate ? 'time' : $scope.initialPicker;
 
-                    // popup element used to display calendar
-                    var popupEl = angular.element('' +
-                        '<div date-picker-wrap>' +
-                        '<div uib-datepicker></div>' +
-                        '</div>' +
-                        '<div time-picker-wrap>' +
-                        '<div uib-timepicker style="margin:0 auto"></div>' +
-                        '</div>');
+                var isHtml5DateInput = false;
 
-                    // get attributes from directive
-                    popupEl.attr({
-                        'ng-model': 'date',
-                        'ng-change': 'dateSelection(date)'
-                    });
+                if (uiDatetimePickerConfig.html5Types[$attrs.type]) {
+                    dateFormat = uiDatetimePickerConfig.html5Types[$attrs.type];
+                    isHtml5DateInput = true;
+                } else {
+                    dateFormat = $attrs.datetimePicker || uiDatetimePickerConfig.dateFormat;
+                    $attrs.$observe('datetimePicker', function(value) {
+                        var newDateFormat = value || uiDatetimePickerConfig.dateFormat;
 
-                    // datepicker element
-                    var datepickerEl = angular.element(popupEl.children()[0]);
+                        if (newDateFormat !== dateFormat) {
+                            dateFormat = newDateFormat;
+                            ngModel.$modelValue = null;
 
-                    if (isHtml5DateInput) {
-                        if (attrs.type === 'month') {
-                            datepickerEl.attr('datepicker-mode', '"month"');
-                            datepickerEl.attr('min-mode', 'month');
-                        }
-                    }
-
-                    if (attrs.datepickerOptions) {
-                        var options = scope.$parent.$eval(attrs.datepickerOptions);
-
-                        if (options && options.initDate) {
-                            scope.initDate = options.initDate;
-                            datepickerEl.attr('init-date', 'initDate');
-                            delete options.initDate;
-                        }
-
-                        angular.forEach(options, function (value, option) {
-                            datepickerEl.attr(cameltoDash(option), value);
-                        });
-                    }
-
-                    // set datepickerMode to day by default as need to create watch
-                    // else disabled cannot pass in mode
-                    if (!angular.isDefined(attrs['datepickerMode'])) {
-                        attrs['datepickerMode'] = 'day';
-                    }
-
-                    if (attrs.dateDisabled) {
-                        datepickerEl.attr('date-disabled', 'dateDisabled({ date: date, mode: mode })');
-                    }
-
-                    // timepicker element
-                    var timepickerEl = angular.element(popupEl.children()[1]);
-
-                    if (attrs.timepickerOptions) {
-                        var options = scope.$parent.$eval(attrs.timepickerOptions);
-
-                        angular.forEach(options, function (value, option) {
-                            scope.tpData[option] = value;
-                            timepickerEl.attr(cameltoDash(option), 'tpData.' + option);
-                        });
-                    }
-
-                    // watch attrs - NOTE: minDate and maxDate are used with datePicker and timePicker.  By using the minDate and maxDate
-                    // with the timePicker, you can dynamically set the min and max time values.  This cannot be done using the min and max values
-                    // with the timePickerOptions
-                    angular.forEach(['minMode', 'maxMode', 'minDate', 'maxDate', 'datepickerMode', 'initDate', 'shortcutPropagation'], function(key) {
-                        if (attrs[key]) {
-                            var getAttribute = $parse(attrs[key]);
-
-                            scope.$parent.$watch(getAttribute, function(value) {
-                                scope.dpData[key] = value;
-                            });
-                            datepickerEl.attr(cameltoDash(key), 'dpData.' + key);
-
-                            if (key == 'minDate') {
-                                timepickerEl.attr('min', 'dpData.minDate');
-                            } else if (key == 'maxDate')
-                                timepickerEl.attr('max', 'dpData.maxDate');
-
-                            // Propagate changes from datepicker to outside
-                            if (key === 'datepickerMode') {
-                                var setAttribute = getAttribute.assign;
-                                scope.$watch('dpData.' + key, function(value, oldvalue) {
-                                    if (angular.isFunction(setAttribute) && value !== oldvalue) {
-                                        setAttribute(scope.$parent, value);
-                                    }
-                                });
+                            if (!dateFormat) {
+                                throw new Error('datetimePicker must have a date format specified.');
                             }
                         }
                     });
+                }
 
-                    // do not check showWeeks attr, as should be used via datePickerOptions
+                if (!dateFormat) {
+                    throw new Error('datetimePicker must have a date format specified.');
+                }
 
-                    if (!isHtml5DateInput) {
-                        // Internal API to maintain the correct ng-invalid-[key] class
-                        ngModel.$$parserName = 'datetime';
-                        ngModel.$validators.datetime = validator;
-                        ngModel.$parsers.unshift(parseDate);
-                        ngModel.$formatters.push(function(value) {
-                            scope.date = value;
-                            return ngModel.$isEmpty(value) ? value : dateFilter(value, dateFormat);
-                        });
-                    } else {
-                        ngModel.$formatters.push(function(value) {
-                            scope.date = value;
+                // popup element used to display calendar
+                var popupEl = angular.element('' +
+                    '<div date-picker-wrap>' +
+                    '<div uib-datepicker></div>' +
+                    '</div>' +
+                    '<div time-picker-wrap>' +
+                    '<div uib-timepicker style="margin:0 auto"></div>' +
+                    '</div>');
+
+                if (ngModelOptions) {
+                    timezone = ngModelOptions.timezone;
+                    $scope.ngModelOptions = angular.copy(ngModelOptions);
+                    $scope.ngModelOptions.timezone = null;
+                    if ($scope.ngModelOptions.updateOnDefault === true) {
+                        $scope.ngModelOptions.updateOn = $scope.ngModelOptions.updateOn ?
+                        $scope.ngModelOptions.updateOn + ' default' : 'default';
+                    }
+
+                    popupEl.attr('ng-model-options', 'ngModelOptions');
+                } else {
+                    timezone = null;
+                }
+
+                // get attributes from directive
+                popupEl.attr({
+                    'ng-model': 'date',
+                    'ng-change': 'dateSelection(date)'
+                });
+
+                // datepicker element
+                var datepickerEl = angular.element(popupEl.children()[0]);
+
+                if (!$scope.datepickerOptions) {
+                    $scope.datepickerOptions = {};
+                }
+
+                if (isHtml5DateInput) {
+                    if ($attrs.type === 'month') {
+                        $scope.datepickerOptions.datepickerMode = 'month';
+                        $scope.datepickerOptions.minMode = 'month';
+                    }
+                }
+
+                datepickerEl.attr('datepicker-options', 'datepickerOptions');
+
+                // set datepickerMode to day by default as need to create watch
+                // else disabled cannot pass in mode
+                if (!angular.isDefined($scope.datepickerOptions.datepickerMode)) {
+                    $scope.datepickerOptions.datepickerMode = 'day';
+                }
+
+                // timepicker element
+                var timepickerEl = angular.element(popupEl.children()[1]);
+
+                if (!$scope.timepickerOptions)
+                    $scope.timepickerOptions = {};
+
+                for (var key in $scope.timepickerOptions) {
+                    timepickerEl.attr(cameltoDash(key), 'timepickerOptions.' + key);
+                }
+
+                // watch attrs - NOTE: minDate and maxDate are used with datePicker and timePicker.  By using the minDate and maxDate
+                // with the timePicker, you can dynamically set the min and max time values.  This cannot be done using the min and max values
+                // with the timePickerOptions
+                angular.forEach(['minDate', 'maxDate', 'initDate'], function(key) {
+                    if ($scope.datepickerOptions[key]) {
+                        if (key == 'minDate') {
+                            timepickerEl.attr('min', 'datepickerOptions.minDate');
+                        } else if (key == 'maxDate')
+                            timepickerEl.attr('max', 'datepickerOptions.maxDate');
+                    }
+                });
+
+                // do not check showWeeks attr, as should be used via datePickerOptions
+
+                if (!isHtml5DateInput) {
+                    // Internal API to maintain the correct ng-invalid-[key] class
+                    ngModel.$$parserName = 'datetime';
+                    ngModel.$validators.datetime = validator;
+                    ngModel.$parsers.unshift(parseDate);
+                    ngModel.$formatters.push(function(value) {
+                        if (ngModel.$isEmpty(value)) {
+                            $scope.date = value;
                             return value;
-                        });
-                    }
+                        }
 
-                    // Detect changes in the view from the text box
-                    ngModel.$viewChangeListeners.push(function() {
-                        scope.date = parseDateString(ngModel.$viewValue);
+                        $scope.date = uibDateParser.fromTimezone(value, ngModelOptions.timezone);
+
+                        dateFormat = dateFormat.replace(/M!/, 'MM')
+                            .replace(/d!/, 'dd');
+
+                        return uibDateParser.filter($scope.date, dateFormat);
                     });
-
-                    element.bind('keydown', inputKeydownBind);
-
-                    var $popup = $compile(popupEl)(scope);
-                    // Prevent jQuery cache memory leak (template is now redundant after linking)
-                    popupEl.remove();
-
-                    if (appendToBody) {
-                        $document.find('body').append($popup);
-                    } else {
-                        element.after($popup);
-                    }
-
-                    // get text
-                    scope.getText = function (key) {
-                        return scope[key + 'Text'] || uiDatetimePickerConfig[key + 'Text'];
-                    };
-
-                    // Inner change
-                    scope.dateSelection = function (dt) {
-
-                        // check if timePicker is being shown and merge dates, so that the date
-                        // part is never changed, only the time
-                        if (scope.enableTime && scope.showPicker === 'time') {
-
-                            // only proceed if dt is a date
-                            if (dt || dt != null) {
-                                // check if our scope.date is null, and if so, set to todays date
-                                if (!angular.isDefined(scope.date) || scope.date == null) {
-                                    scope.date = new Date();
-                                }
-
-                                // dt will not be undefined if the now or today button is pressed
-                                if (dt && dt != null) {
-                                    // get the existing date and update the time
-                                    var date = new Date(scope.date);
-                                    date.setHours(dt.getHours());
-                                    date.setMinutes(dt.getMinutes());
-                                    date.setSeconds(dt.getSeconds());
-                                    date.setMilliseconds(dt.getMilliseconds());
-                                    dt = date;
-                                }
-                            }
-                        }
-
-                        if (angular.isDefined(dt)) {
-                            if (!scope.date) {
-                                var defaultTime = angular.isDefined(attrs.defaultTime) ? attrs.defaultTime : uiDatetimePickerConfig.defaultTime;
-                                var t = new Date('2001-01-01 ' + defaultTime);
-
-                                if (!isNaN(t)) {
-                                    dt.setHours(t.getHours());
-                                    dt.setMinutes(t.getMinutes());
-                                    dt.setSeconds(t.getSeconds());
-                                    dt.setMilliseconds(t.getMilliseconds());
-                                }
-                            }
-                            scope.date = dt;
-                        }
-
-                        var date = scope.date ? dateFilter(scope.date, dateFormat) : null;
-
-                        element.val(date);
-                        ngModel.$setViewValue(date);
-
-                        if (closeOnDateSelection) {
-                            // do not close when using timePicker as make impossible to choose a time
-                            if (scope.showPicker != 'time' && date != null) {
-                                // if time is enabled, swap to timePicker
-                                if (scope.enableTime) {
-                                    // need to delay this, else timePicker never shown
-                                    $timeout(function() {
-                                        scope.showPicker = 'time';
-                                    }, 0);
-                                } else {
-                                    scope.close();
-                                }
-                            }
-                        }
-
-                    };
-
-                    scope.keydown = function(evt) {
-                        if (evt.which === 27) {
-                            scope.close();
-                            element[0].focus();
-                        }
-                    };
-
-                    scope.$watch('isOpen', function (value) {
-                        scope.dropdownStyle = {
-                            display: value ? 'block' : 'none'
-                        };
-
-                        if (value) {
-                            var position = appendToBody ? $uibPosition.offset(element) : $uibPosition.position(element);
-
-                            if (appendToBody) {
-                                scope.dropdownStyle.top = (position.top + element.prop('offsetHeight')) +'px';
-                            } else {
-                                scope.dropdownStyle.top = undefined;
-                            }
-
-                            scope.dropdownStyle.left = position.left + 'px';
-
-                            $timeout(function() {
-                                scope.$broadcast('uib:datepicker.focus');
-                                $document.bind('click', documentClickBind);
-                            }, 0, false);
-                        } else {
-                            $document.unbind('click', documentClickBind);
-                        }
+                } else {
+                    ngModel.$formatters.push(function(value) {
+                        $scope.date = uibDateParser.fromTimezone(value, ngModelOptions.timezone);
+                        return value;
                     });
+                }
 
-                    scope.isDisabled = function(date) {
-                        if (date === 'today' || date === 'now') {
-                            date = new Date();
+                // Detect changes in the view from the text box
+                ngModel.$viewChangeListeners.push(function() {
+                    $scope.date = parseDateString(ngModel.$viewValue);
+                });
+
+                $element.bind('keydown', inputKeydownBind);
+
+                $popup = $compile(popupEl)($scope);
+                // Prevent jQuery cache memory leak (template is now redundant after linking)
+                popupEl.remove();
+
+                if (appendToBody) {
+                    $document.find('body').append($popup);
+                } else {
+                    $element.after($popup);
+                }
+
+            };
+
+            // get text
+            $scope.getText = function (key) {
+                return $scope.buttonBar[key].text || uiDatetimePickerConfig.buttonBar[key].text;
+            };
+
+            // determine if button is to be shown or not
+            $scope.doShow = function(key) {
+                if (angular.isDefined($scope.buttonBar[key].show))
+                    return $scope.buttonBar[key].show;
+                else
+                    return uiDatetimePickerConfig.buttonBar[key].show;
+            };
+
+            // Inner change
+            $scope.dateSelection = function (dt) {
+
+                // check if timePicker is being shown and merge dates, so that the date
+                // part is never changed, only the time
+                if ($scope.enableTime && $scope.showPicker === 'time') {
+
+                    // only proceed if dt is a date
+                    if (dt || dt != null) {
+                        // check if our $scope.date is null, and if so, set to todays date
+                        if (!angular.isDefined($scope.date) || $scope.date == null) {
+                            $scope.date = new Date();
                         }
 
-                        return scope.dpData.minDate && scope.compare(date, scope.dpData.minDate) < 0 ||
-                            scope.dpData.maxDate && scope.compare(date, scope.dpData.maxDate) > 0;
-                    };
-
-                    scope.compare = function(date1, date2) {
-                        return new Date(date1.getFullYear(), date1.getMonth(), date1.getDate()) - new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
-                    };
-
-                    scope.select = function (opt) {
-
-                        var date = null;
-                        var isNow = opt === 'now';
-
-                        if (opt === 'today' || opt == 'now') {
-                            var now = new Date();
-                            if (angular.isDate(scope.date)) {
-                                date = new Date(scope.date);
-                                date.setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
-                                date.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
-                            } else {
-                                date = now;
-                            }
-                        }
-
-                        scope.dateSelection(date);
-
-                        if (opt == 'clear')
-                            scope.close();
-                    };
-
-                    scope.close = function () {
-                        scope.isOpen = false;
-
-                        // if enableDate and enableTime are true, reopen the picker in date mode first
-                        if (scope.enableDate && scope.enableTime)
-                            scope.showPicker = 'date';
-
-                        element[0].focus();
-                    };
-
-                    scope.changePicker = function (evt, picker) {
-                        evt.preventDefault();
-                        evt.stopPropagation();
-
-                        scope.showPicker = picker;
-                    };
-
-                    scope.$on('$destroy', function () {
-                        if (scope.isOpen === true) {
-                            if (!$rootScope.$$phase) {
-                                scope.$apply(function() {
-                                    scope.close();
-                                });
-                            }
-                        }
-
-                        $popup.remove();
-                        element.unbind('keydown', inputKeydownBind);
-                        $document.unbind('click', documentClickBind);
-                    });
-
-                    function documentClickBind(evt) {
-                        var popup = $popup[0];
-                        var dpContainsTarget = element[0].contains(evt.target);
-
-                        // The popup node may not be an element node
-                        // In some browsers (IE only) element nodes have the 'contains' function
-                        var popupContainsTarget = popup.contains !== undefined && popup.contains(evt.target);
-
-                        if (scope.isOpen && !(dpContainsTarget || popupContainsTarget)) {
-                            scope.$apply(function() {
-                                scope.isOpen = false;
-                            });
-                        }
-                    }
-
-                    function inputKeydownBind (evt) {
-                        if (evt.which === 27 && scope.isOpen) {
-                            evt.preventDefault();
-                            evt.stopPropagation();
-                            scope.$apply(function() {
-                                scope.close();
-                            });
-                            element[0].focus();
-                        } else if (evt.which === 40 && !scope.isOpen) {
-                            evt.preventDefault();
-                            evt.stopPropagation();
-                            scope.$apply(function() {
-                                scope.isOpen = true;
-                            });
-                        }
-                    }
-
-                    function cameltoDash(string) {
-                        return string.replace(/([A-Z])/g, function ($1) { return '-' + $1.toLowerCase(); });
-                    }
-
-                    function parseDateString(viewValue) {
-                        var date = uibDateParser.parse(viewValue, dateFormat, scope.date);
-                        if (isNaN(date)) {
-                            for (var i = 0; i < altInputFormats.length; i++) {
-                                date = uibDateParser.parse(viewValue, altInputFormats[i], scope.date);
-                                if (!isNaN(date)) {
-                                    return date;
-                                }
-                            }
-                        }
-                        return date;
-                    }
-
-                    function parseDate(viewValue) {
-                        if (angular.isNumber(viewValue)) {
-                            // presumably timestamp to date object
-                            viewValue = new Date(viewValue);
-                        }
-
-                        if (!viewValue) {
-                            return null;
-                        } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
-                            return viewValue;
-                        } else if (angular.isString(viewValue)) {
-                            var date = parseDateString(viewValue);
-                            if (isNaN(date)) {
-                                return undefined;
-                            }
-
-                            return date;
-                        } else {
-                            return undefined;
-                        }
-                    }
-
-                    function validator(modelValue, viewValue) {
-                        var value = modelValue || viewValue;
-
-                        if (!(attrs.ngRequired || attrs.required) && !value) {
-                            return true;
-                        }
-
-                        if (angular.isNumber(value)) {
-                            value = new Date(value);
-                        }
-
-                        if (!value) {
-                            return true;
-                        } else if (angular.isDate(value) && !isNaN(value)) {
-                            return true;
-                        } else if (angular.isDate(new Date(value)) && !isNaN(new Date(value).valueOf())) {
-                            return true;
-                        } else if (angular.isString(value)) {
-                            return !isNaN(parseDateString(viewValue));
-                        } else {
-                            return false;
+                        // dt will not be undefined if the now or today button is pressed
+                        if (dt && dt != null) {
+                            // get the existing date and update the time
+                            var date = new Date($scope.date);
+                            date.setHours(dt.getHours());
+                            date.setMinutes(dt.getMinutes());
+                            date.setSeconds(dt.getSeconds());
+                            date.setMilliseconds(dt.getMilliseconds());
+                            dt = date;
                         }
                     }
                 }
-            };
-        }])
 
+                if (angular.isDefined(dt)) {
+                    if (!$scope.date) {
+                        var defaultTime = angular.isDefined($attrs.defaultTime) ? $attrs.defaultTime : uiDatetimePickerConfig.defaultTime;
+                        var t = new Date('2001-01-01 ' + defaultTime);
+
+                        if (!isNaN(t) && dt != null) {
+                            dt.setHours(t.getHours());
+                            dt.setMinutes(t.getMinutes());
+                            dt.setSeconds(t.getSeconds());
+                            dt.setMilliseconds(t.getMilliseconds());
+                        }
+                    }
+                    $scope.date = dt;
+                }
+
+                var date = $scope.date ? dateFilter($scope.date, dateFormat, ngModelOptions.timezone) : null;
+
+                $element.val(date);
+                ngModel.$setViewValue(date);
+
+                if (closeOnDateSelection) {
+                    // do not close when using timePicker as make impossible to choose a time
+                    if ($scope.showPicker != 'time' && date != null) {
+                        // if time is enabled, swap to timePicker
+                        if ($scope.enableTime) {
+                            $scope.open('time');
+                        } else {
+                            $scope.close(false);
+                        }
+                    }
+                }
+
+            };
+
+            $scope.keydown = function(evt) {
+                if (evt.which === 27) {
+                    $scope.close(false);
+                    $element[0].focus();
+                }
+            };
+
+            $scope.$watch('isOpen', function (value) {
+                $scope.dropdownStyle = {
+                    display: value ? 'block' : 'none'
+                };
+
+                if (value) {
+                    cache['openDate'] = $scope.date;
+
+                    var position = appendToBody ? $uibPosition.offset($element) : $uibPosition.position($element);
+
+                    if (appendToBody) {
+                        $scope.dropdownStyle.top = (position.top + $element.prop('offsetHeight')) +'px';
+                    } else {
+                        $scope.dropdownStyle.top = undefined;
+                    }
+
+                    $scope.dropdownStyle.left = position.left + 'px';
+
+                    $timeout(function() {
+                        $scope.$broadcast('uib:datepicker.focus');
+                        $document.bind('click', documentClickBind);
+                    }, 0, false);
+
+                    $scope.open($scope.showPicker);
+                } else {
+                    $document.unbind('click', documentClickBind);
+                }
+            });
+
+            $scope.isDisabled = function(date) {
+                if (date === 'today' || date === 'now')
+                    date = uibDateParser.fromTimezone(new Date(), timezone);
+
+                var dates = {};
+                angular.forEach(['minDate', 'maxDate'], function(key) {
+                    if (!$scope.datepickerOptions[key]) {
+                        dates[key] = null;
+                    } else if (angular.isDate($scope.datepickerOptions[key])) {
+                        dates[key] = uibDateParser.fromTimezone(new Date($scope.datepickerOptions[key]), timezone);
+                    } else {
+                        dates[key] = new Date(dateFilter($scope.datepickerOptions[key], 'medium'));
+                    }
+                });
+
+                return $scope.datepickerOptions &&
+                    dates.minDate && $scope.compare(date, dates.minDate) < 0 ||
+                    dates.maxDate && $scope.compare(date, dates.maxDate) > 0;
+            };
+
+            $scope.compare = function(date1, date2) {
+                return new Date(date1.getFullYear(), date1.getMonth(), date1.getDate()) - new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+            };
+
+            $scope.select = function (opt) {
+
+                var date = null;
+                var isNow = opt === 'now';
+
+                if (opt === 'today' || opt == 'now') {
+                    var now = new Date();
+                    if (angular.isDate($scope.date)) {
+                        date = new Date($scope.date);
+                        date.setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+                        date.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+                    } else {
+                        date = now;
+                    }
+                }
+
+                $scope.dateSelection(date);
+            };
+
+            $scope.open = function (picker, evt) {
+                if (angular.isDefined(evt)) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                }
+
+                // need to delay this, else timePicker never shown
+                $timeout(function() {
+                    $scope.showPicker = picker;
+                }, 0);
+
+                // in order to update the timePicker, we need to update the model reference!
+                // as found here https://angular-ui.github.io/bootstrap/#/timepicker
+                if (picker == 'time') {
+                    $timeout(function() {
+                        $scope.date = parseDateString(ngModel.$viewValue);
+                    }, 50);
+                }
+            };
+
+            $scope.close = function (closePressed) {
+                $scope.isOpen = false;
+
+                // if enableDate and enableTime are true, reopen the picker in date mode first
+                if ($scope.enableDate && $scope.enableTime)
+                    $scope.showPicker = $scope.reOpenDefault === false ? 'date' : $scope.reOpenDefault;
+
+                // if a on-close-fn has been defined, lets call it
+                // we only call this if closePressed is defined!
+                if (angular.isDefined(closePressed))
+                    $scope.whenClosed({ args: { closePressed: closePressed, openDate: cache['openDate'] || null, closeDate: $scope.date } });
+
+                $element[0].focus();
+            };
+
+            $scope.$on('$destroy', function () {
+                if ($scope.isOpen === true) {
+                    if (!$rootScope.$$phase) {
+                        $scope.$apply(function() {
+                            $scope.close();
+                        });
+                    }
+                }
+
+                watchListeners.forEach(function(a) { a(); });
+                $popup.remove();
+                $element.unbind('keydown', inputKeydownBind);
+                $document.unbind('click', documentClickBind);
+            });
+
+            function documentClickBind(evt) {
+                var popup = $popup[0];
+                var dpContainsTarget = $element[0].contains(evt.target);
+
+                // The popup node may not be an element node
+                // In some browsers (IE only) element nodes have the 'contains' function
+                var popupContainsTarget = popup.contains !== undefined && popup.contains(evt.target);
+
+                if ($scope.isOpen && !(dpContainsTarget || popupContainsTarget)) {
+                    $scope.$apply(function() {
+                        $scope.close(false);
+                    });
+                }
+            }
+
+            function inputKeydownBind (evt) {
+                if (evt.which === 27 && $scope.isOpen) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    $scope.$apply(function() {
+                        $scope.close(false);
+                    });
+                    $element[0].focus();
+                } else if (evt.which === 40 && !$scope.isOpen) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    $scope.$apply(function() {
+                        $scope.isOpen = true;
+                    });
+                }
+            }
+
+            function cameltoDash(string) {
+                return string.replace(/([A-Z])/g, function ($1) { return '-' + $1.toLowerCase(); });
+            }
+
+            function parseDateString(viewValue) {
+                var date = uibDateParser.parse(viewValue, dateFormat, $scope.date);
+                if (isNaN(date)) {
+                    for (var i = 0; i < altInputFormats.length; i++) {
+                        date = uibDateParser.parse(viewValue, altInputFormats[i], $scope.date);
+                        if (!isNaN(date)) {
+                            return date;
+                        }
+                    }
+                }
+                return date;
+            }
+
+            function parseDate(viewValue) {
+                if (angular.isNumber(viewValue) && !isNaN(viewValue)) {
+                    // presumably timestamp to date object
+                    viewValue = new Date(viewValue);
+                }
+
+                if (!viewValue) {
+                    return null;
+                }
+
+                if (angular.isDate(viewValue) && !isNaN(viewValue)) {
+                    return viewValue;
+                }
+
+                if (angular.isString(viewValue)) {
+                    var date = parseDateString(viewValue);
+                    if (!isNaN(date)) {
+                        return uibDateParser.toTimezone(date, ngModelOptions.timezone);
+                    }
+
+                    return undefined;
+                } else {
+                    return undefined;
+                }
+            }
+
+            function validateMinMax(value) {
+                if ($scope.datepickerOptions.minDate && value < $scope.datepickerOptions.minDate) {
+                     return false;
+                 } else if ($scope.datepickerOptions.maxDate && value > $scope.datepickerOptions.maxDate) {
+                     return false;
+                 } else {
+                     return true;
+                 }
+            }
+
+            function validator(modelValue, viewValue) {
+                var value = modelValue || viewValue;
+
+                if (!($attrs.ngRequired || $attrs.required) && !value) {
+                    return true;
+                }
+
+                if (angular.isNumber(value)) {
+                    value = new Date(value);
+                }
+
+                if (!value) {
+                    return true;
+                } else if (angular.isDate(value) && !isNaN(value)) {
+                    return validateMinMax (value);
+                } else if (angular.isDate(new Date(value)) && !isNaN(new Date(value).valueOf())) {
+                    return validateMinMax (new Date(value));
+                } else if (angular.isString(value)) {
+                    return !isNaN(parseDateString(viewValue)) && validateMinMax(parseDateString(viewVialue));
+                } else {
+                    return false;
+                }
+            }
+
+        }])
+    .directive('datetimePicker', function () {
+        return {
+            restrict: 'A',
+            require: ['ngModel', 'datetimePicker'],
+            controller: 'DateTimePickerController',
+            scope: {
+                isOpen: '=?',
+                datepickerOptions: '=?',
+                timepickerOptions: '=?',
+                enableDate: '=?',
+                enableTime: '=?',
+                initialPicker: '=?',
+                reOpenDefault: '=?',
+                whenClosed: '&'
+            },
+            link: function (scope, element, attrs, ctrls) {
+                var ngModel = ctrls[0],
+                    ctrl = ctrls[1];
+
+                ctrl.init(ngModel);
+            }
+        };
+    })
     .directive('datePickerWrap', function () {
         return {
             restrict: 'EA',
@@ -36739,12 +36992,12 @@ angular.module('ui.bootstrap.datetimepicker').run(['$templateCache', function($t
   'use strict';
 
   $templateCache.put('template/date-picker.html',
-    "<ul ng-if=\"isOpen && showPicker == 'date'\" class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-style=dropdownStyle style=left:inherit ng-keydown=keydown($event) ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=date-picker-menu><div ng-transclude></div></li><li ng-if=showButtonBar style=padding:5px><span class=\"btn-group pull-left\" style=margin-right:10px><button type=button class=\"btn btn-sm btn-info\" ng-click=\"select('today')\" ng-disabled=\"isDisabled('today')\">{{ getText('today') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\"><button ng-if=enableTime type=button class=\"btn btn-sm btn-default\" ng-click=\"changePicker($event, 'time')\">{{ getText('time')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-click=close()>{{ getText('close') }}</button></span></li></ul>"
+    "<ul class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-if=\"isOpen && showPicker == 'date'\" ng-style=dropdownStyle style=left:inherit ng-keydown=keydown($event) ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=date-picker-menu><div ng-transclude></div></li><li style=padding:5px ng-if=buttonBar.show><span class=\"btn-group pull-left\" style=margin-right:10px ng-if=\"doShow('today') || doShow('clear')\"><button type=button class=\"btn btn-sm btn-info\" ng-if=\"doShow('today')\" ng-click=\"select('today')\" ng-disabled=\"isDisabled('today')\">{{ getText('today') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-if=\"doShow('clear')\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\" ng-if=\"(doShow('time') && enableTime) || doShow('close')\"><button type=button class=\"btn btn-sm btn-default\" ng-if=\"doShow('time') && enableTime\" ng-click=\"open('time', $event)\">{{ getText('time')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-if=\"doShow('close')\" ng-click=close(true)>{{ getText('close') }}</button></span> <span class=clearfix></span></li></ul>"
   );
 
 
   $templateCache.put('template/time-picker.html',
-    "<ul ng-if=\"isOpen && showPicker == 'time'\" class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-style=dropdownStyle style=left:inherit ng-keydown=keydown($event) ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=time-picker-menu><div ng-transclude></div></li><li ng-if=showButtonBar style=padding:5px><span class=\"btn-group pull-left\" style=margin-right:10px><button type=button class=\"btn btn-sm btn-info\" ng-click=\"select('now')\" ng-disabled=\"isDisabled('now')\">{{ getText('now') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\"><button ng-if=enableDate type=button class=\"btn btn-sm btn-default\" ng-click=\"changePicker($event, 'date')\">{{ getText('date')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-click=close()>{{ getText('close') }}</button></span></li></ul>"
+    "<ul class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-if=\"isOpen && showPicker == 'time'\" ng-style=dropdownStyle style=left:inherit ng-keydown=keydown($event) ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=time-picker-menu><div ng-transclude></div></li><li style=padding:5px ng-if=buttonBar.show><span class=\"btn-group pull-left\" style=margin-right:10px ng-if=\"doShow('now') || doShow('clear')\"><button type=button class=\"btn btn-sm btn-info\" ng-if=\"doShow('now')\" ng-click=\"select('now')\" ng-disabled=\"isDisabled('now')\">{{ getText('now') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-if=\"doShow('clear')\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\" ng-if=\"(doShow('date') && enableDate) || doShow('close')\"><button type=button class=\"btn btn-sm btn-default\" ng-if=\"doShow('date') && enableDate\" ng-click=\"open('date', $event)\">{{ getText('date')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-if=\"doShow('close')\" ng-click=close(true)>{{ getText('close') }}</button></span> <span class=clearfix></span></li></ul>"
   );
 
 }]);
@@ -39775,6 +40028,634 @@ module.exports = {
 };
 
 },{}],26:[function(require,module,exports){
+'use strict';
+
+require('whatwg-fetch');
+var Q = require('Q');
+var EventEmitter = require('eventemitter2').EventEmitter2;
+var copy = require('shallow-copy');
+
+// The default base url.
+var baseUrl = 'https://api.form.io';
+
+var plugins = [];
+
+// The temporary GET request cache storage
+var cache = {};
+
+var noop = function(){};
+var identity = function(value) { return value; };
+
+// Will invoke a function on all plugins.
+// Returns a promise that resolves when all promises
+// returned by the plugins have resolved.
+// Should be used when you want plugins to prepare for an event
+// but don't want any data returned.
+var pluginWait = function(pluginFn) {
+  var args = [].slice.call(arguments, 1);
+  return Q.all(plugins.map(function(plugin) {
+    return (plugin[pluginFn] || noop).apply(plugin, args);
+  }));
+};
+
+// Will invoke a function on plugins from highest priority
+// to lowest until one returns a value. Returns null if no
+// plugins return a value.
+// Should be used when you want just one plugin to handle things.
+var pluginGet = function(pluginFn) {
+  var args = [].slice.call(arguments, 0);
+  var callPlugin = function(index, pluginFn) {
+    var plugin = plugins[index];
+    if (!plugin) return Q(null);
+    return Q((plugin && plugin[pluginFn] || noop).apply(plugin, [].slice.call(arguments, 2)))
+    .then(function(result) {
+      if (result !== null && result !== undefined) return result;
+      return callPlugin.apply(null, [index + 1].concat(args));
+    });
+  };
+  return callPlugin.apply(null, [0].concat(args));
+};
+
+// Will invoke a function on plugins from highest priority to
+// lowest, building a promise chain from their return values
+// Should be used when all plugins need to process a promise's
+// success or failure
+var pluginAlter = function(pluginFn, value) {
+  var args = [].slice.call(arguments, 2);
+  return plugins.reduce(function(value, plugin) {
+      return (plugin[pluginFn] || identity).apply(plugin, [value].concat(args));
+  }, value);
+};
+
+
+/**
+ * Returns parts of the URL that are important.
+ * Indexes
+ *  - 0: The full url
+ *  - 1: The protocol
+ *  - 2: The hostname
+ *  - 3: The rest
+ *
+ * @param url
+ * @returns {*}
+ */
+var getUrlParts = function(url) {
+  var regex = '^(http[s]?:\\/\\/)';
+  if (baseUrl && url.indexOf(baseUrl) === 0) {
+    regex += '(' + baseUrl.replace(/^http[s]?:\/\//, '') + ')';
+  }
+  else {
+    regex += '([^/]+)';
+  }
+  regex += '($|\\/.*)';
+  return url.match(new RegExp(regex));
+};
+
+var serialize = function(obj) {
+  var str = [];
+  for(var p in obj)
+    if (obj.hasOwnProperty(p)) {
+      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    }
+  return str.join("&");
+};
+
+// The formio class.
+var Formio = function(path) {
+
+  // Ensure we have an instance of Formio.
+  if (!(this instanceof Formio)) { return new Formio(path); }
+  if (!path) {
+    // Allow user to create new projects if this was instantiated without
+    // a url
+    this.projectUrl = baseUrl + '/project';
+    this.projectsUrl = baseUrl + '/project';
+    this.projectId = false;
+    this.query = '';
+    return;
+  }
+
+  // Initialize our variables.
+  this.projectsUrl = '';
+  this.projectUrl = '';
+  this.projectId = '';
+  this.formUrl = '';
+  this.formsUrl = '';
+  this.formId = '';
+  this.submissionsUrl = '';
+  this.submissionUrl = '';
+  this.submissionId = '';
+  this.actionsUrl = '';
+  this.actionId = '';
+  this.actionUrl = '';
+  this.query = '';
+
+  // Normalize to an absolute path.
+  if ((path.indexOf('http') !== 0) && (path.indexOf('//') !== 0)) {
+    baseUrl = baseUrl ? baseUrl : window.location.href.match(/http[s]?:\/\/api./)[0];
+    path = baseUrl + path;
+  }
+
+  var hostparts = getUrlParts(path);
+  var parts = [];
+  var hostName = hostparts[1] + hostparts[2];
+  path = hostparts.length > 3 ? hostparts[3] : '';
+  var queryparts = path.split('?');
+  if (queryparts.length > 1) {
+    path = queryparts[0];
+    this.query = '?' + queryparts[1];
+  }
+
+  // See if this is a form path.
+  if ((path.search(/(^|\/)(form|project)($|\/)/) !== -1)) {
+
+    // Register a specific path.
+    var registerPath = function(name, base) {
+      this[name + 'sUrl'] = base + '/' + name;
+      var regex = new RegExp('\/' + name + '\/([^/]+)');
+      if (path.search(regex) !== -1) {
+        parts = path.match(regex);
+        this[name + 'Url'] = parts ? (base + parts[0]) : '';
+        this[name + 'Id'] = (parts.length > 1) ? parts[1] : '';
+        base += parts[0];
+      }
+      return base;
+    }.bind(this);
+
+    // Register an array of items.
+    var registerItems = function(items, base, staticBase) {
+      for (var i in items) {
+        if (items.hasOwnProperty(i)) {
+          var item = items[i];
+          if (item instanceof Array) {
+            registerItems(item, base, true);
+          }
+          else {
+            var newBase = registerPath(item, base);
+            base = staticBase ? base : newBase;
+          }
+        }
+      }
+    };
+
+    registerItems(['project', 'form', ['submission', 'action']], hostName);
+
+    if (!this.projectId) {
+      if (hostparts.length > 2 && hostparts[2].split('.').length > 2) {
+        this.projectUrl = hostName;
+        this.projectId = hostparts[2].split('.')[0];
+      }
+    }
+  }
+  else {
+
+    // This is an aliased url.
+    this.projectUrl = hostName;
+    this.projectId = (hostparts.length > 2) ? hostparts[2].split('.')[0] : '';
+    var subRegEx = new RegExp('\/(submission|action)($|\/.*)');
+    var subs = path.match(subRegEx);
+    this.pathType = (subs && (subs.length > 1)) ? subs[1] : '';
+    path = path.replace(subRegEx, '');
+    path = path.replace(/\/$/, '');
+    this.formsUrl = hostName + '/form';
+    this.formUrl = hostName + path;
+    this.formId = path.replace(/^\/+|\/+$/g, '');
+    var items = ['submission', 'action'];
+    for (var i in items) {
+      if (items.hasOwnProperty(i)) {
+        var item = items[i];
+        this[item + 'sUrl'] = hostName + path + '/' + item;
+        if ((this.pathType === item) && (subs.length > 2) && subs[2]) {
+          this[item + 'Id'] = subs[2].replace(/^\/+|\/+$/g, '');
+          this[item + 'Url'] = hostName + path + subs[0];
+        }
+      }
+    }
+  }
+};
+
+/**
+ * Load a resource.
+ *
+ * @param type
+ * @returns {Function}
+ * @private
+ */
+var _load = function(type) {
+  var _id = type + 'Id';
+  var _url = type + 'Url';
+  return function(query, opts) {
+    if (query && typeof query === 'object') {
+      query = serialize(query.params);
+    }
+    if (query) {
+      query = this.query ? (this.query + '&' + query) : ('?' + query);
+    }
+    else {
+      query = this.query;
+    }
+    if (!this[_id]) { return Q.reject('Missing ' + _id); }
+    return this.makeRequest(type, this[_url] + query, 'get', null, opts);
+  };
+};
+
+/**
+ * Save a resource.
+ *
+ * @param type
+ * @returns {Function}
+ * @private
+ */
+var _save = function(type) {
+  var _id = type + 'Id';
+  var _url = type + 'Url';
+  return function(data, opts) {
+    var method = this[_id] ? 'put' : 'post';
+    var reqUrl = this[_id] ? this[_url] : this[type + 'sUrl'];
+    cache = {};
+    return this.makeRequest(type, reqUrl + this.query, method, data, opts);
+  };
+};
+
+/**
+ * Delete a resource.
+ *
+ * @param type
+ * @returns {Function}
+ * @private
+ */
+var _delete = function(type) {
+  var _id = type + 'Id';
+  var _url = type + 'Url';
+  return function(opts) {
+    if (!this[_id]) { Q.reject('Nothing to delete'); }
+    cache = {};
+    return this.makeRequest(type, this[_url], 'delete', null, opts);
+  };
+};
+
+/**
+ * Resource index method.
+ *
+ * @param type
+ * @returns {Function}
+ * @private
+ */
+var _index = function(type) {
+  var _url = type + 'Url';
+  return function(query, opts) {
+    query = query || '';
+    if (query && typeof query === 'object') {
+      query = '?' + serialize(query.params);
+    }
+    return this.makeRequest(type, this[_url] + query, 'get', null, opts);
+  };
+};
+
+// Activates plugin hooks, makes Formio.request if no plugin provides a request
+Formio.prototype.makeRequest = function(type, url, method, data, opts) {
+  var self = this;
+  method = (method || 'GET').toUpperCase();
+  if(!opts || typeof opts !== 'object') {
+    opts = {};
+  }
+
+  var requestArgs = {
+    formio: self,
+    type: type,
+    url: url,
+    method: method,
+    data: data,
+    opts: opts
+  };
+
+  var request = pluginWait('preRequest', requestArgs)
+  .then(function() {
+    return pluginGet('request', requestArgs)
+    .then(function(result) {
+      if (result === null || result === undefined) {
+        return Formio.request(url, method, data);
+      }
+      return result;
+    });
+  });
+
+  return pluginAlter('wrapRequestPromise', request, requestArgs);
+};
+
+// Define specific CRUD methods.
+Formio.prototype.loadProject = _load('project');
+Formio.prototype.saveProject = _save('project');
+Formio.prototype.deleteProject = _delete('project');
+Formio.prototype.loadForm = _load('form');
+Formio.prototype.saveForm = _save('form');
+Formio.prototype.deleteForm = _delete('form');
+Formio.prototype.loadForms = _index('forms');
+Formio.prototype.loadSubmission = _load('submission');
+Formio.prototype.saveSubmission = _save('submission');
+Formio.prototype.deleteSubmission = _delete('submission');
+Formio.prototype.loadSubmissions = _index('submissions');
+Formio.prototype.loadAction = _load('action');
+Formio.prototype.saveAction = _save('action');
+Formio.prototype.deleteAction = _delete('action');
+Formio.prototype.loadActions = _index('actions');
+Formio.prototype.availableActions = function() { return this.makeRequest('availableActions', this.formUrl + '/actions'); };
+Formio.prototype.actionInfo = function(name) { return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name); };
+
+Formio.makeStaticRequest = function(url, method, data) {
+  var self = this;
+  method = (method || 'GET').toUpperCase();
+
+  var requestArgs = {
+    url: url,
+    method: method,
+    data: data
+  };
+
+  var request = pluginWait('preStaticRequest', requestArgs)
+  .then(function() {
+    return pluginGet('staticRequest', requestArgs)
+    .then(function(result) {
+      if (result === null || result === undefined) {
+        return Formio.request(url, method, data);
+      }
+      return result;
+    });
+  });
+
+  return pluginAlter('wrapStaticRequestPromise', request, requestArgs);
+};
+
+// Static methods.
+Formio.loadProjects = function(query) {
+  query = query || '';
+  if (typeof query === 'object') {
+    query = '?' + serialize(query.params);
+  }
+  return this.makeStaticRequest(baseUrl + '/project' + query);
+};
+Formio.request = function(url, method, data) {
+  if (!url) { return Q.reject('No url provided'); }
+  method = (method || 'GET').toUpperCase();
+  var cacheKey = btoa(url);
+
+  return Q().then(function() {
+    // Get the cached promise to save multiple loads.
+    if (method === 'GET' && cache.hasOwnProperty(cacheKey)) {
+      return cache[cacheKey];
+    }
+    else {
+      return Q()
+      .then(function() {
+        // Set up and fetch request
+        var headers = new Headers({
+          'Accept': 'application/json',
+          'Content-type': 'application/json; charset=UTF-8'
+        });
+        var token = Formio.getToken();
+        if (token) {
+          headers.append('x-jwt-token', token);
+        }
+
+        var options = {
+          method: method,
+          headers: headers,
+          mode: 'cors'
+        };
+        if (data) {
+          options.body = JSON.stringify(data);
+        }
+
+        return fetch(url, options);
+      })
+      .catch(function(err) {
+        err.message = 'Could not connect to API server (' + err.message + ')';
+        err.networkError = true;
+        throw err;
+      })
+      .then(function(response) {
+        // Handle fetch results
+        if (response.ok) {
+          var token = response.headers.get('x-jwt-token');
+          if (response.status >= 200 && response.status < 300 && token && token !== '') {
+            Formio.setToken(token);
+          }
+          // 204 is no content. Don't try to .json() it.
+          if (response.status === 204) {
+            return {};
+          }
+          return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
+            response.json() : response.text())
+          .then(function(result) {
+            // Add some content-range metadata to the result here
+            var range = response.headers.get('content-range');
+            if (range && typeof result === 'object') {
+              range = range.split('/');
+              if(range[0] !== '*') {
+                var skipLimit = range[0].split('-');
+                result.skip = Number(skipLimit[0]);
+                result.limit = skipLimit[1] - skipLimit[0] + 1;
+              }
+              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
+            }
+            return result;
+          });
+        }
+        else {
+          if (response.status === 440) {
+            Formio.setToken(null);
+          }
+          // Parse and return the error as a rejected promise to reject this promise
+          return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
+            response.json() : response.text())
+            .then(function(error){
+              throw error;
+            });
+        }
+      })
+      .catch(function(err) {
+        // Remove failed promises from cache
+        delete cache[cacheKey];
+        // Propagate error so client can handle accordingly
+        throw err;
+      });
+    }
+  })
+  .then(function(result) {
+    // Save the cache
+    if (method === 'GET') {
+      cache[cacheKey] = Q(result);
+    }
+
+    // Shallow copy result so modifications don't end up in cache
+    if(Array.isArray(result)) {
+      var resultCopy = result.map(copy);
+      resultCopy.skip = result.skip;
+      resultCopy.limit = result.limit;
+      resultCopy.serverCount = result.serverCount;
+      return resultCopy;
+    }
+    return copy(result);
+  });
+};
+
+Formio.setToken = function(token) {
+  token = token || '';
+  if (token === this.token) { return; }
+  this.token = token;
+  if (!token) {
+    Formio.setUser(null);
+    return localStorage.removeItem('formioToken');
+  }
+  localStorage.setItem('formioToken', token);
+  Formio.currentUser(); // Run this so user is updated if null
+};
+Formio.getToken = function() {
+  if (this.token) { return this.token; }
+  var token = localStorage.getItem('formioToken') || '';
+  this.token = token;
+  return token;
+};
+Formio.setUser = function(user) {
+  if (!user) {
+    this.setToken(null);
+    return localStorage.removeItem('formioUser');
+  }
+  localStorage.setItem('formioUser', JSON.stringify(user));
+};
+Formio.getUser = function() {
+  return JSON.parse(localStorage.getItem('formioUser') || null);
+};
+
+Formio.setBaseUrl = function(url) {
+  baseUrl = url;
+};
+Formio.getBaseUrl = function() {
+  return baseUrl;
+}
+Formio.clearCache = function() { cache = {}; };
+
+Formio.currentUser = function() {
+  var url = baseUrl + '/current';
+  var user = this.getUser();
+  if (user) {
+    return pluginAlter('wrapStaticRequestPromise', Q(user), {
+      url: url,
+      method: 'GET'
+    })
+  }
+  var token = this.getToken();
+  if (!token) {
+    return pluginAlter('wrapStaticRequestPromise', Q(null), {
+      url: url,
+      method: 'GET'
+    })
+  }
+  return this.makeStaticRequest(url)
+  .then(function(response) {
+    Formio.setUser(response);
+    return response;
+  });
+};
+
+// Keep track of their logout callback.
+Formio.logout = function() {
+  return this.makeStaticRequest(baseUrl + '/logout').finally(function() {
+    this.setToken(null);
+    this.setUser(null);
+    Formio.clearCache();
+  }.bind(this));
+};
+Formio.fieldData = function(data, component) {
+  if (!data) { return ''; }
+  if (!component || !component.key) { return data; }
+  if (component.key.indexOf('.') !== -1) {
+    var value = data;
+    var parts = component.key.split('.');
+    var key = '';
+    for (var i = 0; i < parts.length; i++) {
+      key = parts[i];
+
+      // Handle nested resources
+      if (value.hasOwnProperty('_id')) {
+        value = value.data;
+      }
+
+      // Return if the key is not found on the value.
+      if (!value.hasOwnProperty(key)) {
+        return;
+      }
+
+      // Convert old single field data in submissions to multiple
+      if (key === parts[parts.length - 1] && component.multiple && !Array.isArray(value[key])) {
+        value[key] = [value[key]];
+      }
+
+      // Set the value of this key.
+      value = value[key];
+    }
+    return value;
+  }
+  else {
+    // Convert old single field data in submissions to multiple
+    if (component.multiple && !Array.isArray(data[component.key])) {
+      data[component.key] = [data[component.key]];
+    }
+    return data[component.key];
+  }
+};
+
+/**
+ * EventEmitter for Formio events.
+ * See Node.js documentation for API documentation: https://nodejs.org/api/events.html
+ */
+Formio.events = new EventEmitter({
+  wildcard: false,
+  maxListeners: 0
+});
+
+/**
+ * Register a plugin with Formio.js
+ * @param plugin The plugin to register. See plugin documentation.
+ * @param name   Optional name to later retrieve plugin with.
+ */
+Formio.registerPlugin = function(plugin, name) {
+  plugins.push(plugin);
+  plugins.sort(function(a, b) {
+    return (b.priority || 0) - (a.priority || 0);
+  });
+  plugin.__name = name;
+  (plugin.init || noop).call(plugin, Formio);
+};
+
+/**
+ * Returns the plugin registered with the given name.
+ */
+Formio.getPlugin = function(name) {
+  return plugins.reduce(function(result, plugin) {
+    if (result) return result;
+    if (plugin.__name === name) return plugin;
+  }, null);
+};
+
+/**
+ * Deregisters a plugin with Formio.js.
+ * @param  plugin The instance or name of the plugin
+ * @return true if deregistered, false otherwise
+ */
+Formio.deregisterPlugin = function(plugin) {
+  var beforeLength = plugins.length;
+  plugins = plugins.filter(function(p) {
+    if(p !== plugin && p.__name !== plugin) return true;
+    (p.deregister || noop).call(p, Formio);
+    return false;
+  });
+  return beforeLength !== plugins.length;
+};
+
+module.exports = Formio;
+
+},{"Q":1,"eventemitter2":24,"shallow-copy":95,"whatwg-fetch":98}],27:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -55805,9 +56686,9 @@ module.exports = {
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 //! moment.js
-//! version : 2.12.0
+//! version : 2.13.0
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -55884,7 +56765,9 @@ module.exports = {
             invalidMonth    : null,
             invalidFormat   : false,
             userInvalidated : false,
-            iso             : false
+            iso             : false,
+            parsedDateParts : [],
+            meridiem        : null
         };
     }
 
@@ -55895,9 +56778,30 @@ module.exports = {
         return m._pf;
     }
 
+    var some;
+    if (Array.prototype.some) {
+        some = Array.prototype.some;
+    } else {
+        some = function (fun) {
+            var t = Object(this);
+            var len = t.length >>> 0;
+
+            for (var i = 0; i < len; i++) {
+                if (i in t && fun.call(this, t[i], i, t)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+    }
+
     function valid__isValid(m) {
         if (m._isValid == null) {
             var flags = getParsingFlags(m);
+            var parsedParts = some.call(flags.parsedDateParts, function (i) {
+                return i != null;
+            });
             m._isValid = !isNaN(m._d.getTime()) &&
                 flags.overflow < 0 &&
                 !flags.empty &&
@@ -55905,7 +56809,8 @@ module.exports = {
                 !flags.invalidWeekday &&
                 !flags.nullInput &&
                 !flags.invalidFormat &&
-                !flags.userInvalidated;
+                !flags.userInvalidated &&
+                (!flags.meridiem || (flags.meridiem && parsedParts));
 
             if (m._strict) {
                 m._isValid = m._isValid &&
@@ -56048,6 +56953,9 @@ module.exports = {
         var firstTime = true;
 
         return extend(function () {
+            if (utils_hooks__hooks.deprecationHandler != null) {
+                utils_hooks__hooks.deprecationHandler(null, msg);
+            }
             if (firstTime) {
                 warn(msg + '\nArguments: ' + Array.prototype.slice.call(arguments).join(', ') + '\n' + (new Error()).stack);
                 firstTime = false;
@@ -56059,6 +56967,9 @@ module.exports = {
     var deprecations = {};
 
     function deprecateSimple(name, msg) {
+        if (utils_hooks__hooks.deprecationHandler != null) {
+            utils_hooks__hooks.deprecationHandler(name, msg);
+        }
         if (!deprecations[name]) {
             warn(msg);
             deprecations[name] = true;
@@ -56066,6 +56977,7 @@ module.exports = {
     }
 
     utils_hooks__hooks.suppressDeprecationWarnings = false;
+    utils_hooks__hooks.deprecationHandler = null;
 
     function isFunction(input) {
         return input instanceof Function || Object.prototype.toString.call(input) === '[object Function]';
@@ -56113,6 +57025,22 @@ module.exports = {
         if (config != null) {
             this.set(config);
         }
+    }
+
+    var keys;
+
+    if (Object.keys) {
+        keys = Object.keys;
+    } else {
+        keys = function (obj) {
+            var i, res = [];
+            for (i in obj) {
+                if (hasOwnProp(obj, i)) {
+                    res.push(i);
+                }
+            }
+            return res;
+        };
     }
 
     // internal storage for locale config files
@@ -56269,7 +57197,7 @@ module.exports = {
     }
 
     function locale_locales__listLocales() {
-        return Object.keys(locales);
+        return keys(locales);
     }
 
     var aliases = {};
@@ -56348,7 +57276,7 @@ module.exports = {
             Math.pow(10, Math.max(0, zerosToFill)).toString().substr(1) + absNumber;
     }
 
-    var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|YYYYYY|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
+    var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|YYYYYY|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
 
     var localFormattingTokens = /(\[[^\[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g;
 
@@ -56401,7 +57329,7 @@ module.exports = {
         }
 
         return function (mom) {
-            var output = '';
+            var output = '', i;
             for (i = 0; i < length; i++) {
                 output += array[i] instanceof Function ? array[i].call(mom, format) : array[i];
             }
@@ -56530,6 +57458,23 @@ module.exports = {
     var WEEK = 7;
     var WEEKDAY = 8;
 
+    var indexOf;
+
+    if (Array.prototype.indexOf) {
+        indexOf = Array.prototype.indexOf;
+    } else {
+        indexOf = function (o) {
+            // I know
+            var i;
+            for (i = 0; i < this.length; ++i) {
+                if (this[i] === o) {
+                    return i;
+                }
+            }
+            return -1;
+        };
+    }
+
     function daysInMonth(year, month) {
         return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     }
@@ -56592,8 +57537,53 @@ module.exports = {
             this._monthsShort[MONTHS_IN_FORMAT.test(format) ? 'format' : 'standalone'][m.month()];
     }
 
+    function units_month__handleStrictParse(monthName, format, strict) {
+        var i, ii, mom, llc = monthName.toLocaleLowerCase();
+        if (!this._monthsParse) {
+            // this is not used
+            this._monthsParse = [];
+            this._longMonthsParse = [];
+            this._shortMonthsParse = [];
+            for (i = 0; i < 12; ++i) {
+                mom = create_utc__createUTC([2000, i]);
+                this._shortMonthsParse[i] = this.monthsShort(mom, '').toLocaleLowerCase();
+                this._longMonthsParse[i] = this.months(mom, '').toLocaleLowerCase();
+            }
+        }
+
+        if (strict) {
+            if (format === 'MMM') {
+                ii = indexOf.call(this._shortMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._longMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        } else {
+            if (format === 'MMM') {
+                ii = indexOf.call(this._shortMonthsParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._longMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._longMonthsParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._shortMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        }
+    }
+
     function localeMonthsParse (monthName, format, strict) {
         var i, mom, regex;
+
+        if (this._monthsParseExact) {
+            return units_month__handleStrictParse.call(this, monthName, format, strict);
+        }
 
         if (!this._monthsParse) {
             this._monthsParse = [];
@@ -56601,6 +57591,9 @@ module.exports = {
             this._shortMonthsParse = [];
         }
 
+        // TODO: add sorting
+        // Sorting makes sure if one month (or abbr) is a prefix of another
+        // see sorting in computeMonthsParse
         for (i = 0; i < 12; i++) {
             // make the regex if we don't have it already
             mom = create_utc__createUTC([2000, i]);
@@ -56726,8 +57719,8 @@ module.exports = {
 
         this._monthsRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
         this._monthsShortRegex = this._monthsRegex;
-        this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')$', 'i');
-        this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')$', 'i');
+        this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+        this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
     }
 
     function checkOverflow (m) {
@@ -56954,7 +57947,7 @@ module.exports = {
 
     // MOMENTS
 
-    var getSetYear = makeGetSet('FullYear', false);
+    var getSetYear = makeGetSet('FullYear', true);
 
     function getIsLeapYear () {
         return isLeapYear(this.year());
@@ -57223,6 +58216,9 @@ module.exports = {
                 config._a[HOUR] > 0) {
             getParsingFlags(config).bigHour = undefined;
         }
+
+        getParsingFlags(config).parsedDateParts = config._a.slice(0);
+        getParsingFlags(config).meridiem = config._meridiem;
         // handle meridiem
         config._a[HOUR] = meridiemFixWrap(config._locale, config._a[HOUR], config._meridiem);
 
@@ -57363,7 +58359,7 @@ module.exports = {
         if (input === undefined) {
             config._d = new Date(utils_hooks__hooks.now());
         } else if (isDate(input)) {
-            config._d = new Date(+input);
+            config._d = new Date(input.valueOf());
         } else if (typeof input === 'string') {
             configFromString(config);
         } else if (isArray(input)) {
@@ -57483,7 +58479,7 @@ module.exports = {
         this._milliseconds = +milliseconds +
             seconds * 1e3 + // 1000
             minutes * 6e4 + // 1000 * 60
-            hours * 36e5; // 1000 * 60 * 60
+            hours * 1000 * 60 * 60; //using 1000 * 60 * 60 instead of 36e5 to avoid floating point rounding errors https://github.com/moment/moment/issues/2978
         // Because of dateAddRemove treats 24 hours as different from a
         // day when working around DST, we need to store them separately
         this._days = +days +
@@ -57553,9 +58549,9 @@ module.exports = {
         var res, diff;
         if (model._isUTC) {
             res = model.clone();
-            diff = (isMoment(input) || isDate(input) ? +input : +local__createLocal(input)) - (+res);
+            diff = (isMoment(input) || isDate(input) ? input.valueOf() : local__createLocal(input).valueOf()) - res.valueOf();
             // Use low-level api, because this fn is low-level api.
-            res._d.setTime(+res._d + diff);
+            res._d.setTime(res._d.valueOf() + diff);
             utils_hooks__hooks.updateOffset(res, false);
             return res;
         } else {
@@ -57716,7 +58712,7 @@ module.exports = {
     // from http://docs.closure-library.googlecode.com/git/closure_goog_date_date.js.source.html
     // somewhat more in line with 4.4.3.2 2004 spec, but allows decimal anywhere
     // and further modified to allow for strings containing both week and day
-    var isoRegex = /^(-)?P(?:([0-9,.]*)Y)?(?:([0-9,.]*)M)?(?:([0-9,.]*)W)?(?:([0-9,.]*)D)?(?:T(?:([0-9,.]*)H)?(?:([0-9,.]*)M)?(?:([0-9,.]*)S)?)?$/;
+    var isoRegex = /^(-)?P(?:(-?[0-9,.]*)Y)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)W)?(?:(-?[0-9,.]*)D)?(?:T(?:(-?[0-9,.]*)H)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)S)?)?$/;
 
     function create__createDuration (input, key) {
         var duration = input,
@@ -57860,7 +58856,7 @@ module.exports = {
         updateOffset = updateOffset == null ? true : updateOffset;
 
         if (milliseconds) {
-            mom._d.setTime(+mom._d + milliseconds * isAdding);
+            mom._d.setTime(mom._d.valueOf() + milliseconds * isAdding);
         }
         if (days) {
             get_set__set(mom, 'Date', get_set__get(mom, 'Date') + days * isAdding);
@@ -57905,9 +58901,9 @@ module.exports = {
         }
         units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
         if (units === 'millisecond') {
-            return +this > +localInput;
+            return this.valueOf() > localInput.valueOf();
         } else {
-            return +localInput < +this.clone().startOf(units);
+            return localInput.valueOf() < this.clone().startOf(units).valueOf();
         }
     }
 
@@ -57918,14 +58914,16 @@ module.exports = {
         }
         units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
         if (units === 'millisecond') {
-            return +this < +localInput;
+            return this.valueOf() < localInput.valueOf();
         } else {
-            return +this.clone().endOf(units) < +localInput;
+            return this.clone().endOf(units).valueOf() < localInput.valueOf();
         }
     }
 
-    function isBetween (from, to, units) {
-        return this.isAfter(from, units) && this.isBefore(to, units);
+    function isBetween (from, to, units, inclusivity) {
+        inclusivity = inclusivity || '()';
+        return (inclusivity[0] === '(' ? this.isAfter(from, units) : !this.isBefore(from, units)) &&
+            (inclusivity[1] === ')' ? this.isBefore(to, units) : !this.isAfter(to, units));
     }
 
     function isSame (input, units) {
@@ -57936,10 +58934,10 @@ module.exports = {
         }
         units = normalizeUnits(units || 'millisecond');
         if (units === 'millisecond') {
-            return +this === +localInput;
+            return this.valueOf() === localInput.valueOf();
         } else {
-            inputMs = +localInput;
-            return +(this.clone().startOf(units)) <= inputMs && inputMs <= +(this.clone().endOf(units));
+            inputMs = localInput.valueOf();
+            return this.clone().startOf(units).valueOf() <= inputMs && inputMs <= this.clone().endOf(units).valueOf();
         }
     }
 
@@ -58006,10 +59004,12 @@ module.exports = {
             adjust = (b - anchor) / (anchor2 - anchor);
         }
 
-        return -(wholeMonthDiff + adjust);
+        //check for negative zero, return zero if negative zero
+        return -(wholeMonthDiff + adjust) || 0;
     }
 
     utils_hooks__hooks.defaultFormat = 'YYYY-MM-DDTHH:mm:ssZ';
+    utils_hooks__hooks.defaultFormatUtc = 'YYYY-MM-DDTHH:mm:ss[Z]';
 
     function toString () {
         return this.clone().locale('en').format('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
@@ -58030,7 +59030,10 @@ module.exports = {
     }
 
     function format (inputString) {
-        var output = formatMoment(this, inputString || utils_hooks__hooks.defaultFormat);
+        if (!inputString) {
+            inputString = this.isUtc() ? utils_hooks__hooks.defaultFormatUtc : utils_hooks__hooks.defaultFormat;
+        }
+        var output = formatMoment(this, inputString);
         return this.localeData().postformat(output);
     }
 
@@ -58109,6 +59112,7 @@ module.exports = {
         case 'week':
         case 'isoWeek':
         case 'day':
+        case 'date':
             this.hours(0);
             /* falls through */
         case 'hour':
@@ -58142,19 +59146,25 @@ module.exports = {
         if (units === undefined || units === 'millisecond') {
             return this;
         }
+
+        // 'date' is an alias for 'day', so it should be considered as such.
+        if (units === 'date') {
+            units = 'day';
+        }
+
         return this.startOf(units).add(1, (units === 'isoWeek' ? 'week' : units)).subtract(1, 'ms');
     }
 
     function to_type__valueOf () {
-        return +this._d - ((this._offset || 0) * 60000);
+        return this._d.valueOf() - ((this._offset || 0) * 60000);
     }
 
     function unix () {
-        return Math.floor(+this / 1000);
+        return Math.floor(this.valueOf() / 1000);
     }
 
     function toDate () {
-        return this._offset ? new Date(+this) : this._d;
+        return this._offset ? new Date(this.valueOf()) : this._d;
     }
 
     function toArray () {
@@ -58423,9 +59433,15 @@ module.exports = {
     addRegexToken('d',    match1to2);
     addRegexToken('e',    match1to2);
     addRegexToken('E',    match1to2);
-    addRegexToken('dd',   matchWord);
-    addRegexToken('ddd',  matchWord);
-    addRegexToken('dddd', matchWord);
+    addRegexToken('dd',   function (isStrict, locale) {
+        return locale.weekdaysMinRegex(isStrict);
+    });
+    addRegexToken('ddd',   function (isStrict, locale) {
+        return locale.weekdaysShortRegex(isStrict);
+    });
+    addRegexToken('dddd',   function (isStrict, locale) {
+        return locale.weekdaysRegex(isStrict);
+    });
 
     addWeekParseToken(['dd', 'ddd', 'dddd'], function (input, week, config, token) {
         var weekday = config._locale.weekdaysParse(input, token, config._strict);
@@ -58478,8 +59494,76 @@ module.exports = {
         return this._weekdaysMin[m.day()];
     }
 
+    function day_of_week__handleStrictParse(weekdayName, format, strict) {
+        var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
+        if (!this._weekdaysParse) {
+            this._weekdaysParse = [];
+            this._shortWeekdaysParse = [];
+            this._minWeekdaysParse = [];
+
+            for (i = 0; i < 7; ++i) {
+                mom = create_utc__createUTC([2000, 1]).day(i);
+                this._minWeekdaysParse[i] = this.weekdaysMin(mom, '').toLocaleLowerCase();
+                this._shortWeekdaysParse[i] = this.weekdaysShort(mom, '').toLocaleLowerCase();
+                this._weekdaysParse[i] = this.weekdays(mom, '').toLocaleLowerCase();
+            }
+        }
+
+        if (strict) {
+            if (format === 'dddd') {
+                ii = indexOf.call(this._weekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else if (format === 'ddd') {
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        } else {
+            if (format === 'dddd') {
+                ii = indexOf.call(this._weekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else if (format === 'ddd') {
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._weekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._weekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        }
+    }
+
     function localeWeekdaysParse (weekdayName, format, strict) {
         var i, mom, regex;
+
+        if (this._weekdaysParseExact) {
+            return day_of_week__handleStrictParse.call(this, weekdayName, format, strict);
+        }
 
         if (!this._weekdaysParse) {
             this._weekdaysParse = [];
@@ -58491,7 +59575,7 @@ module.exports = {
         for (i = 0; i < 7; i++) {
             // make the regex if we don't have it already
 
-            mom = local__createLocal([2000, 1]).day(i);
+            mom = create_utc__createUTC([2000, 1]).day(i);
             if (strict && !this._fullWeekdaysParse[i]) {
                 this._fullWeekdaysParse[i] = new RegExp('^' + this.weekdays(mom, '').replace('.', '\.?') + '$', 'i');
                 this._shortWeekdaysParse[i] = new RegExp('^' + this.weekdaysShort(mom, '').replace('.', '\.?') + '$', 'i');
@@ -58547,6 +59631,99 @@ module.exports = {
         return input == null ? this.day() || 7 : this.day(this.day() % 7 ? input : input - 7);
     }
 
+    var defaultWeekdaysRegex = matchWord;
+    function weekdaysRegex (isStrict) {
+        if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, '_weekdaysRegex')) {
+                computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+                return this._weekdaysStrictRegex;
+            } else {
+                return this._weekdaysRegex;
+            }
+        } else {
+            return this._weekdaysStrictRegex && isStrict ?
+                this._weekdaysStrictRegex : this._weekdaysRegex;
+        }
+    }
+
+    var defaultWeekdaysShortRegex = matchWord;
+    function weekdaysShortRegex (isStrict) {
+        if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, '_weekdaysRegex')) {
+                computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+                return this._weekdaysShortStrictRegex;
+            } else {
+                return this._weekdaysShortRegex;
+            }
+        } else {
+            return this._weekdaysShortStrictRegex && isStrict ?
+                this._weekdaysShortStrictRegex : this._weekdaysShortRegex;
+        }
+    }
+
+    var defaultWeekdaysMinRegex = matchWord;
+    function weekdaysMinRegex (isStrict) {
+        if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, '_weekdaysRegex')) {
+                computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+                return this._weekdaysMinStrictRegex;
+            } else {
+                return this._weekdaysMinRegex;
+            }
+        } else {
+            return this._weekdaysMinStrictRegex && isStrict ?
+                this._weekdaysMinStrictRegex : this._weekdaysMinRegex;
+        }
+    }
+
+
+    function computeWeekdaysParse () {
+        function cmpLenRev(a, b) {
+            return b.length - a.length;
+        }
+
+        var minPieces = [], shortPieces = [], longPieces = [], mixedPieces = [],
+            i, mom, minp, shortp, longp;
+        for (i = 0; i < 7; i++) {
+            // make the regex if we don't have it already
+            mom = create_utc__createUTC([2000, 1]).day(i);
+            minp = this.weekdaysMin(mom, '');
+            shortp = this.weekdaysShort(mom, '');
+            longp = this.weekdays(mom, '');
+            minPieces.push(minp);
+            shortPieces.push(shortp);
+            longPieces.push(longp);
+            mixedPieces.push(minp);
+            mixedPieces.push(shortp);
+            mixedPieces.push(longp);
+        }
+        // Sorting makes sure if one weekday (or abbr) is a prefix of another it
+        // will match the longer piece.
+        minPieces.sort(cmpLenRev);
+        shortPieces.sort(cmpLenRev);
+        longPieces.sort(cmpLenRev);
+        mixedPieces.sort(cmpLenRev);
+        for (i = 0; i < 7; i++) {
+            shortPieces[i] = regexEscape(shortPieces[i]);
+            longPieces[i] = regexEscape(longPieces[i]);
+            mixedPieces[i] = regexEscape(mixedPieces[i]);
+        }
+
+        this._weekdaysRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
+        this._weekdaysShortRegex = this._weekdaysRegex;
+        this._weekdaysMinRegex = this._weekdaysRegex;
+
+        this._weekdaysStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+        this._weekdaysShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
+        this._weekdaysMinStrictRegex = new RegExp('^(' + minPieces.join('|') + ')', 'i');
+    }
+
     // FORMATTING
 
     addFormatToken('DDD', ['DDDD', 3], 'DDDo', 'dayOfYear');
@@ -58578,8 +59755,13 @@ module.exports = {
         return this.hours() % 12 || 12;
     }
 
+    function kFormat() {
+        return this.hours() || 24;
+    }
+
     addFormatToken('H', ['HH', 2], 0, 'hour');
     addFormatToken('h', ['hh', 2], 0, hFormat);
+    addFormatToken('k', ['kk', 2], 0, kFormat);
 
     addFormatToken('hmm', 0, 0, function () {
         return '' + hFormat.apply(this) + zeroFill(this.minutes(), 2);
@@ -59040,6 +60222,13 @@ module.exports = {
     prototype__proto._weekdaysShort = defaultLocaleWeekdaysShort;
     prototype__proto.weekdaysParse  =        localeWeekdaysParse;
 
+    prototype__proto._weekdaysRegex      = defaultWeekdaysRegex;
+    prototype__proto.weekdaysRegex       =        weekdaysRegex;
+    prototype__proto._weekdaysShortRegex = defaultWeekdaysShortRegex;
+    prototype__proto.weekdaysShortRegex  =        weekdaysShortRegex;
+    prototype__proto._weekdaysMinRegex   = defaultWeekdaysMinRegex;
+    prototype__proto.weekdaysMinRegex    =        weekdaysMinRegex;
+
     // Hours
     prototype__proto.isPM = localeIsPM;
     prototype__proto._meridiemParse = defaultLocaleMeridiemParse;
@@ -59051,7 +60240,7 @@ module.exports = {
         return locale[field](utc, format);
     }
 
-    function list (format, index, field, count, setter) {
+    function listMonthsImpl (format, index, field) {
         if (typeof format === 'number') {
             index = format;
             format = undefined;
@@ -59060,35 +60249,79 @@ module.exports = {
         format = format || '';
 
         if (index != null) {
-            return lists__get(format, index, field, setter);
+            return lists__get(format, index, field, 'month');
         }
 
         var i;
         var out = [];
-        for (i = 0; i < count; i++) {
-            out[i] = lists__get(format, i, field, setter);
+        for (i = 0; i < 12; i++) {
+            out[i] = lists__get(format, i, field, 'month');
+        }
+        return out;
+    }
+
+    // ()
+    // (5)
+    // (fmt, 5)
+    // (fmt)
+    // (true)
+    // (true, 5)
+    // (true, fmt, 5)
+    // (true, fmt)
+    function listWeekdaysImpl (localeSorted, format, index, field) {
+        if (typeof localeSorted === 'boolean') {
+            if (typeof format === 'number') {
+                index = format;
+                format = undefined;
+            }
+
+            format = format || '';
+        } else {
+            format = localeSorted;
+            index = format;
+            localeSorted = false;
+
+            if (typeof format === 'number') {
+                index = format;
+                format = undefined;
+            }
+
+            format = format || '';
+        }
+
+        var locale = locale_locales__getLocale(),
+            shift = localeSorted ? locale._week.dow : 0;
+
+        if (index != null) {
+            return lists__get(format, (index + shift) % 7, field, 'day');
+        }
+
+        var i;
+        var out = [];
+        for (i = 0; i < 7; i++) {
+            out[i] = lists__get(format, (i + shift) % 7, field, 'day');
         }
         return out;
     }
 
     function lists__listMonths (format, index) {
-        return list(format, index, 'months', 12, 'month');
+        return listMonthsImpl(format, index, 'months');
     }
 
     function lists__listMonthsShort (format, index) {
-        return list(format, index, 'monthsShort', 12, 'month');
+        return listMonthsImpl(format, index, 'monthsShort');
     }
 
-    function lists__listWeekdays (format, index) {
-        return list(format, index, 'weekdays', 7, 'day');
+    function lists__listWeekdays (localeSorted, format, index) {
+        return listWeekdaysImpl(localeSorted, format, index, 'weekdays');
     }
 
-    function lists__listWeekdaysShort (format, index) {
-        return list(format, index, 'weekdaysShort', 7, 'day');
+    function lists__listWeekdaysShort (localeSorted, format, index) {
+        return listWeekdaysImpl(localeSorted, format, index, 'weekdaysShort');
     }
 
-    function lists__listWeekdaysMin (format, index) {
-        return list(format, index, 'weekdaysMin', 7, 'day');
+    function lists__listWeekdaysMin (localeSorted, format, index) {
+        return listWeekdaysImpl(localeSorted, format, index, 'weekdaysMin');
     }
 
     locale_locales__getSetGlobalLocale('en', {
@@ -59459,7 +60692,7 @@ module.exports = {
     // Side effect imports
 
 
-    utils_hooks__hooks.version = '2.12.0';
+    utils_hooks__hooks.version = '2.13.0';
 
     setHookCallback(local__createLocal);
 
@@ -59494,7 +60727,7 @@ module.exports = {
     return _moment;
 
 }));
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 (function (angular, factory) {
@@ -59661,7 +60894,7 @@ module.exports = {
     return app;
 }));
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -60506,7 +61739,7 @@ module.exports = {
     return m;
 }));
 
-},{"angular":9}],30:[function(require,module,exports){
+},{"angular":9}],31:[function(require,module,exports){
 /**!
  * AngularJS file upload directives and services. Supoorts: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -63309,10 +64542,10 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 require('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":30}],32:[function(require,module,exports){
+},{"./dist/ng-file-upload-all":31}],33:[function(require,module,exports){
 /*
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
@@ -70642,642 +71875,14 @@ angular.module('ui.bootstrap.datepickerPopup').run(function() {!angular.$$csp().
 angular.module('ui.bootstrap.tooltip').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTooltipCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-tooltip-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-bottom > .tooltip-arrow,[uib-popover-popup].popover.top-left > .arrow,[uib-popover-popup].popover.top-right > .arrow,[uib-popover-popup].popover.bottom-left > .arrow,[uib-popover-popup].popover.bottom-right > .arrow,[uib-popover-popup].popover.left-top > .arrow,[uib-popover-popup].popover.left-bottom > .arrow,[uib-popover-popup].popover.right-top > .arrow,[uib-popover-popup].popover.right-bottom > .arrow,[uib-popover-html-popup].popover.top-left > .arrow,[uib-popover-html-popup].popover.top-right > .arrow,[uib-popover-html-popup].popover.bottom-left > .arrow,[uib-popover-html-popup].popover.bottom-right > .arrow,[uib-popover-html-popup].popover.left-top > .arrow,[uib-popover-html-popup].popover.left-bottom > .arrow,[uib-popover-html-popup].popover.right-top > .arrow,[uib-popover-html-popup].popover.right-bottom > .arrow,[uib-popover-template-popup].popover.top-left > .arrow,[uib-popover-template-popup].popover.top-right > .arrow,[uib-popover-template-popup].popover.bottom-left > .arrow,[uib-popover-template-popup].popover.bottom-right > .arrow,[uib-popover-template-popup].popover.left-top > .arrow,[uib-popover-template-popup].popover.left-bottom > .arrow,[uib-popover-template-popup].popover.right-top > .arrow,[uib-popover-template-popup].popover.right-bottom > .arrow{top:auto;bottom:auto;left:auto;right:auto;margin:0;}[uib-popover-popup].popover,[uib-popover-html-popup].popover,[uib-popover-template-popup].popover{display:block !important;}</style>'); angular.$$uibTooltipCss = true; });
 angular.module('ui.bootstrap.timepicker').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTimepickerCss && angular.element(document).find('head').prepend('<style type="text/css">.uib-time input{width:50px;}</style>'); angular.$$uibTimepickerCss = true; });
 angular.module('ui.bootstrap.typeahead').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTypeaheadCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'); angular.$$uibTypeaheadCss = true; });
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 require('./dist/ui-bootstrap-tpls');
 
 module.exports = 'ui.bootstrap';
 
-},{"./dist/ui-bootstrap-tpls":32}],34:[function(require,module,exports){
+},{"./dist/ui-bootstrap-tpls":33}],35:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],35:[function(require,module,exports){
-'use strict';
-
-require('whatwg-fetch');
-var Q = require('Q');
-var EventEmitter = require('eventemitter2').EventEmitter2;
-var copy = require('shallow-copy');
-
-// The default base url.
-var baseUrl = '';
-
-var plugins = [];
-
-// The temporary GET request cache storage
-var cache = {};
-
-var noop = function(){};
-var identity = function(value) { return value; };
-
-// Will invoke a function on all plugins.
-// Returns a promise that resolves when all promises
-// returned by the plugins have resolved.
-// Should be used when you want plugins to prepare for an event
-// but don't want any data returned.
-var pluginWait = function(pluginFn) {
-  var args = [].slice.call(arguments, 1);
-  return Q.all(plugins.map(function(plugin) {
-    return (plugin[pluginFn] || noop).apply(plugin, args);
-  }));
-};
-
-// Will invoke a function on plugins from highest priority
-// to lowest until one returns a value. Returns null if no
-// plugins return a value.
-// Should be used when you want just one plugin to handle things.
-var pluginGet = function(pluginFn) {
-  var args = [].slice.call(arguments, 0);
-  var callPlugin = function(index, pluginFn) {
-    var plugin = plugins[index];
-    if (!plugin) return Q(null);
-    return Q((plugin && plugin[pluginFn] || noop).apply(plugin, [].slice.call(arguments, 2)))
-    .then(function(result) {
-      if (result !== null && result !== undefined) return result;
-      return callPlugin.apply(null, [index + 1].concat(args));
-    });
-  };
-  return callPlugin.apply(null, [0].concat(args));
-};
-
-// Will invoke a function on plugins from highest priority to
-// lowest, building a promise chain from their return values
-// Should be used when all plugins need to process a promise's
-// success or failure
-var pluginAlter = function(pluginFn, value) {
-  var args = [].slice.call(arguments, 2);
-  return plugins.reduce(function(value, plugin) {
-      return (plugin[pluginFn] || identity).apply(plugin, [value].concat(args));
-  }, value);
-};
-
-
-/**
- * Returns parts of the URL that are important.
- * Indexes
- *  - 0: The full url
- *  - 1: The protocol
- *  - 2: The hostname
- *  - 3: The rest
- *
- * @param url
- * @returns {*}
- */
-var getUrlParts = function(url) {
-  var regex = '^(http[s]?:\\/\\/)';
-  if (baseUrl && url.indexOf(baseUrl) === 0) {
-    regex += '(' + baseUrl.replace(/^http[s]?:\/\//, '') + ')';
-  }
-  else {
-    regex += '([^/]+)';
-  }
-  regex += '($|\\/.*)';
-  return url.match(new RegExp(regex));
-};
-
-var serialize = function(obj) {
-  var str = [];
-  for(var p in obj)
-    if (obj.hasOwnProperty(p)) {
-      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-    }
-  return str.join("&");
-};
-
-// The formio class.
-var Formio = function(path) {
-
-  // Ensure we have an instance of Formio.
-  if (!(this instanceof Formio)) { return new Formio(path); }
-  if (!path) {
-    // Allow user to create new projects if this was instantiated without
-    // a url
-    this.projectUrl = baseUrl + '/project';
-    this.projectsUrl = baseUrl + '/project';
-    this.projectId = false;
-    this.query = '';
-    return;
-  }
-
-  // Initialize our variables.
-  this.projectsUrl = '';
-  this.projectUrl = '';
-  this.projectId = '';
-  this.formUrl = '';
-  this.formsUrl = '';
-  this.formId = '';
-  this.submissionsUrl = '';
-  this.submissionUrl = '';
-  this.submissionId = '';
-  this.actionsUrl = '';
-  this.actionId = '';
-  this.actionUrl = '';
-  this.query = '';
-
-  // Normalize to an absolute path.
-  if ((path.indexOf('http') !== 0) && (path.indexOf('//') !== 0)) {
-    baseUrl = baseUrl ? baseUrl : window.location.href.match(/http[s]?:\/\/api./)[0];
-    path = baseUrl + path;
-  }
-
-  var hostparts = getUrlParts(path);
-  var parts = [];
-  var hostName = hostparts[1] + hostparts[2];
-  path = hostparts.length > 3 ? hostparts[3] : '';
-  var queryparts = path.split('?');
-  if (queryparts.length > 1) {
-    path = queryparts[0];
-    this.query = '?' + queryparts[1];
-  }
-
-  // See if this is a form path.
-  if ((path.search(/(^|\/)(form|project)($|\/)/) !== -1)) {
-
-    // Register a specific path.
-    var registerPath = function(name, base) {
-      this[name + 'sUrl'] = base + '/' + name;
-      var regex = new RegExp('\/' + name + '\/([^/]+)');
-      if (path.search(regex) !== -1) {
-        parts = path.match(regex);
-        this[name + 'Url'] = parts ? (base + parts[0]) : '';
-        this[name + 'Id'] = (parts.length > 1) ? parts[1] : '';
-        base += parts[0];
-      }
-      return base;
-    }.bind(this);
-
-    // Register an array of items.
-    var registerItems = function(items, base, staticBase) {
-      for (var i in items) {
-        if (items.hasOwnProperty(i)) {
-          var item = items[i];
-          if (item instanceof Array) {
-            registerItems(item, base, true);
-          }
-          else {
-            var newBase = registerPath(item, base);
-            base = staticBase ? base : newBase;
-          }
-        }
-      }
-    };
-
-    registerItems(['project', 'form', ['submission', 'action']], hostName);
-
-    if (!this.projectId) {
-      if (hostparts.length > 2 && hostparts[2].split('.').length > 2) {
-        this.projectUrl = hostName;
-        this.projectId = hostparts[2].split('.')[0];
-      }
-    }
-  }
-  else {
-
-    // This is an aliased url.
-    this.projectUrl = hostName;
-    this.projectId = (hostparts.length > 2) ? hostparts[2].split('.')[0] : '';
-    var subRegEx = new RegExp('\/(submission|action)($|\/.*)');
-    var subs = path.match(subRegEx);
-    this.pathType = (subs && (subs.length > 1)) ? subs[1] : '';
-    path = path.replace(subRegEx, '');
-    path = path.replace(/\/$/, '');
-    this.formsUrl = hostName + '/form';
-    this.formUrl = hostName + path;
-    this.formId = path.replace(/^\/+|\/+$/g, '');
-    var items = ['submission', 'action'];
-    for (var i in items) {
-      if (items.hasOwnProperty(i)) {
-        var item = items[i];
-        this[item + 'sUrl'] = hostName + path + '/' + item;
-        if ((this.pathType === item) && (subs.length > 2) && subs[2]) {
-          this[item + 'Id'] = subs[2].replace(/^\/+|\/+$/g, '');
-          this[item + 'Url'] = hostName + path + subs[0];
-        }
-      }
-    }
-  }
-};
-
-/**
- * Load a resource.
- *
- * @param type
- * @returns {Function}
- * @private
- */
-var _load = function(type) {
-  var _id = type + 'Id';
-  var _url = type + 'Url';
-  return function(query, opts) {
-    if (query && typeof query === 'object') {
-      query = serialize(query.params);
-    }
-    if (query) {
-      query = this.query ? (this.query + '&' + query) : ('?' + query);
-    }
-    else {
-      query = this.query;
-    }
-    if (!this[_id]) { return Q.reject('Missing ' + _id); }
-    return this.makeRequest(type, this[_url] + query, 'get', null, opts);
-  };
-};
-
-/**
- * Save a resource.
- *
- * @param type
- * @returns {Function}
- * @private
- */
-var _save = function(type) {
-  var _id = type + 'Id';
-  var _url = type + 'Url';
-  return function(data, opts) {
-    var method = this[_id] ? 'put' : 'post';
-    var reqUrl = this[_id] ? this[_url] : this[type + 'sUrl'];
-    cache = {};
-    return this.makeRequest(type, reqUrl + this.query, method, data, opts);
-  };
-};
-
-/**
- * Delete a resource.
- *
- * @param type
- * @returns {Function}
- * @private
- */
-var _delete = function(type) {
-  var _id = type + 'Id';
-  var _url = type + 'Url';
-  return function(opts) {
-    if (!this[_id]) { Q.reject('Nothing to delete'); }
-    cache = {};
-    return this.makeRequest(type, this[_url], 'delete', null, opts);
-  };
-};
-
-/**
- * Resource index method.
- *
- * @param type
- * @returns {Function}
- * @private
- */
-var _index = function(type) {
-  var _url = type + 'Url';
-  return function(query, opts) {
-    query = query || '';
-    if (query && typeof query === 'object') {
-      query = '?' + serialize(query.params);
-    }
-    return this.makeRequest(type, this[_url] + query, 'get', null, opts);
-  };
-};
-
-// Activates plugin hooks, makes Formio.request if no plugin provides a request
-Formio.prototype.makeRequest = function(type, url, method, data, opts) {
-  var self = this;
-  method = (method || 'GET').toUpperCase();
-  if(!opts || typeof opts !== 'object') {
-    opts = {};
-  }
-
-  var requestArgs = {
-    formio: self,
-    type: type,
-    url: url,
-    method: method,
-    data: data,
-    opts: opts
-  };
-
-  var request = pluginWait('preRequest', requestArgs)
-  .then(function() {
-    return pluginGet('request', requestArgs)
-    .then(function(result) {
-      if (result === null || result === undefined) {
-        return Formio.request(url, method, data);
-      }
-      return result;
-    });
-  });
-
-  return pluginAlter('wrapRequestPromise', request, requestArgs);
-};
-
-// Define specific CRUD methods.
-Formio.prototype.loadProject = _load('project');
-Formio.prototype.saveProject = _save('project');
-Formio.prototype.deleteProject = _delete('project');
-Formio.prototype.loadForm = _load('form');
-Formio.prototype.saveForm = _save('form');
-Formio.prototype.deleteForm = _delete('form');
-Formio.prototype.loadForms = _index('forms');
-Formio.prototype.loadSubmission = _load('submission');
-Formio.prototype.saveSubmission = _save('submission');
-Formio.prototype.deleteSubmission = _delete('submission');
-Formio.prototype.loadSubmissions = _index('submissions');
-Formio.prototype.loadAction = _load('action');
-Formio.prototype.saveAction = _save('action');
-Formio.prototype.deleteAction = _delete('action');
-Formio.prototype.loadActions = _index('actions');
-Formio.prototype.availableActions = function() { return this.makeRequest('availableActions', this.formUrl + '/actions'); };
-Formio.prototype.actionInfo = function(name) { return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name); };
-
-Formio.makeStaticRequest = function(url, method, data) {
-  var self = this;
-  method = (method || 'GET').toUpperCase();
-
-  var requestArgs = {
-    url: url,
-    method: method,
-    data: data
-  };
-
-  var request = pluginWait('preStaticRequest', requestArgs)
-  .then(function() {
-    return pluginGet('staticRequest', requestArgs)
-    .then(function(result) {
-      if (result === null || result === undefined) {
-        return Formio.request(url, method, data);
-      }
-      return result;
-    });
-  });
-
-  return pluginAlter('wrapStaticRequestPromise', request, requestArgs);
-};
-
-// Static methods.
-Formio.loadProjects = function(query) {
-  query = query || '';
-  if (typeof query === 'object') {
-    query = '?' + serialize(query.params);
-  }
-  return this.makeStaticRequest(baseUrl + '/project' + query);
-};
-Formio.request = function(url, method, data) {
-  if (!url) { return Q.reject('No url provided'); }
-  method = (method || 'GET').toUpperCase();
-  var cacheKey = btoa(url);
-
-  return Q().then(function() {
-    // Get the cached promise to save multiple loads.
-    if (method === 'GET' && cache.hasOwnProperty(cacheKey)) {
-      return cache[cacheKey];
-    }
-    else {
-      return Q()
-      .then(function() {
-        // Set up and fetch request
-        var headers = new Headers({
-          'Accept': 'application/json',
-          'Content-type': 'application/json; charset=UTF-8'
-        });
-        var token = Formio.getToken();
-        if (token) {
-          headers.append('x-jwt-token', token);
-        }
-
-        var options = {
-          method: method,
-          headers: headers,
-          mode: 'cors'
-        };
-        if (data) {
-          options.body = JSON.stringify(data);
-        }
-
-        return fetch(url, options);
-      })
-      .catch(function(err) {
-        err.message = 'Could not connect to API server (' + err.message + ')';
-        err.networkError = true;
-        throw err;
-      })
-      .then(function(response) {
-        // Handle fetch results
-        if (response.ok) {
-          var token = response.headers.get('x-jwt-token');
-          if (response.status >= 200 && response.status < 300 && token && token !== '') {
-            Formio.setToken(token);
-          }
-          // 204 is no content. Don't try to .json() it.
-          if (response.status === 204) {
-            return {};
-          }
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
-            response.json() : response.text())
-          .then(function(result) {
-            // Add some content-range metadata to the result here
-            var range = response.headers.get('content-range');
-            if (range && typeof result === 'object') {
-              range = range.split('/');
-              if(range[0] !== '*') {
-                var skipLimit = range[0].split('-');
-                result.skip = Number(skipLimit[0]);
-                result.limit = skipLimit[1] - skipLimit[0] + 1;
-              }
-              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
-            }
-            return result;
-          });
-        }
-        else {
-          if (response.status === 440) {
-            Formio.setToken(null);
-          }
-          // Parse and return the error as a rejected promise to reject this promise
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
-            response.json() : response.text())
-            .then(function(error){
-              throw error;
-            });
-        }
-      })
-      .catch(function(err) {
-        // Remove failed promises from cache
-        delete cache[cacheKey];
-        // Propagate error so client can handle accordingly
-        throw err;
-      });
-    }
-  })
-  .then(function(result) {
-    // Save the cache
-    if (method === 'GET') {
-      cache[cacheKey] = Q(result);
-    }
-
-    // Shallow copy result so modifications don't end up in cache
-    if(Array.isArray(result)) {
-      var resultCopy = result.map(copy);
-      resultCopy.skip = result.skip;
-      resultCopy.limit = result.limit;
-      resultCopy.serverCount = result.serverCount;
-      return resultCopy;
-    }
-    return copy(result);
-  });
-};
-
-Formio.setToken = function(token) {
-  token = token || '';
-  if (token === this.token) { return; }
-  this.token = token;
-  if (!token) {
-    Formio.setUser(null);
-    return localStorage.removeItem('formioToken');
-  }
-  localStorage.setItem('formioToken', token);
-  Formio.currentUser(); // Run this so user is updated if null
-};
-Formio.getToken = function() {
-  if (this.token) { return this.token; }
-  var token = localStorage.getItem('formioToken') || '';
-  this.token = token;
-  return token;
-};
-Formio.setUser = function(user) {
-  if (!user) {
-    this.setToken(null);
-    return localStorage.removeItem('formioUser');
-  }
-  localStorage.setItem('formioUser', JSON.stringify(user));
-};
-Formio.getUser = function() {
-  return JSON.parse(localStorage.getItem('formioUser') || null);
-};
-
-Formio.setBaseUrl = function(url) {
-  baseUrl = url;
-};
-Formio.getBaseUrl = function() {
-  return baseUrl;
-}
-Formio.clearCache = function() { cache = {}; };
-
-Formio.currentUser = function() {
-  var url = baseUrl + '/current';
-  var user = this.getUser();
-  if (user) {
-    return pluginAlter('wrapStaticRequestPromise', Q(user), {
-      url: url,
-      method: 'GET'
-    })
-  }
-  var token = this.getToken();
-  if (!token) {
-    return pluginAlter('wrapStaticRequestPromise', Q(null), {
-      url: url,
-      method: 'GET'
-    })
-  }
-  return this.makeStaticRequest(url)
-  .then(function(response) {
-    Formio.setUser(response);
-    return response;
-  });
-};
-
-// Keep track of their logout callback.
-Formio.logout = function() {
-  return this.makeStaticRequest(baseUrl + '/logout').finally(function() {
-    this.setToken(null);
-    this.setUser(null);
-    Formio.clearCache();
-  }.bind(this));
-};
-Formio.fieldData = function(data, component) {
-  if (!data) { return ''; }
-  if (!component || !component.key) { return data; }
-  if (component.key.indexOf('.') !== -1) {
-    var value = data;
-    var parts = component.key.split('.');
-    var key = '';
-    for (var i = 0; i < parts.length; i++) {
-      key = parts[i];
-
-      // Handle nested resources
-      if (value.hasOwnProperty('_id')) {
-        value = value.data;
-      }
-
-      // Return if the key is not found on the value.
-      if (!value.hasOwnProperty(key)) {
-        return;
-      }
-
-      // Convert old single field data in submissions to multiple
-      if (key === parts[parts.length - 1] && component.multiple && !Array.isArray(value[key])) {
-        value[key] = [value[key]];
-      }
-
-      // Set the value of this key.
-      value = value[key];
-    }
-    return value;
-  }
-  else {
-    // Convert old single field data in submissions to multiple
-    if (component.multiple && !Array.isArray(data[component.key])) {
-      data[component.key] = [data[component.key]];
-    }
-    return data[component.key];
-  }
-};
-
-/**
- * EventEmitter for Formio events.
- * See Node.js documentation for API documentation: https://nodejs.org/api/events.html
- */
-Formio.events = new EventEmitter({
-  wildcard: false,
-  maxListeners: 0
-});
-
-/**
- * Register a plugin with Formio.js
- * @param plugin The plugin to register. See plugin documentation.
- * @param name   Optional name to later retrieve plugin with.
- */
-Formio.registerPlugin = function(plugin, name) {
-  plugins.push(plugin);
-  plugins.sort(function(a, b) {
-    return (b.priority || 0) - (a.priority || 0);
-  });
-  plugin.__name = name;
-  (plugin.init || noop).call(plugin, Formio);
-};
-
-/**
- * Returns the plugin registered with the given name.
- */
-Formio.getPlugin = function(name) {
-  return plugins.reduce(function(result, plugin) {
-    if (result) return result;
-    if (plugin.__name === name) return plugin;
-  }, null);
-};
-
-/**
- * Deregisters a plugin with Formio.js.
- * @param  plugin The instance or name of the plugin
- * @return true if deregistered, false otherwise
- */
-Formio.deregisterPlugin = function(plugin) {
-  var beforeLength = plugins.length;
-  plugins = plugins.filter(function(p) {
-    if(p !== plugin && p.__name !== plugin) return true;
-    (p.deregister || noop).call(p, Formio);
-    return false;
-  });
-  return beforeLength !== plugins.length;
-};
-
-module.exports = Formio;
-
-},{"Q":1,"eventemitter2":24,"shallow-copy":93,"whatwg-fetch":96}],36:[function(require,module,exports){
+},{"dup":25}],36:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71483,7 +72088,8 @@ module.exports = function(app) {
               }
             }, 100);
           };
-        }]
+        }],
+        viewTemplate: 'formio/componentsView/button.html'
       });
     }
   ]);
@@ -71492,6 +72098,10 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/components/button.html',
         "<button type=\"{{component.action == 'submit' || component.action == 'reset' ? component.action : 'button'}}\"\nng-class=\"{'btn-block': component.block}\"\nclass=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\nng-disabled=\"readOnly || form.submitting || (component.disableOnInvalid && form.$invalid)\"\ntabindex=\"{{ component.tabindex || 0 }}\"\nng-click=\"onClick()\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n   <i ng-if=\"component.action == 'submit' && form.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n"
+      );
+
+      $templateCache.put('formio/componentsView/button.html',
+        ""
       );
     }
   ]);
@@ -71507,6 +72117,7 @@ module.exports = function(app) {
       formioComponentsProvider.register('checkbox', {
         title: 'Check Box',
         template: 'formio/components/checkbox.html',
+        controller: [function() {}], // This empty controller is required to fix a bug with checkboxes on ui view change - fa-825.
         settings: {
           input: true,
           inputType: 'checkbox',
@@ -71527,10 +72138,9 @@ module.exports = function(app) {
   ]);
   app.run([
     '$templateCache',
-    'FormioUtils',
     function($templateCache) {
       $templateCache.put('formio/components/checkbox.html',
-        "<div class=\"checkbox\">\n  <label for=\"{{ component.key }}\" ng-class=\"{'field-required': component.validate.required}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ component.key }}\"\n    name=\"{{ component.key }}\"\n    value=\"{{ component.key }}\"\n    ng-checked=\"data[component.key] === 'true'\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-disabled=\"readOnly\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\">\n    {{ component.label }}\n  </label>\n</div>\n"
+        "<div class=\"checkbox\">\n  <label for=\"{{ component.key }}\" ng-class=\"{'field-required': component.validate.required}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ component.key }}\"\n    name=\"{{ component.key }}\"\n    value=\"{{ component.key }}\"\n    ng-checked=\"data[component.key] || data[component.key] === 'true'\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-disabled=\"readOnly\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\">\n    {{ component.label }}\n  </label>\n</div>\n"
       );
     }
   ]);
@@ -71550,7 +72160,8 @@ module.exports = function(app) {
         settings: {
           input: false,
           columns: [{components: []}, {components: []}]
-        }
+        },
+        viewTemplate: 'formio/componentsView/columns.html'
       });
     }
   ]);
@@ -71559,6 +72170,10 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/components/columns.html',
         "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\"></formio-component>\n  </div>\n</div>\n"
+      );
+
+      $templateCache.put('formio/componentsView/columns.html',
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\"></formio-component-view>\n  </div>\n</div>\n"
       );
     }
   ]);
@@ -71697,6 +72312,114 @@ module.exports = function(app) {
 },{}],43:[function(require,module,exports){
 "use strict";
 
+
+module.exports = function(app) {
+  app.directive('currencyInput', function() {
+    // May be better way than adding to prototype.
+    var splice = function(string, idx, rem, s) {
+      return (string.slice(0, idx) + s + string.slice(idx + Math.abs(rem)));
+    };
+    return {
+      restrict: 'A',
+      link: function(scope, element) {
+        element.bind('keyup', function() {
+          var data = scope.data[scope.component.key];
+
+          //clearing left side zeros
+          while (data.charAt(0) === '0') {
+            data = data.substr(1);
+          }
+
+          data = data.replace(/[^\d.\',']/g, '');
+
+          var point = data.indexOf('.');
+          if (point >= 0) {
+            data = data.slice(0, point + 3);
+          }
+
+          var decimalSplit = data.split('.');
+          var intPart = decimalSplit[0];
+          var decPart = decimalSplit[1];
+
+          intPart = intPart.replace(/[^\d]/g, '');
+          if (intPart.length > 3) {
+            var intDiv = Math.floor(intPart.length / 3);
+            while (intDiv > 0) {
+              var lastComma = intPart.indexOf(',');
+              if (lastComma < 0) {
+                lastComma = intPart.length;
+              }
+
+              if (lastComma - 3 > 0) {
+                intPart = splice(intPart, lastComma - 3, 0, ',');
+              }
+              intDiv--;
+            }
+          }
+
+          if (decPart === undefined) {
+            decPart = '';
+          }
+          else {
+            decPart = '.' + decPart;
+          }
+          var res = intPart + decPart;
+          scope.$apply(function() {
+            scope.data[scope.component.key] = res;
+          });
+        });
+      }
+    };
+  });
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      formioComponentsProvider.register('currency', {
+        title: 'Currency',
+        template: 'formio/components/currency.html',
+        group: 'advanced',
+        settings: {
+          input: true,
+          tableView: true,
+          inputType: 'text',
+          inputMask: '',
+          label: '',
+          key: 'currencyField',
+          placeholder: '',
+          prefix: '',
+          suffix: '',
+          defaultValue: '',
+          protected: false,
+          persistent: true,
+          validate: {
+            required: false,
+            multiple: '',
+            custom: ''
+          },
+          conditional: {
+            show: null,
+            when: null,
+            eq: ''
+          }
+        }
+      });
+    }
+  ]);
+
+  app.run([
+    '$templateCache',
+    'FormioUtils',
+    function($templateCache, FormioUtils) {
+      $templateCache.put('formio/components/currency.html', FormioUtils.fieldWrap(
+        "<input type=\"{{ component.inputType }}\"\nclass=\"form-control\"\nid=\"{{ component.key }}\"\nname=\"{{ component.key }}\"\ntabindex=\"{{ component.tabindex || 0 }}\"\nng-model=\"data[component.key]\"\nng-required=\"component.validate.required\"\nng-disabled=\"readOnly\"\nsafe-multiple-to-single\nplaceholder=\"{{ component.placeholder }}\"\ncustom-validator=\"component.validate.custom\"\ncurrency-input\nui-mask-placeholder=\"\"\nui-options=\"uiMaskOptions\"\n>\n"
+      ));
+    }
+  ]);
+};
+
+},{}],44:[function(require,module,exports){
+"use strict";
+
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -71719,7 +72442,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71803,7 +72526,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71882,7 +72605,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -71911,7 +72634,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71927,7 +72650,8 @@ module.exports = function(app) {
           tableView: true,
           legend: '',
           components: []
-        }
+        },
+        viewTemplate: 'formio/componentsView/fieldset.html'
       });
     }
   ]);
@@ -71937,11 +72661,15 @@ module.exports = function(app) {
       $templateCache.put('formio/components/fieldset.html',
         "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend }}</legend>\n  <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\"></formio-component>\n</fieldset>\n"
       );
+
+      $templateCache.put('formio/componentsView/fieldset.html',
+        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend }}</legend>\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\"></formio-component-view>\n</fieldset>\n"
+      );
     }
   ]);
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72122,7 +72850,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72155,7 +72883,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 
 
@@ -72233,7 +72961,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -72256,6 +72984,7 @@ require('./email')(app);
 require('./phonenumber')(app);
 require('./address')(app);
 require('./datetime')(app);
+require('./currency')(app);
 require('./hidden')(app);
 require('./resource')(app);
 require('./file')(app);
@@ -72272,7 +73001,7 @@ require('./panel')(app);
 require('./table')(app);
 require('./well')(app);
 
-},{"./address":36,"./button":37,"./checkbox":38,"./columns":39,"./components":40,"./container":41,"./content":42,"./custom":43,"./datagrid":44,"./datetime":45,"./email":46,"./fieldset":47,"./file":48,"./hidden":49,"./htmlelement":50,"./number":52,"./page":53,"./panel":54,"./password":55,"./phonenumber":56,"./radio":57,"./resource":58,"./select":59,"./selectboxes":60,"./signature":61,"./table":62,"./textarea":63,"./textfield":64,"./well":65}],52:[function(require,module,exports){
+},{"./address":36,"./button":37,"./checkbox":38,"./columns":39,"./components":40,"./container":41,"./content":42,"./currency":43,"./custom":44,"./datagrid":45,"./datetime":46,"./email":47,"./fieldset":48,"./file":49,"./hidden":50,"./htmlelement":51,"./number":53,"./page":54,"./panel":55,"./password":56,"./phonenumber":57,"./radio":58,"./resource":59,"./select":60,"./selectboxes":61,"./signature":62,"./table":63,"./textarea":64,"./textfield":65,"./well":66}],53:[function(require,module,exports){
 "use strict";
 
 
@@ -72280,6 +73009,9 @@ module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
     function(formioComponentsProvider) {
+      var isNumeric = function isNumeric(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+      };
       formioComponentsProvider.register('number', {
         title: 'Number',
         template: 'formio/components/number.html',
@@ -72304,7 +73036,13 @@ module.exports = function(app) {
             multiple: '',
             custom: ''
           }
-        }
+        },
+        controller: ['$scope', function($scope) {
+          // Ensure that values are numbers.
+          if ($scope.data.hasOwnProperty($scope.component.key) && isNumeric($scope.data[$scope.component.key])) {
+            $scope.data[$scope.component.key] = parseFloat($scope.data[$scope.component.key]);
+          }
+        }]
       });
     }
   ]);
@@ -72320,7 +73058,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],53:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72346,7 +73084,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72362,7 +73100,8 @@ module.exports = function(app) {
           title: '',
           theme: 'default',
           components: []
-        }
+        },
+        viewTemplate: 'formio/componentsView/panel.html'
       });
     }
   ]);
@@ -72372,11 +73111,15 @@ module.exports = function(app) {
       $templateCache.put('formio/components/panel.html',
         "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\"></formio-component>\n  </div>\n</div>\n"
       );
+
+      $templateCache.put('formio/componentsView/panel.html',
+        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\"></formio-component-view>\n  </div>\n</div>\n"
+      );
     }
   ]);
 };
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -72405,7 +73148,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -72438,7 +73181,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 "use strict";
 
 
@@ -72479,7 +73222,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72500,7 +73243,12 @@ module.exports = function(app) {
         },
         controller: ['$scope', 'Formio', function($scope, Formio) {
           var settings = $scope.component;
+          var params = settings.params || {};
           $scope.selectItems = [];
+          $scope.hasNextPage = false;
+          $scope.resourceLoading = false;
+          params.limit = 100;
+          params.skip = 0;
           if (settings.multiple) {
             settings.defaultValue = [];
           }
@@ -72514,13 +73262,13 @@ module.exports = function(app) {
             }
             url += '/form/' + settings.resource;
             var formio = new Formio(url);
-            var refreshing = false;
-            $scope.refreshSubmissions = function(input) {
-              if (refreshing) {
+
+            // Refresh the items.
+            $scope.refreshSubmissions = function(input, append) {
+              if ($scope.resourceLoading) {
                 return;
               }
-              refreshing = true;
-              var params = settings.params || {};
+              $scope.resourceLoading = true;
               // If they wish to return only some fields.
               if (settings.selectFields) {
                 params.select = settings.selectFields;
@@ -72535,9 +73283,25 @@ module.exports = function(app) {
               formio.loadSubmissions({
                 params: params
               }).then(function(submissions) {
-                $scope.selectItems = submissions || [];
-                refreshing = false;
+                submissions = submissions || [];
+                if (append) {
+                  $scope.selectItems = $scope.selectItems.concat(submissions);
+                }
+                else {
+                  $scope.selectItems = submissions;
+                }
+                $scope.hasNextPage = (submissions.length >= params.limit) && ($scope.selectItems.length < submissions.serverCount);
+              })['finally'](function() {
+                $scope.resourceLoading = false;
               });
+            };
+
+            // Load more items.
+            $scope.loadMoreItems = function($select, $event) {
+              $event.stopPropagation();
+              $event.preventDefault();
+              params.skip += params.limit;
+              $scope.refreshSubmissions(null, true);
             };
 
             $scope.refreshSubmissions();
@@ -72572,7 +73336,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/resource.html',
-        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">{{ component.label }}</label>\n<span ng-if=\"!component.label && component.validate.required\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"component.validate.required\" id=\"{{ component.key }}\" name=\"{{ component.key }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n  </ui-select-choices>\n</ui-select>\n<formio-errors></formio-errors>\n"
+        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">{{ component.label }}</label>\n<span ng-if=\"!component.label && component.validate.required\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"component.validate.required\" id=\"{{ component.key }}\" name=\"{{ component.key }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n    <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n  </ui-select-choices>\n</ui-select>\n<formio-errors></formio-errors>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -72583,7 +73347,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],59:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72716,7 +73480,9 @@ module.exports = function(app) {
         },
         controller: ['$scope', '$http', 'Formio', '$interpolate', function($scope, $http, Formio, $interpolate) {
           var settings = $scope.component;
+          var options = {cache: true};
           $scope.nowrap = true;
+          $scope.hasNextPage = false;
           $scope.selectItems = [];
           var valueProp = $scope.component.valueProperty;
           $scope.getSelectItem = function(item) {
@@ -72771,7 +73537,6 @@ module.exports = function(app) {
             case 'url':
             case 'resource':
               var url = '';
-              var options = {cache: true};
               if (settings.dataSrc === 'url') {
                 url = settings.data.url;
                 if (url.substr(0, 1) === '/') {
@@ -72795,13 +73560,32 @@ module.exports = function(app) {
                 if (settings.data.project) {
                   url += '/project/' + settings.data.project;
                 }
-                url += '/form/' + settings.data.resource + '/submission?limit=1000';
+                url += '/form/' + settings.data.resource + '/submission';
               }
 
+              options.params = {
+                limit: 100,
+                skip: 0
+              };
+
+              $scope.loadMoreItems = function($select, $event) {
+                $event.stopPropagation();
+                $event.preventDefault();
+                options.params.skip += options.params.limit;
+                $scope.refreshItems(null, null, true);
+              };
+
               if (url) {
-                $scope.refreshItems = function(input, newUrl) {
+                $scope.selectLoading = false;
+                $scope.hasNextPage = true;
+                $scope.refreshItems = function(input, newUrl, append) {
                   newUrl = newUrl || url;
                   if (!newUrl) {
+                    return;
+                  }
+
+                  // Do not want to call if it is already loading.
+                  if ($scope.selectLoading) {
                     return;
                   }
 
@@ -72819,8 +73603,35 @@ module.exports = function(app) {
                     newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') + filter;
                   }
 
+                  // Set the new result.
+                  var setResult = function(data) {
+                    if (data.length < options.params.limit) {
+                      $scope.hasNextPage = false;
+                    }
+                    if (append) {
+                      $scope.selectItems = $scope.selectItems.concat(data);
+                    }
+                    else {
+                      $scope.selectItems = data;
+                    }
+                  };
+
+                  $scope.selectLoading = true;
                   $http.get(newUrl, options).then(function(result) {
-                    $scope.selectItems = result.data;
+                    var data = result.data;
+                    if (data) {
+                      if (data.hasOwnProperty('data')) {
+                        setResult(data.data);
+                      }
+                      else if (data.hasOwnProperty('items')) {
+                        setResult(data.items);
+                      }
+                      else {
+                        setResult(data);
+                      }
+                    }
+                  })['finally'](function() {
+                    $scope.selectLoading = false;
                   });
                 };
                 $scope.refreshItems();
@@ -72864,7 +73675,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/select.html',
-        "<label ng-if=\"component.label && !component.hideLabel\"  for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">{{ component.label }}</label>\n<span ng-if=\"!component.label && component.validate.required\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ui-select-required ui-select-open-on-focus ng-model=\"data[component.key]\" safe-multiple-to-single name=\"{{ component.key }}\" ng-disabled=\"readOnly\" ng-required=\"component.validate.required\" id=\"{{ component.key }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"getSelectItem(item) as item in selectItems | filter: $select.search\" refresh=\"refreshItems($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n  </ui-select-choices>\n</ui-select>\n<formio-errors></formio-errors>\n"
+        "<label ng-if=\"component.label && !component.hideLabel\"  for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">{{ component.label }}</label>\n<span ng-if=\"!component.label && component.validate.required\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select\n  ui-select-required\n  ui-select-open-on-focus\n  ng-model=\"data[component.key]\"\n  safe-multiple-to-single\n  name=\"{{ component.key }}\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"component.validate.required\"\n  id=\"{{ component.key }}\"\n  theme=\"bootstrap\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n>\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"getSelectItem(item) as item in selectItems | filter: $select.search\" refresh=\"refreshItems($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n    <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"selectLoading\">Load more...</button>\n  </ui-select-choices>\n</ui-select>\n<formio-errors></formio-errors>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -72875,7 +73686,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 "use strict";
 
 
@@ -72897,7 +73708,6 @@ module.exports = function(app) {
         angular.forEach($scope.component.values, function(v) {
           model[v.value] = !!ngModel.$viewValue[v.value];
         });
-        ngModel.$setViewValue(model);
         ngModel.$setPristine(true);
 
         ngModel.$isEmpty = function(value) {
@@ -72907,9 +73717,9 @@ module.exports = function(app) {
         };
 
         $scope.toggleCheckbox = function(value) {
-          var model = angular.copy(ngModel.$viewValue);
-          model[value] = !model[value];
-          ngModel.$setViewValue(model);
+          var _model = angular.copy(ngModel.$viewValue);
+          _model[value] = !_model[value];
+          ngModel.$setViewValue(_model);
         };
       }
     };
@@ -72950,7 +73760,6 @@ module.exports = function(app) {
 
   app.run([
     '$templateCache',
-    'FormioUtils',
     function($templateCache) {
       $templateCache.put('formio/components/selectboxes-directive.html',
         "<div class=\"select-boxes\">\n  <div ng-class=\"component.inline ? 'checkbox-inline' : 'checkbox'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ component.key }}-{{ v.value }}\">\n      <input type=\"checkbox\"\n        id=\"{{ component.key }}-{{ v.value }}\"\n        name=\"{{ component.key }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-disabled=\"readOnly\"\n        ng-click=\"toggleCheckbox(v.value)\"\n        ng-checked=\"model[v.value]\"\n      >\n      {{ v.label }}\n    </label>\n  </div>\n</div>\n"
@@ -72962,7 +73771,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],61:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73096,7 +73905,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73132,11 +73941,15 @@ module.exports = function(app) {
       $templateCache.put('formio/components/table.html',
         "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\"></formio-component>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
       );
+
+      $templateCache.put('formio/componentsView/table.html',
+        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\"></formio-component-view>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
+      );
     }
   ]);
 };
 
-},{}],63:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73191,7 +74004,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],64:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 "use strict";
 
 
@@ -73250,7 +74063,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73264,7 +74077,8 @@ module.exports = function(app) {
         settings: {
           input: false,
           components: []
-        }
+        },
+        viewTemplate: 'formio/componentsView/well.html'
       });
     }
   ]);
@@ -73274,11 +74088,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/well.html',
         "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\"></formio-component>\n</div>\n"
       );
+      $templateCache.put('formio/componentsView/well.html',
+        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\"></formio-component-view>\n</div>\n"
+      );
     }
   ]);
 };
 
-},{}],66:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73315,7 +74132,7 @@ module.exports = function() {
   };
 };
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73404,11 +74221,16 @@ module.exports = function() {
               }
               var value = $scope.submission.data[cond.key];
 
-              if (value) {
+              if (value && typeof value !== 'object') {
                 // Check if the conditional value is equal to the trigger value
                 $scope.show[component.key] = value.toString() === component.conditional.eq.toString()
                   ? boolean[component.conditional.show]
                   : !boolean[component.conditional.show];
+              }
+              // Special check for check boxes component.
+              else if (value && typeof value === 'object') {
+                // Check if the conditional trigger value is true.
+                $scope.show[component.key] = boolean[value[component.conditional.eq].toString()];
               }
               // Check against the components default value, if present and the components hasnt been interacted with.
               else if (!value && cond.defaultValue) {
@@ -73426,8 +74248,8 @@ module.exports = function() {
             }
 
             // Set hidden if specified
-            if ($scope.hideComponents && $scope.hideComponents.indexOf(component.key) !== -1) {
-              updateVisiblity(component.key);
+            if ($scope.hideComponents) {
+              component.hidden = $scope.hideComponents.indexOf(component.key) !== -1;
             }
 
             // Set required if specified
@@ -73601,7 +74423,7 @@ module.exports = function() {
   };
 };
 
-},{}],68:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -73622,12 +74444,12 @@ module.exports = [
         readOnly: '='
       },
       templateUrl: 'formio/component.html',
-      link: function($scope, el, attrs, formioCtrl) {
+      link: function(scope, el, attrs, formioCtrl) {
         if (formioCtrl) {
-          $scope.showAlerts = formioCtrl.showAlerts.bind(formioCtrl);
+          scope.showAlerts = formioCtrl.showAlerts.bind(formioCtrl);
         }
         else {
-          $scope.showAlerts = function() {
+          scope.showAlerts = function() {
             throw new Error('Cannot call $scope.showAlerts unless this component is inside a formio directive.');
           };
         }
@@ -73733,7 +74555,46 @@ module.exports = [
   }
 ];
 
-},{}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
+"use strict";
+module.exports = [
+  'formioComponents',
+  function(
+    formioComponents
+  ) {
+    return {
+      replace: true,
+      restrict: 'E',
+      scope: {
+        component: '=',
+        data: '='
+      },
+      templateUrl: 'formio/component-view.html',
+      controller: [
+        '$scope',
+        function(
+          $scope
+        ) {
+          // Get the settings.
+          var component = formioComponents.components[$scope.component.type] || formioComponents.components['custom'];
+
+          // Set the template for the component.
+          if (!component.viewTemplate) {
+            $scope.template = 'formio/element-view.html';
+          }
+          else if (typeof component.viewTemplate === 'function') {
+            $scope.template = component.viewTemplate($scope);
+          }
+          else {
+            $scope.template = component.viewTemplate;
+          }
+        }
+      ]
+    };
+  }
+];
+
+},{}],71:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73816,7 +74677,7 @@ module.exports = function() {
   };
 };
 
-},{}],70:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -73835,7 +74696,7 @@ module.exports = [
   }
 ];
 
-},{}],71:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73845,7 +74706,7 @@ module.exports = function() {
   };
 };
 
-},{}],72:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73860,7 +74721,7 @@ module.exports = function() {
   };
 };
 
-},{}],73:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73915,7 +74776,7 @@ module.exports = function() {
   };
 };
 
-},{}],74:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73983,7 +74844,7 @@ module.exports = function() {
         };
 
         // Show the current page.
-        var showPage = function() {
+        var showPage = function(scroll) {
           // If the page is past the components length, try to clear first.
           if ($scope.currentPage >= $scope.form.components.length) {
             $scope.clear();
@@ -74009,7 +74870,9 @@ module.exports = function() {
           }))($scope));
           $scope.wizardLoaded = true;
           $scope.formioAlerts = [];
-          window.scrollTo(0, 0);
+          if (scroll) {
+            window.scrollTo(0, 0);
+          }
           $scope.$emit('wizardPage', $scope.currentPage);
         };
 
@@ -74075,7 +74938,7 @@ module.exports = function() {
 
         $scope.cancel = function() {
           $scope.clear();
-          showPage();
+          showPage(true);
         };
 
         // Move onto the next page.
@@ -74087,7 +74950,7 @@ module.exports = function() {
             return;
           }
           $scope.currentPage++;
-          showPage();
+          showPage(true);
           $scope.$emit('wizardNext', $scope.currentPage);
         };
 
@@ -74097,7 +74960,7 @@ module.exports = function() {
             return;
           }
           $scope.currentPage--;
-          showPage();
+          showPage(true);
           $scope.$emit('wizardPrev', $scope.currentPage);
         };
 
@@ -74109,7 +74972,7 @@ module.exports = function() {
             return;
           }
           $scope.currentPage = page;
-          showPage();
+          showPage(true);
         };
 
         $scope.isValid = function() {
@@ -74137,7 +75000,7 @@ module.exports = function() {
             }
           });
 
-          $scope.form = angular.merge($scope.form, angular.copy(form));
+          $scope.form = $scope.form ? angular.merge($scope.form, angular.copy(form)) : angular.copy(form);
           $scope.form.components = $scope.pages;
           $scope.page = angular.copy(form);
           $scope.page.display = 'form';
@@ -74186,7 +75049,7 @@ module.exports = function() {
   };
 };
 
-},{}],75:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74356,7 +75219,7 @@ module.exports = [
   }
 ];
 
-},{}],76:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 "use strict";
 var formioUtils = require('formio-utils');
 
@@ -74411,7 +75274,7 @@ module.exports = function() {
   };
 };
 
-},{"formio-utils":34}],77:[function(require,module,exports){
+},{"formio-utils":35}],79:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -74460,7 +75323,7 @@ module.exports = [
   }
 ];
 
-},{}],78:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74494,7 +75357,7 @@ module.exports = [
   }
 ];
 
-},{}],79:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -74503,7 +75366,7 @@ module.exports = [
   }
 ];
 
-},{}],80:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -74516,18 +75379,17 @@ module.exports = [
   }
 ];
 
-},{}],81:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 "use strict";
 module.exports = [
-  'FormioUtils',
-  function(FormioUtils) {
+  function() {
     return function(components) {
       var tableComps = [];
       if (!components || !components.length) {
         return tableComps;
       }
-      FormioUtils.eachComponent(components, function(component) {
-        if (component.tableView && component.key) {
+      components.forEach(function(component) {
+        if (component.tableView) {
           tableComps.push(component);
         }
       });
@@ -74536,7 +75398,7 @@ module.exports = [
   }
 ];
 
-},{}],82:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -74549,7 +75411,7 @@ module.exports = [
   }
 ];
 
-},{}],83:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74564,7 +75426,7 @@ module.exports = [
   }
 ];
 
-},{}],84:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 "use strict";
 require('angular-ui-mask/dist/mask');
 require('ui-select/dist/select');
@@ -74578,7 +75440,7 @@ require('angular-ui-bootstrap');
 require('bootstrap-ui-datetime-picker/dist/datetime-picker');
 require('./formio');
 
-},{"./formio":85,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":33,"angular-ui-mask/dist/mask":7,"bootstrap":11,"bootstrap-ui-datetime-picker/dist/datetime-picker":10,"ng-file-upload":31,"signature_pad":94,"ui-select/dist/select":95}],85:[function(require,module,exports){
+},{"./formio":87,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":34,"angular-ui-mask/dist/mask":7,"bootstrap":11,"bootstrap-ui-datetime-picker/dist/datetime-picker":10,"ng-file-upload":32,"signature_pad":96,"ui-select/dist/select":97}],87:[function(require,module,exports){
 "use strict";
 
 
@@ -74625,6 +75487,8 @@ app.directive('formioSubmission', require('./directives/formioSubmission'));
 
 app.directive('formioComponent', require('./directives/formioComponent'));
 
+app.directive('formioComponentView', require('./directives/formioComponentView'));
+
 app.directive('formioElement', require('./directives/formioElement'));
 
 app.directive('formioWizard', require('./directives/formioWizard'));
@@ -74661,7 +75525,7 @@ app.run([
   function($templateCache) {
     // The template for the formio forms.
     $templateCache.put('formio.html',
-      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message }}\n    </div>\n    <formio-component ng-repeat=\"component in form.components track by $index\" component=\"component\" data=\"submission.data\" form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || component.disabled\"></formio-component>\n  </form>\n</div>\n"
+      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component ng-repeat=\"component in form.components\" component=\"component\" data=\"submission.data\" form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || component.disabled\"></formio-component>\n  </form>\n</div>\n"
     );
 
     $templateCache.put('formio-wizard.html',
@@ -74673,7 +75537,7 @@ app.run([
     );
 
     $templateCache.put('formio/submission.html',
-      "<table class=\"table table-striped table-responsive\">\n  <tr ng-repeat=\"component in form.components | tableComponents\" ng-if=\"!ignore[component.key]\">\n    <th>{{ component.label }}</th>\n    <td><div ng-bind-html=\"submission.data | tableView:component\"></div></td>\n  </tr>\n</table>\n"
+      "<div>\n  <div ng-repeat=\"component in form.components track by $index\" >\n    <formio-component-view component=\"component\" data=\"submission.data\"></formio-component-view>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/submissions.html',
@@ -74685,6 +75549,14 @@ app.run([
       "<ng-form name=\"formioFieldForm\" class=\"formio-component-{{ component.key }}\" ng-hide=\"component.hidden\">\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" ng-class=\"{'has-error': formioFieldForm[component.key].$invalid && !formioFieldForm[component.key].$pristine }\" ng-style=\"component.style\">\n    <formio-element></formio-element>\n  </div>\n</ng-form>\n"
     );
 
+    $templateCache.put('formio/component-view.html',
+      "<ng-form name=\"formioFieldForm\" class=\"formio-component-{{ component.key }}\" ng-hide=\"component.hidden\">\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" ng-class=\"{'has-error': formioFieldForm[component.key].$invalid && !formioFieldForm[component.key].$pristine }\" ng-style=\"component.style\">\n    <formio-element></formio-element>\n  </div>\n</ng-form>\n"
+    );
+
+    $templateCache.put('formio/element-view.html',
+      "<div>\n  <div><strong>{{ component.label }}</strong></div>\n  <div ng-bind-html=\"data | tableView:component\"></div>\n</div>\n"
+    );
+
     $templateCache.put('formio/errors.html',
       "<div ng-show=\"formioFieldForm[component.key].$error && !formioFieldForm[component.key].$pristine\">\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.email\">{{ component.label || component.key }} must be a valid email.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.required\">{{ component.label || component.key }} is required.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.number\">{{ component.label || component.key }} must be a number.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.maxlength\">{{ component.label || component.key }} must be shorter than {{ component.validate.maxLength + 1 }} characters.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.minlength\">{{ component.label || component.key }} must be longer than {{ component.validate.minLength - 1 }} characters.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.min\">{{ component.label || component.key }} must be higher than {{ component.validate.min - 1 }}.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.max\">{{ component.label || component.key }} must be lower than {{ component.validate.max + 1 }}.</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.custom\">{{ component.customError }}</p>\n  <p class=\"help-block\" ng-show=\"formioFieldForm[component.key].$error.pattern\">{{ component.label || component.key }} does not match the pattern {{ component.validate.pattern }}</p>\n</div>\n"
     );
@@ -74693,7 +75565,7 @@ app.run([
 
 require('./components');
 
-},{"./components":51,"./directives/customValidator":66,"./directives/formio":67,"./directives/formioComponent":68,"./directives/formioDelete":69,"./directives/formioElement":70,"./directives/formioErrors":71,"./directives/formioSubmission":72,"./directives/formioSubmissions":73,"./directives/formioWizard":74,"./factories/FormioScope":75,"./factories/FormioUtils":76,"./factories/formioInterceptor":77,"./factories/formioTableView":78,"./filters/flattenComponents":79,"./filters/safehtml":80,"./filters/tableComponents":81,"./filters/tableFieldView":82,"./filters/tableView":83,"./plugins":86,"./providers/Formio":90,"./providers/FormioPlugins":91}],86:[function(require,module,exports){
+},{"./components":52,"./directives/customValidator":67,"./directives/formio":68,"./directives/formioComponent":69,"./directives/formioComponentView":70,"./directives/formioDelete":71,"./directives/formioElement":72,"./directives/formioErrors":73,"./directives/formioSubmission":74,"./directives/formioSubmissions":75,"./directives/formioWizard":76,"./factories/FormioScope":77,"./factories/FormioUtils":78,"./factories/formioInterceptor":79,"./factories/formioTableView":80,"./filters/flattenComponents":81,"./filters/safehtml":82,"./filters/tableComponents":83,"./filters/tableFieldView":84,"./filters/tableView":85,"./plugins":88,"./providers/Formio":92,"./providers/FormioPlugins":93}],88:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   require('./storage/url')(app);
@@ -74701,7 +75573,7 @@ module.exports = function(app) {
   require('./storage/dropbox')(app);
 };
 
-},{"./storage/dropbox":87,"./storage/s3":88,"./storage/url":89}],87:[function(require,module,exports){
+},{"./storage/dropbox":89,"./storage/s3":90,"./storage/url":91}],89:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -74835,7 +75707,7 @@ module.exports = function(app) {
 };
 
 
-},{}],88:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -74932,7 +75804,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],89:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -74984,7 +75856,7 @@ module.exports = function(app) {
   );
 };
 
-},{}],90:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -75047,7 +75919,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/src/formio.js":35}],91:[function(require,module,exports){
+},{"formiojs/src/formio.js":26}],93:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   var plugins = {};
@@ -75076,7 +75948,7 @@ module.exports = function() {
   };
 };
 
-},{}],92:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -75169,7 +76041,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],93:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -75206,7 +76078,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],94:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module unless amdModuleId is set
@@ -75597,7 +76469,7 @@ return SignaturePad;
 
 }));
 
-},{}],95:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -77687,7 +78559,7 @@ $templateCache.put("select2/select.tpl.html","<div class=\"ui-select-container s
 $templateCache.put("selectize/choices.tpl.html","<div ng-show=\"$select.open\" class=\"ui-select-choices ui-select-dropdown selectize-dropdown single\"><div class=\"ui-select-choices-content selectize-dropdown-content\"><div class=\"ui-select-choices-group optgroup\" role=\"listbox\"><div ng-show=\"$select.isGrouped\" class=\"ui-select-choices-group-label optgroup-header\" ng-bind=\"$group.name\"></div><div role=\"option\" class=\"ui-select-choices-row\" ng-class=\"{active: $select.isActive(this), disabled: $select.isDisabled(this)}\"><div class=\"option ui-select-choices-row-inner\" data-selectable=\"\"></div></div></div></div></div>");
 $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"($select.open || $select.isEmpty())\" class=\"ui-select-match\" ng-transclude=\"\"></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"text\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.searchEnabled || ($select.selected && !$select.open)\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div></div>");}]);
-},{}],96:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 (function() {
   'use strict';
 
@@ -78019,7 +78891,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })();
 
-},{}],97:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78080,7 +78952,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],98:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78150,7 +79022,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],99:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78209,7 +79081,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],100:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78248,7 +79120,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],101:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -78316,7 +79188,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],102:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78367,7 +79239,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],103:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78407,7 +79279,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],104:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78469,7 +79341,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],105:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78525,7 +79397,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],106:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78695,7 +79567,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],107:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78710,7 +79582,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],108:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78765,7 +79637,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],109:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78843,7 +79715,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],110:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78899,7 +79771,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],111:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78958,7 +79830,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],112:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -78997,7 +79869,7 @@ require('./panel')(app);
 require('./table')(app);
 require('./well')(app);
 
-},{"./address":97,"./button":98,"./checkbox":99,"./columns":100,"./components":101,"./container":102,"./content":103,"./custom":104,"./datagrid":105,"./datetime":106,"./email":107,"./fieldset":108,"./file":109,"./hidden":110,"./htmlelement":111,"./number":113,"./page":114,"./panel":115,"./password":116,"./phonenumber":117,"./radio":118,"./resource":119,"./select":120,"./selectboxes":121,"./signature":122,"./table":123,"./textarea":124,"./textfield":125,"./well":126}],113:[function(require,module,exports){
+},{"./address":99,"./button":100,"./checkbox":101,"./columns":102,"./components":103,"./container":104,"./content":105,"./custom":106,"./datagrid":107,"./datetime":108,"./email":109,"./fieldset":110,"./file":111,"./hidden":112,"./htmlelement":113,"./number":115,"./page":116,"./panel":117,"./password":118,"./phonenumber":119,"./radio":120,"./resource":121,"./select":122,"./selectboxes":123,"./signature":124,"./table":125,"./textarea":126,"./textfield":127,"./well":128}],115:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79062,7 +79934,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],114:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79083,7 +79955,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],115:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79150,7 +80022,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],116:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79216,7 +80088,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],117:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79282,7 +80154,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],118:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79344,7 +80216,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],119:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79429,7 +80301,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],120:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79612,7 +80484,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],121:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79681,7 +80553,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],122:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79741,7 +80613,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],123:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79812,7 +80684,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],124:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79848,7 +80720,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],125:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79916,7 +80788,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],126:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79953,7 +80825,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],127:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -80131,7 +81003,7 @@ module.exports = {
   }
 };
 
-},{}],128:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -80194,7 +81066,7 @@ module.exports = {
   ]
 };
 
-},{}],129:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 module.exports = ['debounce', function(debounce) {
@@ -80454,7 +81326,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{}],130:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -80470,7 +81342,7 @@ module.exports = [
   }
 ];
 
-},{}],131:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 "use strict";
 'use strict';
 
@@ -80549,7 +81421,7 @@ module.exports = [
   }
 ];
 
-},{"formio-utils":25,"lodash":26}],132:[function(require,module,exports){
+},{"formio-utils":25,"lodash":27}],134:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$scope',
@@ -80718,7 +81590,7 @@ module.exports = [
   }
 ];
 
-},{}],133:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -80738,7 +81610,7 @@ module.exports = [
   }
 ];
 
-},{}],134:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -80760,7 +81632,7 @@ module.exports = [
   }
 ];
 
-},{}],135:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -80827,7 +81699,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   };
 }];
 
-},{}],136:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -80856,7 +81728,7 @@ module.exports = function() {
   };
 };
 
-},{}],137:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -80924,7 +81796,7 @@ module.exports = function() {
   };
 };
 
-},{}],138:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -80945,7 +81817,7 @@ module.exports = [
   }
 ];
 
-},{}],139:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -80997,7 +81869,7 @@ module.exports = function() {
   };
 };
 
-},{}],140:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -81036,7 +81908,7 @@ module.exports = function() {
   };
 };
 
-},{}],141:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -81073,7 +81945,7 @@ module.exports = function() {
   };
 };
 
-},{}],142:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -81096,7 +81968,7 @@ module.exports = function() {
   };
 };
 
-},{}],143:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -81175,7 +82047,7 @@ module.exports = function() {
   };
 };
 
-},{}],144:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -81209,7 +82081,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],145:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 "use strict";
 require('ng-formio/src/formio-complete.js');
 require('angular-drag-and-drop-lists');
@@ -81218,9 +82090,9 @@ require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":146,"angular-drag-and-drop-lists":2,"lodash":26,"ng-ckeditor/ng-ckeditor":28,"ng-dialog":29,"ng-formio/src/formio-complete.js":84}],146:[function(require,module,exports){
+},{"./ngFormBuilder.js":148,"angular-drag-and-drop-lists":2,"lodash":27,"ng-ckeditor/ng-ckeditor":29,"ng-dialog":30,"ng-formio/src/formio-complete.js":86}],148:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.11.1 | https://npmcdn.com/ng-formio-builder@1.11.1/LICENSE.txt */
+/*! ng-formio-builder v1.11.2 | https://npmcdn.com/ng-formio-builder@1.11.2/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -81317,4 +82189,4 @@ app.run([
 
 require('./components');
 
-},{"./components":112,"./constants/commonOptions":127,"./constants/formOptions":128,"./directives/formBuilder":129,"./directives/formBuilderComponent":130,"./directives/formBuilderConditional":131,"./directives/formBuilderDnd":132,"./directives/formBuilderElement":133,"./directives/formBuilderList":134,"./directives/formBuilderOption":135,"./directives/formBuilderOptionCustomValidation":136,"./directives/formBuilderOptionKey":137,"./directives/formBuilderRow":138,"./directives/formBuilderTable":139,"./directives/formBuilderTooltip":140,"./directives/jsonInput":141,"./directives/validApiKey":142,"./directives/valueBuilder":143,"./factories/debounce":144}]},{},[145]);
+},{"./components":114,"./constants/commonOptions":129,"./constants/formOptions":130,"./directives/formBuilder":131,"./directives/formBuilderComponent":132,"./directives/formBuilderConditional":133,"./directives/formBuilderDnd":134,"./directives/formBuilderElement":135,"./directives/formBuilderList":136,"./directives/formBuilderOption":137,"./directives/formBuilderOptionCustomValidation":138,"./directives/formBuilderOptionKey":139,"./directives/formBuilderRow":140,"./directives/formBuilderTable":141,"./directives/formBuilderTooltip":142,"./directives/jsonInput":143,"./directives/validApiKey":144,"./directives/valueBuilder":145,"./factories/debounce":146}]},{},[147]);
