@@ -8,9 +8,10 @@ module.exports = function(gulp, plugins) {
     return bundle
       .bundle()
       .pipe(plugins.source('ngFormBuilder-complete.js'))
+      .pipe(plugins.replace('<%=version%>', plugins.packageJson.version))
       .pipe(gulp.dest('dist/'))
       .pipe(plugins.rename('ngFormBuilder-complete.min.js'))
-      .pipe(plugins.streamify(plugins.uglify()))
+      .pipe(plugins.streamify(plugins.uglify({preserveComments: 'license'})))
       .pipe(gulp.dest('dist/'))
       .on('error', function(err){
         console.log(err);
