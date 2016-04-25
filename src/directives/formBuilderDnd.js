@@ -10,6 +10,9 @@ module.exports = [
     dndDragIframeWorkaround
   ) {
     $scope.hideCount = (_.isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
+    $scope.$watch('hideDndBoxCount', function(hideCount) {
+      $scope.hideCount = hideCount ? hideCount : 1;
+    });
 
     $scope.formComponents = formioComponents.components;
 

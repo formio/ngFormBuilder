@@ -35,6 +35,7 @@ module.exports = ['debounce', function(debounce) {
         else {
           $scope.form.components.push(submitButton);
         }
+        $scope.hideCount = 2;
         $scope.form.page = 0;
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
 
@@ -76,6 +77,10 @@ module.exports = ['debounce', function(debounce) {
             }
           });
         }
+
+        $scope.$watch('form.display', function(display) {
+          $scope.hideCount = (display === 'wizard') ? 1 : 2;
+        });
 
         // Make sure they can switch back and forth between wizard and pages.
         $scope.$on('formDisplay', function(event, display) {

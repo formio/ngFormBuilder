@@ -10,19 +10,21 @@
 
 .component-btn-group .component-settings-button {
   float: right;
-  z-index: 20;
   margin: 4px 4px 0 0;
-}
-
-.component-form-group.col-xs-6 {
-  clear: right;
-}
-
-li .component-btn-group .component-settings-button {
+  padding: 2px 2px;
+  font-size: 10px;
+  line-height: 1.2em;
+  border-radius: 0;
+  width: 18px;
+  height: 18px;
   z-index: 1001;
   -webkit-box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
   -moz-box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
   box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
+}
+
+.component-form-group.col-xs-6 {
+  clear: right;
 }
 
 li:not(:hover) .component-btn-group .component-settings-button {
@@ -41,15 +43,6 @@ li:not(:hover) .component-btn-group .component-settings-button {
 
 .form-component-list li {
   margin-bottom: 10px;
-}
-
-.btn-xxs, .btn-group-xxs > .btn {
-  padding: 2px 2px;
-  font-size: 10px;
-  line-height: 1.2em;
-  border-radius: 0;
-  width: 18px;
-  height: 18px;
 }
 
 .ngdialog.ngdialog-theme-default.component-settings .ngdialog-content {

@@ -2,7 +2,7 @@
   "name": "ng-formio-builder",
   "main": [
     "dist/ngFormBuilder.js",
-    "css/formBuilder.css"
+    "dist/ngFormBuilder.css"
   ],
   "version": "1.11.2",
   "authors": [
