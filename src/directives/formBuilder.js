@@ -1,8 +1,10 @@
+/*eslint max-statements: 0*/
 module.exports = ['debounce', function(debounce) {
   return {
     replace: true,
     templateUrl: 'formio/formbuilder/builder.html',
     scope: {
+      form: '=?',
       src: '=',
       type: '=',
       onSave: '=',
@@ -27,10 +29,19 @@ module.exports = ['debounce', function(debounce) {
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
-        $scope.form = {components:[submitButton], page: 0};
-        $scope.formio = new Formio($scope.src);
+        if (!$scope.form || !$scope.form.components || !$scope.form.components.length) {
+          $scope.form = {components:[submitButton]};
+        }
+        else {
+          $scope.form.components.push(submitButton);
+        }
+        $scope.form.page = 0;
+        $scope.formio = $scope.src ? new Formio($scope.src) : null;
 
         var setNumPages = function() {
+          if (!$scope.form) {
+            return;
+          }
           if ($scope.form.display !== 'wizard') {
             return;
           }
@@ -56,7 +67,7 @@ module.exports = ['debounce', function(debounce) {
         };
 
         // Load the form.
-        if ($scope.formio.formId) {
+        if ($scope.formio && $scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
@@ -136,49 +147,51 @@ module.exports = ['debounce', function(debounce) {
           return component.group;
         });
 
-        $scope.formComponentsByGroup.resource = {};
-        $scope.formComponentGroups.resource = {
-          title: 'Existing Resource Fields',
-          panelClass: 'subgroup-accordion-container',
-          subgroups: {}
-        };
-
         // Get the resource fields.
-        $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
-          // Iterate through all resources.
-          _.each(resources, function(resource) {
-            var resourceKey = resource.name;
+        if ($scope.formio) {
+          $scope.formComponentsByGroup.resource = {};
+          $scope.formComponentGroups.resource = {
+            title: 'Existing Resource Fields',
+            panelClass: 'subgroup-accordion-container',
+            subgroups: {}
+          };
 
-            // Add a legend for this resource.
-            $scope.formComponentsByGroup.resource[resourceKey] = [];
-            $scope.formComponentGroups.resource.subgroups[resourceKey] = {
-              title: resource.title
-            };
+          $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+            // Iterate through all resources.
+            _.each(resources, function(resource) {
+              var resourceKey = resource.name;
 
-            // Iterate through each component.
-            FormioUtils.eachComponent(resource.components, function(component) {
-              if (component.type === 'button') return;
+              // Add a legend for this resource.
+              $scope.formComponentsByGroup.resource[resourceKey] = [];
+              $scope.formComponentGroups.resource.subgroups[resourceKey] = {
+                title: resource.title
+              };
 
-              $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
-                _.cloneDeep(formioComponents.components[component.type], true),
-                {
-                  title: component.label,
-                  group: 'resource',
-                  subgroup: resourceKey,
-                  settings: component
-                },
-                {
-                  settings: {
-                    label: component.label,
-                    key: component.key,
-                    lockKey: true,
-                    source: resource._id
+              // Iterate through each component.
+              FormioUtils.eachComponent(resource.components, function(component) {
+                if (component.type === 'button') return;
+
+                $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
+                  _.cloneDeep(formioComponents.components[component.type], true),
+                  {
+                    title: component.label,
+                    group: 'resource',
+                    subgroup: resourceKey,
+                    settings: component
+                  },
+                  {
+                    settings: {
+                      label: component.label,
+                      key: component.key,
+                      lockKey: true,
+                      source: resource._id
+                    }
                   }
-                }
-              ));
+                ));
+              });
             });
           });
-        });
+        }
 
         var update = function() {
           $scope.$emit('formUpdate', $scope.form);

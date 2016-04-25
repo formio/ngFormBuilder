@@ -6,6 +6,7 @@
       Drag and Drop a form component
     </div>
   </li>
+  <!-- DO NOT PUT "track by $index" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->
   <li ng-repeat="component in component.components"
       ng-if="!rootList || !form.display || (form.display === 'form') || (form.page === $index)"
       dnd-draggable="component"
