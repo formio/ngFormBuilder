@@ -1,8 +1,6 @@
 module.exports = function(gulp, plugins) {
   return function () {
-    return gulp.src(plugins.bowerFiles({
-        includeSelf: true
-      }))
+    return gulp.src(plugins.bowerFiles().concat('css/ngFormBuilder.css'))
       .pipe(plugins.filter('**/*.css'))
       .pipe(plugins.concat('ngFormBuilder-full.css'))
       .pipe(gulp.dest('dist'))
