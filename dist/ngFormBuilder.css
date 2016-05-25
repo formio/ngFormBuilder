@@ -251,8 +251,10 @@ ul.component-list li {
 }
 
 /****************************** Data Grid Styling *************************/
-ul.formbuilder-group {
+ul.formbuilder-group,
+ul.formbuilder-group > li {
   padding: 0;
+  position: relative;
 }
 
 ul.formbuilder-group li.formbuilder-group-row {
