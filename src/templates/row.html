@@ -2,7 +2,7 @@
   <label ng-if="component.label" class="control-label">{{ component.label }}</label>
   <ul class="component-row formbuilder-group"
       dnd-list="component.components"
-      dnd-drop="addComponent(item)"
+      dnd-drop="addComponent(item, index)"
       dnd-horizontal-list="true">
     <li ng-repeat="component in component.components"
         class="formbuilder-group-row pull-left"
