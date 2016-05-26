@@ -43,10 +43,6 @@ module.exports = function(app) {
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
-
-      $templateCache.put('formio/formbuilder/datagrid.html',
-        '<form-builder-row class="formio-row" component="component" form="form" formio="formio"></form-builder-row>'
-      );
     }
   ]);
 };

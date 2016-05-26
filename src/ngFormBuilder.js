@@ -87,6 +87,10 @@ app.run([
       fs.readFileSync(__dirname + '/templates/builder.html', 'utf8')
     );
 
+    $templateCache.put('formio/formbuilder/datagrid.html',
+      fs.readFileSync(__dirname + '/templates/datagrid.html', 'utf8')
+    );
+
     $templateCache.put('formio/components/confirm-remove.html',
       fs.readFileSync(__dirname + '/templates/confirm-remove.html', 'utf8')
     );

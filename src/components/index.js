@@ -25,12 +25,12 @@ require('./resource')(app);
 require('./file')(app);
 require('./signature')(app);
 require('./custom')(app);
+require('./datagrid')(app);
 
 // Layout
 require('./columns')(app);
 require('./fieldset')(app);
 require('./container')(app);
-require('./datagrid')(app);
 require('./page')(app);
 require('./panel')(app);
 require('./table')(app);
