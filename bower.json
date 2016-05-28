@@ -4,7 +4,7 @@
     "dist/ngFormBuilder.js",
     "css/ngFormBuilder.css"
   ],
-  "version": "1.11.9",
+  "version": "1.12.0",
   "authors": [
     "Travis Tidwell <travis@form.io>"
   ],
