@@ -34,7 +34,6 @@ module.exports = function(app) {
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="addAnother"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
-        '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +
@@ -43,10 +42,6 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
-      );
-
-      $templateCache.put('formio/formbuilder/datagrid.html',
-        '<form-builder-row class="formio-row" component="component" form="form" formio="formio"></form-builder-row>'
       );
     }
   ]);

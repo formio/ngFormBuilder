@@ -807,8 +807,13 @@ li:not(:hover) .component-btn-group .component-settings-button {
  * For the correct positioning of the placeholder element, the dnd-list and
  * it's children must have position: relative
  */
-ul.component-list,
-ul.component-list > li {
+ul[dnd-list],
+ul[dnd-list] > li {
+  position: relative;
+}
+
+tr[dnd-list],
+tr[dnd-list] > th {
   position: relative;
 }
 
@@ -836,6 +841,11 @@ ul.component-list li {
   padding: 0px;
 }
 
+.dropzone {
+  min-height: 150px;
+  min-width: 150px;
+}
+
 /**
  * Reduce opacity of elements during the drag operation. This allows the user
  * to see where he is dropping his element, even if the element is huge. The
@@ -860,8 +870,8 @@ ul.component-list li {
  */
 .dropzone .dndPlaceholder {
   background-color: #ddd;
-  min-height: 42px;
-  display: block;
+  min-height: 50px;
+  min-width: 50px;
   position: relative;
 }
 
@@ -870,7 +880,6 @@ ul.component-list li {
  * a content component do not interfere with dragging.
  */
 .dropzone .dndOverlay {
-  position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
@@ -900,7 +909,7 @@ ul.component-list li {
 /***************************** Element type specific styles *****************************/
 
 .dropzone .item {
-  padding: 10px 15px;
+  padding: 20px;
 }
 
 .dropzone .container-element {
@@ -977,39 +986,16 @@ ul.component-list li {
   border: dotted 2px #e8e8e8;
 }
 
-.form-builder-component .form-field-type-datagrid .formbuilder-row {
-  padding: 5px;
-  border: dotted 2px #e8e8e8;
-}
-
 .form-builder-component .form-field-type-columns .formio-column {
   padding: 10px;
   border: dotted 2px #e8e8e8;
 }
 
 /****************************** Data Grid Styling *************************/
-ul.formbuilder-group {
-  padding: 0;
-}
 
-ul.formbuilder-group li.formbuilder-group-row {
-  margin: 0 10px;
-  min-width: 100px;
-}
-
-ul.formbuilder-group li.formbuilder-group-row:first-child {
-  margin-left: 0;
-}
-
-ul.formbuilder-group li.dndPlaceholder {
-  width: 150px;
-  height: 51px;
-  float: left;
-}
-
-ul.formbuilder-group li.form-builder-drop div {
-  text-align:center;
-  margin-bottom: 5px;
+.datagrid-dnd {
+  padding: 5px;
+  border: dotted 2px #e8e8e8;
 }
 
 /***************************** Form Component Buttons *********************/

@@ -52,7 +52,7 @@ module.exports = [
           index = 0;
         }
         else if (index >= $scope.component.components.length) {
-          index--;
+          index -= 1;
         }
       }
 
