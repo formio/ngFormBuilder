@@ -176,10 +176,15 @@ module.exports = ['debounce', function(debounce) {
               FormioUtils.eachComponent(resource.components, function(component) {
                 if (component.type === 'button') return;
 
+                var componentName = component.label;
+                if (!componentName && component.key) {
+                  componentName = _.upperFirst(component.key);
+                }
+
                 $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
                   _.cloneDeep(formioComponents.components[component.type], true),
                   {
-                    title: component.label,
+                    title: componentName,
                     group: 'resource',
                     subgroup: resourceKey,
                     settings: component
