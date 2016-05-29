@@ -259,6 +259,7 @@ ul.component-list li {
 .datagrid-dnd {
   padding: 5px;
   border: dotted 2px #e8e8e8;
+  min-height: inherit;
 }
 
 /***************************** Form Component Buttons *********************/
