@@ -16,8 +16,8 @@
           {{ (component.label || '') | formioTranslate }}
           <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
         </th>
-        <th ng-if="component.components.length === 0">
-          <div class="alert alert-info" role="alert">
+        <th ng-if="component.components.length === 0" style="border: none;">
+          <div class="alert alert-info" role="alert" style="margin:0;">
             Datagrid Components
           </div>
         </th>
