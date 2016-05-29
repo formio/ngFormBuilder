@@ -1,39 +1,38 @@
 <div class="datagrid-dnd dropzone" ng-controller="formBuilderDnd">
   <label ng-if="component.label" class="control-label">{{ component.label }}</label>
   <table class="table datagrid-table" ng-class="{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}">
-    <thead>
-      <tr dnd-list="component.components"
-        dnd-drop="addComponent(item, index)"
-        dnd-horizontal-list="true">
-        <th
-          style="padding:30px 0 10px 0"
-          ng-repeat="component in component.components"
-          dnd-draggable="component"
-          dnd-effect-allowed="move"
-          dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
-          dnd-dragend="dndDragIframeWorkaround.isDragging = false"
-          dnd-moved="removeComponent(component, false)">
-          {{ (component.label || '') | formioTranslate }}
-          <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
-        </th>
-        <th ng-if="component.components.length === 0">
-          <div class="alert alert-info" role="alert">
-            Datagrid Components
+    <tr>
+      <th style="padding:30px 0 10px 0" ng-repeat="component in component.components">
+        {{ (component.label || '') | formioTranslate }}
+        <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
+      </th>
+    </tr>
+    <tr
+      class="component-list"
+      dnd-list="component.components"
+      dnd-drop="addComponent(item, index)"
+    >
+      <td
+        ng-repeat="component in component.components"
+        ng-init="hideMoveButton = true; component.hideLabel = true"
+        dnd-draggable="component"
+        dnd-effect-allowed="move"
+        dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
+        dnd-dragend="dndDragIframeWorkaround.isDragging = false"
+        dnd-moved="removeComponent(component, false)"
+      >
+        <div class="component-form-group component-type-{{ component.type }} form-builder-component">
+          <div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" id="form-group-{{ component.key }}" style="position:inherit" ng-style="component.style">
+            <form-builder-component></form-builder-component>
           </div>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td ng-repeat="component in component.components" ng-init="hideMoveButton = true; component.hideLabel = true">
-          <div class="component-form-group component-type-{{ component.type }} form-builder-component">
-            <div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" id="form-group-{{ component.key }}" style="position:inherit" ng-style="component.style">
-              <form-builder-component></form-builder-component>
-            </div>
-          </div>
-        </td>
-      </tr>
-    </tbody>
+        </div>
+      </td>
+      <td ng-if="component.components.length === 0">
+        <div class="alert alert-info" role="alert">
+          Datagrid Components
+        </div>
+      </td>
+    </tr>
   </table>
   <div style="clear:both;"></div>
 </div>
