@@ -26,6 +26,7 @@ require('./file')(app);
 require('./signature')(app);
 require('./custom')(app);
 require('./datagrid')(app);
+require('./survey')(app);
 
 // Layout
 require('./columns')(app);

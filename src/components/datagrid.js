@@ -4,7 +4,7 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('datagrid', {
         fbtemplate: 'formio/formbuilder/datagrid.html',
-        icon: 'fa fa-list',
+        icon: 'fa fa-th',
         views: [
           {
             name: 'Display',
