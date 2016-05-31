@@ -17004,7 +17004,7 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('datagrid', {
         fbtemplate: 'formio/formbuilder/datagrid.html',
-        icon: 'fa fa-list',
+        icon: 'fa fa-th',
         views: [
           {
             name: 'Display',
@@ -17510,6 +17510,7 @@ require('./file')(app);
 require('./signature')(app);
 require('./custom')(app);
 require('./datagrid')(app);
+require('./survey')(app);
 
 // Layout
 require('./columns')(app);
@@ -17520,7 +17521,7 @@ require('./panel')(app);
 require('./table')(app);
 require('./well')(app);
 
-},{"./address":3,"./button":4,"./checkbox":5,"./columns":6,"./components":7,"./container":8,"./content":9,"./currency":10,"./custom":11,"./datagrid":12,"./datetime":13,"./email":14,"./fieldset":15,"./file":16,"./hidden":17,"./htmlelement":18,"./number":20,"./page":21,"./panel":22,"./password":23,"./phonenumber":24,"./radio":25,"./resource":26,"./select":27,"./selectboxes":28,"./signature":29,"./table":30,"./textarea":31,"./textfield":32,"./well":33}],20:[function(require,module,exports){
+},{"./address":3,"./button":4,"./checkbox":5,"./columns":6,"./components":7,"./container":8,"./content":9,"./currency":10,"./custom":11,"./datagrid":12,"./datetime":13,"./email":14,"./fieldset":15,"./file":16,"./hidden":17,"./htmlelement":18,"./number":20,"./page":21,"./panel":22,"./password":23,"./phonenumber":24,"./radio":25,"./resource":26,"./select":27,"./selectboxes":28,"./signature":29,"./survey":30,"./table":31,"./textarea":32,"./textfield":33,"./well":34}],20:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -17812,7 +17813,7 @@ module.exports = function(app) {
     'formioComponentsProvider',
     function(formioComponentsProvider) {
       formioComponentsProvider.register('radio', {
-        icon: 'fa fa-list-ul',
+        icon: 'fa fa-dot-circle-o',
         views: [
           {
             name: 'Display',
@@ -18270,6 +18271,69 @@ module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
     function(formioComponentsProvider) {
+      formioComponentsProvider.register('survey', {
+        icon: 'fa fa-list',
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/survey/display.html'
+          },
+          {
+            name: 'Validation',
+            template: 'formio/components/survey/validate.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Layout',
+            template: 'formio/components/common/layout.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
+        documentation: 'http://help.form.io/userguide/#survey'
+      });
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      // Create the settings markup.
+      $templateCache.put('formio/components/survey/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
+          '<value-builder data="component.questions" default="component.questions" label="Questions" tooltip-text="The questions you would like to as in this survey question."></value-builder>' +
+          '<value-builder data="component.values" default="component.values" label="Values" tooltip-text="The values that can be selected per question. Example: \'Satisfied\', \'Very Satisfied\', etc."></value-builder>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
+          '<form-builder-option property="protected"></form-builder-option>' +
+          '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+      // Create the API markup.
+      $templateCache.put('formio/components/survey/validate.html',
+        '<ng-form>' +
+          '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
+        '</ng-form>'
+      );
+    }
+  ]);
+};
+
+},{}],31:[function(require,module,exports){
+"use strict";
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
       formioComponentsProvider.register('table', {
         fbtemplate: 'formio/formbuilder/table.html',
         documentation: 'http://help.form.io/userguide/#table',
@@ -18335,7 +18399,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -18371,7 +18435,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -18439,7 +18503,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -18476,7 +18540,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -18654,7 +18718,7 @@ module.exports = {
   }
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -18717,7 +18781,7 @@ module.exports = {
   ]
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 module.exports = ['debounce', function(debounce) {
@@ -18987,7 +19051,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -19003,7 +19067,7 @@ module.exports = [
   }
 ];
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 'use strict';
 
@@ -19082,7 +19146,7 @@ module.exports = [
   }
 ];
 
-},{"formio-utils":1,"lodash":2}],39:[function(require,module,exports){
+},{"formio-utils":1,"lodash":2}],40:[function(require,module,exports){
 "use strict";
 module.exports = [
   '$scope',
@@ -19254,7 +19318,7 @@ module.exports = [
   }
 ];
 
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -19278,7 +19342,7 @@ module.exports = [
   }
 ];
 
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -19300,7 +19364,7 @@ module.exports = [
   }
 ];
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -19367,7 +19431,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   };
 }];
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -19396,7 +19460,7 @@ module.exports = function() {
   };
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -19464,7 +19528,7 @@ module.exports = function() {
   };
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -19485,7 +19549,7 @@ module.exports = [
   }
 ];
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -19537,7 +19601,7 @@ module.exports = function() {
   };
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -19576,7 +19640,7 @@ module.exports = function() {
   };
 };
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -19613,7 +19677,7 @@ module.exports = function() {
   };
 };
 
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -19636,7 +19700,7 @@ module.exports = function() {
   };
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -19715,7 +19779,7 @@ module.exports = function() {
   };
 };
 
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -19749,7 +19813,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 "use strict";
 /*! ng-formio-builder v1.12.4 | https://npmcdn.com/ng-formio-builder@1.12.4/LICENSE.txt */
 /*global window: false, console: false */
@@ -19852,4 +19916,4 @@ app.run([
 
 require('./components');
 
-},{"./components":19,"./constants/commonOptions":34,"./constants/formOptions":35,"./directives/formBuilder":36,"./directives/formBuilderComponent":37,"./directives/formBuilderConditional":38,"./directives/formBuilderDnd":39,"./directives/formBuilderElement":40,"./directives/formBuilderList":41,"./directives/formBuilderOption":42,"./directives/formBuilderOptionCustomValidation":43,"./directives/formBuilderOptionKey":44,"./directives/formBuilderRow":45,"./directives/formBuilderTable":46,"./directives/formBuilderTooltip":47,"./directives/jsonInput":48,"./directives/validApiKey":49,"./directives/valueBuilder":50,"./factories/debounce":51}]},{},[52]);
+},{"./components":19,"./constants/commonOptions":35,"./constants/formOptions":36,"./directives/formBuilder":37,"./directives/formBuilderComponent":38,"./directives/formBuilderConditional":39,"./directives/formBuilderDnd":40,"./directives/formBuilderElement":41,"./directives/formBuilderList":42,"./directives/formBuilderOption":43,"./directives/formBuilderOptionCustomValidation":44,"./directives/formBuilderOptionKey":45,"./directives/formBuilderRow":46,"./directives/formBuilderTable":47,"./directives/formBuilderTooltip":48,"./directives/jsonInput":49,"./directives/validApiKey":50,"./directives/valueBuilder":51,"./factories/debounce":52}]},{},[53]);

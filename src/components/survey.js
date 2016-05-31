@@ -2,16 +2,16 @@ module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
     function(formioComponentsProvider) {
-      formioComponentsProvider.register('radio', {
-        icon: 'fa fa-dot-circle-o',
+      formioComponentsProvider.register('survey', {
+        icon: 'fa fa-list',
         views: [
           {
             name: 'Display',
-            template: 'formio/components/radio/display.html'
+            template: 'formio/components/survey/display.html'
           },
           {
             name: 'Validation',
-            template: 'formio/components/radio/validate.html'
+            template: 'formio/components/survey/validate.html'
           },
           {
             name: 'API',
@@ -26,7 +26,7 @@ module.exports = function(app) {
             template: 'formio/components/common/conditional.html'
           }
         ],
-        documentation: 'http://help.form.io/userguide/#radio'
+        documentation: 'http://help.form.io/userguide/#survey'
       });
     }
   ]);
@@ -34,10 +34,11 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       // Create the settings markup.
-      $templateCache.put('formio/components/radio/display.html',
+      $templateCache.put('formio/components/survey/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
-          '<value-builder data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+          '<value-builder data="component.questions" default="component.questions" label="Questions" tooltip-text="The questions you would like to as in this survey question."></value-builder>' +
+          '<value-builder data="component.values" default="component.values" label="Values" tooltip-text="The values that can be selected per question. Example: \'Satisfied\', \'Very Satisfied\', etc."></value-builder>' +
           '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
@@ -48,7 +49,7 @@ module.exports = function(app) {
         '</ng-form>'
       );
       // Create the API markup.
-      $templateCache.put('formio/components/radio/validate.html',
+      $templateCache.put('formio/components/survey/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
