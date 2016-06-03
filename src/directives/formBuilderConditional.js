@@ -27,7 +27,8 @@ module.exports = [
             '<small>' +
             '<p>Enter custom conditional code.</p>' +
             '<p>You must assign the <strong>show</strong> variable as either <strong>true</strong> or <strong>false</strong>.</p>' +
-            '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component.</p>' +
+            '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+            '<p><strong>Note: Advanced Conditional logic will only work, if the Simple Conditional logic is not defined.</strong></p>' +
             '</small>' +
           '</uib-accordion-group>' +
         '</uib-accordion>',
