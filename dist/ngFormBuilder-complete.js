@@ -63518,8 +63518,8 @@ angular.module('ui.mask', [])
 }());
 },{}],17:[function(require,module,exports){
 // https://github.com/Gillardo/bootstrap-ui-datetime-picker
-// Version: 2.3.1
-// Released: 2016-04-07 
+// Version: 2.4.0
+// Released: 2016-06-03 
 angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bootstrap.position'])
     .constant('uiDatetimePickerConfig', {
         dateFormat: 'yyyy-MM-dd HH:mm',
@@ -63561,17 +63561,23 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
             }
         },
         closeOnDateSelection: true,
+        closeOnTimeNow: true,
         appendToBody: false,
         altInputFormats: [],
-        ngModelOptions: { }
+        ngModelOptions: { },
+        saveAs: false,
+        readAs: false,
     })
     .controller('DateTimePickerController', ['$scope', '$element', '$attrs', '$compile', '$parse', '$document', '$timeout', '$uibPosition', 'dateFilter', 'uibDateParser', 'uiDatetimePickerConfig', '$rootScope',
         function ($scope, $element, $attrs, $compile, $parse, $document, $timeout, $uibPosition, dateFilter, uibDateParser, uiDatetimePickerConfig, $rootScope) {
             var dateFormat = uiDatetimePickerConfig.dateFormat,
                 ngModel, ngModelOptions, $popup, cache = {}, watchListeners = [],
                 closeOnDateSelection = angular.isDefined($attrs.closeOnDateSelection) ? $scope.$parent.$eval($attrs.closeOnDateSelection) : uiDatetimePickerConfig.closeOnDateSelection,
+                closeOnTimeNow = angular.isDefined($attrs.closeOnTimeNow) ? $scope.$parent.$eval($attrs.closeOnTimeNow) : uiDatetimePickerConfig.closeOnTimeNow,
                 appendToBody = angular.isDefined($attrs.datepickerAppendToBody) ? $scope.$parent.$eval($attrs.datepickerAppendToBody) : uiDatetimePickerConfig.appendToBody,
-                altInputFormats = angular.isDefined($attrs.altInputFormats) ? $scope.$parent.$eval($attrs.altInputFormats) : uiDatetimePickerConfig.altInputFormats;
+                altInputFormats = angular.isDefined($attrs.altInputFormats) ? $scope.$parent.$eval($attrs.altInputFormats) : uiDatetimePickerConfig.altInputFormats,
+                saveAs = angular.isDefined($attrs.saveAs) ? $scope.$parent.$eval($attrs.saveAs) || $attrs.saveAs : uiDatetimePickerConfig.saveAs,
+                readAs = angular.isDefined($attrs.readAs) ? $scope.$parent.$eval($attrs.readAs) : uiDatetimePickerConfig.readAs;
 
             this.init = function(_ngModel) {
                 ngModel = _ngModel;
@@ -63722,6 +63728,20 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
                     });
                 }
 
+                if (saveAs) {
+                    // If it is determined closure var's need to be exposed to the parser, don't add the formatter here.
+                    // Instead just call the method from within the stock parser with this context and/or any needed closure variables.
+                    if (angular.isFunction(saveAs))
+                        ngModel.$parsers.push(saveAs);
+                    else
+                        ngModel.$parsers.push(saveAsParser);
+
+                    // Assuming if saveAs is !false, we'll want to convert, either pass the function, or the stock str/num -> Date obj formatter.
+                    if (angular.isFunction(readAs))
+                        ngModel.$formatters.push(readAs);
+                    else
+                        ngModel.$formatters.push(readAsFormatter);
+                }
                 // Detect changes in the view from the text box
                 ngModel.$viewChangeListeners.push(function() {
                     $scope.date = parseDateString(ngModel.$viewValue);
@@ -63739,6 +63759,38 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
                     $element.after($popup);
                 }
 
+                function readAsFormatter(value) {
+                    if (ngModel.$isEmpty(value))
+                        return value;
+
+                    var d = new Date(value);
+                    if (angular.isDate(d) && !isNaN(d))
+                        return d;
+
+                    return value;
+                }
+
+                function saveAsParser(value) {
+                    if (!value || angular.isString(value) || !angular.isDate(value) || isNaN(value))
+                        return value;
+
+                    if (saveAs === 'ISO')
+                        return value.toISOString();
+
+                    if (saveAs === 'json')
+                        return value.toJSON();
+
+                    if (saveAs === 'number')
+                        return value.valueOf();
+
+                    if (!isHtml5DateInput) {
+                        dateFormat = dateFormat.replace(/M!/, 'MM')
+                            .replace(/d!/, 'dd');
+                        return uibDateParser.filter(uibDateParser.fromTimezone(value, ngModelOptions.timezone), dateFormat);
+                    } else {
+                        return uibDateParser.fromTimezone(value, ngModelOptions.timezone).toLocaleString();
+                    }
+                }
             };
 
             // get text
@@ -63755,7 +63807,7 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
             };
 
             // Inner change
-            $scope.dateSelection = function (dt) {
+            $scope.dateSelection = function (dt, opt) {
 
                 // check if timePicker is being shown and merge dates, so that the date
                 // part is never changed, only the time
@@ -63810,16 +63862,11 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
                         } else {
                             $scope.close(false);
                         }
+                    } else if (closeOnTimeNow && $scope.showPicker === 'time' && date != null && opt === 'now') {
+                        $scope.close(false);
                     }
                 }
 
-            };
-
-            $scope.keydown = function(evt) {
-                if (evt.which === 27) {
-                    $scope.close(false);
-                    $element[0].focus();
-                }
             };
 
             $scope.$watch('isOpen', function (value) {
@@ -63891,7 +63938,7 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
                     }
                 }
 
-                $scope.dateSelection(date);
+                $scope.dateSelection(date, opt);
             };
 
             $scope.open = function (picker, evt) {
@@ -63923,10 +63970,11 @@ angular.module('ui.bootstrap.datetimepicker', ['ui.bootstrap.dateparser', 'ui.bo
 
                 // if a on-close-fn has been defined, lets call it
                 // we only call this if closePressed is defined!
-                if (angular.isDefined(closePressed))
+                if (angular.isDefined(closePressed)) {
                     $scope.whenClosed({ args: { closePressed: closePressed, openDate: cache['openDate'] || null, closeDate: $scope.date } });
-
-                $element[0].focus();
+                } else {
+                    $element[0].focus();
+                }
             };
 
             $scope.$on('$destroy', function () {
@@ -64099,12 +64147,12 @@ angular.module('ui.bootstrap.datetimepicker').run(['$templateCache', function($t
   'use strict';
 
   $templateCache.put('template/date-picker.html',
-    "<ul class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-if=\"isOpen && showPicker == 'date'\" ng-style=dropdownStyle style=left:inherit ng-keydown=keydown($event) ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=date-picker-menu><div ng-transclude></div></li><li style=padding:5px ng-if=buttonBar.show><span class=\"btn-group pull-left\" style=margin-right:10px ng-if=\"doShow('today') || doShow('clear')\"><button type=button class=\"btn btn-sm btn-info\" ng-if=\"doShow('today')\" ng-click=\"select('today')\" ng-disabled=\"isDisabled('today')\">{{ getText('today') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-if=\"doShow('clear')\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\" ng-if=\"(doShow('time') && enableTime) || doShow('close')\"><button type=button class=\"btn btn-sm btn-default\" ng-if=\"doShow('time') && enableTime\" ng-click=\"open('time', $event)\">{{ getText('time')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-if=\"doShow('close')\" ng-click=close(true)>{{ getText('close') }}</button></span> <span class=clearfix></span></li></ul>"
+    "<ul class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-if=\"isOpen && showPicker == 'date'\" ng-style=dropdownStyle style=left:inherit ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=date-picker-menu><div ng-transclude></div></li><li style=padding:5px ng-if=buttonBar.show><span class=\"btn-group pull-left\" style=margin-right:10px ng-if=\"doShow('today') || doShow('clear')\"><button type=button class=\"btn btn-sm btn-info\" ng-if=\"doShow('today')\" ng-click=\"select('today')\" ng-disabled=\"isDisabled('today')\">{{ getText('today') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-if=\"doShow('clear')\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\" ng-if=\"(doShow('time') && enableTime) || doShow('close')\"><button type=button class=\"btn btn-sm btn-default\" ng-if=\"doShow('time') && enableTime\" ng-click=\"open('time', $event)\">{{ getText('time')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-if=\"doShow('close')\" ng-click=close(true)>{{ getText('close') }}</button></span> <span class=clearfix></span></li></ul>"
   );
 
 
   $templateCache.put('template/time-picker.html',
-    "<ul class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-if=\"isOpen && showPicker == 'time'\" ng-style=dropdownStyle style=left:inherit ng-keydown=keydown($event) ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=time-picker-menu><div ng-transclude></div></li><li style=padding:5px ng-if=buttonBar.show><span class=\"btn-group pull-left\" style=margin-right:10px ng-if=\"doShow('now') || doShow('clear')\"><button type=button class=\"btn btn-sm btn-info\" ng-if=\"doShow('now')\" ng-click=\"select('now')\" ng-disabled=\"isDisabled('now')\">{{ getText('now') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-if=\"doShow('clear')\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\" ng-if=\"(doShow('date') && enableDate) || doShow('close')\"><button type=button class=\"btn btn-sm btn-default\" ng-if=\"doShow('date') && enableDate\" ng-click=\"open('date', $event)\">{{ getText('date')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-if=\"doShow('close')\" ng-click=close(true)>{{ getText('close') }}</button></span> <span class=clearfix></span></li></ul>"
+    "<ul class=\"dropdown-menu dropdown-menu-left datetime-picker-dropdown\" ng-if=\"isOpen && showPicker == 'time'\" ng-style=dropdownStyle style=left:inherit ng-click=$event.stopPropagation()><li style=\"padding:0 5px 5px 5px\" class=time-picker-menu><div ng-transclude></div></li><li style=padding:5px ng-if=buttonBar.show><span class=\"btn-group pull-left\" style=margin-right:10px ng-if=\"doShow('now') || doShow('clear')\"><button type=button class=\"btn btn-sm btn-info\" ng-if=\"doShow('now')\" ng-click=\"select('now')\" ng-disabled=\"isDisabled('now')\">{{ getText('now') }}</button> <button type=button class=\"btn btn-sm btn-danger\" ng-if=\"doShow('clear')\" ng-click=\"select('clear')\">{{ getText('clear') }}</button></span> <span class=\"btn-group pull-right\" ng-if=\"(doShow('date') && enableDate) || doShow('close')\"><button type=button class=\"btn btn-sm btn-default\" ng-if=\"doShow('date') && enableDate\" ng-click=\"open('date', $event)\">{{ getText('date')}}</button> <button type=button class=\"btn btn-sm btn-success\" ng-if=\"doShow('close')\" ng-click=close(true)>{{ getText('close') }}</button></span> <span class=clearfix></span></li></ul>"
   );
 
 }]);
@@ -75648,7 +75696,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/button.html',
-        "<button type=\"{{component.action == 'submit' || component.action == 'reset' ? component.action : 'button'}}\"\nid=\"{{ componentId }}\"\nname=\"{{ componentId }}\"\nng-class=\"{'btn-block': component.block}\"\nclass=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\nng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid)\"\ntabindex=\"{{ component.tabindex || 0 }}\"\nng-click=\"onClick()\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n   <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n"
+        "<button type=\"{{component.action == 'submit' || component.action == 'reset' ? component.action : 'button'}}\"\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  ng-class=\"{'btn-block': component.block}\"\n  class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n  ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid)\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-click=\"onClick()\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n   <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n"
       );
 
       $templateCache.put('formio/componentsView/button.html',
@@ -75703,7 +75751,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/checkbox.html',
-        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': component.validate.required}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ componentId }}\"\n    name=\"{{ componentId }}\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-disabled=\"readOnly\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\">\n    {{ component.label | formioTranslate }}\n  </label>\n</div>\n"
+        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': component.validate.required}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ componentId }}\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-disabled=\"readOnly\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\">\n    {{ component.label | formioTranslate }}\n  </label>\n</div>\n"
       );
     }
   ]);
@@ -76091,7 +76139,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/datagrid.html', FormioUtils.fieldWrap(
-        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\" >\n        <formio-component component=\"col\" data=\"rows[rowIndex]\" formio=\"formio\" read-only=\"readOnly || col.disabled\" grid-row=\"rowIndex\" grid-col=\"colIndex\" formio-form=\"formioForm\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
+        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\" >\n        <formio-component component=\"col\" data=\"rows[rowIndex]\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || col.disabled\" grid-row=\"rowIndex\" grid-col=\"colIndex\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
       ));
     }
   ]);
@@ -76817,7 +76865,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/radio.html', FormioUtils.fieldWrap(
-        "<div ng-class=\"component.inline ? 'radio-inline' : 'radio'\" ng-repeat=\"v in component.values track by $index\">\n  <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ componentId }}-{{ v.value }}\"\n    name=\"{{ componentId }}-{{ v.value }}\"\n    value=\"{{ v.value }}\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\"\n    ng-disabled=\"readOnly\"\n    custom-validator=\"component.validate.custom\">\n    {{ v.label | formioTranslate }}\n  </label>\n</div>\n"
+        "<div ng-class=\"component.inline ? 'radio-inline' : 'radio'\" ng-repeat=\"v in component.values track by $index\">\n  <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ componentId }}-{{ v.value }}\"\n    value=\"{{ v.value }}\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\"\n    ng-disabled=\"readOnly\"\n    custom-validator=\"component.validate.custom\">\n    {{ v.label | formioTranslate }}\n  </label>\n</div>\n"
       ));
     }
   ]);
@@ -77299,6 +77347,7 @@ module.exports = function(app) {
       require: 'ngModel',
       scope: {
         component: '=',
+        componentId: '=',
         readOnly: '=',
         model: '=ngModel',
         gridRow: '=',
@@ -77376,7 +77425,7 @@ module.exports = function(app) {
         "<div class=\"select-boxes\">\n  <div ng-class=\"component.inline ? 'checkbox-inline' : 'checkbox'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n      <input type=\"checkbox\"\n        id=\"{{ componentId }}-{{ v.value }}\"\n        name=\"{{ componentId }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-disabled=\"readOnly\"\n        ng-click=\"toggleCheckbox(v.value)\"\n        ng-checked=\"model[v.value]\"\n        grid-row=\"gridRow\"\n        grid-col=\"gridCol\"\n      >\n      {{ v.label | formioTranslate }}\n    </label>\n  </div>\n</div>\n"
       );
       $templateCache.put('formio/components/selectboxes.html',
-        "<div class=\"select-boxes\">\n  <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">\n    {{ component.label }}\n  </label>\n  <formio-select-boxes\n    id=\"{{ componentId }}\"\n    name=\"{{ componentId }}\"\n    ng-model=\"data[component.key]\"\n    ng-model-options=\"{allowInvalid: true}\"\n    component=\"component\"\n    read-only=\"readOnly\"\n    ng-required=\"component.validate.required\"\n    custom-validator=\"component.validate.custom\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n  ></formio-select-boxes>\n  <formio-errors></formio-errors>\n</div>\n"
+        "<div class=\"select-boxes\">\n  <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">\n    {{ component.label }}\n  </label>\n  <formio-select-boxes\n    ng-model=\"data[component.key]\"\n    ng-model-options=\"{allowInvalid: true}\"\n    component=\"component\"\n    component-id=\"componentId\"\n    read-only=\"readOnly\"\n    ng-required=\"component.validate.required\"\n    custom-validator=\"component.validate.custom\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n  ></formio-select-boxes>\n  <formio-errors></formio-errors>\n</div>\n"
       );
     }
   ]);
@@ -77859,18 +77908,6 @@ module.exports = function() {
         };
 
         var updateComponents = function() {
-          // Change the visibility for the component with the given key
-          var updateVisiblity = function(key) {
-            var newClass = $scope.show[key] ? 'ng-show' : 'ng-hide';
-            if ($scope.hideComponents && $scope.hideComponents.indexOf(key) !== -1) {
-              newClass = 'ng-hide';
-            }
-            $element
-              .find('div#form-group-' + key)
-              .removeClass('ng-show ng-hide')
-              .addClass(newClass);
-          };
-
           $scope.form.components = $scope.form.components || [];
           FormioUtils.eachComponent($scope.form.components, function(component) {
             // Display every component by default
@@ -77878,7 +77915,7 @@ module.exports = function() {
               ? true
               : $scope.show[component.key];
 
-            // Only change display options of all require conditional properties are present.
+            // Only change display options if all required conditional properties are present.
             if (
               component.conditional
               && (component.conditional.show !== null && component.conditional.show !== '')
@@ -77918,7 +77955,7 @@ module.exports = function() {
               }
 
               // Update the visibility, if its possible a change occurred.
-              updateVisiblity(component.key);
+              component.hide = !$scope.show[component.key];
             }
 
             // Set hidden if specified
@@ -77999,7 +78036,7 @@ module.exports = function() {
             if (component.type === 'resource' && component.key && component.defaultPermission) {
               defaultPermissions[component.key] = component.defaultPermission;
             }
-            if ($scope.submission.data.hasOwnProperty(component.key)) {
+            if ($scope.submission.data.hasOwnProperty(component.key) && $scope.show[component.key]) {
               var value = $scope.submission.data[component.key];
               if (component.type === 'number') {
                 submissionData.data[component.key] = value ? parseFloat(value) : 0;
@@ -78185,8 +78222,9 @@ module.exports = [
 
           // Add a new field value.
           $scope.addFieldValue = function() {
+            var value = $scope.component.hasOwnProperty('defaultValue') ? $scope.component.defaultValue : '';
             $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || [];
-            $scope.data[$scope.component.key].push('');
+            $scope.data[$scope.component.key].push(value);
           };
 
           // Remove a field value.
@@ -78213,7 +78251,7 @@ module.exports = [
 
           // If the component has a controller.
           if (component.controller) {
-            // Maintain reverse compatability by executing the old method style.
+            // Maintain reverse compatibility by executing the old method style.
             if (typeof component.controller === 'function') {
               component.controller($scope.component, $scope, $http, Formio);
             }
@@ -78222,25 +78260,54 @@ module.exports = [
             }
           }
 
-          // Establish a default for data.
-          if ($scope.data && !$scope.data.hasOwnProperty($scope.component.key) && $scope.component.hasOwnProperty('defaultValue')) {
-            if ($scope.component.multiple && !angular.isArray($scope.component.defaultValue)) {
-              $scope.data[$scope.component.key] = [$scope.component.defaultValue];
+          $scope.$watch('component.multiple', function(_new, _old) {
+            if (!_new && !_old) return;
+
+            // Establish a default for data.
+            $scope.data = $scope.data || {};
+            if ($scope.component.multiple) {
+              var value = null;
+              if ($scope.data[$scope.component.key]) {
+                // If a value is present, and its an array, assign it to the value.
+                if ($scope.data[$scope.component.key] instanceof Array) {
+                  value = $scope.data[$scope.component.key];
+                }
+                // If a value is present and it is not an array, wrap the value.
+                else {
+                  value = [$scope.data[$scope.component.key]];
+                }
+              }
+              else if ($scope.component.hasOwnProperty('defaultValue')) {
+                // If there is a default value and it is an array, assign it to the value.
+                if ($scope.component.defaultValue instanceof Array) {
+                  value = $scope.component.defaultValue;
+                }
+                // If there is a default value and it is not an array, wrap the value.
+                else {
+                  value = [$scope.component.defaultValue];
+                }
+              }
+              else {
+                // Couldn't safely default, make it a simple array. Possibly add a single obj or string later.
+                value = [];
+              }
+
+              // Use the current data or default.
+              $scope.data[$scope.component.key] = value;
             }
             else {
-              $scope.data[$scope.component.key] = $scope.component.defaultValue;
+              // Use the current data or default.
+              $scope.data[$scope.component.key] = ($scope.data[$scope.component.key] ? $scope.data[$scope.component.key] : false)
+                || ($scope.component.hasOwnProperty('defaultValue') ? $scope.component.defaultValue : '');
             }
-          }
-          else if ($scope.data && !$scope.data.hasOwnProperty($scope.component.key) && $scope.component.multiple) {
-            $scope.data[$scope.component.key] = [];
-          }
+          });
 
           // Set the component name.
           $scope.componentId = $scope.component.key;
-          if ($scope.gridRow) {
+          if ($scope.gridRow !== undefined) {
             $scope.componentId += ('-' + $scope.gridRow);
           }
-          if ($scope.gridCol) {
+          if ($scope.gridCol !== undefined) {
             $scope.componentId += ('-' + $scope.gridCol);
           }
         }
@@ -78991,30 +79058,30 @@ module.exports = function() {
       var requiredInline = '<span ng-if="!component.label && component.validate.required" class="glyphicon glyphicon-asterisk form-control-feedback field-required-inline" aria-hidden="true"></span>';
       var template =
         '<div ng-if="!component.multiple">' +
-        inputLabel + requiredInline +
-        '<div class="input-group" ng-if="component.prefix || component.suffix">' +
-        '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
-        input +
-        '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
-        '</div>' +
-        '<div ng-if="!component.prefix && !component.suffix">' + input + '</div>' +
+          inputLabel + requiredInline +
+          '<div class="input-group" ng-if="component.prefix || component.suffix">' +
+            '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
+            input +
+            '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
+          '</div>' +
+          '<div ng-if="!component.prefix && !component.suffix">' + input + '</div>' +
         '</div>' +
         '<div ng-if="component.multiple"><table class="table table-bordered">' +
-        inputLabel +
-        '<tr ng-repeat="value in data[component.key] track by $index">' +
-        '<td>' + requiredInline +
-        '<div class="input-group" ng-if="component.prefix || component.suffix">' +
-        '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
-        multiInput +
-        '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
-        '</div>' +
-        '<div ng-if="!component.prefix && !component.suffix">' + multiInput + '</div>' +
-        '</td>' +
-        '<td><a ng-click="removeFieldValue($index)" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
-        '</tr>' +
-        '<tr>' +
-        '<td colspan="2"><a ng-click="addFieldValue()" class="btn btn-primary"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" | formioTranslate }}</a></td>' +
-        '</tr>' +
+          inputLabel +
+          '<tr ng-repeat="value in data[component.key] track by $index">' +
+            '<td>' + requiredInline +
+              '<div class="input-group" ng-if="component.prefix || component.suffix">' +
+                '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
+                multiInput +
+                '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
+              '</div>' +
+              '<div ng-if="!component.prefix && !component.suffix">' + multiInput + '</div>' +
+            '</td>' +
+            '<td><a ng-click="removeFieldValue($index)" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td colspan="2"><a ng-click="addFieldValue()" class="btn btn-primary"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" | formioTranslate }}</a></td>' +
+          '</tr>' +
         '</table></div>';
       return template;
     }
@@ -79302,7 +79369,7 @@ app.run([
   function($templateCache) {
     // The template for the formio forms.
     $templateCache.put('formio.html',
-      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <ng-form name=\"formioForm\">\n      <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n        {{ alert.message }}\n      </div>\n      <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n      <formio-component ng-repeat=\"component in form.components\" component=\"component\" data=\"submission.data\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || component.disabled\"></formio-component>\n    </ng-form>\n  </form>\n</div>\n"
+      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component ng-repeat=\"component in form.components\" component=\"component\" data=\"submission.data\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || component.disabled\" ng-if=\"!component.hide\"></formio-component>\n  </form>\n</div>\n"
     );
 
     $templateCache.put('formio-wizard.html',
@@ -79323,7 +79390,7 @@ app.run([
 
     // A formio component template.
     $templateCache.put('formio/component.html',
-      "<div class=\"form-group has-feedback form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentName }}\" ng-class=\"{'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
+      "<div class=\"form-group has-feedback form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\" ng-class=\"{'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
     );
 
     $templateCache.put('formio/component-view.html',
@@ -83093,7 +83160,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":151,"angular-drag-and-drop-lists":1,"lodash":8,"ng-ckeditor/ng-ckeditor":9,"ng-dialog":10,"ng-formio/src/formio-complete.js":92}],151:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.7 | https://npmcdn.com/ng-formio-builder@1.12.7/LICENSE.txt */
+/*! ng-formio-builder v1.12.8 | https://npmcdn.com/ng-formio-builder@1.12.8/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
