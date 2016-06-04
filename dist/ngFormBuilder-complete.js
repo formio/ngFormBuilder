@@ -52563,7 +52563,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":60,"angular-drag-and-drop-lists":1,"lodash":5,"ng-ckeditor/ng-ckeditor":6,"ng-dialog":7,"ng-formio/src/formio-complete.js":147}],60:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.9 | https://npmcdn.com/ng-formio-builder@1.12.9/LICENSE.txt */
+/*! ng-formio-builder v1.12.10 | https://npmcdn.com/ng-formio-builder@1.12.10/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -78986,7 +78986,7 @@ module.exports = function(app) {
         },
         controller: ['$scope', function($scope) {
           var settings = $scope.component;
-          $scope.onClick = function() {
+          var onClick = function() {
             switch (settings.action) {
               case 'submit':
                 return;
@@ -79014,6 +79014,14 @@ module.exports = function(app) {
                 break;
             }
           };
+
+          $scope.$on('buttonClick', function(event, component, componentId) {
+            // Ensure the componentId's match (even though they always should).
+            if (componentId !== $scope.componentId) {
+              return;
+            }
+            onClick();
+          });
 
           $scope.openOAuth = function(settings) {
             /*eslint-disable camelcase */
@@ -79106,7 +79114,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/button.html',
-        "<button type=\"{{component.action == 'submit' || component.action == 'reset' ? component.action : 'button'}}\"\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  ng-class=\"{'btn-block': component.block}\"\n  class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n  ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid)\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-click=\"onClick()\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n   <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n"
+        "<button type=\"{{component.action == 'submit' || component.action == 'reset' ? component.action : 'button'}}\"\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  ng-class=\"{'btn-block': component.block}\"\n  class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n  ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid)\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-click=\"$emit('buttonClick', component, componentId)\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n   <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n"
       );
 
       $templateCache.put('formio/componentsView/button.html',
