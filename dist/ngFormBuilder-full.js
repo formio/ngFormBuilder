@@ -52563,7 +52563,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":60,"angular-drag-and-drop-lists":1,"lodash":5,"ng-ckeditor/ng-ckeditor":6,"ng-dialog":7,"ng-formio/src/formio-full.js":149}],60:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.8 | https://npmcdn.com/ng-formio-builder@1.12.8/LICENSE.txt */
+/*! ng-formio-builder v1.12.9 | https://npmcdn.com/ng-formio-builder@1.12.9/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -91189,7 +91189,7 @@ module.exports = function() {
               }
 
               // Update the visibility, if its possible a change occurred.
-              component.hide = !$scope.show[component.key];
+              component.hide = component.hidden = !$scope.show[component.key];
             }
             // Custom conditional logic.
             else if (component.customConditional) {
@@ -91208,7 +91208,7 @@ module.exports = function() {
               }
 
               // Update the visibility, if its possible a change occurred.
-              component.hide = !$scope.show[component.key];
+              component.hide = component.hidden = !$scope.show[component.key];
             }
 
             // Set hidden if specified
