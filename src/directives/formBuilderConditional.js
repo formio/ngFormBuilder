@@ -7,21 +7,31 @@ module.exports = [
   function() {
     return {
       restrict: 'E',
-      replace: true,
       scope: true,
-      template:
-      '<div>' +
-        'This component should:' +
-        '<select class="form-control input-md" ng-model="_boolean">' +
-          '<option ng-repeat="item in _booleans track by $index" value="{{item.value}}">{{item.label}}</option>' +
-        '</select>' +
-        '<br>When the form component:' +
-        '<select class="form-control input-md" ng-model="_component">' +
-          '<option ng-repeat="item in _components track by $index" value="{{item.key}}">{{item.label}}</option>' +
-        '</select>' +
-        '<br>Has the value:' +
-        '<input type="text" class="form-control input-md" ng-model="_searchValue">' +
-      '</div>',
+      template: '' +
+        '<uib-accordion>' +
+          '<uib-accordion-group heading="Simple" is-open="status.simple">' +
+            'This component should:' +
+            '<select class="form-control input-md" ng-model="_boolean">' +
+            '<option ng-repeat="item in _booleans track by $index" value="{{item.value}}">{{item.label}}</option>' +
+            '</select>' +
+            '<br>When the form component:' +
+            '<select class="form-control input-md" ng-model="_component">' +
+            '<option ng-repeat="item in _components track by $index" value="{{item.key}}">{{item.label}}</option>' +
+            '</select>' +
+            '<br>Has the value:' +
+            '<input type="text" class="form-control input-md" ng-model="_searchValue">' +
+          '</uib-accordion-group>' +
+          '<uib-accordion-group heading="Advanced" is-open="status.advanced">' +
+            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.customConditional" placeholder="/*** Example Code ***/\nshow = (data[\'mykey\'] > 1);">{{ component.validate.custom }}</textarea>' +
+            '<small>' +
+            '<p>Enter custom conditional code.</p>' +
+            '<p>You must assign the <strong>show</strong> variable as either <strong>true</strong> or <strong>false</strong>.</p>' +
+            '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+            '<p><strong>Note: Advanced Conditional logic will only work, if the Simple Conditional logic is not defined.</strong></p>' +
+            '</small>' +
+          '</uib-accordion-group>' +
+        '</uib-accordion>',
       controller: [
         '$scope',
         function(
@@ -69,6 +79,12 @@ module.exports = [
           $scope.$watch('_searchValue', function(newVal) {
             $scope.component.conditional.eq = newVal;
           });
+
+          // Track the status of the accordion panels open state.
+          $scope.status = {
+            simple: !$scope.component.customConditional,
+            advanced: !!$scope.component.customConditional
+          };
         }
       ]
     };
