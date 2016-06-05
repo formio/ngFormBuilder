@@ -52563,7 +52563,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":60,"angular-drag-and-drop-lists":1,"lodash":5,"ng-ckeditor/ng-ckeditor":6,"ng-dialog":7,"ng-formio/src/formio-complete.js":147}],60:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.10 | https://npmcdn.com/ng-formio-builder@1.12.10/LICENSE.txt */
+/*! ng-formio-builder v1.12.11 | https://npmcdn.com/ng-formio-builder@1.12.11/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -78994,23 +78994,21 @@ module.exports = function(app) {
                 $scope.resetForm();
                 break;
               case 'oauth':
-                if ($scope.hasOwnProperty('form')) {
-                  if (!settings.oauth) {
-                    $scope.showAlerts({
-                      type: 'danger',
-                      message: 'You must assign this button to an OAuth action before it will work.'
-                    });
-                    break;
-                  }
-                  if (settings.oauth.error) {
-                    $scope.showAlerts({
-                      type: 'danger',
-                      message: settings.oauth.error
-                    });
-                    break;
-                  }
-                  $scope.openOAuth(settings.oauth);
+                if (!settings.oauth) {
+                  $scope.showAlerts({
+                    type: 'danger',
+                    message: 'You must assign this button to an OAuth action before it will work.'
+                  });
+                  break;
                 }
+                if (settings.oauth.error) {
+                  $scope.showAlerts({
+                    type: 'danger',
+                    message: settings.oauth.error
+                  });
+                  break;
+                }
+                $scope.openOAuth(settings.oauth);
                 break;
             }
           };
