@@ -13,33 +13,42 @@ module.exports = {
    * @param components
    * @param fn
    */
-  eachComponent: function eachComponent(components, fn, includeAll) {
+  eachComponent: function eachComponent(components, fn, includeAll, path) {
     if (!components) return;
-
+    path = path || '';
     components.forEach(function(component) {
       var hasColumns = component.columns && Array.isArray(component.columns);
       var hasRows = component.rows && Array.isArray(component.rows);
       var hasComps = component.components && Array.isArray(component.components);
       var noRecurse = false;
+      var newPath = component.key ? (path ? (path + '.' + component.key) : component.key) : '';
+
       if (includeAll || component.tree || (!hasColumns && !hasRows && !hasComps)) {
-        noRecurse = fn(component);
+        noRecurse = fn(component, newPath);
       }
+
+      var subPath = function() {
+        if (component.key && ((component.type === 'datagrid') || (component.type === 'container'))) {
+          return newPath;
+        }
+        return path;
+      };
 
       if (!noRecurse) {
         if (hasColumns) {
           component.columns.forEach(function(column) {
-            eachComponent(column.components, fn, includeAll);
+            eachComponent(column.components, fn, includeAll, subPath());
           });
         }
 
         else if (hasRows) {
           [].concat.apply([], component.rows).forEach(function(row) {
-            eachComponent(row.components, fn, includeAll);
+            eachComponent(row.components, fn, includeAll, subPath());
           });
         }
 
         else if (hasComps) {
-          eachComponent(component.components, fn, includeAll);
+          eachComponent(component.components, fn, includeAll, subPath());
         }
       }
     });
@@ -67,11 +76,11 @@ module.exports = {
    * @param flattened
    * @returns {*|{}}
    */
-  flattenComponents: function flattenComponents(components) {
+  flattenComponents: function flattenComponents(components, includeAll) {
     var flattened = {};
-    module.exports.eachComponent(components, function(component) {
-      flattened[component.key] = component;
-    });
+    module.exports.eachComponent(components, function(component, path) {
+      flattened[path] = component;
+    }, includeAll);
     return flattened;
   }
 };
@@ -19827,7 +19836,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],53:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.11 | https://npmcdn.com/ng-formio-builder@1.12.11/LICENSE.txt */
+/*! ng-formio-builder v1.12.12 | https://npmcdn.com/ng-formio-builder@1.12.12/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -19917,7 +19926,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',
-      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"component.label\" class=\"control-label\">{{ component.label }}</label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <tr>\n      <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n        {{ (component.label || '') | formioTranslate }}\n        <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n      </th>\n    </tr>\n    <tr\n      class=\"component-list\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n    >\n      <td\n        ng-repeat=\"component in component.components\"\n        ng-init=\"hideMoveButton = true; component.hideLabel = true\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\"\n      >\n        <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n          <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n            <form-builder-component></form-builder-component>\n          </div>\n        </div>\n      </td>\n      <td ng-if=\"component.components.length === 0\">\n        <div class=\"alert alert-info\" role=\"alert\">\n          Datagrid Components\n        </div>\n      </td>\n    </tr>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
+      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"component.label\" class=\"control-label\">{{ component.label }}</label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <tr>\n      <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n        {{ (component.label || '') | formioTranslate }}\n        <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n      </th>\n    </tr>\n    <tr\n      class=\"component-list\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n    >\n      <td\n        ng-repeat=\"component in component.components\"\n        ng-init=\"hideMoveButton = true; component.hideLabel = true\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\"\n      >\n        <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n          <div class=\"has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n            <div class=\"input-group\">\n              <form-builder-component></form-builder-component>\n            </div>\n          </div>\n        </div>\n      </td>\n      <td ng-if=\"component.components.length === 0\">\n        <div class=\"alert alert-info\" role=\"alert\">\n          Datagrid Components\n        </div>\n      </td>\n    </tr>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/components/confirm-remove.html',

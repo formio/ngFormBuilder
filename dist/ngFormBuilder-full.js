@@ -39082,33 +39082,42 @@ module.exports = {
    * @param components
    * @param fn
    */
-  eachComponent: function eachComponent(components, fn, includeAll) {
+  eachComponent: function eachComponent(components, fn, includeAll, path) {
     if (!components) return;
-
+    path = path || '';
     components.forEach(function(component) {
       var hasColumns = component.columns && Array.isArray(component.columns);
       var hasRows = component.rows && Array.isArray(component.rows);
       var hasComps = component.components && Array.isArray(component.components);
       var noRecurse = false;
+      var newPath = component.key ? (path ? (path + '.' + component.key) : component.key) : '';
+
       if (includeAll || component.tree || (!hasColumns && !hasRows && !hasComps)) {
-        noRecurse = fn(component);
+        noRecurse = fn(component, newPath);
       }
+
+      var subPath = function() {
+        if (component.key && ((component.type === 'datagrid') || (component.type === 'container'))) {
+          return newPath;
+        }
+        return path;
+      };
 
       if (!noRecurse) {
         if (hasColumns) {
           component.columns.forEach(function(column) {
-            eachComponent(column.components, fn, includeAll);
+            eachComponent(column.components, fn, includeAll, subPath());
           });
         }
 
         else if (hasRows) {
           [].concat.apply([], component.rows).forEach(function(row) {
-            eachComponent(row.components, fn, includeAll);
+            eachComponent(row.components, fn, includeAll, subPath());
           });
         }
 
         else if (hasComps) {
-          eachComponent(component.components, fn, includeAll);
+          eachComponent(component.components, fn, includeAll, subPath());
         }
       }
     });
@@ -39136,11 +39145,11 @@ module.exports = {
    * @param flattened
    * @returns {*|{}}
    */
-  flattenComponents: function flattenComponents(components) {
+  flattenComponents: function flattenComponents(components, includeAll) {
     var flattened = {};
-    module.exports.eachComponent(components, function(component) {
-      flattened[component.key] = component;
-    });
+    module.exports.eachComponent(components, function(component, path) {
+      flattened[path] = component;
+    }, includeAll);
     return flattened;
   }
 };
@@ -85969,7 +85978,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/datagrid.html', FormioUtils.fieldWrap(
-        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\" ng-if=\"!component.hide\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\" >\n        <formio-component component=\"col\" data=\"rows[rowIndex]\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || col.disabled\" grid-row=\"rowIndex\" grid-col=\"colIndex\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
+        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\" ng-if=\"!component.hide\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\">\n        <formio-component component=\"col\" data=\"rows[rowIndex]\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || col.disabled\" grid-row=\"rowIndex\" grid-col=\"colIndex\"></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
       ));
     }
   ]);
@@ -86286,6 +86295,13 @@ module.exports = function(app) {
                 .then(function(fileInfo) {
                   delete $scope.fileUploads[fileName];
                   fileInfo.storage = $scope.component.storage;
+                  // Ensure that the file component is an array.
+                  if (
+                    !$scope.data[$scope.component.key] ||
+                    !($scope.data[$scope.component.key] instanceof Array)
+                  ) {
+                    $scope.data[$scope.component.key] = [];
+                  }
                   $scope.data[$scope.component.key].push(fileInfo);
                 })
                 .catch(function(message) {
@@ -86695,7 +86711,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/radio.html', FormioUtils.fieldWrap(
-        "<div ng-class=\"component.inline ? 'radio-inline' : 'radio'\" ng-repeat=\"v in component.values track by $index\">\n  <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n    <input type=\"{{ component.inputType }}\"\n    id=\"{{ componentId }}-{{ v.value }}\"\n    value=\"{{ v.value }}\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-model=\"data[component.key]\"\n    ng-required=\"component.validate.required\"\n    ng-disabled=\"readOnly\"\n    custom-validator=\"component.validate.custom\">\n    {{ v.label | formioTranslate }}\n  </label>\n</div>\n"
+        "<ng-form name=\"{{ componentId }}\" ng-model=\"data[component.key]\" custom-validator=\"component.validate.custom\">\n  <div ng-class=\"component.inline ? 'radio-inline' : 'radio'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n      <input type=\"{{ component.inputType }}\"\n             id=\"{{ componentId }}-{{ v.value }}\"\n             value=\"{{ v.value }}\"\n             tabindex=\"{{ component.tabindex || 0 }}\"\n             ng-model=\"data[component.key]\"\n             ng-required=\"component.validate.required\"\n             ng-disabled=\"readOnly\">\n\n      {{ v.label | formioTranslate }}\n    </label>\n  </div>\n</ng-form>\n"
       ));
     }
   ]);
@@ -87188,18 +87204,26 @@ module.exports = function(app) {
         // Initialize model
         var model = {};
         angular.forEach($scope.component.values, function(v) {
-          model[v.value] = !!ngModel.$viewValue[v.value];
+          model[v.value] = ngModel.$viewValue.hasOwnProperty(v.value)
+            ? !!ngModel.$viewValue[v.value]
+            : false;
         });
-        ngModel.$setPristine(true);
+        // FA-835 - Update the view model with our defaults.
+        ngModel.$setViewValue(model);
 
+        ngModel.$setPristine(true);
         ngModel.$isEmpty = function(value) {
+          if (typeof value === 'undefined') {
+            return true;
+          }
+
           return Object.keys(value).every(function(key) {
             return !value[key];
           });
         };
 
         $scope.toggleCheckbox = function(value) {
-          var _model = angular.copy(ngModel.$viewValue);
+          var _model = angular.copy(ngModel.$viewValue || {});
           _model[value] = !_model[value];
           ngModel.$setViewValue(_model);
         };
@@ -87236,7 +87260,6 @@ module.exports = function(app) {
           label: '',
           key: 'selectboxesField',
           values: [],
-          defaultValue: {},
           inline: false,
           protected: false,
           persistent: true,
@@ -87762,19 +87785,20 @@ module.exports = function() {
               }
               var value = $scope.submission.data[cond.key];
 
-              if (value && typeof value !== 'object') {
+              if (typeof value !== 'undefined' && typeof value !== 'object') {
                 // Check if the conditional value is equal to the trigger value
                 $scope.show[component.key] = value.toString() === component.conditional.eq.toString()
                   ? boolean[component.conditional.show]
                   : !boolean[component.conditional.show];
               }
               // Special check for check boxes component.
-              else if (value && typeof value === 'object') {
-                // Check if the conditional trigger value is true.
-                $scope.show[component.key] = boolean[value[component.conditional.eq].toString()];
+              else if (typeof value !== 'undefined' && typeof value === 'object') {
+                $scope.show[component.key] = boolean.hasOwnProperty(value[component.conditional.eq])
+                  ? boolean[value[component.conditional.eq]]
+                  : true;
               }
               // Check against the components default value, if present and the components hasnt been interacted with.
-              else if (!value && cond.defaultValue) {
+              else if (typeof value === 'undefined' && cond.hasOwnProperty('defaultValue')) {
                 $scope.show[component.key] = cond.defaultValue.toString() === component.conditional.eq.toString()
                   ? boolean[component.conditional.show]
                   : !boolean[component.conditional.show];
@@ -87784,27 +87808,25 @@ module.exports = function() {
                 $scope.show[component.key] = !boolean[component.conditional.show];
               }
 
-              // Update the visibility, if its possible a change occurred.
-              component.hide = component.hidden = !$scope.show[component.key];
+              // Update the visibility, if it's possible a change occurred.
+              component.hide = !$scope.show[component.key];
             }
             // Custom conditional logic.
             else if (component.customConditional) {
               try {
                 // Create a child block, and expose the submission data.
-                {
-                  var data = $scope.submission.data; // eslint-disable-line no-unused-vars
-                  var show = true; // show by default.
-                  // Eval the custom conditional and update the show value.
-                  show = eval('(function() { ' + component.customConditional.toString() + '; return show; })()');
-                  $scope.show[component.key] = boolean[show];
-                }
+                var data = $scope.submission.data; // eslint-disable-line no-unused-vars
+                // Eval the custom conditional and update the show value.
+                var show = eval('(function() { ' + component.customConditional.toString() + '; return show; })()');
+                // Show by default, if an invalid type is given.
+                $scope.show[component.key] = boolean.hasOwnProperty(show.toString()) ? boolean[show] : true;
               }
               catch (e) {
                 $scope.show[component.key] = true;
               }
 
               // Update the visibility, if its possible a change occurred.
-              component.hide = component.hidden = !$scope.show[component.key];
+              component.hide = !$scope.show[component.key];
             }
 
             // Set hidden if specified
@@ -88147,7 +88169,8 @@ module.exports = [
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 $scope.data[$scope.component.key] = $scope.data[$scope.component.key];
               }
-              else if ($scope.component.hasOwnProperty('defaultValue')) {
+              // FA-835 - The default values for select boxes are set in the component.
+              else if ($scope.component.hasOwnProperty('defaultValue') && $scope.component.type !== 'selectboxes') {
                 $scope.data[$scope.component.key] = $scope.component.defaultValue;
               }
             }
@@ -88910,23 +88933,21 @@ module.exports = function() {
       var template =
         '<div ng-if="!component.multiple">' +
           inputLabel + requiredInline +
-          '<div class="input-group" ng-if="component.prefix || component.suffix">' +
+          '<div class="input-group">' +
             '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
             input +
             '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
           '</div>' +
-          '<div ng-if="!component.prefix && !component.suffix">' + input + '</div>' +
         '</div>' +
         '<div ng-if="component.multiple"><table class="table table-bordered">' +
           inputLabel +
           '<tr ng-repeat="value in data[component.key] track by $index">' +
             '<td>' + requiredInline +
-              '<div class="input-group" ng-if="component.prefix || component.suffix">' +
+              '<div class="input-group">' +
                 '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
                 multiInput +
                 '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
               '</div>' +
-              '<div ng-if="!component.prefix && !component.suffix">' + multiInput + '</div>' +
             '</td>' +
             '<td><a ng-click="removeFieldValue($index)" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
           '</tr>' +
@@ -89161,7 +89182,7 @@ app.provider('Formio', require('./providers/Formio'));
 app.provider('FormioPlugins', require('./providers/FormioPlugins'));
 
 /**
- * Provides a way to regsiter the Formio scope.
+ * Provides a way to register the Formio scope.
  */
 app.factory('FormioScope', require('./factories/FormioScope'));
 
@@ -89245,7 +89266,7 @@ app.run([
 
     // A formio component template.
     $templateCache.put('formio/component.html',
-      "<div class=\"form-group has-feedback form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\" ng-class=\"{'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
+      "<div class=\"form-group has-feedback form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\" ng-class=\"{'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\" ng-style=\"component.style\" ng-hide=\"component.hide || component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
     );
 
     $templateCache.put('formio/component-view.html',
@@ -93004,7 +93025,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":153,"angular-drag-and-drop-lists":1,"lodash":8,"ng-ckeditor/ng-ckeditor":9,"ng-dialog":10,"ng-formio/src/formio-full.js":94}],153:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.11 | https://npmcdn.com/ng-formio-builder@1.12.11/LICENSE.txt */
+/*! ng-formio-builder v1.12.12 | https://npmcdn.com/ng-formio-builder@1.12.12/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -93094,7 +93115,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',
-      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"component.label\" class=\"control-label\">{{ component.label }}</label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <tr>\n      <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n        {{ (component.label || '') | formioTranslate }}\n        <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n      </th>\n    </tr>\n    <tr\n      class=\"component-list\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n    >\n      <td\n        ng-repeat=\"component in component.components\"\n        ng-init=\"hideMoveButton = true; component.hideLabel = true\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\"\n      >\n        <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n          <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n            <form-builder-component></form-builder-component>\n          </div>\n        </div>\n      </td>\n      <td ng-if=\"component.components.length === 0\">\n        <div class=\"alert alert-info\" role=\"alert\">\n          Datagrid Components\n        </div>\n      </td>\n    </tr>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
+      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"component.label\" class=\"control-label\">{{ component.label }}</label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <tr>\n      <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n        {{ (component.label || '') | formioTranslate }}\n        <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n      </th>\n    </tr>\n    <tr\n      class=\"component-list\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n    >\n      <td\n        ng-repeat=\"component in component.components\"\n        ng-init=\"hideMoveButton = true; component.hideLabel = true\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\"\n      >\n        <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n          <div class=\"has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n            <div class=\"input-group\">\n              <form-builder-component></form-builder-component>\n            </div>\n          </div>\n        </div>\n      </td>\n      <td ng-if=\"component.components.length === 0\">\n        <div class=\"alert alert-info\" role=\"alert\">\n          Datagrid Components\n        </div>\n      </td>\n    </tr>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/components/confirm-remove.html',
