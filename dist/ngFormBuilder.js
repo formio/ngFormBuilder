@@ -19132,8 +19132,9 @@ module.exports = [
           $scope._components = _.get($scope, 'form.components') || [];
           $scope._components = utils.flattenComponents($scope._components);
           // Remove non-input/button fields because they don't make sense.
+          // FA-890 - Dont allow the current component to be a conditional trigger.
           $scope._components = _.reject($scope._components, function(c) {
-            return !c.input || (c.type === 'button');
+            return !c.input || (c.type === 'button') || (c.key === $scope.component.key);
           });
 
           // Add default item to the components list.
