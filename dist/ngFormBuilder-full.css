@@ -696,6 +696,14 @@ input[type="password"][draggable="true"] {
   margin-top: 4px;
 }
 
+/* FA-877 - Fix component widths in the data grid with prefix/sufix. */
+.input-group {
+  width: 100%;
+}
+.form-field-type-datagrid .input-group {
+  width: auto;
+}
+
 .form-field-type-datagrid .form-group {
   margin-bottom: 0;
 }
