@@ -61,7 +61,7 @@ module.exports = [
           $scope._components.unshift('');
 
           // Default and watch the show logic.
-          $scope.component.conditional.show = $scope.component.conditional.show || null;
+          $scope.component.conditional.show = $scope.component.conditional.show || {value: '', label: ''};
 
           // Default and watch the when logic.
           $scope.component.conditional.when = $scope.component.conditional.when || null;
