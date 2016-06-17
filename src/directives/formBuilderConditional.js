@@ -13,7 +13,7 @@ module.exports = [
           '<uib-accordion-group heading="Simple" is-open="status.simple">' +
             'This component should Display:' +
             '<select class="form-control input-md" ng-model="component.conditional.show">' +
-            '<option ng-repeat="item in _booleans track by $index" value="{{item}}">{{item}}</option>' +
+            '<option ng-repeat="item in _booleans track by $index" value="{{item}}">{{item.toString()}}</option>' +
             '</select>' +
             '<br>When the form component:' +
             '<select class="form-control input-md" ng-model="component.conditional.when">' +
@@ -41,7 +41,7 @@ module.exports = [
           $scope.component.conditional = $scope.component.conditional || {};
 
           // The available logic functions.
-          $scope._booleans = [null, true, false];
+          $scope._booleans = ['', 'true', 'false'];
 
           // Filter the list of available form components for conditional logic.
           $scope._components = _.get($scope, 'form.components') || [];
@@ -56,16 +56,16 @@ module.exports = [
           $scope._components.unshift('');
 
           // Default and watch the show logic.
-          $scope.component.conditional.show = $scope.component.conditional.show || null;
+          $scope.component.conditional.show = $scope.component.conditional.show || '';
           // Coerce show var to supported value.
           var _booleanMap = {
-            'null': null,
-            'true': true,
-            'false': false
+            '': '',
+            'true': 'true',
+            'false': 'false'
           };
           $scope.component.conditional.show = _booleanMap.hasOwnProperty($scope.component.conditional.show)
             ? _booleanMap[$scope.component.conditional.show]
-            : null;
+            : '';
 
           // Default and watch the when logic.
           $scope.component.conditional.when = $scope.component.conditional.when || null;
