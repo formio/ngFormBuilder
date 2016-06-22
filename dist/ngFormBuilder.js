@@ -19091,9 +19091,9 @@ module.exports = [
       template: '' +
         '<uib-accordion>' +
           '<uib-accordion-group heading="Simple" is-open="status.simple">' +
-            'This component should:' +
+            'This component should Display:' +
             '<select class="form-control input-md" ng-model="component.conditional.show">' +
-            '<option ng-repeat="item in _booleans track by $index" value="{{item.value}}">{{item.label}}</option>' +
+            '<option ng-repeat="item in _booleans track by $index" value="{{item}}">{{item.toString()}}</option>' +
             '</select>' +
             '<br>When the form component:' +
             '<select class="form-control input-md" ng-model="component.conditional.when">' +
@@ -19115,18 +19115,13 @@ module.exports = [
       controller: [
         '$scope',
         function(
-          $scope
-        ) {
+          $scope) {
           // Default the current components conditional logic.
           $scope.component = $scope.component || {};
           $scope.component.conditional = $scope.component.conditional || {};
 
           // The available logic functions.
-          $scope._booleans = [
-            {value: '', label: ''},
-            {value: true, label: 'Display'},
-            {value: false, label: 'Hide'}
-          ];
+          $scope._booleans = ['', 'true', 'false'];
 
           // Filter the list of available form components for conditional logic.
           $scope._components = _.get($scope, 'form.components') || [];
@@ -19141,7 +19136,16 @@ module.exports = [
           $scope._components.unshift('');
 
           // Default and watch the show logic.
-          $scope.component.conditional.show = $scope.component.conditional.show || null;
+          $scope.component.conditional.show = $scope.component.conditional.show || '';
+          // Coerce show var to supported value.
+          var _booleanMap = {
+            '': '',
+            'true': 'true',
+            'false': 'false'
+          };
+          $scope.component.conditional.show = _booleanMap.hasOwnProperty($scope.component.conditional.show)
+            ? _booleanMap[$scope.component.conditional.show]
+            : '';
 
           // Default and watch the when logic.
           $scope.component.conditional.when = $scope.component.conditional.when || null;
