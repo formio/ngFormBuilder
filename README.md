@@ -5,7 +5,7 @@ construct a JSON object reporesentation of a form, which could then be handed of
 found @ [https://github.com/formio/ngFormio](https://github.com/formio/ngFormio).  The following landing page should
 provide a good example of how this form builder works.
 
-[See Working Example](https://embed.plnkr.co/OlaYjN/)
+[See Working Example](http://codepen.io/travist/full/xVyMjo/)
 
 The form builder can be embedded within your application using the following embed code.
 
