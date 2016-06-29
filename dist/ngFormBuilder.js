@@ -19747,15 +19747,15 @@ module.exports = function() {
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
                       '<th class="col-xs-6">{{ labelLabel }}</th>' +
+                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
                       '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
                       '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
@@ -19840,7 +19840,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],53:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.13 | https://npmcdn.com/ng-formio-builder@1.12.13/LICENSE.txt */
+/*! ng-formio-builder v1.12.14 | https://npmcdn.com/ng-formio-builder@1.12.14/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 

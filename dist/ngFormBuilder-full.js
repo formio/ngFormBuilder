@@ -93425,15 +93425,15 @@ module.exports = function() {
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
                       '<th class="col-xs-6">{{ labelLabel }}</th>' +
+                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
                       '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
                       '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
@@ -93527,7 +93527,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":153,"angular-drag-and-drop-lists":1,"lodash":8,"ng-ckeditor/ng-ckeditor":9,"ng-dialog":10,"ng-formio/src/formio-full.js":94}],153:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.13 | https://npmcdn.com/ng-formio-builder@1.12.13/LICENSE.txt */
+/*! ng-formio-builder v1.12.14 | https://npmcdn.com/ng-formio-builder@1.12.14/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
