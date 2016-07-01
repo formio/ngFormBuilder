@@ -39543,7 +39543,18 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],7:[function(require,module,exports){
+'use strict';
+
 module.exports = {
+  /**
+   * Determine if a component is a layout component or not.
+   *
+   * @param {Object} component
+   *   The component to check.
+   *
+   * @returns {Boolean}
+   *   Whether or not the component is a layout component.
+   */
   isLayoutComponent: function isLayoutComponent(component) {
     return (
       (component.columns && Array.isArray(component.columns)) ||
@@ -39554,8 +39565,15 @@ module.exports = {
 
   /**
    * Iterate through each component within a form.
-   * @param components
-   * @param fn
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Function} fn
+   *   The iteration function to invoke for each component.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   * @param {String} path
+   *   The current data path of the element. Example: data.user.firstName
    */
   eachComponent: function eachComponent(components, fn, includeAll, path) {
     if (!components) return;
@@ -39600,9 +39618,14 @@ module.exports = {
 
   /**
    * Get a component by its key
-   * @param components
-   * @param key The key of the component to get
-   * @returns The component that matches the given key, or undefined if not found.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {String} key
+   *   The key of the component to get.
+   *
+   * @returns {Object}
+   *   The component that matches the given key, or undefined if not found.
    */
   getComponent: function getComponent(components, key) {
     var result;
@@ -39616,9 +39639,14 @@ module.exports = {
 
   /**
    * Flatten the form components for data manipulation.
-   * @param components
-   * @param flattened
-   * @returns {*|{}}
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   *
+   * @returns {Object}
+   *   The flattened components map.
    */
   flattenComponents: function flattenComponents(components, includeAll) {
     var flattened = {};
@@ -39626,6 +39654,53 @@ module.exports = {
       flattened[path] = component;
     }, includeAll);
     return flattened;
+  },
+
+  /**
+   * Get the value for a component key, in the given submission.
+   *
+   * @param {Object} submission
+   *   A submission object to search.
+   * @param {String} key
+   *   A for components API key to search for.
+   */
+  getValue: function getValue(submission, key) {
+    var data = submission.data || {};
+
+    var search = function search(data) {
+      var i;
+      var value;
+
+      if (data instanceof Array) {
+        for (i = 0; i < data.length; i++) {
+          if (typeof data[i] === 'object') {
+            value = search(data[i]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+      else if (typeof data === 'object') {
+        if (data.hasOwnProperty(key)) {
+          return data[key];
+        }
+
+        var keys = Object.keys(data);
+        for (i = 0; i < keys.length; i++) {
+          if (typeof data[keys[i]] === 'object') {
+            value = search(data[keys[i]]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+    };
+
+    return search(data);
   }
 };
 
@@ -70484,6 +70559,10 @@ Formio.request = function(url, method, data) {
         else {
           if (response.status === 440) {
             Formio.setToken(null);
+            Formio.events.emit('formio.sessionExpired', response.body);
+          }
+          else if (response.status === 401) {
+            Formio.events.emit('formio.unauthorized', response.body);
           }
           // Parse and return the error as a rejected promise to reject this promise
           return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
@@ -70494,6 +70573,10 @@ Formio.request = function(url, method, data) {
         }
       })
       .catch(function(err) {
+        if (err === 'Bad Token') {
+          Formio.setToken(null);
+          Formio.events.emit('formio.badToken', err);
+        }
         // Remove failed promises from cache
         delete cache[cacheKey];
         // Propagate error so client can handle accordingly
@@ -86117,11 +86200,11 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/columns.html',
-        "<div class=\"row\" ng-if=\"!component.hide\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" formio-form=\"formioForm\" read-only=\"readOnly\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"component in column.components track by $index\"\n      component=\"component\"\n      data=\"data\"\n      formio=\"formio\"\n      formio-form=\"formioForm\"\n      read-only=\"readOnly\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      ng-if=\"show[column.key || ''] && show[component.key || '']\"\n      show=\"show\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/columns.html',
-        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" form=\"form\"></formio-component-view>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n  </div>\n</div>\n"
       );
     }
   ]);
@@ -86224,7 +86307,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/container.html', FormioUtils.fieldWrap(
-        "<div ng-controller=\"formioContainerComponent\" class=\"formio-container-component\" ng-if=\"!component.hide\">\n  <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data[parentKey]\" formio=\"formio\" formio-form=\"formioForm\" read-only=\"readOnly\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n</div>\n"
+        "<div ng-controller=\"formioContainerComponent\" class=\"formio-container-component\">\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data[parentKey]\"\n    formio=\"formio\"\n    formio-form=\"formioForm\"\n    read-only=\"readOnly\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n    show=\"show\"\n  ></formio-component>\n</div>\n"
       ));
     }
   ]);
@@ -86476,7 +86559,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/datagrid.html', FormioUtils.fieldWrap(
-        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\" ng-if=\"!component.hide\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\">\n        <formio-component component=\"col\" data=\"rows[rowIndex]\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || col.disabled\" grid-row=\"rowIndex\" grid-col=\"colIndex\"></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
+        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\">\n        <formio-component\n          component=\"col\"\n          data=\"rows[rowIndex]\"\n          formio-form=\"formioForm\"\n          formio=\"formio\"\n          read-only=\"readOnly || col.disabled\"\n          grid-row=\"rowIndex\"\n          grid-col=\"colIndex\"\n          ng-if=\"show[component.key || ''] && show[col.key || '']\"\n          show=\"show\"\n        ></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
       ));
     }
   ]);
@@ -86623,11 +86706,11 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/fieldset.html',
-        "<fieldset id=\"{{ component.key }}\" ng-if=\"!component.hide\">\n  <legend ng-if=\"component.legend\">{{ component.legend | formioTranslate }}</legend>\n  <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\" formio-form=\"formioForm\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n</fieldset>\n"
+        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend | formioTranslate }}</legend>\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    formio=\"formio\"\n    read-only=\"readOnly\"\n    formio-form=\"formioForm\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n    show=\"show\"\n  ></formio-component>\n</fieldset>\n"
       );
 
       $templateCache.put('formio/componentsView/fieldset.html',
-        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend }}</legend>\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\"></formio-component-view>\n</fieldset>\n"
+        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend }}</legend>\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n</fieldset>\n"
       );
     }
   ]);
@@ -87102,11 +87185,11 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/panel.html',
-        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\" ng-if=\"!component.hide\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title | formioTranslate }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\" formio-form=\"formioForm\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title | formioTranslate }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component\n      ng-repeat=\"_component in component.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      read-only=\"readOnly\"\n      formio-form=\"formioForm\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n      show=\"show\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/panel.html',
-        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\"></formio-component-view>\n  </div>\n</div>\n"
+        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n  </div>\n</div>\n"
       );
     }
   ]);
@@ -87707,7 +87790,8 @@ module.exports = function(app) {
             : false;
         });
         // FA-835 - Update the view model with our defaults.
-        ngModel.$setViewValue(model);
+        // FA-921 - Attempt to load a current model, if present before the defaults.
+        ngModel.$setViewValue($scope.model || model);
 
         ngModel.$setPristine(true);
         ngModel.$isEmpty = function(value) {
@@ -87911,11 +87995,11 @@ module.exports = function(app) {
     function($templateCache,
               FormioUtils) {
       $templateCache.put('formio/components/signature.html', FormioUtils.fieldWrap(
-        "<img ng-if=\"readOnly\" ng-attr-src=\"{{data[component.key]}}\" src=\"\" />\n<div ng-if=\"!readOnly\" style=\"width: {{ component.width }}; height: {{ component.height }};\">\n  <a class=\"btn btn-xs btn-default\" style=\"position:absolute; left: 0; top: 0; z-index: 1000\" ng-click=\"component.clearSignature()\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n  </a>\n  <canvas signature component=\"component\" name=\"{{ componentId }}\" ng-model=\"data[component.key]\" ng-required=\"component.validate.required\"></canvas>\n  <div class=\"formio-signature-footer\" style=\"text-align: center;color:#C3C3C3;\" ng-class=\"{'field-required': component.validate.required}\">{{ component.footer | formioTranslate }}</div>\n</div>\n"
+        "<div ng-if=\"readOnly\">\n  <div ng-if=\"data[component.key] === 'YES'\">\n    [ Signature is hidden ]\n  </div>\n  <div ng-if=\"data[component.key] !== 'YES'\">\n    <img class=\"signature\" ng-attr-src=\"{{data[component.key]}}\" src=\"\" />\n  </div>\n</div>\n<div ng-if=\"!readOnly\" style=\"width: {{ component.width }}; height: {{ component.height }};\">\n  <a class=\"btn btn-xs btn-default\" style=\"position:absolute; left: 0; top: 0; z-index: 1000\" ng-click=\"component.clearSignature()\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n  </a>\n  <canvas signature component=\"component\" name=\"{{ componentId }}\" ng-model=\"data[component.key]\" ng-required=\"component.validate.required\"></canvas>\n  <div class=\"formio-signature-footer\" style=\"text-align: center;color:#C3C3C3;\" ng-class=\"{'field-required': component.validate.required}\">{{ component.footer | formioTranslate }}</div>\n</div>\n"
       ));
 
       $templateCache.put('formio/componentsView/signature.html', FormioUtils.fieldWrap(
-        "<img ng-attr-src=\"{{data[component.key]}}\" src=\"\" />\n"
+        "<div ng-if=\"data[component.key] === 'YES'\">\n  [ Signature is hidden ]\n</div>\n<div ng-if=\"data[component.key] !== 'YES'\">\n  <img class=\"signature\" ng-attr-src=\"{{data[component.key]}}\" src=\"\" />\n</div>\n"
       ));
     }
   ]);
@@ -88012,11 +88096,11 @@ module.exports = function(app) {
       tableClasses += "'table-hover': component.hover, ";
       tableClasses += "'table-condensed': component.condensed}";
       $templateCache.put('formio/components/table.html',
-        "<div class=\"table-responsive\" id=\"{{ component.key }}\" ng-if=\"!component.hide\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header | formioTranslate }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" formio-form=\"formioForm\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
+        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header | formioTranslate }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component\n            ng-repeat=\"component in column.components track by $index\"\n            component=\"component\"\n            data=\"data\"\n            formio=\"formio\"\n            formio-form=\"formioForm\"\n            grid-row=\"gridRow\"\n            grid-col=\"gridCol\"\n            ng-if=\"show[column.key || ''] && show[component.key || '']\"\n            show=\"show\"\n          ></formio-component>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/table.html',
-        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" form=\"form\"></formio-component-view>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
+        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
       );
     }
   ]);
@@ -88159,10 +88243,10 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/well.html',
-        "<div class=\"well\" id=\"{{ component.key }}\" ng-if=\"!component.hide\">\n  <formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" read-only=\"readOnly\" formio-form=\"formioForm\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n</div>\n"
+        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    formio=\"formio\"\n    read-only=\"readOnly\"\n    formio-form=\"formioForm\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n    show=\"show\"\n  ></formio-component>\n</div>\n"
       );
       $templateCache.put('formio/componentsView/well.html',
-        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\"></formio-component-view>\n</div>\n"
+        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n</div>\n"
       );
     }
   ]);
@@ -88252,79 +88336,168 @@ module.exports = function() {
         }
 
         // Build the display map.
-        $scope.show = {};
+        $scope.show = {
+          '': true,
+          'undefined': true,
+          'null': true
+        };
         var boolean = {
           'true': true,
           'false': false
         };
 
-        var updateComponents = function() {
+        /**
+         * Sweep the current submission, to identify and remove data that has been conditionally hidden.
+         *
+         * This will iterate over every key in the submission data obj, regardless of the structure.
+         */
+        var sweepSubmission = function() {
+          var show = $scope.show || {
+              '': true,
+              'undefined': true,
+              'null': true
+            };
+          var submission = $scope.submission.data || {};
+
+          /**
+           * Sweep the given component keys and remove any data for the given keys which are being conditionally hidden.
+           *
+           * @param {Object} components
+           *   The list of components to sweep.
+           * @param {Boolean} ret
+           *   Whether or not you want to know if a modification needs to be made.
+           */
+          var sweep = function sweep(components, ret) {
+            // Skip our unwanted types.
+            if (components === null || typeof components === 'undefined') {
+              if (ret) {
+                return false;
+              }
+              return;
+            }
+
+            // If given a string, then we are looking at the api key of a component.
+            if (typeof components === 'string') {
+              if (show.hasOwnProperty(components) && show[components] === false) {
+                if (ret) {
+                  return true;
+                }
+                return;
+              }
+            }
+            // If given an array, iterate over each element, assuming its not a string itself.
+            // If each element is a string, then we aren't looking at a component, but data itself.
+            else if (components instanceof Array) {
+              var filtered = [];
+
+              components.forEach(function(component) {
+                if (typeof component === 'string') {
+                  filtered.push(component);
+                  return;
+                }
+
+                // Recurse into the components of this component.
+                var modified = sweep(component, true);
+                if (!modified) {
+                  filtered.push(component);
+                }
+              });
+
+              components = filtered;
+              return;
+            }
+            // If given an object, iterate the properties as component keys.
+            else if (typeof components === 'object') {
+              Object.keys(components).forEach(function(key) {
+                // If the key is deleted, delete the whole obj.
+                var modifiedKey = sweep(key, true);
+                if (modifiedKey) {
+                  delete components[key];
+                }
+                else {
+                  // If a child leaf is modified (non key) delete its whole subtree.
+                  if (components[key] instanceof Array || typeof components[key] === 'object') {
+                    // If the component can have sub-components, recurse.
+                    sweep(components[key]);
+                  }
+                }
+              });
+              return;
+            }
+
+            return;
+          };
+          return sweep(submission);
+        };
+
+        // The list of all conditionals.
+        var _conditionals = {};
+
+        // The list of all custom conditionals, segregated because they must be run on every change to data.
+        var _customConditionals = {};
+
+        // Regex for getting component subkeys.
+        var subkey = /^.+\[(.+)\]$/;
+
+        /**
+         * Sweep all the components and build the conditionals map.
+         *
+         * @private
+         */
+        var _sweepConditionalsCalled = false;
+        var _sweepConditionals = function() {
+          if (_sweepConditionalsCalled) {
+            return;
+          }
+          else {
+            _sweepConditionalsCalled = true;
+          }
+
+          $scope.form = $scope.form || {};
           $scope.form.components = $scope.form.components || [];
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            // Display every component by default
-            $scope.show[component.key] = ($scope.show[component.key] === undefined)
-              ? true
-              : $scope.show[component.key];
+            if (!component.hasOwnProperty('key')) {
+              return;
+            }
+            // Get key inside: something[key]
+            if (subkey.test(component.key)) {
+              try {
+                var key = subkey.exec(component.key)[1];
+                if (key) {
+                  component.key = key;
+                }
+              }
+              catch (e) {
+                $scope.show[component.key] = true;
+              }
+            }
+            // Show everything by default.
+            $scope.show[component.key] = true;
 
-            // Only change display options if all required conditional properties are present.
+            // We only care about valid/complete conditional settings.
             if (
               component.conditional
               && (component.conditional.show !== null && component.conditional.show !== '')
               && (component.conditional.when !== null && component.conditional.when !== '')
             ) {
               // Default the conditional values.
-              component.conditional.show = boolean[component.conditional.show];
+              component.conditional.show = boolean.hasOwnProperty(component.conditional.show)
+                ? boolean[component.conditional.show]
+                : true;
               component.conditional.eq = component.conditional.eq || '';
 
-              // Get the conditional component.
-              var cond = FormioUtils.getComponent($scope.form.components, component.conditional.when.toString());
-              if (!cond) {
-                return;
-              }
-              var value = $scope.submission.data[cond.key];
+              // Keys should be unique, so don't worry about clobbering an existing duplicate.
+              _conditionals[component.key] = component.conditional;
 
-              if (typeof value !== 'undefined' && typeof value !== 'object') {
-                // Check if the conditional value is equal to the trigger value
-                $scope.show[component.key] = value.toString() === component.conditional.eq.toString()
-                  ? boolean[component.conditional.show]
-                  : !boolean[component.conditional.show];
+              // Store the components default value for conditional logic, if present.
+              if (component.hasOwnProperty('defaultValue')) {
+                _conditionals[component.key].defaultValue = component.defaultValue;
               }
-              // Special check for check boxes component.
-              else if (typeof value !== 'undefined' && typeof value === 'object') {
-                $scope.show[component.key] = boolean.hasOwnProperty(value[component.conditional.eq])
-                  ? boolean[value[component.conditional.eq]]
-                  : true;
-              }
-              // Check against the components default value, if present and the components hasnt been interacted with.
-              else if (typeof value === 'undefined' && cond.hasOwnProperty('defaultValue')) {
-                $scope.show[component.key] = cond.defaultValue.toString() === component.conditional.eq.toString()
-                  ? boolean[component.conditional.show]
-                  : !boolean[component.conditional.show];
-              }
-              // If there is no value, we still need to process as not equal.
-              else {
-                $scope.show[component.key] = !boolean[component.conditional.show];
-              }
-
-              // Update the visibility, if it's possible a change occurred.
-              component.hide = !$scope.show[component.key];
             }
             // Custom conditional logic.
             else if (component.customConditional) {
-              try {
-                // Create a child block, and expose the submission data.
-                var data = $scope.submission.data; // eslint-disable-line no-unused-vars
-                // Eval the custom conditional and update the show value.
-                var show = eval('(function() { ' + component.customConditional.toString() + '; return show; })()');
-                // Show by default, if an invalid type is given.
-                $scope.show[component.key] = boolean.hasOwnProperty(show.toString()) ? boolean[show] : true;
-              }
-              catch (e) {
-                $scope.show[component.key] = true;
-              }
-
-              // Update the visibility, if its possible a change occurred.
-              component.hide = !$scope.show[component.key];
+              // Add this customConditional to the conditionals list.
+              _customConditionals[component.key] = component.customConditional;
             }
 
             // Set hidden if specified
@@ -88344,9 +88517,106 @@ module.exports = function() {
           }, true);
         };
 
-        // Update the components on the initial form render and all subsequent submission data changes.
-        $scope.$on('formRender', updateComponents);
-        $scope.$watchCollection('submission.data', updateComponents);
+        /**
+         * Using the conditionals map, invoke the conditionals for each component.
+         *
+         * @param {String} componentKey
+         *   The component to toggle conditional logic for.
+         *
+         * @private
+         */
+        var _toggleConditional = function(componentKey) {
+          if (_conditionals.hasOwnProperty(componentKey)) {
+            var cond = _conditionals[componentKey];
+            var value = FormioUtils.getValue($scope.submission, cond.when);
+
+            if (typeof value !== 'undefined' && typeof value !== 'object') {
+              // Check if the conditional value is equal to the trigger value
+              $scope.show[componentKey] = value.toString() === cond.eq.toString()
+                ? boolean[cond.show]
+                : !boolean[cond.show];
+            }
+            // Special check for check boxes component.
+            else if (typeof value !== 'undefined' && typeof value === 'object') {
+              // Only update the visibility is present, otherwise hide, because it was deleted by the submission sweep.
+              if (value.hasOwnProperty(cond.eq)) {
+                $scope.show[componentKey] = boolean.hasOwnProperty(value[cond.eq])
+                  ? boolean[value[cond.eq]]
+                  : true;
+              }
+              else {
+                $scope.show[componentKey] = false;
+              }
+            }
+            // Check against the components default value, if present and the components hasn't been interacted with.
+            else if (typeof value === 'undefined' && cond.hasOwnProperty('defaultValue')) {
+              $scope.show[componentKey] = cond.defaultValue.toString() === cond.eq.toString()
+                ? boolean[cond.show]
+                : !boolean[cond.show];
+            }
+            // If there is no value, we still need to process as not equal.
+            else {
+              $scope.show[componentKey] = !boolean[cond.show];
+            }
+          }
+        };
+
+        /**
+         * Using the custom conditionals map, invoke the conditionals for each component.
+         *
+         * @param {String} componentKey
+         *   The component to toggle conditional logic for.
+         *
+         * @private
+         */
+        var _toggleCustomConditional = function(componentKey) {
+          if (_customConditionals.hasOwnProperty(componentKey)) {
+            var cond = _customConditionals[componentKey];
+
+            try {
+              // Create a child block, and expose the submission data.
+              var data = $scope.submission.data; // eslint-disable-line no-unused-vars
+              // Eval the custom conditional and update the show value.
+              var show = eval('(function() { ' + cond.toString() + '; return show; })()');
+              // Show by default, if an invalid type is given.
+              $scope.show[componentKey] = boolean.hasOwnProperty(show.toString()) ? boolean[show] : true;
+            }
+            catch (e) {
+              $scope.show[componentKey] = true;
+            }
+          }
+        };
+
+        // On every change to data, trigger the conditionals.
+        $scope.$watch(function() {
+          return $scope.submission && $scope.submission.data
+            ? $scope.submission.data
+            : {};
+        }, function() {
+          // Toggle every conditional.
+          var allConditionals = Object.keys(_conditionals);
+          (allConditionals || []).forEach(function(componentKey) {
+            _toggleConditional(componentKey);
+          });
+
+          var allCustomConditionals = Object.keys(_customConditionals);
+          (allCustomConditionals || []).forEach(function(componentKey) {
+            _toggleCustomConditional(componentKey);
+          });
+
+          var allHidden = Object.keys($scope.show);
+          (allHidden || []).forEach(function(componentKey) {
+            // If a component is hidden, delete its value, so other conditionals are property chain reacted.
+            if (!$scope.show[componentKey]) {
+              return sweepSubmission();
+            }
+          });
+        }, true);
+
+        var cancelFormLoadEvent = $scope.$on('formLoad', function() {
+          _sweepConditionals();
+          cancelFormLoadEvent();
+        });
 
         if (!$scope._src) {
           $scope.$watch('src', function(src) {
@@ -88371,6 +88641,8 @@ module.exports = function() {
         $scope.onSubmit = function(form) {
           if (!form.$valid || form.submitting) return;
           form.submitting = true;
+
+          sweepSubmission();
 
           // Create a sanitized submission object.
           var submissionData = {data: {}};
@@ -88414,7 +88686,7 @@ module.exports = function() {
                 submissionData.data[component.key] = value;
               }
             }
-          });
+          }, true);
 
           angular.forEach($scope.submission.data, function(value, key) {
             if (value && !value.hasOwnProperty('_id')) {
@@ -88545,7 +88817,8 @@ module.exports = [
         formioForm: '=',
         readOnly: '=',
         gridRow: '=',
-        gridCol: '='
+        gridCol: '=',
+        show: '='
       },
       templateUrl: 'formio/component.html',
       link: function(scope, el, attrs, formioCtrl) {
@@ -88701,7 +88974,8 @@ module.exports = [
       scope: {
         component: '=',
         data: '=',
-        form: '='
+        form: '=',
+        ignore: '=?'
       },
       templateUrl: 'formio/component-view.html',
       controller: [
@@ -88727,6 +89001,18 @@ module.exports = [
           else {
             $scope.template = component.viewTemplate;
           }
+
+          // Set the component name.
+          $scope.componentId = $scope.component.key;
+          if ($scope.gridRow !== undefined) {
+            $scope.componentId += ('-' + $scope.gridRow);
+          }
+          if ($scope.gridCol !== undefined) {
+            $scope.componentId += ('-' + $scope.gridCol);
+          }
+
+          // See if we should show this component.
+          $scope.shouldShow = !$scope.ignore || ($scope.ignore.indexOf($scope.componentId) === -1);
         }
       ]
     };
@@ -89304,12 +89590,12 @@ module.exports = [
           }
         });
 
-        $scope.$watch('form', function(form) {
+        // Trigger a form load event when the components length is more than 0.
+        $scope.$watch('form.components.length', function() {
           if (
-            !form ||
-            (Object.keys(form).length === 0) ||
-            !form.components ||
-            !form.components.length
+            !$scope.form ||
+            !$scope.form.components ||
+            !$scope.form.components.length
           ) {
             return;
           }
@@ -89369,7 +89655,7 @@ module.exports = [
         }
         else {
           $scope.formoLoaded = true;
-          $scope.formLoading = $scope.form && (Object.keys($scope.form).length === 0);
+          $scope.formLoading = !$scope.form || (Object.keys($scope.form).length === 0) || !$scope.form.components.length;
 
           // Emit the events if these objects are already loaded.
           if (!$scope.formLoading) {
@@ -89399,6 +89685,7 @@ module.exports = function() {
     flattenComponents: formioUtils.flattenComponents,
     eachComponent: formioUtils.eachComponent,
     getComponent: formioUtils.getComponent,
+    getValue: formioUtils.getValue,
     hideFields: function(form, components) {
       this.eachComponent(form.components, function(component) {
         for (var i in components) {
@@ -89743,7 +90030,7 @@ app.run([
   function($templateCache) {
     // The template for the formio forms.
     $templateCache.put('formio.html',
-      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component ng-repeat=\"component in form.components\" component=\"component\" data=\"submission.data\" formio-form=\"formioForm\" formio=\"formio\" read-only=\"readOnly || component.disabled\" ng-if=\"!component.hide\"></formio-component>\n  </form>\n</div>\n"
+      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components\"\n      component=\"component\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      read-only=\"readOnly || component.disabled\"\n      ng-if=\"show[component.key || '']\"\n      show=\"show\"\n    ></formio-component>\n  </form>\n</div>\n"
     );
 
     $templateCache.put('formio-wizard.html',
@@ -89755,7 +90042,7 @@ app.run([
     );
 
     $templateCache.put('formio/submission.html',
-      "<div>\n  <div ng-repeat=\"component in form.components track by $index\" >\n    <formio-component-view form=\"form\" component=\"component\" data=\"submission.data\"></formio-component-view>\n  </div>\n</div>\n"
+      "<div>\n  <div ng-repeat=\"component in form.components track by $index\" >\n    <formio-component-view form=\"form\" component=\"component\" data=\"submission.data\" ignore=\"ignore\"></formio-component-view>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/submissions.html',
@@ -89764,11 +90051,11 @@ app.run([
 
     // A formio component template.
     $templateCache.put('formio/component.html',
-      "<div class=\"form-group has-feedback form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\" ng-class=\"{'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\" ng-style=\"component.style\" ng-hide=\"component.hide || component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
+      "<div class=\"form-group has-feedback form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\" ng-class=\"{'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
     );
 
     $templateCache.put('formio/component-view.html',
-      "<div name=\"componentId\" class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}} formio-component-{{ component.key }}\" id=\"form-group-{{ componentId }}\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n"
+      "<div name=\"{{ componentId }}\" class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}} formio-component-{{ component.key }}\" id=\"form-group-{{ componentId }}\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element ng-if=\"shouldShow\"></formio-element>\n</div>\n"
     );
 
     $templateCache.put('formio/element-view.html',
@@ -93390,7 +93677,7 @@ module.exports = function() {
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
-      var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-\.\[\]]*/g;
+      var invalidRegex = /^[^A-Za-z]+|[^A-Za-z0-9\-\.]+/g;
       ngModel.$parsers.push(function(inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {
@@ -93527,7 +93814,7 @@ require('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":153,"angular-drag-and-drop-lists":1,"lodash":8,"ng-ckeditor/ng-ckeditor":9,"ng-dialog":10,"ng-formio/src/formio-full.js":94}],153:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.12.13 | https://npmcdn.com/ng-formio-builder@1.12.13/LICENSE.txt */
+/*! ng-formio-builder v1.12.14 | https://npmcdn.com/ng-formio-builder@1.12.14/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
