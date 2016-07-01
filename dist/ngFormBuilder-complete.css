@@ -596,6 +596,10 @@ body > .ui-select-bootstrap.open {
   padding: 0;
 }
 
+.form-field-type-signature img {
+  width: 100%;
+}
+
 .datetime-picker-dropdown div > table .btn-default {
   border: 0;
   background-color: #fff;
