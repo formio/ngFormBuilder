@@ -17382,10 +17382,10 @@ module.exports = function(app) {
       formioComponentsProvider.register('file', {
         onEdit: [
           '$scope',
-          'FormioPlugins',
-          function($scope, FormioPlugins) {
+          'Formio',
+          function($scope, Formio) {
             // Pull out title and name from the list of storage plugins.
-            $scope.storage = _.map(new FormioPlugins('storage'), function(storage) {
+            $scope.storage = _.map(Formio.providers.storage, function(storage) {
               return _.pick(storage, ['title', 'name']);
             });
           }
@@ -18885,7 +18885,6 @@ module.exports = ['debounce', function(debounce) {
       'ngDialog',
       'Formio',
       'FormioUtils',
-      'FormioPlugins',
       'dndDragIframeWorkaround',
       function(
         $scope,
@@ -18893,7 +18892,6 @@ module.exports = ['debounce', function(debounce) {
         ngDialog,
         Formio,
         FormioUtils,
-        FormioPlugins,
         dndDragIframeWorkaround
       ) {
         // Add the components to the scope.
@@ -19364,7 +19362,7 @@ module.exports = [
         template: 'formio/components/settings.html',
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
-        controller: ['$scope', 'Formio', 'FormioPlugins', '$controller', function($scope, Formio, FormioPlugins, $controller) {
+        controller: ['$scope', 'Formio', '$controller', function($scope, Formio, $controller) {
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit

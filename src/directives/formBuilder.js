@@ -16,7 +16,6 @@ module.exports = ['debounce', function(debounce) {
       'ngDialog',
       'Formio',
       'FormioUtils',
-      'FormioPlugins',
       'dndDragIframeWorkaround',
       function(
         $scope,
@@ -24,7 +23,6 @@ module.exports = ['debounce', function(debounce) {
         ngDialog,
         Formio,
         FormioUtils,
-        FormioPlugins,
         dndDragIframeWorkaround
       ) {
         // Add the components to the scope.
