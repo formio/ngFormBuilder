@@ -16612,6 +16612,14 @@ module.exports = function(app) {
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="mapRegion" form-builder-tooltip="The region bias to use for this search. See https://developers.google.com/maps/documentation/geocoding/intro#RegionCodes for more information.">Region Bias</label>' +
+            '<input type="text" class="form-control" id="mapRegion" name="mapRegion" ng-model="component.map.region"></input>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label for="mapKey" form-builder-tooltip="The API key for Google Maps. See https://developers.google.com/maps/documentation/geocoding/get-api-key for more information.">Google Maps API Key</label>' +
+            '<input type="text" class="form-control" id="mapKey" name="mapKey" ng-model="component.map.key"></input>' +
+          '</div>' +
           '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
@@ -19913,7 +19921,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],53:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v1.13.0 | https://npmcdn.com/ng-formio-builder@1.13.0/LICENSE.txt */
+/*! ng-formio-builder v2.0.0 | https://npmcdn.com/ng-formio-builder@2.0.0/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
