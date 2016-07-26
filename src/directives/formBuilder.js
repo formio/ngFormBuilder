@@ -140,14 +140,24 @@ module.exports = ['debounce', function(debounce) {
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
-          if (component.settings.hasOwnProperty('builder') && !component.settings.builder) {
+          if ((component.settings.hasOwnProperty('builder') && !component.settings.builder) || component.disabled) {
             delete $scope.formComponents[key];
           }
         });
 
-        $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
+        });
+
+        var allOfItsComponentsDisabled = function(groupKey) {
+          return !$scope.formComponentsByGroup[groupKey];
+        };
+
+        $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
+        _.each($scope.formComponentGroups, function(_, key) {
+          if (allOfItsComponentsDisabled(key)) {
+            delete $scope.formComponentGroups[key];
+          }
         });
 
         // Get the resource fields.
