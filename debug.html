@@ -1,0 +1,45 @@
+<html>
+<head>
+  <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+  <link rel="stylesheet" href="bower_components/ng-ckeditor/ng-ckeditor.css" />
+  <link rel="stylesheet" href="bower_components/ng-dialog/css/ngDialog.css" />
+  <link rel="stylesheet" href="bower_components/ng-dialog/css/ngDialog-theme-default.css" />
+  <link rel="stylesheet" href="bower_components/angular-ui-select/dist/select.css" />
+  <link rel="stylesheet" href="bower_components/ng-formio/css/formio.css" />
+  <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
+  <link rel="stylesheet" href="dist/ngFormBuilder.css" />
+</head>
+<body ng-app="formBuilder" style="padding-top: 30px;">
+<div class="container">
+  <form-builder form="form"></form-builder>
+</div>
+<script src="bower_components/jquery/dist/jquery.js"></script>
+<script src="bower_components/angular/angular.js"></script>
+<script src="bower_components/angular-drag-and-drop-lists/angular-drag-and-drop-lists.js"></script>
+<script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+<script src="bower_components/lodash/lodash.js"></script>
+<script src="bower_components/ckeditor/ckeditor.js"></script>
+<script src="bower_components/ng-ckeditor/ng-ckeditor.js"></script>
+<script src="bower_components/ng-dialog/js/ngDialog.js"></script>
+<script src="bower_components/ng-file-upload/ng-file-upload.js"></script>
+<script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+<script src="bower_components/moment/moment.js"></script>
+<script src="bower_components/angular-moment/angular-moment.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+<script src="bower_components/bootstrap-ui-datetime-picker/dist/datetime-picker.js"></script>
+<script src="bower_components/signature_pad/signature_pad.js"></script>
+<script src="bower_components/angular-ui-mask/dist/mask.js"></script>
+<script src="bower_components/blob-polyfill/Blob.js"></script>
+<script src="bower_components/file-saver.js/FileSaver.js"></script>
+<script src="bower_components/angular-file-saver/dist/angular-file-saver.bundle.js"></script>
+<script src="bower_components/angular-ui-select/dist/select.js"></script>
+<script src="bower_components/ng-formio/dist/formio.js"></script>
+<script src="dist/ngFormBuilder.js"></script>
+<script type="text/javascript">
+  angular.module('formBuilder', ['formio', 'ngFormBuilder'])
+    .run(['$rootScope', function($rootScope) {
+      $rootScope.form = {components: []};
+    }]);
+</script>
+</body>
+</html>
