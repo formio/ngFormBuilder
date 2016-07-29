@@ -30,9 +30,6 @@ module.exports = ['debounce', function(debounce) {
         if (!$scope.form || !$scope.form.components || !$scope.form.components.length) {
           $scope.form = {components:[submitButton]};
         }
-        else {
-          $scope.form.components.push(submitButton);
-        }
         $scope.hideCount = 2;
         $scope.form.page = 0;
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
