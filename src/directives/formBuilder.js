@@ -140,12 +140,12 @@ module.exports = ['debounce', function(debounce) {
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
-          if (component.settings.hasOwnProperty('builder') && !component.settings.builder) {
+          if (component.settings.hasOwnProperty('builder') && !component.settings.builder || component.disabled) {
             delete $scope.formComponents[key];
           }
         });
 
-        $scope.formComponentGroups = _.cloneDeep(formioComponents.groups);
+        $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
           return component.group;
         });
