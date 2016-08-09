@@ -1,6 +1,6 @@
 {
   "name": "ng-formio-builder",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
@@ -53,6 +53,6 @@
     "lodash": "^4.14.1",
     "ng-ckeditor": "github:formio/ng-ckeditor",
     "ng-dialog": "^0.5.9",
-    "ng-formio": "^2.1.6"
+    "ng-formio": "^2.1.7"
   }
 }
