@@ -136,7 +136,7 @@ module.exports = [
           // Watch the settings label and auto set the key from it.
           var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
           $scope.$watch('component.label', function() {
-            if ($scope.component.label && !$scope.component.lockKey) {
+            if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
