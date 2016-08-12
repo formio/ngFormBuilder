@@ -17,27 +17,42 @@ module.exports = function() {
     },
     controller: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
       var suffixRegex = /(\d+)$/;
-      // Appends a number to a component.key to keep it unique
-      var uniquify = function() {
-        var newValue = $scope.component.key;
-        var valid = true;
-        FormioUtils.eachComponent($scope.form.components, function(component) {
-          if (component.key === newValue && component !== $scope.component) {
-            valid = false;
-          }
-        });
-        if (valid) {
-          return;
+
+      // Prebuild a list of existing components.
+      var existingComponents = {};
+      FormioUtils.eachComponent($scope.form.components, function(component) {
+        if (component.key) {
+          existingComponents[component.key] = component;
         }
-        if (newValue.match(suffixRegex)) {
-          newValue = newValue.replace(suffixRegex, function(suffix) {
+      });
+
+      var keyExists = function(component) {
+        if (existingComponents.hasOwnProperty(component.key) && existingComponents[component.key] !== component) {
+          return true;
+        }
+        return false;
+      };
+
+      var iterateKey = function(componentKey) {
+        if (componentKey.match(suffixRegex)) {
+          componentKey = componentKey.replace(suffixRegex, function(suffix) {
             return Number(suffix) + 1;
           });
         }
         else {
-          newValue += '2';
+          componentKey += '1';
         }
-        $scope.component.key = newValue;
+        return componentKey;
+      };
+
+      // Appends a number to a component.key to keep it unique
+      var uniquify = function() {
+        if (!$scope.component.key) {
+          return;
+        }
+        while (keyExists($scope.component)) {
+          $scope.component.key = iterateKey($scope.component.key);
+        }
       };
 
       $scope.$watch('component.key', uniquify);
