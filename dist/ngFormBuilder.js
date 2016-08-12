@@ -17754,16 +17754,12 @@ module.exports = function(app) {
           'Formio',
           function($scope, Formio) {
             // Pull out title and name from the list of storage plugins.
-            /* eslint-disable no-console */
-            console.log(Formio.providers.storage);
             $scope.storage = _.map(Formio.providers.storage, function(storage, key) {
-              console.log(storage);
               return {
                 title: storage.title,
                 name: key
               };
             });
-            console.log($scope.storage);
           }
         ],
         icon: 'fa fa-file',
