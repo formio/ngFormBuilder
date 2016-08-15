@@ -37,6 +37,8 @@ app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
 
+app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
+
 app.directive('validApiKey', require('./directives/validApiKey'));
 
 app.directive('formBuilderOptionCustomValidation', require('./directives/formBuilderOptionCustomValidation'));
