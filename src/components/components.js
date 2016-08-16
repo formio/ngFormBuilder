@@ -42,6 +42,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/common/api.html',
         '<ng-form>' +
           '<form-builder-option-key></form-builder-option-key>' +
+          '<form-builder-option-tags></form-builder-option-tags>' +
         '</ng-form>'
       );
 

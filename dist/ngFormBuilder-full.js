@@ -90183,6 +90183,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/common/api.html',
         '<ng-form>' +
           '<form-builder-option-key></form-builder-option-key>' +
+          '<form-builder-option-tags></form-builder-option-tags>' +
         '</ng-form>'
       );
 
@@ -93018,6 +93019,49 @@ module.exports = function() {
 
 },{}],144:[function(require,module,exports){
 "use strict";
+/**
+* A directive for a field to edit a component's tags.
+*/
+module.exports = function() {
+  return {
+    restrict: 'E',
+    replace: true,
+    template: function() {
+      return '' +
+        '<div class="form-group">' +
+        '  <label class="control-label" form-builder-tooltip="Tag the field for use in custom logic.">Field Tags</label>' +
+        '  <tags-input ng-model="tags" on-tag-added="addTag($tag)" on-tag-removed="removeTag($tag)"></tags-input>' +
+        '</div>';
+    },
+    controller: ['$scope', function($scope) {
+      $scope.component.tags = $scope.component.tags || [];
+      $scope.tags = _.map($scope.component.tags, function(tag) {
+        return {text: tag};
+      });
+
+      $scope.addTag = function(tag) {
+        if (!$scope.component) {
+          return;
+        }
+        if (!$scope.component.tags) {
+          $scope.component.tags = [];
+        }
+        $scope.component.tags.push(tag.text);
+      };
+      $scope.removeTag = function(tag) {
+        if ($scope.component.tags && $scope.component.tags.length) {
+          var tagIndex = $scope.component.tags.indexOf(tag.text);
+          if (tagIndex !== -1) {
+            $scope.component.tags.splice(tagIndex, 1);
+          }
+        }
+      };
+    }]
+  };
+};
+
+},{}],145:[function(require,module,exports){
+"use strict";
 module.exports = [
   function() {
     return {
@@ -93037,7 +93081,7 @@ module.exports = [
   }
 ];
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -93089,7 +93133,7 @@ module.exports = function() {
   };
 };
 
-},{}],146:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -93128,7 +93172,7 @@ module.exports = function() {
   };
 };
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -93165,7 +93209,7 @@ module.exports = function() {
   };
 };
 
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -93188,7 +93232,7 @@ module.exports = function() {
   };
 };
 
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -93267,7 +93311,7 @@ module.exports = function() {
   };
 };
 
-},{}],150:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -93301,7 +93345,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],151:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 "use strict";
 require('ng-formio/src/formio-full.js');
 require('angular-drag-and-drop-lists');
@@ -93310,9 +93354,9 @@ require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":152,"angular-drag-and-drop-lists":1,"lodash":35,"ng-ckeditor/ng-ckeditor":38,"ng-dialog":39,"ng-formio/src/formio-full.js":94}],152:[function(require,module,exports){
+},{"./ngFormBuilder.js":153,"angular-drag-and-drop-lists":1,"lodash":35,"ng-ckeditor/ng-ckeditor":38,"ng-dialog":39,"ng-formio/src/formio-full.js":94}],153:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v2.1.11 | https://npmcdn.com/ng-formio-builder@2.1.11/LICENSE.txt */
+/*! ng-formio-builder v2.1.12 | https://npmcdn.com/ng-formio-builder@2.1.12/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -93350,6 +93394,8 @@ app.directive('formBuilderOption', require('./directives/formBuilderOption'));
 app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
+
+app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
 
 app.directive('validApiKey', require('./directives/validApiKey'));
 
@@ -93413,4 +93459,4 @@ app.run([
 
 require('./components');
 
-},{"./components":117,"./constants/commonOptions":133,"./constants/formOptions":134,"./directives/formBuilder":135,"./directives/formBuilderComponent":136,"./directives/formBuilderConditional":137,"./directives/formBuilderDnd":138,"./directives/formBuilderElement":139,"./directives/formBuilderList":140,"./directives/formBuilderOption":141,"./directives/formBuilderOptionCustomValidation":142,"./directives/formBuilderOptionKey":143,"./directives/formBuilderRow":144,"./directives/formBuilderTable":145,"./directives/formBuilderTooltip":146,"./directives/jsonInput":147,"./directives/validApiKey":148,"./directives/valueBuilder":149,"./factories/debounce":150}]},{},[151]);
+},{"./components":117,"./constants/commonOptions":133,"./constants/formOptions":134,"./directives/formBuilder":135,"./directives/formBuilderComponent":136,"./directives/formBuilderConditional":137,"./directives/formBuilderDnd":138,"./directives/formBuilderElement":139,"./directives/formBuilderList":140,"./directives/formBuilderOption":141,"./directives/formBuilderOptionCustomValidation":142,"./directives/formBuilderOptionKey":143,"./directives/formBuilderOptionTags":144,"./directives/formBuilderRow":145,"./directives/formBuilderTable":146,"./directives/formBuilderTooltip":147,"./directives/jsonInput":148,"./directives/validApiKey":149,"./directives/valueBuilder":150,"./factories/debounce":151}]},{},[152]);
