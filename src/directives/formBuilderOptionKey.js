@@ -21,13 +21,14 @@ module.exports = function() {
       // Prebuild a list of existing components.
       var existingComponents = {};
       FormioUtils.eachComponent($scope.form.components, function(component) {
-        if (component.key) {
+        // Don't add to existing components if current component or if it is new. (New could mean same as another item).
+        if (component.key && ($scope.component.key !== component.key || $scope.component.isNew)) {
           existingComponents[component.key] = component;
         }
       });
 
       var keyExists = function(component) {
-        if (existingComponents.hasOwnProperty(component.key) && existingComponents[component.key] !== component) {
+        if (existingComponents.hasOwnProperty(component.key)) {
           return true;
         }
         return false;
