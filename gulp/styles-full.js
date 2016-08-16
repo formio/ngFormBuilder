@@ -4,7 +4,7 @@ module.exports = function(gulp, plugins) {
       .pipe(plugins.filter('**/*.css'))
       .pipe(plugins.concat('ngFormBuilder-full.css'))
       .pipe(gulp.dest('dist'))
-      .pipe(plugins.cssnano())
+      .pipe(plugins.cssnano({zindex: false}))
       .pipe(plugins.rename('ngFormBuilder-full.min.css'))
       .pipe(gulp.dest('dist'));
   };

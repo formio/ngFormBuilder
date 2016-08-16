@@ -80356,6 +80356,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/common/api.html',
         '<ng-form>' +
           '<form-builder-option-key></form-builder-option-key>' +
+          '<form-builder-option-tags></form-builder-option-tags>' +
         '</ng-form>'
       );
 
@@ -80930,8 +80931,11 @@ module.exports = function(app) {
           'Formio',
           function($scope, Formio) {
             // Pull out title and name from the list of storage plugins.
-            $scope.storage = _.map(Formio.providers.storage, function(storage) {
-              return _.pick(storage, ['title', 'name']);
+            $scope.storage = _.map(Formio.providers.storage, function(storage, key) {
+              return {
+                title: storage.title,
+                name: key
+              };
             });
           }
         ],
@@ -83189,6 +83193,49 @@ module.exports = function() {
 
 },{}],142:[function(require,module,exports){
 "use strict";
+/**
+* A directive for a field to edit a component's tags.
+*/
+module.exports = function() {
+  return {
+    restrict: 'E',
+    replace: true,
+    template: function() {
+      return '' +
+        '<div class="form-group">' +
+        '  <label class="control-label" form-builder-tooltip="Tag the field for use in custom logic.">Field Tags</label>' +
+        '  <tags-input ng-model="tags" on-tag-added="addTag($tag)" on-tag-removed="removeTag($tag)"></tags-input>' +
+        '</div>';
+    },
+    controller: ['$scope', function($scope) {
+      $scope.component.tags = $scope.component.tags || [];
+      $scope.tags = _.map($scope.component.tags, function(tag) {
+        return {text: tag};
+      });
+
+      $scope.addTag = function(tag) {
+        if (!$scope.component) {
+          return;
+        }
+        if (!$scope.component.tags) {
+          $scope.component.tags = [];
+        }
+        $scope.component.tags.push(tag.text);
+      };
+      $scope.removeTag = function(tag) {
+        if ($scope.component.tags && $scope.component.tags.length) {
+          var tagIndex = $scope.component.tags.indexOf(tag.text);
+          if (tagIndex !== -1) {
+            $scope.component.tags.splice(tagIndex, 1);
+          }
+        }
+      };
+    }]
+  };
+};
+
+},{}],143:[function(require,module,exports){
+"use strict";
 module.exports = [
   function() {
     return {
@@ -83208,7 +83255,7 @@ module.exports = [
   }
 ];
 
-},{}],143:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -83260,7 +83307,7 @@ module.exports = function() {
   };
 };
 
-},{}],144:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -83299,7 +83346,7 @@ module.exports = function() {
   };
 };
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -83336,7 +83383,7 @@ module.exports = function() {
   };
 };
 
-},{}],146:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -83359,7 +83406,7 @@ module.exports = function() {
   };
 };
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -83438,7 +83485,7 @@ module.exports = function() {
   };
 };
 
-},{}],148:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -83472,7 +83519,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],149:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 "use strict";
 require('ng-formio/src/formio-complete.js');
 require('angular-drag-and-drop-lists');
@@ -83481,9 +83528,9 @@ require('ng-dialog');
 require('lodash');
 require('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":150,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":92}],150:[function(require,module,exports){
+},{"./ngFormBuilder.js":151,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":92}],151:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v2.1.8 | https://npmcdn.com/ng-formio-builder@2.1.8/LICENSE.txt */
+/*! ng-formio-builder v2.1.12 | https://npmcdn.com/ng-formio-builder@2.1.12/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -83521,6 +83568,8 @@ app.directive('formBuilderOption', require('./directives/formBuilderOption'));
 app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
+
+app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
 
 app.directive('validApiKey', require('./directives/validApiKey'));
 
@@ -83584,4 +83633,4 @@ app.run([
 
 require('./components');
 
-},{"./components":115,"./constants/commonOptions":131,"./constants/formOptions":132,"./directives/formBuilder":133,"./directives/formBuilderComponent":134,"./directives/formBuilderConditional":135,"./directives/formBuilderDnd":136,"./directives/formBuilderElement":137,"./directives/formBuilderList":138,"./directives/formBuilderOption":139,"./directives/formBuilderOptionCustomValidation":140,"./directives/formBuilderOptionKey":141,"./directives/formBuilderRow":142,"./directives/formBuilderTable":143,"./directives/formBuilderTooltip":144,"./directives/jsonInput":145,"./directives/validApiKey":146,"./directives/valueBuilder":147,"./factories/debounce":148}]},{},[149]);
+},{"./components":115,"./constants/commonOptions":131,"./constants/formOptions":132,"./directives/formBuilder":133,"./directives/formBuilderComponent":134,"./directives/formBuilderConditional":135,"./directives/formBuilderDnd":136,"./directives/formBuilderElement":137,"./directives/formBuilderList":138,"./directives/formBuilderOption":139,"./directives/formBuilderOptionCustomValidation":140,"./directives/formBuilderOptionKey":141,"./directives/formBuilderOptionTags":142,"./directives/formBuilderRow":143,"./directives/formBuilderTable":144,"./directives/formBuilderTooltip":145,"./directives/jsonInput":146,"./directives/validApiKey":147,"./directives/valueBuilder":148,"./factories/debounce":149}]},{},[150]);

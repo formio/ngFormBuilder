@@ -10,7 +10,7 @@
 
 .component-btn-group .component-settings-button {
   float: right;
-  z-index: 20;
+  z-index: 1001;
   margin: 4px 4px 0 0;
 }
 
@@ -58,6 +58,10 @@ li:not(:hover) .component-btn-group .component-settings-button {
 
 #component-settings .tab-pane {
   padding: 10px;
+}
+
+#component-settings .nav-tabs {
+  font-size: 12px;
 }
 
 .component-settings-key {
