@@ -143,6 +143,7 @@ module.exports = function(app) {
               '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.data.resource"></select>' +
             '</div>' +
           '</ng-switch>' +
+          '<form-builder-option property="selectValues" label="Select Values" type="text" placeholder="The selectable items in the source data." title="The property within the source data, where iterable items reside."></form-builder-option>' +
           '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
           '<div class="form-group" ng-hide="component.dataSrc !== \'resource\' || !component.data.resource || resourceFields.length == 0">' +
             '<label for="placeholder" form-builder-tooltip="The field to use as the value.">Value</label>' +
