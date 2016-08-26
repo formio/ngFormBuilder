@@ -17166,6 +17166,7 @@ module.exports = function(app) {
                   '<formio-component component="component" data="data" formio="formio"></formio-component>' +
                 '</div>' +
               '</div>' +
+              '<formio-settings-info component="component" data="data" formio="formio"></formio-settings-info>' +
               '<div class="form-group">' +
                 '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
@@ -20345,7 +20346,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(require,module,exports){
 "use strict";
-/*! ng-formio-builder v2.1.13 | https://npmcdn.com/ng-formio-builder@2.1.13/LICENSE.txt */
+/*! ng-formio-builder v2.1.14 | https://npmcdn.com/ng-formio-builder@2.1.14/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
