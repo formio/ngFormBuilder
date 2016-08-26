@@ -90304,6 +90304,7 @@ module.exports = function(app) {
                   '<formio-component component="component" data="data" formio="formio"></formio-component>' +
                 '</div>' +
               '</div>' +
+              '<formio-settings-info component="component" data="data" formio="formio"></formio-settings-info>' +
               '<div class="form-group">' +
                 '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
