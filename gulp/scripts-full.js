@@ -2,13 +2,15 @@ module.exports = function(gulp, plugins) {
   return function() {
     var bundle = plugins.browserify({
       entries: './src/ngFormBuilder-full.js',
-      debug: false
+      debug: false,
+      standalone: 'formio-builder'
     });
 
     return bundle
       .bundle()
       .pipe(plugins.source('ngFormBuilder-full.js'))
       .pipe(plugins.replace('<%=version%>', plugins.packageJson.version))
+      .pipe(plugins.derequire())
       .pipe(gulp.dest('dist/'))
       .pipe(plugins.rename('ngFormBuilder-full.min.js'))
       .pipe(plugins.streamify(plugins.uglify({preserveComments: 'license'})))
