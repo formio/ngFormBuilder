@@ -1,9 +1,9 @@
 <div class="row formbuilder">
   <div class="col-xs-4 col-sm-3 col-md-2 formcomponents">
     <uib-accordion close-others="true">
-      <uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" panel-class="panel-default {{ group.panelClass }}">
+      <div uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" class="panel panel-default form-builder-panel {{ group.panelClass }}">
         <uib-accordion close-others="true" ng-if="group.subgroups">
-          <uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" panel-class="panel-default subgroup-accordion">
+          <div uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" class="panel panel-default form-builder-panel subgroup-accordion">
             <div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"
                 dnd-draggable="component.settings"
                 dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
@@ -14,7 +14,7 @@
                 <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}
               </span>
             </div>
-          </uib-accordion-group>
+          </div>
         </uib-accordion>
         <div ng-repeat="component in formComponentsByGroup[groupName]" ng-if="!group.subgroup && component.title"
             dnd-draggable="component.settings"
@@ -26,7 +26,7 @@
             <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}
           </span>
         </div>
-      </uib-accordion-group>
+      </div>
     </uib-accordion>
   </div>
   <div class="col-xs-8 col-sm-9 col-md-10 formarea">

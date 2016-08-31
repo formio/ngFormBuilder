@@ -1003,6 +1003,10 @@ li:not(:hover) .component-btn-group .component-settings-button {
   margin-bottom: 0;
 }
 
+.form-builder-panel .panel-body {
+  padding: 5px;
+}
+
 .form-component-list {
   list-style: none;
   margin: 0;
