@@ -830,6 +830,10 @@ tags-input .autocomplete .suggestion-item em {
   background-color: #fff;
 }
 
+.glyphicon.formio-hidden {
+  display: none;
+}
+
 /* Handle overflow of long matched placeholder/text without covering caret */
 .has-feedback .form-control.ui-select-toggle {
   padding-right: 20px;
