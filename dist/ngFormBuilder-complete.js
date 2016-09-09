@@ -83893,7 +83893,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":151,"angular-drag-and-drop-lists":1,"lodash":31,"ng-ckeditor/ng-ckeditor":34,"ng-dialog":35,"ng-formio/src/formio-complete.js":92}],151:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.2 | https://npmcdn.com/ng-formio-builder@2.2.2/LICENSE.txt */
+/*! ng-formio-builder v2.2.2 | https://unpkg.com/ng-formio-builder@2.2.2/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 

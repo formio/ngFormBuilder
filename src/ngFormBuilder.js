@@ -1,4 +1,4 @@
-/*! ng-formio-builder v<%=version%> | https://npmcdn.com/ng-formio-builder@<%=version%>/LICENSE.txt */
+/*! ng-formio-builder v<%=version%> | https://unpkg.com/ng-formio-builder@<%=version%>/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 var fs = require('fs');
