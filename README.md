@@ -20,6 +20,39 @@ Installation
 To install this within your application, you will first need to include the following 
 
 
+Adding Components
+=================
+To add a component, add it in the config phase.
+
+```
+  angular
+    .module('myApp')
+    .config([
+      'formioComponentsProvider',
+      function (formioComponentsProvider) {
+        formioComponentsProvider.register('myfield', {
+          title: 'My Field',
+          template: 'formio/components/icons.html',
+          controller: ['$scope', function($scope) {
+          }],
+          group: 'custom',
+          icon: 'fa fa-heart-o',
+          settings: {},
+          views: []
+        });
+```
+Removing Components
+===================
+To remove default components or groups from the form builder, set them as disabled in the run phase.
+
+```
+  angular.module('myApp')
+    .run(['formioComponents', function(formioComponents) {
+      formioComponents.components.textfield.disabled = true;
+      formioComponents.groups.layout.disabled = true;
+    }]);
+```
+
 Form.io
 ==============
 This project is provided by [Form.io](https://form.io), which is a combined form and API platform for Developers.
