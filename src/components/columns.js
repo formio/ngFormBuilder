@@ -10,6 +10,10 @@ module.exports = function(app) {
         confirmRemove: true,
         views: [
           {
+            name: 'Display',
+            template: 'formio/components/columns/display.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -30,6 +34,11 @@ module.exports = function(app) {
             '<form-builder-list class="formio-column" component="component" form="form" formio="formio"></form-builder-list>' +
           '</div>' +
         '</div>'
+      );
+      $templateCache.put('formio/components/columns/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+        '</ng-form>'
       );
     }
   ]);
