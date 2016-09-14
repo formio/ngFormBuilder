@@ -151,6 +151,11 @@ module.exports = {
     placeholder: 'Add Another',
     tooltip: 'Set the text of the Add Another button.'
   },
+  'defaultValueMoment': {
+    label: 'Default Value',
+    placeholder: 'Default Value',
+    tooltip: 'You can use Moment.js functions to set the default value to a specific date. For example: \n \n Moment.subtract(10, `days`).calendar();'
+  },
   // Need to use array notation to have dash in name
   'style[\'margin-top\']': {
     label: 'Margin Top',
