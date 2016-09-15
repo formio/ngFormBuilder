@@ -10,6 +10,10 @@ module.exports = function(app) {
             template: 'formio/components/select/display.html'
           },
           {
+            name: 'Data',
+            template: 'formio/components/select/data.html'
+          },
+          {
             name: 'Validation',
             template: 'formio/components/select/validate.html'
           },
@@ -40,7 +44,7 @@ module.exports = function(app) {
           var getInputFields = function(components) {
             var fields = [];
             FormioUtils.eachComponent(components, function(component) {
-              if (component.key && component.input && (component.type !== 'button')) {
+              if (component.key && component.input && (component.type !== 'button') && component.key !== $scope.component.key) {
                 var comp = _.clone(component);
                 if (!comp.label) {
                   comp.label = comp.key;
@@ -59,7 +63,16 @@ module.exports = function(app) {
               return;
             }
             var selected = null;
-            $scope.resourceFields = [];
+            $scope.resourceFields = [
+              {
+                property: '',
+                title: '{Entire Object}'
+              },
+              {
+                property: '_id',
+                title: 'Submission Id'
+              }
+            ];
             if ($scope.formio.projectId) {
               $scope.component.data.project = $scope.formio.projectId;
             }
@@ -104,12 +117,15 @@ module.exports = function(app) {
 
           // Update other parameters when the value property changes.
           $scope.$watch('component.valueProperty', function(property) {
-            if (!property) {
-              return;
-            }
             if ($scope.component.dataSrc === 'resource') {
-              $scope.component.searchField = property;
-              $scope.component.template = '<span>{{ item.' + property + ' }}</span>';
+              if (!property) {
+                $scope.component.searchField = '';
+                $scope.component.template = '<span>{{ item.data }}</span>';
+              }
+              else {
+                $scope.component.searchField = property + '__regex';
+                $scope.component.template = '<span>{{ item.' + property + ' }}</span>';
+              }
             }
           });
 
@@ -127,6 +143,17 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="protected"></form-builder-option>' +
+          '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/select/data.html',
+        '<ng-form>' +
           '<div class="form-group">' +
             '<label for="dataSrc" form-builder-tooltip="The source to use for the select data. Values lets you provide your own values and labels. JSON lets you provide raw JSON data. URL lets you provide a URL to retrieve the JSON data from.">Data Source Type</label>' +
             '<select class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" ng-options="value as label for (value, label) in dataSources"></select>' +
@@ -143,28 +170,26 @@ module.exports = function(app) {
               '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.data.resource"></select>' +
             '</div>' +
           '</ng-switch>' +
-          '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\'" property="selectValues" label="Select Values" type="text" placeholder="The selectable items in the source data." title="The property within the source data, where iterable items reside."></form-builder-option>' +
-          '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\'" property="valueProperty" label="Value Property" placeholder="The selected items property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
+          '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
+          '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
           '<div class="form-group" ng-hide="component.dataSrc !== \'resource\' || !component.data.resource || resourceFields.length == 0">' +
             '<label for="placeholder" form-builder-tooltip="The field to use as the value.">Value</label>' +
             '<select class="form-control" id="valueProperty" name="valueProperty" ng-options="value.property as value.title for value in resourceFields" ng-model="component.valueProperty"></select>' +
           '</div>' +
-          '<div class="form-group" ng-hide="component.dataSrc !== \'resource\'">' +
-            '<label for="placeholder" form-builder-tooltip="Refresh this field when this field changes.">Refresh On</label>' +
-            '<select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
+          '<div class="form-group" ng-if="component.dataSrc == \'resource\' && component.valueProperty === \'\'">' +
+          '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
+          '  <input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
-          '<form-builder-option ng-show="component.dataSrc == \'url\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
-          '<div class="form-group" ng-show="component.dataSrc !== \'resource\'">' +
+          '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
-          '<form-builder-option property="customClass"></form-builder-option>' +
-          '<form-builder-option property="tabindex"></form-builder-option>' +
-          '<form-builder-option property="multiple"></form-builder-option>' +
-          '<form-builder-option property="protected"></form-builder-option>' +
-          '<form-builder-option property="persistent"></form-builder-option>' +
-          '<form-builder-option property="tableView"></form-builder-option>' +
+          '<div class="form-group" ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'json\'">' +
+          '  <label for="placeholder" form-builder-tooltip="Refresh data when another field changes.">Refresh On</label>' +
+          '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
+          '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
         '</ng-form>'
       );
