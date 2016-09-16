@@ -10,6 +10,10 @@ module.exports = function(app) {
         confirmRemove: true,
         views: [
           {
+            name: 'Display',
+            template: 'formio/components/common/display.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -28,6 +32,11 @@ module.exports = function(app) {
         '<div class="well">' +
           '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
         '</div>'
+      );
+      $templateCache.put('formio/components/common/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+        '<ng-form>'
       );
     }
   ]);
