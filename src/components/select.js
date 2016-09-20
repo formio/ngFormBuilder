@@ -116,8 +116,9 @@ module.exports = function(app) {
           });
 
           // Update other parameters when the value property changes.
+          $scope.currentValueProperty = $scope.component.valueProperty;
           $scope.$watch('component.valueProperty', function(property) {
-            if ($scope.component.dataSrc === 'resource') {
+            if ($scope.component.dataSrc === 'resource' && $scope.currentValueProperty !== property) {
               if (!property) {
                 $scope.component.searchField = '';
                 $scope.component.template = '<span>{{ item.data }}</span>';

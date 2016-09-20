@@ -18531,8 +18531,9 @@ module.exports = function(app) {
           });
 
           // Update other parameters when the value property changes.
+          $scope.currentValueProperty = $scope.component.valueProperty;
           $scope.$watch('component.valueProperty', function(property) {
-            if ($scope.component.dataSrc === 'resource') {
+            if ($scope.component.dataSrc === 'resource' && $scope.currentValueProperty !== property) {
               if (!property) {
                 $scope.component.searchField = '';
                 $scope.component.template = '<span>{{ item.data }}</span>';
@@ -20373,7 +20374,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.2 | https://npmcdn.com/ng-formio-builder@2.2.2/LICENSE.txt */
+/*! ng-formio-builder v2.2.3 | https://npmcdn.com/ng-formio-builder@2.2.3/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 

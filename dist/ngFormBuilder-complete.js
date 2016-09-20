@@ -51908,8 +51908,9 @@ module.exports = function(app) {
           });
 
           // Update other parameters when the value property changes.
+          $scope.currentValueProperty = $scope.component.valueProperty;
           $scope.$watch('component.valueProperty', function(property) {
-            if ($scope.component.dataSrc === 'resource') {
+            if ($scope.component.dataSrc === 'resource' && $scope.currentValueProperty !== property) {
               if (!property) {
                 $scope.component.searchField = '';
                 $scope.component.template = '<span>{{ item.data }}</span>';
@@ -53759,7 +53760,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":60,"angular-drag-and-drop-lists":1,"lodash":5,"ng-ckeditor/ng-ckeditor":6,"ng-dialog":7,"ng-formio/src/formio-complete.js":152}],60:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.2 | https://npmcdn.com/ng-formio-builder@2.2.2/LICENSE.txt */
+/*! ng-formio-builder v2.2.3 | https://npmcdn.com/ng-formio-builder@2.2.3/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -81579,7 +81580,6 @@ module.exports = function(app) {
                     options.params.select = settings.selectFields;
                   }
 
-
                   // Set the new result.
                   var setResult = function(data) {
                     // coerce the data into an array.
@@ -81604,7 +81604,7 @@ module.exports = function(app) {
                     if (data) {
                       // If the selectValue prop is defined, use it.
                       if (selectValues) {
-                        setResult(_.get(data, selectValues));
+                        setResult(_.get(data, selectValues, []));
                       }
                       // Attempt to default to the formio settings for a resource.
                       else if (data.hasOwnProperty('data')) {
