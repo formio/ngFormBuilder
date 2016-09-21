@@ -159,7 +159,7 @@ module.exports = ['debounce', function(debounce) {
             subgroups: {}
           };
 
-          $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
             // Iterate through all resources.
             _.each(resources, function(resource) {
               var resourceKey = resource.name;
