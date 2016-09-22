@@ -19430,7 +19430,7 @@ module.exports = ['debounce', function(debounce) {
             subgroups: {}
           };
 
-          $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
             // Iterate through all resources.
             _.each(resources, function(resource) {
               var resourceKey = resource.name;
@@ -20374,7 +20374,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.3 | https://npmcdn.com/ng-formio-builder@2.2.3/LICENSE.txt */
+/*! ng-formio-builder v2.2.4 | https://npmcdn.com/ng-formio-builder@2.2.4/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
