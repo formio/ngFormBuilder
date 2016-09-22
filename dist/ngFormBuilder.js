@@ -17271,6 +17271,10 @@ module.exports = function(app) {
         confirmRemove: true,
         views: [
           {
+            name: 'Display',
+            template: 'formio/components/columns/display.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -17291,6 +17295,11 @@ module.exports = function(app) {
             '<form-builder-list class="formio-column" component="component" form="form" formio="formio"></form-builder-list>' +
           '</div>' +
         '</div>'
+      );
+      $templateCache.put('formio/components/columns/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+        '</ng-form>'
       );
     }
   ]);
@@ -17434,6 +17443,10 @@ module.exports = function(app) {
         },
         views: [
           {
+            name: 'Display',
+            template: 'formio/components/common/display.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -17452,6 +17465,11 @@ module.exports = function(app) {
         '<div class="form-group">' +
           '<textarea ckeditor ng-model="component.html"><textarea>' +
         '</div>'
+      );
+      $templateCache.put('formio/components/common/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+        '</ng-form>'
       );
     }
   ]);
@@ -17709,6 +17727,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datetime/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="defaultDate"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -18078,6 +18097,7 @@ module.exports = function(app) {
       // Create the settings markup.
       $templateCache.put('formio/components/htmlelement/display.html',
         '<ng-form>' +
+        '<form-builder-option property="customClass" label="Container Custom Class"></form-builder-option>' +
           '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
           '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
           '<value-builder ' +
@@ -19165,6 +19185,10 @@ module.exports = function(app) {
         confirmRemove: true,
         views: [
           {
+            name: 'Display',
+            template: 'formio/components/common/display.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -19183,6 +19207,11 @@ module.exports = function(app) {
         '<div class="well">' +
           '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
         '</div>'
+      );
+      $templateCache.put('formio/components/common/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+        '<ng-form>'
       );
     }
   ]);
@@ -19342,6 +19371,11 @@ module.exports = {
     label: 'Add Another Text',
     placeholder: 'Add Another',
     tooltip: 'Set the text of the Add Another button.'
+  },
+  'defaultDate': {
+    label: 'Default Value',
+    placeholder: 'Default Value',
+    tooltip: 'You can use Moment.js functions to set the default value to a specific date. For example: \n \n moment().subtract(10, \'days\').calendar();'
   },
   // Need to use array notation to have dash in name
   'style[\'margin-top\']': {
@@ -19592,7 +19626,7 @@ module.exports = ['debounce', function(debounce) {
             subgroups: {}
           };
 
-          $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
             // Iterate through all resources.
             _.each(resources, function(resource) {
               var resourceKey = resource.name;
@@ -20536,7 +20570,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.4 | https://npmcdn.com/ng-formio-builder@2.2.4/LICENSE.txt */
+/*! ng-formio-builder v2.2.4 | https://unpkg.com/ng-formio-builder@2.2.4/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 

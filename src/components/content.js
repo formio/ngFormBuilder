@@ -13,6 +13,10 @@ module.exports = function(app) {
         },
         views: [
           {
+            name: 'Display',
+            template: 'formio/components/common/display.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -31,6 +35,11 @@ module.exports = function(app) {
         '<div class="form-group">' +
           '<textarea ckeditor ng-model="component.html"><textarea>' +
         '</div>'
+      );
+      $templateCache.put('formio/components/common/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+        '</ng-form>'
       );
     }
   ]);
