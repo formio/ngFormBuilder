@@ -10,7 +10,7 @@ module.exports = [
       scope: true,
       template: '' +
         '<uib-accordion>' +
-          '<uib-accordion-group heading="Simple" is-open="status.simple">' +
+          '<div uib-accordion-group heading="Simple" class="panel panel-default" is-open="status.simple">' +
             'This component should Display:' +
             '<select class="form-control input-md" ng-model="component.conditional.show">' +
             '<option ng-repeat="item in _booleans track by $index" value="{{item}}">{{item.toString()}}</option>' +
@@ -21,8 +21,8 @@ module.exports = [
             '</select>' +
             '<br>Has the value:' +
             '<input type="text" class="form-control input-md" ng-model="component.conditional.eq">' +
-          '</uib-accordion-group>' +
-          '<uib-accordion-group heading="Advanced" is-open="status.advanced">' +
+          '</div>' +
+          '<div uib-accordion-group heading="Advanced" class="panel panel-default" is-open="status.advanced">' +
             '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.customConditional" placeholder="/*** Example Code ***/\nshow = (data[\'mykey\'] > 1);">{{ component.validate.custom }}</textarea>' +
             '<small>' +
             '<p>Enter custom conditional code.</p>' +
@@ -30,7 +30,7 @@ module.exports = [
             '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
             '<p><strong>Note: Advanced Conditional logic will only work, if the Simple Conditional logic is not defined.</strong></p>' +
             '</small>' +
-          '</uib-accordion-group>' +
+          '</div>' +
         '</uib-accordion>',
       controller: [
         '$scope',
