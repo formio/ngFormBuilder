@@ -82343,7 +82343,7 @@ module.exports = function(app) {
             return fields;
           };
 
-          $scope.formFields = getInputFields($scope.form.components);
+          $scope.formFields = [{label: 'Any Change', key: 'data'}].concat(getInputFields($scope.form.components));
 
           // Loads the selected fields.
           var loadFields = function() {
