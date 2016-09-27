@@ -49,6 +49,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Allows multiple values to be entered for this field.'
   },
+  clearOnRefresh: {
+    label: 'Clear Value On Refresh',
+    type: 'checkbox',
+    tooltip: 'When the Refresh On field is changed, clear the selected value.'
+  },
   unique: {
     label: 'Unique',
     type: 'checkbox',

@@ -82322,7 +82322,8 @@ module.exports = function(app) {
             values: 'Values',
             json: 'Raw JSON',
             url: 'URL',
-            resource: 'Resource'
+            resource: 'Resource',
+            custom: 'Custom'
           };
           $scope.resources = [];
           $scope.resourceFields = [];
@@ -82342,7 +82343,7 @@ module.exports = function(app) {
             return fields;
           };
 
-          $scope.formFields = getInputFields($scope.form.components);
+          $scope.formFields = [{label: 'Any Change', key: 'data'}].concat(getInputFields($scope.form.components));
 
           // Loads the selected fields.
           var loadFields = function() {
@@ -82459,7 +82460,7 @@ module.exports = function(app) {
             '</div>' +
           '</ng-switch>' +
           '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
-          '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
+          '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\' || component.dataSrc == \'custom\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
           '<div class="form-group" ng-hide="component.dataSrc !== \'resource\' || !component.data.resource || resourceFields.length == 0">' +
             '<label for="placeholder" form-builder-tooltip="The field to use as the value.">Value</label>' +
             '<select class="form-control" id="valueProperty" name="valueProperty" ng-options="value.property as value.title for value in resourceFields" ng-model="component.valueProperty"></select>' +
@@ -82470,6 +82471,10 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
+          '<div class="form-group" ng-show="component.dataSrc == \'custom\'">' +
+          '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">Custom Values</label>' +
+          '  <textarea class="form-control" rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];">{{ component.data.custom }}</textarea>' +
+          '</div>' +
           '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
@@ -82478,6 +82483,7 @@ module.exports = function(app) {
           '  <label for="placeholder" form-builder-tooltip="Refresh data when another field changes.">Refresh On</label>' +
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
+          '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
         '</ng-form>'
       );
@@ -82959,6 +82965,11 @@ module.exports = {
     label: 'Multiple Values',
     type: 'checkbox',
     tooltip: 'Allows multiple values to be entered for this field.'
+  },
+  clearOnRefresh: {
+    label: 'Clear Value On Refresh',
+    type: 'checkbox',
+    tooltip: 'When the Refresh On field is changed, clear the selected value.'
   },
   unique: {
     label: 'Unique',
