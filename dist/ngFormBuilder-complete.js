@@ -74948,9 +74948,22 @@ module.exports = function(app) {
 
           // Add a watch if they wish to refresh on selection of another field.
           if (settings.refreshOn) {
-            $scope.$watch('data.' + settings.refreshOn, function() {
-              $scope.refreshItems();
-            });
+            if (settings.refreshOn === 'data') {
+              $scope.$watch('data', function() {
+                $scope.refreshItems();
+                if (settings.clearOnRefresh) {
+                  $scope.data[settings.key] = settings.multiple ? [] : '';
+                }
+              }, true);
+            }
+            else {
+              $scope.$watch('data.' + settings.refreshOn, function() {
+                $scope.refreshItems();
+                if (settings.clearOnRefresh) {
+                  $scope.data[settings.key] = settings.multiple ? [] : '';
+                }
+              });
+            }
           }
 
           switch (settings.dataSrc) {
@@ -74979,6 +74992,20 @@ module.exports = function(app) {
               catch (error) {
                 $scope.selectItems = [];
               }
+              break;
+            case 'custom':
+              $scope.refreshItems = function() {
+                try {
+                  /* eslint-disable no-unused-vars */
+                  var data = _.cloneDeep($scope.data);
+                  /* eslint-enable no-unused-vars */
+                  $scope.selectItems = eval('(function(data) { var values = [];' + settings.data.custom.toString() + '; return values; })(data)');
+                }
+                catch (error) {
+                  $scope.selectItems = [];
+                }
+              };
+              $scope.refreshItems();
               break;
             case 'url':
             case 'resource':
@@ -75117,7 +75144,8 @@ module.exports = function(app) {
             values: [],
             json: '',
             url: '',
-            resource: ''
+            resource: '',
+            custom: ''
           },
           dataSrc: 'values',
           valueProperty: '',
@@ -84282,7 +84310,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":151,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":92}],151:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.7 | https://unpkg.com/ng-formio-builder@2.2.7/LICENSE.txt */
+/*! ng-formio-builder v2.2.9 | https://unpkg.com/ng-formio-builder@2.2.9/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
