@@ -1,3 +1,5 @@
+var livereload = require('gulp-livereload');
+
 module.exports = function(gulp, plugins, bundle) {
   return function() {
     bundle = bundle || plugins.browserify({
@@ -15,7 +17,8 @@ module.exports = function(gulp, plugins, bundle) {
       .pipe(plugins.rename('ngFormBuilder.min.js'))
       .pipe(plugins.streamify(plugins.uglify({preserveComments: 'license'})))
       .pipe(gulp.dest('dist/'))
-      .on('error', function(err){
+      .pipe(livereload())
+      .on('error', function(err) {
         console.log(err);
         this.emit('end');
       });

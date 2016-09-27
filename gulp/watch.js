@@ -1,6 +1,7 @@
 'use strict';
 
 var path = require('path');
+var livereload = require('gulp-livereload');
 
 module.exports = function(gulp, plugins) {
   return function() {
@@ -10,6 +11,7 @@ module.exports = function(gulp, plugins) {
     });
 
     var build = require('./scripts')(gulp, plugins, bundle);
+    livereload.listen();
     bundle = plugins.watchify(bundle);
     bundle.on('update', function(files) {
       console.log('Changed files: ', files.map(path.relative.bind(path, process.cwd())).join(', '));

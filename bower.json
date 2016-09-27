@@ -24,7 +24,9 @@
     "ng-ckeditor": "formio/ng-ckeditor#master",
     "ng-dialog": "^0.6.4",
     "ng-formio": "^2.2.9",
-    "ng-tags-input": "^3.1.1",
+    "ng-tags-input": "^3.1.1"
+  },
+  "devDependencies": {
     "font-awesome": "^4.6.3"
   }
 }
