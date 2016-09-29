@@ -64,6 +64,16 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A protected field will not be returned when queried via API.'
   },
+  image: {
+    label: 'Display as images',
+    type: 'checkbox',
+    tooltip: 'Instead of a list of linked files, images will be rendered in the view.'
+  },
+  imageSize: {
+    label: 'Image Size',
+    placeholder: '100',
+    tooltip: 'The image size for previewing images.'
+  },
   persistent: {
     label: 'Persistent',
     type: 'checkbox',
