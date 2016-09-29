@@ -58,6 +58,8 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
           '<form-builder-option property="dir"></form-builder-option>' +
+          '<form-builder-option property="image"></form-builder-option>' +
+          '<form-builder-option property="imageSize" ng-if="component.image"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +

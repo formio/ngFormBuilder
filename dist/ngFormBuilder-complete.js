@@ -81703,6 +81703,8 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
           '<form-builder-option property="dir"></form-builder-option>' +
+          '<form-builder-option property="image"></form-builder-option>' +
+          '<form-builder-option property="imageSize" ng-if="component.image"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
@@ -83008,6 +83010,16 @@ module.exports = {
     label: 'Protected',
     type: 'checkbox',
     tooltip: 'A protected field will not be returned when queried via API.'
+  },
+  image: {
+    label: 'Display as images',
+    type: 'checkbox',
+    tooltip: 'Instead of a list of linked files, images will be rendered in the view.'
+  },
+  imageSize: {
+    label: 'Image Size',
+    placeholder: '100',
+    tooltip: 'The image size for previewing images.'
   },
   persistent: {
     label: 'Persistent',
@@ -84321,7 +84333,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":151,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":92}],151:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.9 | https://unpkg.com/ng-formio-builder@2.2.9/LICENSE.txt */
+/*! ng-formio-builder v2.2.10 | https://unpkg.com/ng-formio-builder@2.2.10/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
