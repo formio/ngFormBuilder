@@ -98,7 +98,7 @@
           <h3 class="text-center text-muted">which <a href="https://github.com/formio/ngFormio" target="_blank">Renders as a Form</a> in your Application</h3>
           <pre class="text-center bg-info"><h4><code>&lt;formio form="form"&gt;&lt;/formio&gt;</code></h4></pre>
           <div class="well">
-            <formio form="form" id="formio-form"></formio>
+            <formio form="form" ng-if="renderForm"></formio>
           </div>
         </div>
         <div class="clearfix"></div>
@@ -251,13 +251,13 @@ node server</pre>
           display: 'form'
         };
 
+        $rootScope.renderForm = true;
         $rootScope.$on('formUpdate', function(event, form) {
           angular.merge($rootScope.form, form);
-          var formioScope = angular.element('#formio-form').scope();
-          angular.merge(formioScope.form, form);
+          $rootScope.renderForm = false;
           setTimeout(function() {
-            formioScope.$apply();
-          }, 100);
+            $rootScope.renderForm = true;
+          }, 10);
         });
 
         var originalComps = _.cloneDeep($rootScope.form.components);
