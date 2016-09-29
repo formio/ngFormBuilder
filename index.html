@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <title>Form.io Form Builder</title>
   <meta name="viewport" content="width=device-width">
-  <link rel="stylesheet" href="https://cdn.rawgit.com/yesmeck/jquery-jsonview/master/dist/jquery.jsonview.css">
+  <link rel="stylesheet" href="https://cdn.rawgit.com/odra/ng-json-explorer/master/dist/angular-json-explorer.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
   <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
   <link rel="stylesheet" href="dist/ngFormBuilder-full.css" />
 </head>
-<body ng-app="formBuilder" style="padding-top: 30px;">
+<body ng-app="formBuilder">
 <!-- BROWSE HAPPY BEGINS HERE -->
 <style>
   .browsehappy {
@@ -33,43 +33,258 @@
     width:64px;
     display:inline-block;
   }
+
+  .formbuilder {
+    height: 600px;
+  }
+
+  .formcomponents {
+    width: 30%;
+  }
+
+  .formarea {
+    width: 70%;
+  }
+
+  .component-settings .nav-link {
+    font-size: 0.6em;
+  }
+
+  .jsonviewer {
+    max-height: 600px;
+    overflow: scroll;
+  }
+
+  .form-type-select {
+    display: inline-block;
+    width: 100px;
+    height: 28px;
+    vertical-align: top;
+  }
 </style>
 <!--[if IE 6]><p class="browsehappy"><img />You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
 <!--[if IE 7]><p class="browsehappy"><img src="https://cdn.rawgit.com/alrra/browser-logos/master/internet-explorer/internet-explorer_64x64.png" />You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
 <!--[if IE 8]><p class="browsehappy"><img src="https://cdn.rawgit.com/alrra/browser-logos/master/internet-explorer/internet-explorer_64x64.png" />You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
 <!--[if IE 9]><p class="browsehappy"><img src="https://cdn.rawgit.com/alrra/browser-logos/master/internet-explorer/internet-explorer_64x64.png" />You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p><![endif]-->
 <!-- BROWSE HAPPY ENDS HERE -->
-<a href="https://github.com/formio/ngFormBuilder"><img style="position: absolute; top: 0; left: 0; border: 0; z-index:3000;" src="https://camo.githubusercontent.com/121cd7cbdc3e4855075ea8b558508b91ac463ac2/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_green_007200.png"></a>
-<nav class="navbar navbar-inverse navbar-fixed-top">
-  <div class="container">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="https://form.io"></a>
-    </div>
-  </div>
-</nav>
-<div class="jumbotron" style="margin-bottom:0; padding-bottom:20px;">
-  <div class="container">
-    <h2>Form.io Form Builder</h2>
-    <p>This library provides a form builder interface to create JSON based forms.</p>
-    <p>These forms could then be handed off to a Form Renderer such as the one found @ <a href="https://github.com/formio/ngFormio">https://github.com/formio/ngFormio</a>, which is able to render this JSON schema in the application in realtime.</p>
-    <p><strong><pre class="text-center"><code>&lt;form-builder form="myform"&gt;&lt;/form-builder&gt;</code></pre></strong></p>
-    <p>
-      <a class="btn btn-primary btn-lg" href="https://github.com/formio/ngFormBuilder">Download on GitHub</a>
-    </p>
+<div class="jumbotron">
+  <div class="container text-center">
+    <p><img src="http://code-maven.com/img/angularjs.png" /></p>
+    <h1>Form <a href="https://github.com/formio/ngFormBuilder" target="_blank">Builder</a> & <a href="https://github.com/formio/ngFormio" target="_blank">Renderer</a></h1>
+    <p><strong>Open Source</strong> by <a target="_blank" href="https://form.io"><img src="https://help.form.io/assets/formio-logo.png" /></a></p>
   </div>
 </div>
-<div class="container">
-  <h2>Example:</h2>
-  <form-builder form="form"></form-builder>
+<div class="page-content" ng-app="formioApp">
+  <div class="container-fluid">
+    <div>
+      <div class="row">
+        <div class="col-sm-8">
+          <h3 class="text-center text-muted">The <a href="https://github.com/formio/ngFormBuilder" target="_blank">Form Builder</a> allows you to build a <select class="form-control form-type-select" ng-model="form.display" ng-options="display.name as display.title for display in displays"></select></h3>
+          <pre class="text-center bg-info"><h4><code>&lt;form-builder form="form"&gt;&lt;/form-builder&gt;</code></h4></pre>
+          <div class="well" style="background-color: #fdfdfd;">
+            <form-builder form="form"></form-builder>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <h3 class="text-center text-muted">as JSON Schema</h3>
+          <pre class="bg-info"><h4><code>$rootScope.form = </code></h4></pre>
+          <div class="well jsonviewer">
+            <json-explorer data="form" collapsed="jsonCollapsed"></json-explorer>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-8 col-sm-offset-2">
+          <h3 class="text-center text-muted">which <a href="https://github.com/formio/ngFormio" target="_blank">Renders as a Form</a> in your Application</h3>
+          <pre class="text-center bg-info"><h4><code>&lt;formio form="form"&gt;&lt;/formio&gt;</code></h4></pre>
+          <div class="well">
+            <formio form="form" id="formio-form"></formio>
+          </div>
+        </div>
+        <div class="clearfix"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm-10 col-sm-offset-1 text-center">
+          <h3 class="text-center text-muted">which connects to our API Platform</h3>
+          <p>hosted or on-premise</p>
+          <a href="https://form.io" target="_blank"><img style="width:100%" src="https://raw.githubusercontent.com/formio/help.form.io/gh-pages/assets/img/formioapi2.png" /></a>
+        </div>
+      </div>
+      <div class="row" style="margin-top: 40px;">
+        <div class="col-sm-12 text-center">
+          <a href="https://form.io" target="_blank" class="btn btn-lg btn-success">Get Started</a>
+        </div>
+      </div>
+      <div class="row well" style="margin-top: 50px;">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <h2 class="section-heading">We are Open Source!</h2>
+              <h3 class="section-subheading text-muted">We are proud to offer our core Form &amp; API platform as Open Source.</h3>
+              <h3 class="section-subheading text-muted">Find us on GitHub @ <a href="https://github.com/formio/formio" target="_blank">https://github.com/formio/formio</a></h3>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4"><a href="https://github.com/formio/formio" target="_blank"><img class="img-responsive" src="https://form.io/assets/images/github-logo.png"></a></div>
+            <div class="col-md-8">
+              <p>Getting started is as easy as...</p>
+              <pre style="background-color: white;">git clone https://github.com/formio/formio.git
+cd formio
+npm install
+node server</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <a href="https://github.com/formio/formio" target="_blank"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
 </div>
 <script src="https://cdn.ckeditor.com/4.5.11/standard/ckeditor.js"></script>
 <script src="dist/ngFormBuilder-full.js"></script>
-<script src="https://cdn.rawgit.com/yesmeck/jquery-jsonview/master/dist/jquery.jsonview.js"></script>
+<script src="https://cdn.rawgit.com/odra/ng-json-explorer/master/dist/angular-json-explorer.min.js"></script>
 <script type="text/javascript">
-  angular.module('formBuilder', ['formio', 'ngFormBuilder'])
-    .run(['$rootScope', function($rootScope) {
-      $rootScope.form = {components: []};
-    }]);
+  angular
+    .module("formBuilder", ["ui.bootstrap", "ui.select", "formio", "ngFormBuilder", "ngJsonExplorer"])
+    .run([
+      "$rootScope",
+      'formioComponents',
+      '$timeout',
+      function(
+        $rootScope,
+        formioComponents,
+        $timeout
+      ) {
+        $rootScope.displays = [{
+          name: 'form',
+          title: 'Form'
+        }, {
+          name: 'wizard',
+          title: 'Wizard'
+        }];
+        $rootScope.form = {
+          components: [{
+            "input": true,
+            "tableView": true,
+            "inputType": "text",
+            "inputMask": "",
+            "label": "First Name",
+            "key": "firstName",
+            "placeholder": "Enter your first name",
+            "prefix": "",
+            "suffix": "",
+            "multiple": false,
+            "defaultValue": "",
+            "protected": false,
+            "unique": false,
+            "persistent": true,
+            "validate": {
+              "required": false,
+              "minLength": "",
+              "maxLength": "",
+              "pattern": "",
+              "custom": "",
+              "customPrivate": false
+            },
+            "conditional": {
+              "show": false,
+              "when": null,
+              "eq": ""
+            },
+            "type": "textfield"
+          }, {
+            "input": true,
+            "tableView": true,
+            "inputType": "text",
+            "inputMask": "",
+            "label": "Last Name",
+            "key": "lastName",
+            "placeholder": "Enter your last name",
+            "prefix": "",
+            "suffix": "",
+            "multiple": false,
+            "defaultValue": "",
+            "protected": false,
+            "unique": false,
+            "persistent": true,
+            "validate": {
+              "required": false,
+              "minLength": "",
+              "maxLength": "",
+              "pattern": "",
+              "custom": "",
+              "customPrivate": false
+            },
+            "conditional": {
+              "show": false,
+              "when": null,
+              "eq": ""
+            },
+            "type": "textfield"
+          }, {
+            "input": true,
+            "tableView": true,
+            "label": "Message",
+            "key": "message",
+            "placeholder": "What do you think?",
+            "prefix": "",
+            "suffix": "",
+            "rows": 3,
+            "multiple": false,
+            "defaultValue": "",
+            "protected": false,
+            "persistent": true,
+            "validate": {
+              "required": false,
+              "minLength": "",
+              "maxLength": "",
+              "pattern": "",
+              "custom": ""
+            },
+            "type": "textarea",
+            "conditional": {
+              "show": false,
+              "when": null,
+              "eq": ""
+            }
+          }],
+          display: 'form'
+        };
+
+        $rootScope.$on('formUpdate', function(event, form) {
+          angular.merge($rootScope.form, form);
+          var formioScope = angular.element('#formio-form').scope();
+          angular.merge(formioScope.form, form);
+          setTimeout(function() {
+            formioScope.$apply();
+          }, 100);
+        });
+
+        var originalComps = _.cloneDeep($rootScope.form.components);
+        originalComps.push(angular.copy(formioComponents.components.button.settings));
+        $rootScope.jsonCollapsed = true;
+        $timeout(function() {
+          $rootScope.jsonCollapsed = false;
+        }, 200);
+        var currentDisplay = 'form';
+        $rootScope.$watch('form.display', function(display) {
+          if (display && (display !== currentDisplay)) {
+            currentDisplay = display;
+            if (display === 'form') {
+              $rootScope.form.components = originalComps;
+            } else {
+              $rootScope.form.components = [{
+                type: 'panel',
+                input: false,
+                title: 'Page 1',
+                theme: 'default',
+                components: originalComps
+              }];
+            }
+          }
+        });
+      }
+    ]);
 </script>
 </body>
 </html>

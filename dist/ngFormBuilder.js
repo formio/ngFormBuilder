@@ -19940,6 +19940,17 @@ module.exports = [
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
 
+      // If this is a root component and the display is a wizard, then we know
+      // that they dropped the component outside of where it is supposed to go...
+      // Instead append or prepend to the components array.
+      if ($scope.component.display === 'wizard') {
+        $scope.$apply(function() {
+          var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
+          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
+        });
+        return true;
+      }
+
       // Make sure that they don't ever add a component on the bottom of the submit button.
       var lastComponent = $scope.component.components[$scope.component.components.length - 1];
       if (
