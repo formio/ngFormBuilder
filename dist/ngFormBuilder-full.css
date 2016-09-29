@@ -857,6 +857,10 @@ tags-input .autocomplete .suggestion-item em {
 .input-group .form-control.ui-select-search {
   float: none;
 }
+.form-group .form-field-type-select {
+  display: inline-block;
+  width: 100%;
+}
 
 /* Fix Safari bug that prevents you from typing in draggable password fields */
 input[type="password"][draggable="true"] {

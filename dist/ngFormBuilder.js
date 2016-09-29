@@ -19952,6 +19952,17 @@ module.exports = [
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
 
+      // If this is a root component and the display is a wizard, then we know
+      // that they dropped the component outside of where it is supposed to go...
+      // Instead append or prepend to the components array.
+      if ($scope.component.display === 'wizard') {
+        $scope.$apply(function() {
+          var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
+          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
+        });
+        return true;
+      }
+
       // Make sure that they don't ever add a component on the bottom of the submit button.
       var lastComponent = $scope.component.components[$scope.component.components.length - 1];
       if (
@@ -20643,7 +20654,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.2.9 | https://unpkg.com/ng-formio-builder@2.2.9/LICENSE.txt */
+/*! ng-formio-builder v2.2.10 | https://unpkg.com/ng-formio-builder@2.2.10/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
