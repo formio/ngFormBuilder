@@ -27,10 +27,13 @@ module.exports = ['debounce', function(debounce) {
       ) {
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
-        if (!$scope.form || !$scope.form.components || !$scope.form.components.length) {
-          $scope.form = {components:[submitButton]};
+        if (!$scope.form) {
+          $scope.form = {};
         }
-        else {
+        if (!$scope.form.components) {
+          $scope.form.components = [];
+        }
+        if (!$scope.form.components.length) {
           $scope.form.components.push(submitButton);
         }
         $scope.hideCount = 2;
