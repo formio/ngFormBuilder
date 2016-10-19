@@ -69633,7 +69633,9 @@ module.exports = url;
             ariaLabelledBySelector: null,
             ariaDescribedById: null,
             ariaDescribedBySelector: null,
-            bodyClassName: 'ngdialog-open'
+            bodyClassName: 'ngdialog-open',
+            width: null,
+            height: null
         };
 
         this.setForceHtmlReload = function (_useIt) {
@@ -69789,16 +69791,20 @@ module.exports = url;
                                 if (preCloseCallbackResult.closePromise) {
                                     preCloseCallbackResult.closePromise.then(function () {
                                         privateMethods.performCloseDialog($dialog, value);
+                                    }, function () {
+                                        return false;
                                     });
                                 } else {
                                     preCloseCallbackResult.then(function () {
                                         privateMethods.performCloseDialog($dialog, value);
                                     }, function () {
-                                        return;
+                                        return false;
                                     });
                                 }
                             } else if (preCloseCallbackResult !== false) {
                                 privateMethods.performCloseDialog($dialog, value);
+                            } else {
+                                return false;
                             }
                         } else {
                             privateMethods.performCloseDialog($dialog, value);
@@ -69831,7 +69837,7 @@ module.exports = url;
                         var focusableElements = privateMethods.getFocusableElements($dialog);
 
                         if (focusableElements.length === 0) {
-                            if (document.activeElement) {
+                            if (document.activeElement && document.activeElement.blur) {
                                 document.activeElement.blur();
                             }
                             return;
@@ -70012,9 +70018,9 @@ module.exports = url;
 
                     getRouterLocationEventName: function() {
                         if(privateMethods.detectUIRouter()) {
-                            return '$stateChangeSuccess';
+                            return '$stateChangeStart';
                         }
-                        return '$locationChangeSuccess';
+                        return '$locationChangeStart';
                     }
                 };
 
@@ -70042,7 +70048,7 @@ module.exports = url;
                         var dialogID = null;
                         opts = opts || {};
                         if (openOnePerName && opts.name) {
-                            dialogID = opts.name+' dialog';
+                            dialogID = opts.name.toLowerCase().replace(/\s/g, '-') + '-dialog';
                             if (this.isOpen(dialogID)) {
                                 return;
                             }
@@ -70052,6 +70058,14 @@ module.exports = url;
                         dialogID = dialogID || 'ngdialog' + localID;
                         openIdStack.push(dialogID);
 
+                        // Merge opts.data with predefined via setDefaults
+                        if (typeof options.data !== 'undefined') {
+                            if (typeof opts.data === 'undefined') {
+                                opts.data = {};
+                            }
+                            opts.data = angular.merge(angular.copy(options.data), opts.data);
+                        }
+
                         angular.extend(options, opts);
 
                         var defer;
@@ -70060,7 +70074,7 @@ module.exports = url;
                         var scope;
                         scopes[dialogID] = scope = angular.isObject(options.scope) ? options.scope.$new() : $rootScope.$new();
 
-                        var $dialog, $dialogParent;
+                        var $dialog, $dialogParent, $dialogContent;
 
                         var resolve = angular.extend({}, options.resolve);
 
@@ -70080,7 +70094,7 @@ module.exports = url;
                             }
 
                             var hasOverlayClass = options.overlay ? '' : ' ngdialog-no-overlay';
-                            $dialog = $el('<div id="'+dialogID + '" class="ngdialog' + hasOverlayClass + '"></div>');
+                            $dialog = $el('<div id="' + dialogID + '" class="ngdialog' + hasOverlayClass + '"></div>');
                             $dialog.html((options.overlay ?
                                 '<div class="ngdialog-overlay"></div><div class="ngdialog-content" role="document">' + template + '</div>' :
                                 '<div class="ngdialog-content" role="document">' + template + '</div>'));
@@ -70104,6 +70118,24 @@ module.exports = url;
 
                             if (options.appendClassName) {
                                 $dialog.addClass(options.appendClassName);
+                            }
+
+                            if (options.width) {
+                                $dialogContent = $dialog[0].querySelector('.ngdialog-content');
+                                if (angular.isString(options.width)) {
+                                    $dialogContent.style.width = options.width;
+                                } else {
+                                    $dialogContent.style.width = options.width + 'px';
+                                }
+                            }
+
+                            if (options.height) {
+                                $dialogContent = $dialog[0].querySelector('.ngdialog-content');
+                                if (angular.isString(options.height)) {
+                                    $dialogContent.style.height = options.height;
+                                } else {
+                                    $dialogContent.style.height = options.height + 'px';
+                                }
                             }
 
                             if (options.disableAnimation) {
@@ -70163,10 +70195,14 @@ module.exports = url;
                                 );
 
                                 if(options.bindToController) {
-                                    angular.extend(controllerInstance.instance, {ngDialogId: scope.ngDialogId, ngDialogData: scope.ngDialogData, closeThisDialog: scope.closeThisDialog});
+                                    angular.extend(controllerInstance.instance, {ngDialogId: scope.ngDialogId, ngDialogData: scope.ngDialogData, closeThisDialog: scope.closeThisDialog, confirm: scope.confirm});
                                 }
 
-                                $dialog.data('$ngDialogControllerController', controllerInstance());
+                                if(typeof controllerInstance === 'function'){
+                                    $dialog.data('$ngDialogControllerController', controllerInstance());
+                                } else {
+                                    $dialog.data('$ngDialogControllerController', controllerInstance);
+                                }
                             }
 
                             $timeout(function () {
@@ -70203,8 +70239,9 @@ module.exports = url;
 
                             if (options.closeByNavigation) {
                                 var eventName = privateMethods.getRouterLocationEventName();
-                                $rootScope.$on(eventName, function () {
-                                    privateMethods.closeDialog($dialog);
+                                $rootScope.$on(eventName, function ($event) {
+                                    if (privateMethods.closeDialog($dialog) === false)
+                                        $event.preventDefault();
                                 });
                             }
 
@@ -70289,6 +70326,15 @@ module.exports = url;
                         var options = angular.copy(defaults);
 
                         opts = opts || {};
+
+                        // Merge opts.data with predefined via setDefaults
+                        if (typeof options.data !== 'undefined') {
+                            if (typeof opts.data === 'undefined') {
+                                opts.data = {};
+                            }
+                            opts.data = angular.merge(angular.copy(options.data), opts.data);
+                        }
+
                         angular.extend(options, opts);
 
                         options.scope = angular.isObject(options.scope) ? options.scope.$new() : $rootScope.$new();
@@ -76899,7 +76945,7 @@ module.exports = function() {
         $scope.pages = [];
         $scope.hasTitles = false;
         $scope.colclass = '';
-        if (!$scope.submission || !Object.keys($scope.submission.data).length) {
+        if (!$scope.submission || !Object.keys($scope.submission).length) {
           $scope.submission = session ? {data: session.data} : {data: {}};
         }
         $scope.currentPage = session ? session.page : 0;
@@ -76976,19 +77022,89 @@ module.exports = function() {
           if ($scope.checkErrors()) {
             return;
           }
-          var sub = angular.copy($scope.submission);
+
+          // Create a sanitized submission object.
+          var submissionData = {data: {}};
+          if ($scope.submission._id) {
+            submissionData._id = $scope.submission._id;
+          }
+          if ($scope.submission.data._id) {
+            submissionData._id = $scope.submission.data._id;
+          }
+
+          var grabIds = function(input) {
+            if (!input) {
+              return [];
+            }
+
+            if (!(input instanceof Array)) {
+              input = [input];
+            }
+
+            var final = [];
+            input.forEach(function(element) {
+              if (element && element._id) {
+                final.push(element._id);
+              }
+            });
+
+            return final;
+          };
+
+          var defaultPermissions = {};
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (sub.data.hasOwnProperty(component.key) && (component.type === 'number')) {
-              if (sub.data[component.key]) {
-                sub.data[component.key] = parseFloat(sub.data[component.key]);
+            if (component.type === 'resource' && component.key && component.defaultPermission) {
+              defaultPermissions[component.key] = component.defaultPermission;
+            }
+            if (submissionData.data.hasOwnProperty(component.key) && (component.type === 'number')) {
+              var value = $scope.submission.data[component.key];
+              if (component.type === 'number') {
+                submissionData.data[component.key] = value ? parseFloat(value) : 0;
               }
               else {
-                sub.data[component.key] = 0;
+                submissionData.data[component.key] = value;
+              }
+            }
+          }, true);
+
+          angular.forEach($scope.submission.data, function(value, key) {
+            if (value && !value.hasOwnProperty('_id')) {
+              submissionData.data[key] = value;
+            }
+
+            // Setup the submission access.
+            var perm = defaultPermissions[key];
+            if (perm) {
+              submissionData.access = submissionData.access || [];
+
+              // Coerce value into an array for plucking.
+              if (!(value instanceof Array)) {
+                value = [value];
+              }
+
+              // Try to find and update an existing permission.
+              var found = false;
+              submissionData.access.forEach(function(permission) {
+                if (permission.type === perm) {
+                  found = true;
+                  permission.resources = permission.resources || [];
+                  permission.resources.concat(grabIds(value));
+                }
+              });
+
+              // Add a permission, because one was not found.
+              if (!found) {
+                submissionData.access.push({
+                  type: perm,
+                  resources: grabIds(value)
+                });
               }
             }
           });
+          // Strip out any angular keys.
+          submissionData = angular.copy(submissionData);
 
-          var submitEvent = $scope.$emit('formSubmit', sub);
+          var submitEvent = $scope.$emit('formSubmit', submissionData);
           if (submitEvent.defaultPrevented) {
               // Listener wants to cancel the form submission
               return;
@@ -77007,23 +77123,24 @@ module.exports = function() {
 
           // Save to specified action.
           if ($scope.action) {
-            var method = sub._id ? 'put' : 'post';
-            $http[method]($scope.action, sub).success(function(submission) {
+            var method = submissionData._id ? 'put' : 'post';
+            $http[method]($scope.action, submissionData).success(function(submission) {
               Formio.clearCache();
               onDone(submission);
             }).error(FormioScope.onError($scope, $element));
           }
           else if ($scope.formio && !$scope.formio.noSubmit) {
-            $scope.formio.saveSubmission(sub).then(onDone).catch(FormioScope.onError($scope, $element));
+            $scope.formio.saveSubmission(submissionData).then(onDone).catch(FormioScope.onError($scope, $element));
           }
           else {
-            onDone(sub);
+            onDone(submissionData);
           }
         };
 
         $scope.cancel = function() {
           $scope.clear();
           showPage(true);
+          $scope.$emit('cancel');
         };
 
         // Move onto the next page.
@@ -84594,7 +84711,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/list.html',
-      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
+      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
     );
 
     $templateCache.put('formio/formbuilder/row.html',
