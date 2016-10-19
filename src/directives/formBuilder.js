@@ -8,7 +8,8 @@ module.exports = ['debounce', function(debounce) {
       src: '=',
       type: '=',
       onSave: '=',
-      onCancel: '='
+      onCancel: '=',
+      options: '=?'
     },
     controller: [
       '$scope',
@@ -25,12 +26,17 @@ module.exports = ['debounce', function(debounce) {
         FormioUtils,
         dndDragIframeWorkaround
       ) {
+        $scope.options = $scope.options || {};
+
         // Add the components to the scope.
         var submitButton = angular.copy(formioComponents.components.button.settings);
-        if (!$scope.form || !$scope.form.components || !$scope.form.components.length) {
-          $scope.form = {components:[submitButton]};
+        if (!$scope.form) {
+          $scope.form = {};
         }
-        else {
+        if (!$scope.form.components) {
+          $scope.form.components = [];
+        }
+        if (!$scope.options.noSubmit && !$scope.form.components.length) {
           $scope.form.components.push(submitButton);
         }
         $scope.hideCount = 2;
@@ -70,7 +76,7 @@ module.exports = ['debounce', function(debounce) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
-            if ($scope.form.components.length === 0) {
+            if (!$scope.options.noSubmit && $scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
           });
