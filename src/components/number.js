@@ -37,6 +37,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/number/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
