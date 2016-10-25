@@ -101,7 +101,7 @@ module.exports = function(app) {
 
           $scope.$watch('component.dataSrc', function(source) {
             if (($scope.resources.length === 0) && (source === 'resource')) {
-              $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+              $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
                 $scope.resources = resources;
                 loadFields();
               });
@@ -167,10 +167,17 @@ module.exports = function(app) {
             '</div>' +
             '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
-            '<div class="form-group" ng-switch-when="resource">' +
-              '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
-              '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.data.resource"></select>' +
-            '</div>' +
+          '<div class="form-group" ng-switch-when="resource">' +
+            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<ui-select ui-select-required ui-select-open-on-focus ng-model="component.data.resource" theme="bootstrap">' +
+              '<ui-select-match class="ui-select-match" placeholder="">' +
+                '{{$select.selected.title}}' +
+              '</ui-select-match>' +
+              '<ui-select-choices class="ui-select-choices" repeat="value._id as value in resources | filter: $select.search" refresh="refreshSubmissions($select.search)" refresh-delay="250">' +
+                '<div ng-bind-html="value.title | highlight: $select.search"></div>' +
+              '</ui-select-choices>' +
+            '</ui-select>' +
+          '</div>' +
           '</ng-switch>' +
           '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
           '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\' || component.dataSrc == \'custom\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
