@@ -25,7 +25,7 @@ module.exports = function() {
         if (component.key && ($scope.component.key !== component.key || $scope.component.isNew)) {
           existingComponents[component.key] = component;
         }
-      });
+      }, true);
 
       var keyExists = function(component) {
         if (existingComponents.hasOwnProperty(component.key)) {
