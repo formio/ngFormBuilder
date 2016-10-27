@@ -157,7 +157,8 @@ module.exports = ['debounce', function(debounce) {
         });
 
         // Get the resource fields.
-        if ($scope.formio) {
+        var resourceEnabled = !formioComponents.groups.resource || !formioComponents.groups.resource.disabled;
+        if ($scope.formio && resourceEnabled) {
           $scope.formComponentsByGroup.resource = {};
           $scope.formComponentGroups.resource = {
             title: 'Existing Resource Fields',
