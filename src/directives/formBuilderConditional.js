@@ -17,7 +17,7 @@ module.exports = [
             '</select>' +
             '<br>When the form component:' +
             '<select class="form-control input-md" ng-model="component.conditional.when">' +
-            '<option ng-repeat="item in _components track by $index" value="{{item.key}}">{{item.label}}</option>' +
+            '<option ng-repeat="item in _components track by $index" value="{{item.key}}">{{item !== "" ? item.label + " (" + item.key + ")" : ""}}</option>' +
             '</select>' +
             '<br>Has the value:' +
             '<input type="text" class="form-control input-md" ng-model="component.conditional.eq">' +
@@ -49,7 +49,7 @@ module.exports = [
           // Remove non-input/button fields because they don't make sense.
           // FA-890 - Dont allow the current component to be a conditional trigger.
           $scope._components = _.reject($scope._components, function(c) {
-            return !c.input || (c.type === 'button') || (c.key === $scope.component.key);
+            return !c.input || (c.type === 'button') || (c.key === $scope.component.key) || (!c.label && !c.key);
           });
 
           // Add default item to the components list.
