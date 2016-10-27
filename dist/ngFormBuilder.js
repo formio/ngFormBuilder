@@ -17191,12 +17191,12 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="mapRegion" form-builder-tooltip="The region bias to use for this search. See https://developers.google.com/maps/documentation/geocoding/intro#RegionCodes for more information.">Region Bias</label>' +
-            '<input type="text" class="form-control" id="mapRegion" name="mapRegion" ng-model="component.map.region"></input>' +
+            '<label for="mapRegion" form-builder-tooltip="The region bias to use for this search. See <a href=\'https://developers.google.com/maps/documentation/geocoding/intro#RegionCodes\' target=\'_blank\'>Region Biasing</a> for more information.">Region Bias</label>' +
+            '<input type="text" class="form-control" id="mapRegion" name="mapRegion" ng-model="component.map.region" placeholder="Dallas" />' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="mapKey" form-builder-tooltip="The API key for Google Maps. See https://developers.google.com/maps/documentation/geocoding/get-api-key for more information.">Google Maps API Key</label>' +
-            '<input type="text" class="form-control" id="mapKey" name="mapKey" ng-model="component.map.key"></input>' +
+            '<label for="mapKey" form-builder-tooltip="The API key for Google Maps. See <a href=\'https://developers.google.com/maps/documentation/geocoding/get-api-key\' target=\'_blank\'>Get an API Key</a> for more information.">Google Maps API Key</label>' +
+            '<input type="text" class="form-control" id="mapKey" name="mapKey" ng-model="component.map.key" placeholder="xxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxx"/>' +
           '</div>' +
           '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
@@ -18291,6 +18291,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/number/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
@@ -18787,7 +18788,7 @@ module.exports = function(app) {
 
           $scope.$watch('component.dataSrc', function(source) {
             if (($scope.resources.length === 0) && (source === 'resource')) {
-              $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+              $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
                 $scope.resources = resources;
                 loadFields();
               });
@@ -18853,10 +18854,17 @@ module.exports = function(app) {
             '</div>' +
             '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
-            '<div class="form-group" ng-switch-when="resource">' +
-              '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
-              '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.data.resource"></select>' +
-            '</div>' +
+          '<div class="form-group" ng-switch-when="resource">' +
+            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<ui-select ui-select-required ui-select-open-on-focus ng-model="component.data.resource" theme="bootstrap">' +
+              '<ui-select-match class="ui-select-match" placeholder="">' +
+                '{{$select.selected.title}}' +
+              '</ui-select-match>' +
+              '<ui-select-choices class="ui-select-choices" repeat="value._id as value in resources | filter: $select.search" refresh="refreshSubmissions($select.search)" refresh-delay="250">' +
+                '<div ng-bind-html="value.title | highlight: $select.search"></div>' +
+              '</ui-select-choices>' +
+            '</ui-select>' +
+          '</div>' +
           '</ng-switch>' +
           '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
           '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\' || component.dataSrc == \'custom\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
@@ -19885,7 +19893,7 @@ module.exports = [
             '</select>' +
             '<br>When the form component:' +
             '<select class="form-control input-md" ng-model="component.conditional.when">' +
-            '<option ng-repeat="item in _components track by $index" value="{{item.key}}">{{item.label}}</option>' +
+            '<option ng-repeat="item in _components track by $index" value="{{item.key}}">{{item !== "" ? item.label + " (" + item.key + ")" : ""}}</option>' +
             '</select>' +
             '<br>Has the value:' +
             '<input type="text" class="form-control input-md" ng-model="component.conditional.eq">' +
@@ -19917,7 +19925,7 @@ module.exports = [
           // Remove non-input/button fields because they don't make sense.
           // FA-890 - Dont allow the current component to be a conditional trigger.
           $scope._components = _.reject($scope._components, function(c) {
-            return !c.input || (c.type === 'button') || (c.key === $scope.component.key);
+            return !c.input || (c.type === 'button') || (c.key === $scope.component.key) || (!c.label && !c.key);
           });
 
           // Add default item to the components list.
@@ -20313,7 +20321,7 @@ module.exports = function() {
         if (component.key && ($scope.component.key !== component.key || $scope.component.isNew)) {
           existingComponents[component.key] = component;
         }
-      });
+      }, true);
 
       var keyExists = function(component) {
         if (existingComponents.hasOwnProperty(component.key)) {
