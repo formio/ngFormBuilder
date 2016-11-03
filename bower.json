@@ -4,7 +4,7 @@
     "dist/ngFormBuilder.js",
     "css/ngFormBuilder.css"
   ],
-  "version": "2.3.4",
+  "version": "2.3.5",
   "authors": [
     "Travis Tidwell <travis@form.io>"
   ],
@@ -23,7 +23,7 @@
     "lodash": "^4.16.6",
     "ng-ckeditor": "formio/ng-ckeditor#master",
     "ng-dialog": "^0.6.4",
-    "ng-formio": "^2.3.4",
+    "ng-formio": "^2.3.5",
     "ng-tags-input": "^3.1.1"
   },
   "devDependencies": {

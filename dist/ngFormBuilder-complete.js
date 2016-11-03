@@ -47670,8 +47670,9 @@ var dropbox = function(formio) {
         }
 
         xhr.open('POST', formio.formUrl + '/storage/dropbox');
+        var token = false;
         try {
-          var token = localStorage.getItem('formioToken');
+          token = localStorage.getItem('formioToken');
         }
         catch (e) {
           // Swallow error.
@@ -47683,6 +47684,13 @@ var dropbox = function(formio) {
       });
     },
     downloadFile: function(file) {
+      var token = false;
+      try {
+        token = localStorage.getItem('formioToken');
+      }
+      catch (e) {
+        // Swallow error.
+      }
       file.url = formio.formUrl + '/storage/dropbox?path_lower=' + file.path_lower + (token ? '&x-jwt-token=' + token : '');
       return Promise.resolve(file);
     }
@@ -47787,8 +47795,9 @@ var s3 = function(formio) {
 
         pre.setRequestHeader('Accept', 'application/json');
         pre.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        var token = false;
         try {
-          var token = localStorage.getItem('formioToken');
+          token = localStorage.getItem('formioToken');
         }
         catch (e) {
           // swallow error.
@@ -76520,10 +76529,12 @@ module.exports = function() {
 
           // Show the submit message and say the form is no longer submitting.
           var onSubmit = function(submission, message) {
-            $scope.showAlerts({
-              type: 'success',
-              message: message
-            });
+            if (message) {
+              $scope.showAlerts({
+                type: 'success',
+                message: message
+              });
+            }
             form.submitting = false;
           };
 
@@ -84858,7 +84869,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":153,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":92}],153:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.3.4 | https://unpkg.com/ng-formio-builder@2.3.4/LICENSE.txt */
+/*! ng-formio-builder v2.3.5 | https://unpkg.com/ng-formio-builder@2.3.5/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
