@@ -10,6 +10,10 @@ module.exports = function(app) {
             template: 'formio/components/radio/display.html'
           },
           {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
+          },
+          {
             name: 'Validation',
             template: 'formio/components/radio/validate.html'
           },
@@ -38,7 +42,6 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<value-builder data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
-          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +

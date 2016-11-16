@@ -10,6 +10,10 @@ module.exports = function(app) {
             template: 'formio/components/phoneNumber/display.html'
           },
           {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
+          },
+          {
             name: 'Validation',
             template: 'formio/components/phoneNumber/validate.html'
           },
@@ -37,7 +41,6 @@ module.exports = function(app) {
       $templateCache.put('formio/components/phoneNumber/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
-          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +

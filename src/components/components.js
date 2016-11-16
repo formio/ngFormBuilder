@@ -40,6 +40,23 @@ module.exports = function(app) {
       );
 
       // Create the common API tab markup.
+      $templateCache.put('formio/components/common/data.html',
+        '<uib-accordion>' +
+        '  <div uib-accordion-group heading="Simple" class="panel panel-default">' +
+        '    <form-builder-option property="defaultValue"></form-builder-option>' +
+        '  </div>' +
+        '  <div uib-accordion-group heading="Advanced" class="panel panel-default">' +
+        '    <textarea class="form-control" rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '    <small>' +
+        '      <p>Enter custom default value code.</p>' +
+        '      <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '      <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '    </small>' +
+        '  </div>' +
+        '</uib-accordion>'
+      );
+
+      // Create the common API tab markup.
       $templateCache.put('formio/components/common/api.html',
         '<ng-form>' +
           '<form-builder-option-key></form-builder-option-key>' +

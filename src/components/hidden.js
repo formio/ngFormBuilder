@@ -11,6 +11,10 @@ module.exports = function(app) {
             template: 'formio/components/hidden/display.html'
           },
           {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
+          },
+          {
             name: 'Validation',
             template: 'formio/components/hidden/validation.html'
           },
