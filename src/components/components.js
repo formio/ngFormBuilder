@@ -41,14 +41,21 @@ module.exports = function(app) {
 
       // Create the common API tab markup.
       $templateCache.put('formio/components/common/data.html',
+        '<form-builder-option property="defaultValue"></form-builder-option>' +
         '<uib-accordion>' +
-        '  <div uib-accordion-group heading="Simple" class="panel panel-default">' +
-        '    <form-builder-option property="defaultValue"></form-builder-option>' +
-        '  </div>' +
-        '  <div uib-accordion-group heading="Advanced" class="panel panel-default">' +
+        '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
         '    <textarea class="form-control" rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
         '    <small>' +
         '      <p>Enter custom default value code.</p>' +
+        '      <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '      <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '      <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
+        '    </small>' +
+        '  </div>' +
+        '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
+        '    <textarea class="form-control" rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '    <small>' +
+        '      <p>Enter code to calculate a value.</p>' +
         '      <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
         '      <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
         '    </small>' +
