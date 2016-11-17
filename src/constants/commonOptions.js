@@ -49,6 +49,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Allows multiple values to be entered for this field.'
   },
+  disabled: {
+    label: 'Disabled',
+    type: 'checkbox',
+    tooltip: 'Disable the form input.'
+  },
   clearOnRefresh: {
     label: 'Clear Value On Refresh',
     type: 'checkbox',

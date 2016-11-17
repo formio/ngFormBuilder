@@ -10,6 +10,10 @@ module.exports = function(app) {
             template: 'formio/components/day/display.html'
           },
           {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
+          },
+          {
             name: 'Validation',
             template: 'formio/components/day/validate.html'
           },
@@ -37,7 +41,6 @@ module.exports = function(app) {
       $templateCache.put('formio/components/day/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
-          '<form-builder-option property="defaultValue"></form-builder-option>' +
           '<form-builder-option property="fields.day.placeholder" label="Day Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.year.placeholder" label="Year Placeholder"></form-builder-option>' +
@@ -46,6 +49,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
