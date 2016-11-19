@@ -91393,6 +91393,10 @@ module.exports = function(app) {
             '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">Action</label>' +
             '<select class="form-control" id="action" name="action" ng-options="action.name as action.title for action in actions" ng-model="component.action"></select>' +
           '</div>' +
+          '<div class="form-group" ng-if="component.action === \'event\'">' +
+          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">Button Event</label>' +
+          '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
+          '</div>' +
           '<div class="form-group">' +
             '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
@@ -93793,6 +93797,10 @@ module.exports = {
       title: 'Submit'
     },
     {
+      name: 'event',
+      title: 'Event'
+    },
+    {
       name: 'reset',
       title: 'Reset'
     },
@@ -94983,7 +94991,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":156,"angular-drag-and-drop-lists":1,"lodash":35,"ng-ckeditor/ng-ckeditor":38,"ng-dialog":39,"ng-formio/src/formio-full.js":94}],156:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.0 | https://unpkg.com/ng-formio-builder@2.4.0/LICENSE.txt */
+/*! ng-formio-builder v2.4.1 | https://unpkg.com/ng-formio-builder@2.4.1/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
