@@ -73749,7 +73749,7 @@ module.exports = {
    *   The data for this conditional check.
    * @returns {boolean}
    */
-  checkCondition: function(component, data) {
+  checkCondition: function(component, data, submission) {
     if (component.hasOwnProperty('customConditional') && component.customConditional) {
       try {
         var script = '(function() { var show = true;';
@@ -73766,7 +73766,9 @@ module.exports = {
     else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
       var cond = component.conditional;
       var value = this.getValue({data: data}, cond.when);
-      // Will return null if not found.
+      if (submission && (value === null || typeof value === 'undefined')) {
+        value = this.getValue(submission, cond.when);
+      }
       if (value === null || typeof value === 'undefined') {
         value = component.hasOwnProperty('defaultValue') ? component.defaultValue : '';
       }
@@ -77994,8 +77996,8 @@ var formioUtils = _dereq_('formio-utils');
 
 module.exports = function() {
   return {
-    checkVisible: function(component, data) {
-      if (data && !formioUtils.checkCondition(component, data)) {
+    checkVisible: function(component, data, submission) {
+      if (data && !formioUtils.checkCondition(component, data, submission)) {
         if (data.hasOwnProperty(component.key)) {
           delete data[component.key];
         }
@@ -78003,23 +78005,13 @@ module.exports = function() {
       }
       return true;
     },
-    isVisible: function(component, subData, data, hide) {
+    isVisible: function(component, data, submission, hide) {
       // If the component is in the hideComponents array, then hide it by default.
       if (Array.isArray(hide) && (hide.indexOf(component.key) !== -1)) {
         return false;
       }
 
-      // First check local data.
-      if (!this.checkVisible(component, subData)) {
-        return false;
-      }
-
-      // Now check global data.
-      if (!this.checkVisible(component, data)) {
-        return false;
-      }
-
-      return true;
+      return this.checkVisible(component, data, submission);
     },
     flattenComponents: formioUtils.flattenComponents,
     eachComponent: formioUtils.eachComponent,
@@ -85454,7 +85446,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":156,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":94}],156:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.6 | https://unpkg.com/ng-formio-builder@2.4.6/LICENSE.txt */
+/*! ng-formio-builder v2.4.7 | https://unpkg.com/ng-formio-builder@2.4.7/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
