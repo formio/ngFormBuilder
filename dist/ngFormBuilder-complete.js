@@ -73745,11 +73745,14 @@ module.exports = {
    *
    * @param component
    *   The component to check for the condition.
-   * @param compData
-   *   The data for this conditional check.
+   * @param row
+   *   The data within a row
+   * @param data
+   *   The full submission data.
+   *
    * @returns {boolean}
    */
-  checkCondition: function(component, data, submission) {
+  checkCondition: function(component, row, data) {
     if (component.hasOwnProperty('customConditional') && component.customConditional) {
       try {
         var script = '(function() { var show = true;';
@@ -73765,9 +73768,12 @@ module.exports = {
     }
     else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
       var cond = component.conditional;
-      var value = this.getValue({data: data}, cond.when);
-      if (submission && (value === null || typeof value === 'undefined')) {
-        value = this.getValue(submission, cond.when);
+      var value = null;
+      if (row) {
+        value = this.getValue({data: row}, cond.when);
+      }
+      if (data && (value === null || typeof value === 'undefined')) {
+        value = this.getValue({data: data}, cond.when);
       }
       if (value === null || typeof value === 'undefined') {
         value = component.hasOwnProperty('defaultValue') ? component.defaultValue : '';
@@ -76707,16 +76713,16 @@ module.exports = function() {
           return !form.$valid;
         };
 
-        $scope.isVisible = function(component, data) {
+        $scope.isVisible = function(component, row) {
           return FormioUtils.isVisible(
             component,
-            data,
+            row,
             $scope.submission.data,
             $scope.hideComponents
           );
         };
 
-        $scope.isDisabled = function(component, data) {
+        $scope.isDisabled = function(component) {
           return $scope.readOnly || component.disabled || (Array.isArray($scope.disableComponents) && $scope.disableComponents.indexOf(component.key) !== -1);
         };
 
@@ -76947,10 +76953,10 @@ module.exports = [
           };
 
           // See if this component is visible or not.
-          $scope.isVisible = function(component, data) {
+          $scope.isVisible = function(component, row) {
             return FormioUtils.isVisible(
               component,
-              data,
+              row,
               $scope.submission.data,
               $scope.hideComponents
             );
@@ -77162,10 +77168,10 @@ module.exports = [
         ) {
           // Set the form url.
           $scope.formUrl = $scope.form ? Formio.getAppUrl() + '/form/' + $scope.form._id.toString() : '';
-          $scope.isVisible = function(component, data) {
+          $scope.isVisible = function(component, row) {
             return FormioUtils.isVisible(
               component,
-              data,
+              row,
               $scope.submission.data,
               $scope.hideComponents
             );
@@ -77330,10 +77336,10 @@ module.exports = function() {
         $scope,
         FormioUtils
       ) {
-        $scope.isVisible = function(component, data) {
+        $scope.isVisible = function(component, row) {
           return FormioUtils.isVisible(
             component,
-            data,
+            row,
             $scope.submission.data,
             $scope.ignore
           );
@@ -77756,7 +77762,7 @@ module.exports = function() {
             $scope.$watch('submission.data', function(data) {
               var newPages = [];
               angular.forEach(allPages, function(page) {
-                if (FormioUtils.isVisible(page)) {
+                if (FormioUtils.isVisible(page, null, data)) {
                   newPages.push(page);
                 }
               });
@@ -77996,22 +78002,25 @@ var formioUtils = _dereq_('formio-utils');
 
 module.exports = function() {
   return {
-    checkVisible: function(component, data, submission) {
-      if (data && !formioUtils.checkCondition(component, data, submission)) {
-        if (data.hasOwnProperty(component.key)) {
+    checkVisible: function(component, row, data) {
+      if (!formioUtils.checkCondition(component, row, data)) {
+        if (row && row.hasOwnProperty(component.key)) {
+          delete row[component.key];
+        }
+        if (data && data.hasOwnProperty(component.key)) {
           delete data[component.key];
         }
         return false;
       }
       return true;
     },
-    isVisible: function(component, data, submission, hide) {
+    isVisible: function(component, row, data, hide) {
       // If the component is in the hideComponents array, then hide it by default.
-      if (Array.isArray(hide) && (hide.indexOf(component.key) !== -1)) {
+      if (hide && Array.isArray(hide) && (hide.indexOf(component.key) !== -1)) {
         return false;
       }
 
-      return this.checkVisible(component, data, submission);
+      return this.checkVisible(component, row, data);
     },
     flattenComponents: formioUtils.flattenComponents,
     eachComponent: formioUtils.eachComponent,
@@ -85446,7 +85455,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":156,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":94}],156:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.7 | https://unpkg.com/ng-formio-builder@2.4.7/LICENSE.txt */
+/*! ng-formio-builder v2.4.8 | https://unpkg.com/ng-formio-builder@2.4.8/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
