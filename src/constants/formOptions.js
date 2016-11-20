@@ -5,6 +5,10 @@ module.exports = {
       title: 'Submit'
     },
     {
+      name: 'event',
+      title: 'Event'
+    },
+    {
       name: 'reset',
       title: 'Reset'
     },

@@ -46,6 +46,10 @@ module.exports = function(app) {
             '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">Action</label>' +
             '<select class="form-control" id="action" name="action" ng-options="action.name as action.title for action in actions" ng-model="component.action"></select>' +
           '</div>' +
+          '<div class="form-group" ng-if="component.action === \'event\'">' +
+          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">Button Event</label>' +
+          '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
+          '</div>' +
           '<div class="form-group">' +
             '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
