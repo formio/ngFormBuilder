@@ -47227,7 +47227,18 @@ Formio.loadProjects = function(query) {
   return this.makeStaticRequest(baseUrl + '/project' + query);
 };
 
-Formio.request = function(url, method, data, header) {
+/**
+ * Make a formio request, using the current token.
+ *
+ * @param url
+ * @param method
+ * @param data
+ * @param header
+ * @param {Boolean} ignoreCache
+ *   Whether or not to use the cache.
+ * @returns {*}
+ */
+Formio.request = function(url, method, data, header, ignoreCache) {
   if (!url) {
     return Promise.reject('No url provided');
   }
@@ -47236,50 +47247,50 @@ Formio.request = function(url, method, data, header) {
 
   return new Promise(function(resolve, reject) {
     // Get the cached promise to save multiple loads.
-    if (method === 'GET' && cache.hasOwnProperty(cacheKey)) {
-      resolve(cache[cacheKey]);
+    if (!ignoreCache && method === 'GET' && cache.hasOwnProperty(cacheKey)) {
+      return resolve(cache[cacheKey]);
     }
-    else {
-      resolve(new Promise(function(resolve, reject) {
-        // Set up and fetch request
-        var headers = header || new Headers({
+
+    resolve(new Promise(function(resolve, reject) {
+      // Set up and fetch request
+      var headers = header || new Headers({
           'Accept': 'application/json',
           'Content-type': 'application/json; charset=UTF-8'
         });
-        var token = Formio.getToken();
-        if (token) {
-          headers.append('x-jwt-token', token);
-        }
+      var token = Formio.getToken();
+      if (token) {
+        headers.append('x-jwt-token', token);
+      }
 
-        var options = {
-          method: method,
-          headers: headers,
-          mode: 'cors'
-        };
-        if (data) {
-          options.body = JSON.stringify(data);
-        }
+      var options = {
+        method: method,
+        headers: headers,
+        mode: 'cors'
+      };
+      if (data) {
+        options.body = JSON.stringify(data);
+      }
 
-        resolve(fetch(url, options));
-      })
-      .catch(function(err) {
-        err.message = 'Could not connect to API server (' + err.message + ')';
-        err.networkError = true;
-        throw err;
-      })
-      .then(function(response) {
-        // Handle fetch results
-        if (response.ok) {
-          var token = response.headers.get('x-jwt-token');
-          if (response.status >= 200 && response.status < 300 && token && token !== '') {
-            Formio.setToken(token);
-          }
-          // 204 is no content. Don't try to .json() it.
-          if (response.status === 204) {
-            return {};
-          }
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
-            response.json() : response.text())
+      resolve(fetch(url, options));
+    })
+    .catch(function(err) {
+      err.message = 'Could not connect to API server (' + err.message + ')';
+      err.networkError = true;
+      throw err;
+    })
+    .then(function(response) {
+      // Handle fetch results
+      if (response.ok) {
+        var token = response.headers.get('x-jwt-token');
+        if (response.status >= 200 && response.status < 300 && token && token !== '') {
+          Formio.setToken(token);
+        }
+        // 204 is no content. Don't try to .json() it.
+        if (response.status === 204) {
+          return {};
+        }
+        return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
+          response.json() : response.text())
           .then(function(result) {
             // Add some content-range metadata to the result here
             var range = response.headers.get('content-range');
@@ -47294,34 +47305,33 @@ Formio.request = function(url, method, data, header) {
             }
             return result;
           });
-        }
-        else {
-          if (response.status === 440) {
-            Formio.setToken(null);
-            Formio.events.emit('formio.sessionExpired', response.body);
-          }
-          else if (response.status === 401) {
-            Formio.events.emit('formio.unauthorized', response.body);
-          }
-          // Parse and return the error as a rejected promise to reject this promise
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
-            response.json() : response.text())
-            .then(function(error){
-              throw error;
-            });
-        }
-      })
-      .catch(function(err) {
-        if (err === 'Bad Token') {
+      }
+      else {
+        if (response.status === 440) {
           Formio.setToken(null);
-          Formio.events.emit('formio.badToken', err);
+          Formio.events.emit('formio.sessionExpired', response.body);
         }
-        // Remove failed promises from cache
-        delete cache[cacheKey];
-        // Propagate error so client can handle accordingly
-        throw err;
-      }));
-    }
+        else if (response.status === 401) {
+          Formio.events.emit('formio.unauthorized', response.body);
+        }
+        // Parse and return the error as a rejected promise to reject this promise
+        return (response.headers.get('content-type').indexOf('application/json') !== -1 ?
+          response.json() : response.text())
+          .then(function(error){
+            throw error;
+          });
+      }
+    })
+    .catch(function(err) {
+      if (err === 'Bad Token') {
+        Formio.setToken(null);
+        Formio.events.emit('formio.badToken', err);
+      }
+      // Remove failed promises from cache
+      delete cache[cacheKey];
+      // Propagate error so client can handle accordingly
+      throw err;
+    }));
   })
   .then(function(result) {
     // Save the cache
@@ -47449,13 +47459,16 @@ Formio.form = function(form, options, done) {
     return done('Invalid Form');
   }
 
+  var getAction = function() {
+    return options.form || form.getAttribute('action');
+  };
+
   /**
    * Returns the current submission object.
    * @returns {{data: {}}}
    */
   var getSubmission = function() {
     var submission = {data: {}};
-    var action = options.form || form.getAttribute('action');
     var setValue = function(path, value) {
       var paths = path.replace(/\[|\]\[/g, '.').replace(/\]$/g, '').split('.');
       var current = submission;
@@ -47487,6 +47500,10 @@ Formio.form = function(form, options, done) {
     if (event) {
       event.preventDefault();
     }
+    var action = getAction();
+    if (!action) {
+      return;
+    }
     (new Formio(action)).saveSubmission(getSubmission()).then(function(sub) {
       done(null, sub);
     }, done);
@@ -47501,6 +47518,7 @@ Formio.form = function(form, options, done) {
 
   return {
     submit: submit,
+    getAction: getAction,
     getSubmission: getSubmission
   };
 };
@@ -47630,7 +47648,7 @@ Formio.deregisterPlugin = function(plugin) {
 
 module.exports = Formio;
 
-},{"./providers":28,"eventemitter2":25,"native-promise-only":35,"shallow-copy":97,"whatwg-fetch":100}],28:[function(_dereq_,module,exports){
+},{"./providers":28,"eventemitter2":25,"native-promise-only":35,"shallow-copy":99,"whatwg-fetch":102}],28:[function(_dereq_,module,exports){
 module.exports = {
   storage: _dereq_('./storage')
 };
@@ -73610,6 +73628,212 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
 },{"./dist/ng-file-upload-all":38}],40:[function(_dereq_,module,exports){
+'use strict';
+module.exports = {
+  /**
+   * Determine if a component is a layout component or not.
+   *
+   * @param {Object} component
+   *   The component to check.
+   *
+   * @returns {Boolean}
+   *   Whether or not the component is a layout component.
+   */
+  isLayoutComponent: function isLayoutComponent(component) {
+    return (
+      (component.columns && Array.isArray(component.columns)) ||
+      (component.rows && Array.isArray(component.rows)) ||
+      (component.components && Array.isArray(component.components))
+    ) ? true : false;
+  },
+
+  /**
+   * Iterate through each component within a form.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Function} fn
+   *   The iteration function to invoke for each component.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   * @param {String} path
+   *   The current data path of the element. Example: data.user.firstName
+   */
+  eachComponent: function eachComponent(components, fn, includeAll, path) {
+    if (!components) return;
+    path = path || '';
+    components.forEach(function(component) {
+      var hasColumns = component.columns && Array.isArray(component.columns);
+      var hasRows = component.rows && Array.isArray(component.rows);
+      var hasComps = component.components && Array.isArray(component.components);
+      var noRecurse = false;
+      var newPath = component.key ? (path ? (path + '.' + component.key) : component.key) : '';
+
+      if (includeAll || component.tree || (!hasColumns && !hasRows && !hasComps)) {
+        noRecurse = fn(component, newPath);
+      }
+
+      var subPath = function() {
+        if (component.key && ((component.type === 'datagrid') || (component.type === 'container'))) {
+          return newPath;
+        }
+        return path;
+      };
+
+      if (!noRecurse) {
+        if (hasColumns) {
+          component.columns.forEach(function(column) {
+            eachComponent(column.components, fn, includeAll, subPath());
+          });
+        }
+
+        else if (hasRows) {
+          [].concat.apply([], component.rows).forEach(function(row) {
+            eachComponent(row.components, fn, includeAll, subPath());
+          });
+        }
+
+        else if (hasComps) {
+          eachComponent(component.components, fn, includeAll, subPath());
+        }
+      }
+    });
+  },
+
+  /**
+   * Get a component by its key
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {String} key
+   *   The key of the component to get.
+   *
+   * @returns {Object}
+   *   The component that matches the given key, or undefined if not found.
+   */
+  getComponent: function getComponent(components, key) {
+    var result;
+    module.exports.eachComponent(components, function(component) {
+      if (component.key === key) {
+        result = component;
+      }
+    });
+    return result;
+  },
+
+  /**
+   * Flatten the form components for data manipulation.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   *
+   * @returns {Object}
+   *   The flattened components map.
+   */
+  flattenComponents: function flattenComponents(components, includeAll) {
+    var flattened = {};
+    module.exports.eachComponent(components, function(component, path) {
+      flattened[path] = component;
+    }, includeAll);
+    return flattened;
+  },
+
+  /**
+   * Checks the conditions for a provided component and data.
+   *
+   * @param component
+   *   The component to check for the condition.
+   * @param compData
+   *   The data for this conditional check.
+   * @returns {boolean}
+   */
+  checkCondition: function(component, data) {
+    if (component.hasOwnProperty('customConditional') && component.customConditional) {
+      try {
+        var script = '(function() { var show = true;';
+        script += component.customConditional.toString();
+        script += '; return show; })()';
+        var result = eval(script);
+        return result.toString() === 'true';
+      }
+      catch (e) {
+        console.warn('An error occurred in a custom conditional statement for component ' + component.key, e);
+        return true;
+      }
+    }
+    else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
+      var cond = component.conditional;
+      var value = this.getValue({data: data}, cond.when);
+      // Will return null if not found.
+      if (value === null || typeof value === 'undefined') {
+        value = component.hasOwnProperty('defaultValue') ? component.defaultValue : '';
+      }
+      // Special check for selectboxes component.
+      if (typeof value === 'object' && value.hasOwnProperty(cond.eq)) {
+        return value[cond.eq].toString() === cond.show.toString();
+      }
+      return (value.toString() === cond.eq.toString()) === (cond.show.toString() === 'true');
+    }
+
+    // Default to show.
+    return true;
+  },
+
+  /**
+   * Get the value for a component key, in the given submission.
+   *
+   * @param {Object} submission
+   *   A submission object to search.
+   * @param {String} key
+   *   A for components API key to search for.
+   */
+  getValue: function getValue(submission, key) {
+    var data = submission.data || {};
+
+    var search = function search(data) {
+      var i;
+      var value;
+
+      if (!data) {
+        return null;
+      }
+
+      if (data instanceof Array) {
+        for (i = 0; i < data.length; i++) {
+          if (typeof data[i] === 'object') {
+            value = search(data[i]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+      else if (typeof data === 'object') {
+        if (data.hasOwnProperty(key)) {
+          return data[key];
+        }
+
+        var keys = Object.keys(data);
+        for (i = 0; i < keys.length; i++) {
+          if (typeof data[keys[i]] === 'object') {
+            value = search(data[keys[i]]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+    };
+
+    return search(data);
+  }
+};
+
+},{}],41:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73695,7 +73919,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],41:[function(_dereq_,module,exports){
+},{}],42:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73868,7 +74092,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],42:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73922,7 +74146,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],43:[function(_dereq_,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73946,17 +74170,17 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/columns.html',
-        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"component in column.components track by $index\"\n      component=\"component\"\n      data=\"data\"\n      formio=\"formio\"\n      formio-form=\"formioForm\"\n      read-only=\"readOnly\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      ng-if=\"show[column.key || ''] && show[component.key || '']\"\n      show=\"show\"\n    ></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/columns.html',
-        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      form=\"form\"\n      submission=\"submission\"\n      ignore=\"ignore\"\n      ng-if=\"isVisible(_component, data)\"\n    ></formio-component-view>\n  </div>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],44:[function(_dereq_,module,exports){
+},{}],45:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -74016,7 +74240,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],45:[function(_dereq_,module,exports){
+},{}],46:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74054,13 +74278,13 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/container.html', FormioUtils.fieldWrap(
-        "<div ng-controller=\"formioContainerComponent\" class=\"formio-container-component\">\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data[parentKey]\"\n    formio=\"formio\"\n    formio-form=\"formioForm\"\n    read-only=\"readOnly\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n    show=\"show\"\n  ></formio-component>\n</div>\n"
+        "<div ng-controller=\"formioContainerComponent\" class=\"formio-container-component\">\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data[parentKey]\"\n    formio=\"formio\"\n    submission=\"submission\"\n    hide-components=\"hideComponents\"\n    ng-if=\"isVisible(_component, data[parentKey])\"\n    formio-form=\"formioForm\"\n    read-only=\"isDisabled(_component, data[parentKey])\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n  ></formio-component>\n</div>\n"
       ));
     }
   ]);
 };
 
-},{}],46:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74089,7 +74313,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],47:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -74197,7 +74421,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],48:[function(_dereq_,module,exports){
+},{}],49:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74222,7 +74446,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],49:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74279,10 +74503,21 @@ module.exports = function(app) {
   ]);
   app.controller('formioDataGrid', [
     '$scope',
-    function($scope) {
+    'FormioUtils',
+    function($scope, FormioUtils) {
       // Ensure each data grid has a valid data model.
       $scope.data = $scope.data || {};
       $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || [{}];
+
+      // Determine if any component is visible.
+      $scope.anyVisible = function(component) {
+        var data = $scope.data[$scope.component.key];
+        var visible = false;
+        angular.forEach(data, function(rowData) {
+          visible = (visible || FormioUtils.isVisible(component, rowData));
+        });
+        return visible;
+      };
 
       // Pull out the rows and cols for easy iteration.
       $scope.rows = $scope.data[$scope.component.key];
@@ -74310,13 +74545,13 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/datagrid.html', FormioUtils.fieldWrap(
-        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\" ng-if=\"show[component.key || '']\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th ng-repeat=\"col in cols track by $index\" ng-if=\"show[col.key || ''] || localKeys.indexOf(col.conditional.when) !== -1\" ng-class=\"{'field-required': col.validate.required}\">{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\">\n        <formio-component\n          ng-if=\"(localKeys.indexOf(col.conditional.when) === -1 && show[col.key || '']) || checkConditional(col.key, row)\"\n          component=\"col\"\n          data=\"rows[rowIndex]\"\n          formio-form=\"formioForm\"\n          formio=\"formio\"\n          read-only=\"readOnly || col.disabled\"\n          grid-row=\"rowIndex\"\n          grid-col=\"colIndex\"\n          show=\"show\"\n        ></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
+        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th\n        ng-repeat=\"col in cols track by $index\"\n        ng-class=\"{'field-required': col.validate.required}\"\n        ng-if=\"anyVisible(col)\"\n      >{{ col.label | formioTranslate }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\" ng-if=\"anyVisible(col)\">\n        <formio-component\n          component=\"col\"\n          data=\"rows[rowIndex]\"\n          formio-form=\"formioForm\"\n          formio=\"formio\"\n          submission=\"submission\"\n          hide-components=\"hideComponents\"\n          ng-if=\"isVisible(col, row)\"\n          read-only=\"isDisabled(col, row)\"\n          grid-row=\"rowIndex\"\n          grid-col=\"colIndex\"\n        ></formio-component>\n      </td>\n      <td>\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate}}\n    </a>\n  </div>\n</div>\n"
       ));
     }
   ]);
 };
 
-},{}],50:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74426,7 +74661,179 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],51:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
+"use strict";
+
+module.exports = function(app) {
+  app.directive('dayPart', function() {
+    return {
+      restrict: 'A',
+      replace: true,
+      require: 'ngModel',
+      link: function(scope, elem, attrs, ngModel) {
+        var limitLength = attrs.characters || 2;
+        scope.$watch(attrs.ngModel, function() {
+          if (!ngModel.$viewValue) {
+            return;
+          }
+          var render = false;
+          if (ngModel.$viewValue.length > limitLength) {
+            ngModel.$setViewValue(ngModel.$viewValue.substring(0, limitLength));
+            render = true;
+          }
+          if (isNaN(ngModel.$viewValue)) {
+            ngModel.$setViewValue(ngModel.$viewValue.replace(/\D/g,''));
+            render = true;
+          }
+          if (
+            parseInt(ngModel.$viewValue) < parseInt(attrs.min) ||
+            parseInt(ngModel.$viewValue) > parseInt(attrs.max)
+          ) {
+            ngModel.$setViewValue(ngModel.$viewValue.substring(0, limitLength - 1));
+            render = true;
+          }
+          if (render) {
+            ngModel.$render();
+          }
+        });
+      }
+    };
+  });
+  app.directive('dayInput', function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      require: 'ngModel',
+      scope: {
+        component: '=',
+        componentId: '=',
+        readOnly: '=',
+        ngModel: '=',
+        gridRow: '=',
+        gridCol: '='
+      },
+      templateUrl: 'formio/components/day-input.html',
+      controller: ['$scope', function($scope) {
+        $scope.months = [$scope.component.fields.month.placeholder, 'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+
+        $scope.date = {
+          day: '',
+          month: '',
+          year: ''
+        };
+      }],
+      link: function(scope, elem, attrs, ngModel) {
+        // Set the scope values based on the current model.
+        scope.$watch('ngModel', function() {
+          if (ngModel.$viewValue) {
+            // Only update on load.
+            if (!ngModel.$dirty) {
+              var parts = ngModel.$viewValue.split('/');
+              if (parts.length === 3) {
+                scope.date.day = parts[(scope.component.dayFirst ? 0 : 1)];
+                scope.date.month = parseInt(parts[(scope.component.dayFirst ? 1 : 0)]).toString();
+                scope.date.year = parts[2];
+              }
+            }
+          }
+        });
+
+        var padLeft = function padLeft(nr, n, str) {
+          return Array(n - String(nr.toString()).length + 1).join(str || '0') + nr.toString();
+        };
+
+        scope.onChange = function() {
+          ngModel.$setViewValue(padLeft(scope.date.day, 2) + '/' + padLeft(scope.date.month, 2) + '/' + padLeft(scope.date.year, 4));
+        };
+
+        ngModel.$validators.day = function(modelValue, viewValue) {
+          var value = modelValue || viewValue;
+          var required = scope.component.fields.day.required || scope.component.fields.month.required || scope.component.fields.year.required;
+
+          if (!required) {
+            return true;
+          }
+          if (!value && required) {
+            return false;
+          }
+          var parts = value.split('/');
+          if (scope.component.fields.day.required) {
+            if (parts[(scope.component.dayFirst ? 0 : 1)] === '00') {
+              return false;
+            }
+          }
+          if (scope.component.fields.month.required) {
+            if (parts[(scope.component.dayFirst ? 1 : 0)] === '00') {
+              return false;
+            }
+          }
+          if (scope.component.fields.year.required) {
+            if (parts[2] === '0000') {
+              return false;
+            }
+          }
+          return true;
+        };
+      }
+    };
+  });
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      formioComponentsProvider.register('day', {
+        title: 'Day',
+        template: 'formio/components/day.html',
+        group: 'advanced',
+        //controller: ['$scope', function($scope) {
+        //}],
+        settings: {
+          input: true,
+          tableView: true,
+          label: '',
+          key: 'dayField',
+          fields: {
+            day: {
+              type: 'text',
+              placeholder: '',
+              required: false
+            },
+            month: {
+              type: 'select',
+              placeholder: '',
+              required: false
+            },
+            year: {
+              type: 'text',
+              placeholder: '',
+              required: false
+            }
+          },
+          dayFirst: false,
+          protected: false,
+          persistent: true,
+          validate: {
+            custom: ''
+          }
+        }
+      });
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    'FormioUtils',
+    function($templateCache, FormioUtils) {
+      $templateCache.put('formio/components/day.html', FormioUtils.fieldWrap(
+        "<div class=\"day-input\">\n  <day-input\n  name=\"{{componentId}}\"\n  component-id=\"componentId\"\n  read-only=\"isDisabled(component, data)\"\n  component=\"component\"\n  ng-required=\"component.validate.required\"\n  custom-validator=\"component.validate.custom\"\n  ng-model=\"data[component.key]\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  />\n</div>\n"
+      ));
+      $templateCache.put('formio/components/day-input.html',
+        "<div class=\"daySelect form row\">\n  <div class=\"form-group col-xs-3\" ng-if=\"component.dayFirst\">\n    <label for=\"{{componentId}}-day\" ng-class=\"{'field-required': component.fields.day.required}\">{{ \"Day\" | formioTranslate }}</label>\n    <input\n      class=\"form-control\"\n      type=\"text\"\n      id=\"{{componentId}}-day\"\n      ng-model=\"date.day\"\n      ng-change=\"onChange()\"\n      style=\"padding-right: 10px;\"\n      placeholder=\"{{component.fields.day.placeholder}}\"\n      day-part\n      characters=\"2\"\n      min=\"0\"\n      max=\"31\"\n      ng-disabled=\"readOnly\"\n    />\n  </div>\n  <div class=\"form-group col-xs-4\">\n    <label for=\"{{componentId}}-month\" ng-class=\"{'field-required': component.fields.month.required}\">{{ \"Month\" | formioTranslate }}</label>\n    <select class=\"form-control\"\n            type=\"text\"\n            id=\"{{componentId}}-month\"\n            ng-model=\"date.month\"\n            ng-change=\"onChange()\"\n            ng-disabled=\"readOnly\">\n      <option ng-repeat=\"month in months\" value=\"{{$index}}\">{{ month }}</option>\n    </select>\n  </div>\n  <div class=\"form-group col-xs-3\" ng-if=\"!component.dayFirst\">\n    <label for=\"{{componentId}}-day\" ng-class=\"{'field-required': component.fields.day.required}\">{{ \"Day\" | formioTranslate }}</label>\n    <input\n      class=\"form-control\"\n      type=\"text\"\n      id=\"{{componentId}}-day1\"\n      ng-model=\"date.day\"\n      ng-change=\"onChange()\"\n      style=\"padding-right: 10px;\"\n      placeholder=\"{{component.fields.day.placeholder}}\"\n      day-part\n      characters=\"2\"\n      min=\"0\"\n      max=\"31\"\n      ng-disabled=\"readOnly\"\n    />\n  </div>\n  <div class=\"form-group col-xs-5\">\n    <label for=\"{{componentId}}-year\" ng-class=\"{'field-required': component.fields.year.required}\">{{ \"Year\" | formioTranslate }}</label>\n    <input\n      class=\"form-control\"\n      type=\"text\"\n      id=\"{{componentId}}-year\"\n      ng-model=\"date.year\"\n      ng-change=\"onChange()\"\n      style=\"padding-right: 10px;\"\n      placeholder=\"{{component.fields.year.placeholder}}\"\n      day-part\n      characters=\"4\"\n      min=\"0\"\n      max=\"2100\"\n      ng-disabled=\"readOnly\"\n    />\n  </div>\n</div>\n"
+      );
+    }
+  ]);
+};
+
+},{}],53:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -74458,7 +74865,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74484,17 +74891,17 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/fieldset.html',
-        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend | formioTranslate }}</legend>\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    formio=\"formio\"\n    read-only=\"readOnly\"\n    formio-form=\"formioForm\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n    show=\"show\"\n  ></formio-component>\n</fieldset>\n"
+        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend | formioTranslate }}</legend>\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    formio=\"formio\"\n    submission=\"submission\"\n    hide-components=\"hideComponents\"\n    ng-if=\"isVisible(_component, data)\"\n    read-only=\"isDisabled(_component, data)\"\n    formio-form=\"formioForm\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n  ></formio-component>\n</fieldset>\n"
       );
 
       $templateCache.put('formio/componentsView/fieldset.html',
-        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend }}</legend>\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n</fieldset>\n"
+        "<fieldset id=\"{{ component.key }}\">\n  <legend ng-if=\"component.legend\">{{ component.legend }}</legend>\n  <formio-component-view\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    submission=\"submission\"\n    form=\"form\"\n    ignore=\"ignore\"\n    ng-if=\"isVisible(_component, data)\"\n  ></formio-component-view>\n</fieldset>\n"
       );
     }
   ]);
 };
 
-},{}],53:[function(_dereq_,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74742,7 +75149,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],54:[function(_dereq_,module,exports){
+},{}],56:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74775,7 +75182,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],55:[function(_dereq_,module,exports){
+},{}],57:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -74855,7 +75262,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],56:[function(_dereq_,module,exports){
+},{}],58:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -74878,6 +75285,7 @@ _dereq_('./email')(app);
 _dereq_('./phonenumber')(app);
 _dereq_('./address')(app);
 _dereq_('./datetime')(app);
+_dereq_('./day')(app);
 _dereq_('./currency')(app);
 _dereq_('./hidden')(app);
 _dereq_('./resource')(app);
@@ -74896,7 +75304,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":40,"./button":41,"./checkbox":42,"./columns":43,"./components":44,"./container":45,"./content":46,"./currency":47,"./custom":48,"./datagrid":49,"./datetime":50,"./email":51,"./fieldset":52,"./file":53,"./hidden":54,"./htmlelement":55,"./number":57,"./page":58,"./panel":59,"./password":60,"./phonenumber":61,"./radio":62,"./resource":63,"./select":64,"./selectboxes":65,"./signature":66,"./survey":67,"./table":68,"./textarea":69,"./textfield":70,"./well":71}],57:[function(_dereq_,module,exports){
+},{"./address":41,"./button":42,"./checkbox":43,"./columns":44,"./components":45,"./container":46,"./content":47,"./currency":48,"./custom":49,"./datagrid":50,"./datetime":51,"./day":52,"./email":53,"./fieldset":54,"./file":55,"./hidden":56,"./htmlelement":57,"./number":59,"./page":60,"./panel":61,"./password":62,"./phonenumber":63,"./radio":64,"./resource":65,"./select":66,"./selectboxes":67,"./signature":68,"./survey":69,"./table":70,"./textarea":71,"./textfield":72,"./well":73}],59:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -74953,7 +75361,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],58:[function(_dereq_,module,exports){
+},{}],60:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -74974,13 +75382,13 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/page.html',
-        "<formio-component ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" formio=\"formio\" formio-form=\"formioForm\" grid-row=\"gridRow\" grid-col=\"gridCol\"></formio-component>\n"
+        "<formio-component\n  ng-repeat=\"_component in component.components track by $index\"\n  component=\"_component\"\n  data=\"data\"\n  formio=\"formio\"\n  submission=\"submission\"\n  hide-components=\"hideComponents\"\n  ng-if=\"isVisible(_component, data)\"\n  read-only=\"isDisabled(_component, data)\"\n  formio-form=\"formioForm\"\n  grid-row=\"gridRow\"\n  grid-col=\"gridCol\"\n></formio-component>\n"
       );
     }
   ]);
 };
 
-},{}],59:[function(_dereq_,module,exports){
+},{}],61:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -75006,17 +75414,17 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/panel.html',
-        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title | formioTranslate }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component\n      ng-repeat=\"_component in component.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      read-only=\"readOnly\"\n      formio-form=\"formioForm\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n      show=\"show\"\n    ></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title | formioTranslate }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component\n      ng-repeat=\"_component in component.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"isVisible(_component, data)\"\n      read-only=\"isDisabled(_component, data)\"\n      formio-form=\"formioForm\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/panel.html',
-        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n  </div>\n</div>\n"
+        "<div class=\"panel panel-{{ component.theme }}\" id=\"{{ component.key }}\">\n  <div ng-if=\"component.title\" class=\"panel-heading\">\n    <h3 class=\"panel-title\">{{ component.title }}</h3>\n  </div>\n  <div class=\"panel-body\">\n    <formio-component-view\n      ng-repeat=\"_component in component.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      submission=\"submission\"\n      form=\"form\"\n      ignore=\"ignore\"\n      ng-if=\"isVisible(_component, data)\"\n    ></formio-component-view>\n  </div>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],60:[function(_dereq_,module,exports){
+},{}],62:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75045,7 +75453,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],61:[function(_dereq_,module,exports){
+},{}],63:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75078,7 +75486,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],62:[function(_dereq_,module,exports){
+},{}],64:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -75127,7 +75535,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],63:[function(_dereq_,module,exports){
+},{}],65:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -75252,7 +75660,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],64:[function(_dereq_,module,exports){
+},{}],66:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -75656,7 +76064,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],65:[function(_dereq_,module,exports){
+},{}],67:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -75760,7 +76168,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],66:[function(_dereq_,module,exports){
+},{}],68:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -75903,7 +76311,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],67:[function(_dereq_,module,exports){
+},{}],69:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -75976,7 +76384,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],68:[function(_dereq_,module,exports){
+},{}],70:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -76011,17 +76419,17 @@ module.exports = function(app) {
       tableClasses += "'table-hover': component.hover, ";
       tableClasses += "'table-condensed': component.condensed}";
       $templateCache.put('formio/components/table.html',
-        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header | formioTranslate }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component\n            ng-repeat=\"component in column.components track by $index\"\n            component=\"component\"\n            data=\"data\"\n            formio=\"formio\"\n            formio-form=\"formioForm\"\n            grid-row=\"gridRow\"\n            grid-col=\"gridCol\"\n            ng-if=\"show[column.key || ''] && show[component.key || '']\"\n            show=\"show\"\n          ></formio-component>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
+        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header | formioTranslate }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component\n            ng-repeat=\"_component in column.components track by $index\"\n            component=\"_component\"\n            data=\"data\"\n            formio=\"formio\"\n            submission=\"submission\"\n            hide-components=\"hideComponents\"\n            ng-if=\"isVisible(_component, data)\"\n            formio-form=\"formioForm\"\n            read-only=\"isDisabled(_component, data)\"\n            grid-row=\"gridRow\"\n            grid-col=\"gridCol\"\n          ></formio-component>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/table.html',
-        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component-view ng-repeat=\"component in column.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
+        "<div class=\"table-responsive\" id=\"{{ component.key }}\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table\">\n    <thead ng-if=\"component.header.length\">\n      <th ng-repeat=\"header in component.header track by $index\">{{ header }}</th>\n    </thead>\n    <tbody>\n      <tr ng-repeat=\"row in component.rows track by $index\">\n        <td ng-repeat=\"column in row track by $index\">\n          <formio-component-view\n            ng-repeat=\"_component in column.components track by $index\"\n            component=\"_component\"\n            data=\"data\"\n            form=\"form\"\n            submission=\"submission\"\n            ignore=\"ignore\"\n            ng-if=\"isVisible(_component, data)\"\n          ></formio-component-view>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],69:[function(_dereq_,module,exports){
+},{}],71:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -76077,7 +76485,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],70:[function(_dereq_,module,exports){
+},{}],72:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -76136,7 +76544,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],71:[function(_dereq_,module,exports){
+},{}],73:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -76160,16 +76568,16 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/well.html',
-        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    formio=\"formio\"\n    read-only=\"readOnly\"\n    formio-form=\"formioForm\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    ng-if=\"show[component.key || ''] && show[_component.key || '']\"\n    show=\"show\"\n  ></formio-component>\n</div>\n"
+        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    formio=\"formio\"\n    submission=\"submission\"\n    hide-components=\"hideComponents\"\n    ng-if=\"isVisible(_component, data)\"\n    read-only=\"isDisabled(_component, data)\"\n    formio-form=\"formioForm\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n  ></formio-component>\n</div>\n"
       );
       $templateCache.put('formio/componentsView/well.html',
-        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component-view ng-repeat=\"component in component.components track by $index\" component=\"component\" data=\"data\" form=\"form\" ignore=\"ignore\"></formio-component-view>\n</div>\n"
+        "<div class=\"well\" id=\"{{ component.key }}\">\n  <formio-component-view\n    ng-repeat=\"_component in component.components track by $index\"\n    component=\"_component\"\n    data=\"data\"\n    form=\"form\"\n    submission=\"submission\"\n    ignore=\"ignore\"\n    ng-if=\"isVisible(_component, data)\"\n  ></formio-component-view>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],72:[function(_dereq_,module,exports){
+},{}],74:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -76210,7 +76618,7 @@ module.exports = function() {
   };
 };
 
-},{}],73:[function(_dereq_,module,exports){
+},{}],75:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -76257,286 +76665,9 @@ module.exports = function() {
           $scope._src += 'live=1';
         }
 
-        // Build the display map.
-        $scope.show = {
-          '': true,
-          'undefined': true,
-          'null': true
-        };
-        var boolean = {
-          'true': true,
-          'false': false
-        };
-
-        /**
-         * Sweep the current submission, to identify and remove data that has been conditionally hidden.
-         *
-         * This will iterate over every key in the submission data obj, regardless of the structure.
-         */
-        var sweepSubmission = function() {
-          var show = $scope.show || {
-              '': true,
-              'undefined': true,
-              'null': true
-            };
-          var submission = $scope.submission.data || {};
-
-          /**
-           * Sweep the given component keys and remove any data for the given keys which are being conditionally hidden.
-           *
-           * @param {Object} components
-           *   The list of components to sweep.
-           * @param {Boolean} ret
-           *   Whether or not you want to know if a modification needs to be made.
-           */
-          var sweep = function sweep(components, ret) {
-            // Skip our unwanted types.
-            if (components === null || typeof components === 'undefined') {
-              if (ret) {
-                return false;
-              }
-              return;
-            }
-
-            // If given a string, then we are looking at the api key of a component.
-            if (typeof components === 'string') {
-              if (show.hasOwnProperty(components) && show[components] === false) {
-                if (ret) {
-                  return true;
-                }
-                return;
-              }
-            }
-            // If given an array, iterate over each element, assuming its not a string itself.
-            // If each element is a string, then we aren't looking at a component, but data itself.
-            else if (components instanceof Array) {
-              var filtered = [];
-
-              components.forEach(function(component) {
-                if (typeof component === 'string') {
-                  filtered.push(component);
-                  return;
-                }
-
-                // Recurse into the components of this component.
-                var modified = sweep(component, true);
-                if (!modified) {
-                  filtered.push(component);
-                }
-              });
-
-              components = filtered;
-              return;
-            }
-            // If given an object, iterate the properties as component keys.
-            else if (typeof components === 'object') {
-              Object.keys(components).forEach(function(key) {
-                // If the key is deleted, delete the whole obj.
-                var modifiedKey = sweep(key, true);
-                if (modifiedKey) {
-                  delete components[key];
-                }
-                else {
-                  // If a child leaf is modified (non key) delete its whole subtree.
-                  if (components[key] instanceof Array || typeof components[key] === 'object') {
-                    // If the component can have sub-components, recurse.
-                    sweep(components[key]);
-                  }
-                }
-              });
-              return;
-            }
-
-            return;
-          };
-          return sweep(submission);
-        };
-
-        // The list of all conditionals.
-        var _conditionals = {};
-
-        // The list of all custom conditionals, segregated because they must be run on every change to data.
-        var _customConditionals = {};
-
-        /** Sweep all the components and build the conditionals map.
-         *
-         * @private
-         */
-        var _sweepConditionals = function() {
-          $scope.form = $scope.form || {};
-          $scope.form.components = $scope.form.components || [];
-          FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (!component.hasOwnProperty('key')) {
-              return;
-            }
-
-            // Show everything by default.
-            $scope.show[component.key] = true;
-
-            // We only care about valid/complete conditional settings.
-            if (
-              component.conditional
-              && (component.conditional.show !== null && component.conditional.show !== '')
-              && (component.conditional.when !== null && component.conditional.when !== '')
-            ) {
-              // Default the conditional values.
-              component.conditional.show = boolean.hasOwnProperty(component.conditional.show)
-                ? boolean[component.conditional.show]
-                : true;
-              component.conditional.eq = component.conditional.eq || '';
-
-              // Keys should be unique, so don't worry about clobbering an existing duplicate.
-              _conditionals[component.key] = component.conditional;
-
-              // Store the components default value for conditional logic, if present.
-              if (component.hasOwnProperty('defaultValue')) {
-                _conditionals[component.key].defaultValue = component.defaultValue;
-              }
-            }
-            // Custom conditional logic.
-            else if (component.customConditional) {
-              // Add this customConditional to the conditionals list.
-              _customConditionals[component.key] = component.customConditional;
-            }
-
-            // Set hidden if specified
-            if ($scope.hideComponents) {
-              component.hidden = $scope.hideComponents.indexOf(component.key) !== -1;
-            }
-
-            // Set required if specified
-            if ($scope.requireComponents && component.hasOwnProperty('validate') && $scope.requireComponents.indexOf(component.key) !== -1) {
-              component.validate.required = $scope.requireComponents.indexOf(component.key) !== -1;
-            }
-
-            // Set disabled if specified
-            if ($scope.disableComponents) {
-              component.disabled = $scope.disableComponents.indexOf(component.key) !== -1;
-            }
-          }, true);
-        };
-
-        /**
-         * Using the conditionals map, invoke the conditionals for each component.
-         *
-         * @param {String} componentKey
-         *   The component to toggle conditional logic for.
-         *
-         * @private
-         */
-        var _toggleConditional = function(componentKey, subData) {
-          var result;
-          if (_conditionals.hasOwnProperty(componentKey)) {
-            var data = Object.assign({}, $scope.submission.data, subData);
-            var cond = _conditionals[componentKey];
-            var value = FormioUtils.getValue({data: data}, cond.when);
-
-            if (typeof value !== 'undefined' && typeof value !== 'object') {
-              // Check if the conditional value is equal to the trigger value
-              result = value.toString() === cond.eq.toString()
-                ? boolean[cond.show]
-                : !boolean[cond.show];
-            }
-            // Special check for check boxes component.
-            else if (typeof value !== 'undefined' && typeof value === 'object') {
-              // Only update the visibility is present, otherwise hide, because it was deleted by the submission sweep.
-              if (value.hasOwnProperty(cond.eq)) {
-                result = boolean.hasOwnProperty(value[cond.eq])
-                  ? boolean[value[cond.eq]]
-                  : true;
-              }
-              else {
-                result = false;
-              }
-            }
-            // Check against the components default value, if present and the components hasn't been interacted with.
-            else if (typeof value === 'undefined' && cond.hasOwnProperty('defaultValue')) {
-              result = cond.defaultValue.toString() === cond.eq.toString()
-                ? boolean[cond.show]
-                : !boolean[cond.show];
-            }
-            // If there is no value, we still need to process as not equal.
-            else {
-              result = !boolean[cond.show];
-            }
-          }
-          return result;
-        };
-
-        /**
-         * Using the custom conditionals map, invoke the conditionals for each component.
-         *
-         * @param {String} componentKey
-         *   The component to toggle conditional logic for.
-         *
-         * @private
-         */
-        var _toggleCustomConditional = function(componentKey, subData) {
-          var result;
-          if (_customConditionals.hasOwnProperty(componentKey)) {
-            var cond = _customConditionals[componentKey];
-            if (!cond) {
-              return true;
-            }
-
-            try {
-              // Create a child block, and expose the submission data.
-              var data = Object.assign({}, $scope.submission.data, subData); // eslint-disable-line no-unused-vars
-              // Eval the custom conditional and update the show value.
-              var show = eval('(function() { ' + cond.toString() + '; return show; })()');
-              // Show by default, if an invalid type is given.
-              result = boolean.hasOwnProperty(show.toString()) ? boolean[show] : true;
-            }
-            catch (e) {
-              result = true;
-            }
-          }
-          return result;
-        };
-
-        $scope.checkConditional = function(componentKey, subData) {
-          var conditional = _toggleConditional(componentKey, subData);
-          var customConditional = _toggleCustomConditional(componentKey, subData);
-          // customConditional will be true if either are true since the value persists in $scope.show.
-          return conditional || customConditional;
-        };
-
-        // On every change to data, trigger the conditionals.
-        $scope.$watch(function() {
-          return $scope.submission && $scope.submission.data
-            ? $scope.submission.data
-            : {};
-        }, function() {
-          // Toggle every conditional.
-          var allConditionals = Object.keys(_conditionals);
-          (allConditionals || []).forEach(function(componentKey) {
-            $scope.show[componentKey] = _toggleConditional(componentKey);
-          });
-
-          var allCustomConditionals = Object.keys(_customConditionals);
-          (allCustomConditionals || []).forEach(function(componentKey) {
-            $scope.show[componentKey] = _toggleCustomConditional(componentKey);
-          });
-
-          var allHidden = Object.keys($scope.show);
-          (allHidden || []).forEach(function(componentKey) {
-            // If a component is hidden, delete its value, so other conditionals are property chain reacted.
-            if (!$scope.show[componentKey]) {
-              return sweepSubmission();
-            }
-          });
-        }, true);
-
         var cancelFormLoadEvent = $scope.$on('formLoad', function() {
-          _sweepConditionals();
           cancelFormLoadEvent();
         });
-
-        if ($scope.options && $scope.options.watchData) {
-          $scope.$watch('submission.data', function() {
-            _sweepConditionals();
-          }, true);
-        }
 
         if (!$scope._src) {
           $scope.$watch('src', function(src) {
@@ -76570,6 +76701,19 @@ module.exports = function() {
           return !form.$valid;
         };
 
+        $scope.isVisible = function(component, data) {
+          return FormioUtils.isVisible(
+            component,
+            data,
+            $scope.submission.data,
+            $scope.hideComponents
+          );
+        };
+
+        $scope.isDisabled = function(component, data) {
+          return $scope.readOnly || component.disabled || (Array.isArray($scope.disableComponents) && $scope.disableComponents.indexOf(component.key) !== -1);
+        };
+
         // Called when the form is submitted.
         $scope.onSubmit = function(form) {
           $scope.formioAlerts = [];
@@ -76582,8 +76726,6 @@ module.exports = function() {
           }
 
           form.submitting = true;
-
-          sweepSubmission();
 
           // Create a sanitized submission object.
           var submissionData = {data: {}};
@@ -76618,7 +76760,7 @@ module.exports = function() {
             if (component.type === 'resource' && component.key && component.defaultPermission) {
               defaultPermissions[component.key] = component.defaultPermission;
             }
-            if ($scope.submission.data.hasOwnProperty(component.key) && $scope.show[component.key] === true) {
+            if ($scope.submission.data.hasOwnProperty(component.key)) {
               var value = $scope.submission.data[component.key];
               if (component.type === 'number') {
                 submissionData.data[component.key] = value ? parseFloat(value) : 0;
@@ -76740,7 +76882,7 @@ module.exports = function() {
   };
 };
 
-},{}],74:[function(_dereq_,module,exports){
+},{}],76:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -76756,12 +76898,13 @@ module.exports = [
       scope: {
         component: '=',
         data: '=',
+        submission: '=',
+        hideComponents: '=',
         formio: '=',
         formioForm: '=',
         readOnly: '=',
         gridRow: '=',
-        gridCol: '=',
-        show: '='
+        gridCol: '='
       },
       templateUrl: 'formio/component.html',
       link: function(scope, el, attrs, formioCtrl) {
@@ -76778,10 +76921,12 @@ module.exports = [
         '$scope',
         '$http',
         '$controller',
+        'FormioUtils',
         function(
           $scope,
           $http,
-          $controller
+          $controller,
+          FormioUtils
         ) {
           // Options to match jquery.maskedinput masks
           $scope.uiMaskOptions = {
@@ -76795,8 +76940,34 @@ module.exports = [
             silentEvents: ['click', 'focus']
           };
 
+          // See if this component is visible or not.
+          $scope.isVisible = function(component, data) {
+            return FormioUtils.isVisible(
+              component,
+              data,
+              $scope.submission.data,
+              $scope.hideComponents
+            );
+          };
+
+          $scope.isDisabled = $scope.$parent.isDisabled;
+
           // Pass through checkConditional since this is an isolate scope.
           $scope.checkConditional = $scope.$parent.checkConditional;
+
+          // Calculate value when data changes.
+          if ($scope.component.calculateValue) {
+            $scope.$watch('data', function() {
+              try {
+                $scope.data[$scope.component.key] = eval('(function(data) { var value = [];' + $scope.component.calculateValue.toString() + '; return value; })($scope.data)');
+              }
+              catch (e) {
+                /* eslint-disable no-console */
+                console.warn('An error occurred calculating a value for ' + $scope.component.key, e);
+                /* eslint-enable no-console */
+              }
+            }, true);
+          }
 
           // Get the settings.
           var component = formioComponents.components[$scope.component.type] || formioComponents.components['custom'];
@@ -76811,7 +76982,24 @@ module.exports = [
 
           // Add a new field value.
           $scope.addFieldValue = function() {
-            var value = $scope.component.hasOwnProperty('defaultValue') ? $scope.component.defaultValue : '';
+            var value = '';
+            if ($scope.component.hasOwnProperty('customDefaultValue')) {
+              try {
+                /* eslint-disable no-unused-vars */
+                var data = _.cloneDeep($scope.data);
+                /* eslint-enable no-unused-vars */
+                value = eval('(function(data) { var value = "";' + $scope.component.customDefaultValue.toString() + '; return value; })(data)');
+              }
+              catch (e) {
+                /* eslint-disable no-console */
+                console.warn('An error occurrend in a custom default value in ' + $scope.component.key, e);
+                /* eslint-enable no-console */
+                value = '';
+              }
+            }
+            else if ($scope.component.hasOwnProperty('defaultValue')) {
+              value = $scope.component.defaultValue;
+            }
             $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || [];
             $scope.data[$scope.component.key].push(value);
           };
@@ -76853,10 +77041,10 @@ module.exports = [
           }
 
           $scope.$watch('component.multiple', function() {
+            var value = null;
             // Establish a default for data.
             $scope.data = $scope.data || {};
             if ($scope.component.multiple) {
-              var value = null;
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 // If a value is present, and its an array, assign it to the value.
                 if ($scope.data[$scope.component.key] instanceof Array) {
@@ -76865,6 +77053,17 @@ module.exports = [
                 // If a value is present and it is not an array, wrap the value.
                 else {
                   value = [$scope.data[$scope.component.key]];
+                }
+              }
+              else if ($scope.component.hasOwnProperty('customDefaultValue')) {
+                try {
+                  value = eval('(function(data) { var value = "";' + $scope.component.customDefaultValue.toString() + '; return value; })($scope.data)');
+                }
+                catch (e) {
+                  /* eslint-disable no-console */
+                  console.warn('An error occurrend in a custom default value in ' + $scope.component.key, e);
+                  /* eslint-enable no-console */
+                  value = '';
                 }
               }
               else if ($scope.component.hasOwnProperty('defaultValue')) {
@@ -76891,6 +77090,18 @@ module.exports = [
             if ($scope.data.hasOwnProperty($scope.component.key)) {
               $scope.data[$scope.component.key] = $scope.data[$scope.component.key];
             }
+            else if ($scope.component.hasOwnProperty('customDefaultValue')) {
+              try {
+                value = eval('(function(data) { var value = "";' + $scope.component.customDefaultValue.toString() + '; return value; })($scope.data)');
+              }
+              catch (e) {
+                /* eslint-disable no-console */
+                console.warn('An error occurrend in a custom default value in ' + $scope.component.key, e);
+                /* eslint-enable no-console */
+                value = '';
+              }
+              $scope.data[$scope.component.key] = value;
+            }
             // FA-835 - The default values for select boxes are set in the component.
             else if ($scope.component.hasOwnProperty('defaultValue') && $scope.component.type !== 'selectboxes') {
               $scope.data[$scope.component.key] = $scope.component.defaultValue;
@@ -76916,7 +77127,7 @@ module.exports = [
   }
 ];
 
-},{}],75:[function(_dereq_,module,exports){
+},{}],77:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -76930,18 +77141,29 @@ module.exports = [
         component: '=',
         data: '=',
         form: '=',
+        submission: '=',
         ignore: '=?'
       },
       templateUrl: 'formio/component-view.html',
       controller: [
         '$scope',
         'Formio',
+        'FormioUtils',
         function(
           $scope,
-          Formio
+          Formio,
+          FormioUtils
         ) {
           // Set the form url.
           $scope.formUrl = $scope.form ? Formio.getAppUrl() + '/form/' + $scope.form._id.toString() : '';
+          $scope.isVisible = function(component, data) {
+            return FormioUtils.isVisible(
+              component,
+              data,
+              $scope.submission.data,
+              $scope.hideComponents
+            );
+          };
 
           // Get the settings.
           var component = formioComponents.components[$scope.component.type] || formioComponents.components['custom'];
@@ -76965,16 +77187,13 @@ module.exports = [
           if ($scope.gridCol !== undefined) {
             $scope.componentId += ('-' + $scope.gridCol);
           }
-
-          // See if we should show this component.
-          $scope.shouldShow = !$scope.ignore || ($scope.ignore.indexOf($scope.componentId) === -1);
         }
       ]
     };
   }
 ];
 
-},{}],76:[function(_dereq_,module,exports){
+},{}],78:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -77057,7 +77276,7 @@ module.exports = function() {
   };
 };
 
-},{}],77:[function(_dereq_,module,exports){
+},{}],79:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -77076,7 +77295,7 @@ module.exports = [
   }
 ];
 
-},{}],78:[function(_dereq_,module,exports){
+},{}],80:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -77086,7 +77305,7 @@ module.exports = function() {
   };
 };
 
-},{}],79:[function(_dereq_,module,exports){
+},{}],81:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -77097,11 +77316,28 @@ module.exports = function() {
       submission: '=',
       ignore: '=?'
     },
-    templateUrl: 'formio/submission.html'
+    templateUrl: 'formio/submission.html',
+    controller: [
+      '$scope',
+      'FormioUtils',
+      function(
+        $scope,
+        FormioUtils
+      ) {
+        $scope.isVisible = function(component, data) {
+          return FormioUtils.isVisible(
+            component,
+            data,
+            $scope.submission.data,
+            $scope.ignore
+          );
+        };
+      }
+    ]
   };
 };
 
-},{}],80:[function(_dereq_,module,exports){
+},{}],82:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -77156,7 +77392,7 @@ module.exports = function() {
   };
 };
 
-},{}],81:[function(_dereq_,module,exports){
+},{}],83:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -77170,6 +77406,7 @@ module.exports = function() {
       submission: '=?',
       readOnly: '=?',
       hideComponents: '=?',
+      disableComponents: '=?',
       formioOptions: '=?',
       storage: '=?'
     },
@@ -77260,7 +77497,7 @@ module.exports = function() {
         // Show the current page.
         var showPage = function(scroll) {
           // If the page is past the components length, try to clear first.
-          if ($scope.currentPage >= $scope.form.components.length) {
+          if ($scope.currentPage >= $scope.pages.length) {
             $scope.clear();
           }
 
@@ -77271,7 +77508,7 @@ module.exports = function() {
               data: $scope.submission.data
             }));
           }
-          $scope.page.components = $scope.form.components[$scope.currentPage].components;
+          $scope.page.components = $scope.pages[$scope.currentPage].components;
           var pageElement = angular.element(document.createElement('formio'));
           $scope.wizardElement.html($compile(pageElement.attr({
             src: "'" + $scope.src + "'",
@@ -77279,6 +77516,7 @@ module.exports = function() {
             submission: 'submission',
             'read-only': 'readOnly',
             'hide-components': 'hideComponents',
+            'disable-components': 'disableComponents',
             'formio-options': 'formioOptions',
             id: 'formio-wizard-form'
           }))($scope));
@@ -77439,7 +77677,7 @@ module.exports = function() {
           if ($scope.checkErrors()) {
             return;
           }
-          if ($scope.currentPage >= ($scope.form.components.length - 1)) {
+          if ($scope.currentPage >= ($scope.pages.length - 1)) {
             return;
           }
           $scope.currentPage++;
@@ -77461,7 +77699,7 @@ module.exports = function() {
           if (page < 0) {
             return;
           }
-          if (page >= $scope.form.components.length) {
+          if (page >= $scope.pages.length) {
             return;
           }
           $scope.currentPage = page;
@@ -77487,6 +77725,8 @@ module.exports = function() {
           }
         };
 
+        var allPages = [];
+        var hasConditionalPages = false;
         var setForm = function(form) {
           $scope.pages = [];
           angular.forEach(form.components, function(component) {
@@ -77495,12 +77735,32 @@ module.exports = function() {
               if (!$scope.hasTitles && component.title) {
                 $scope.hasTitles = true;
               }
+              if (component.customConditional) {
+                hasConditionalPages = true;
+              }
+              else if (component.conditional && component.conditional.when) {
+                hasConditionalPages = true;
+              }
+              allPages.push(component);
               $scope.pages.push(component);
             }
           });
 
+          if (hasConditionalPages) {
+            $scope.$watch('submission.data', function(data) {
+              var newPages = [];
+              angular.forEach(allPages, function(page) {
+                if (FormioUtils.isVisible(page)) {
+                  newPages.push(page);
+                }
+              });
+              $scope.pages = newPages;
+              updatePages();
+              setTimeout($scope.$apply.bind($scope), 10);
+            }, true);
+          }
+
           $scope.form = $scope.form ? angular.merge($scope.form, angular.copy(form)) : angular.copy(form);
-          $scope.form.components = $scope.pages;
           $scope.page = angular.copy(form);
           $scope.page.display = 'form';
           $scope.$emit('wizardFormLoad', form);
@@ -77543,7 +77803,7 @@ module.exports = function() {
   };
 };
 
-},{}],82:[function(_dereq_,module,exports){
+},{}],84:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -77724,12 +77984,54 @@ module.exports = [
   }
 ];
 
-},{}],83:[function(_dereq_,module,exports){
+},{}],85:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formio-utils');
 
 module.exports = function() {
   return {
+    isVisible: function(component, subData, data, hide) {
+      // If the component is in the hideComponents array, then hide it by default.
+      if (Array.isArray(hide) && (hide.indexOf(component.key) !== -1)) {
+        return false;
+      }
+
+      // Show by default.
+      var shown = true;
+
+      // Check local submission first.
+      if (subData) {
+        shown &= formioUtils.checkCondition(component, subData);
+      }
+
+      // Check global data.
+      if (shown && data) {
+        shown &= formioUtils.checkCondition(component, data);
+      }
+
+      var timestamp = Date.now();
+
+      // Break infinite loops when components show each other.
+      component.count = component.count || 0;
+      var diff = timestamp - (component.lastChanged || 0);
+      if (component.hasOwnProperty('visible') && component.count >= 3 && (diff < 100)) {
+        return component.visible;
+      }
+      else {
+        component.count = 0;
+      }
+
+      component.visible = shown;
+      component.lastChanged = timestamp;
+      component.count++;
+
+      // Make sure to delete the data for invisible fields.
+      if (!shown && data && data.hasOwnProperty(component.key)) {
+        delete data[component.key];
+      }
+
+      return shown;
+    },
     flattenComponents: formioUtils.flattenComponents,
     eachComponent: formioUtils.eachComponent,
     getComponent: formioUtils.getComponent,
@@ -77795,7 +78097,7 @@ module.exports = function() {
   };
 };
 
-},{"formio-utils":26}],84:[function(_dereq_,module,exports){
+},{"formio-utils":40}],86:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -77844,7 +78146,7 @@ module.exports = [
   }
 ];
 
-},{}],85:[function(_dereq_,module,exports){
+},{}],87:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -77878,7 +78180,7 @@ module.exports = [
   }
 ];
 
-},{}],86:[function(_dereq_,module,exports){
+},{}],88:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -77887,7 +78189,7 @@ module.exports = [
   }
 ];
 
-},{}],87:[function(_dereq_,module,exports){
+},{}],89:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -77900,7 +78202,7 @@ module.exports = [
   }
 ];
 
-},{}],88:[function(_dereq_,module,exports){
+},{}],90:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -77919,7 +78221,7 @@ module.exports = [
   }
 ];
 
-},{}],89:[function(_dereq_,module,exports){
+},{}],91:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -77932,7 +78234,7 @@ module.exports = [
   }
 ];
 
-},{}],90:[function(_dereq_,module,exports){
+},{}],92:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -77947,7 +78249,7 @@ module.exports = [
   }
 ];
 
-},{}],91:[function(_dereq_,module,exports){
+},{}],93:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -77976,7 +78278,7 @@ module.exports = [
   }
 ];
 
-},{}],92:[function(_dereq_,module,exports){
+},{}],94:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -77990,7 +78292,7 @@ _dereq_('angular-ui-bootstrap');
 _dereq_('bootstrap-ui-datetime-picker/dist/datetime-picker');
 _dereq_('./formio');
 
-},{"./formio":93,"angular-file-saver":2,"angular-moment":3,"angular-sanitize":5,"angular-ui-bootstrap":7,"angular-ui-mask/dist/mask":8,"bootstrap":12,"bootstrap-ui-datetime-picker/dist/datetime-picker":11,"ng-file-upload":39,"signature_pad":98,"ui-select/dist/select":99}],93:[function(_dereq_,module,exports){
+},{"./formio":95,"angular-file-saver":2,"angular-moment":3,"angular-sanitize":5,"angular-ui-bootstrap":7,"angular-ui-mask/dist/mask":8,"bootstrap":12,"bootstrap-ui-datetime-picker/dist/datetime-picker":11,"ng-file-upload":39,"signature_pad":100,"ui-select/dist/select":101}],95:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -78083,11 +78385,11 @@ app.run([
   function($templateCache) {
     // The template for the formio forms.
     $templateCache.put('formio.html',
-      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" ng-class=\"{'formio-hidden': !formLoading}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message | formioTranslate }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components\"\n      component=\"component\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      read-only=\"readOnly || component.disabled\"\n      ng-if=\"show[component.key || '']\"\n      show=\"show\"\n    ></formio-component>\n  </form>\n</div>\n"
+      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" ng-class=\"{'formio-hidden': !formLoading}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" disable-components=\"disableComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">\n      {{ alert.message | formioTranslate }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components track by $index\"\n      component=\"component\"\n      ng-if=\"isVisible(component)\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      read-only=\"isDisabled(component, submission.data)\"\n    ></formio-component>\n  </form>\n</div>\n"
     );
 
     $templateCache.put('formio-wizard.html',
-      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate }}</div>\n  <div class=\"formio-wizard\"></div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (form.components.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (form.components.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
+      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate }}</div>\n  <div class=\"formio-wizard\"></div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
     );
 
     $templateCache.put('formio-delete.html',
@@ -78095,7 +78397,7 @@ app.run([
     );
 
     $templateCache.put('formio/submission.html',
-      "<div>\n  <div ng-repeat=\"component in form.components track by $index\">\n    <formio-component-view form=\"form\" component=\"component\" data=\"submission.data\" ignore=\"ignore\"></formio-component-view>\n  </div>\n</div>\n"
+      "<div>\n  <div ng-repeat=\"component in form.components track by $index\">\n    <formio-component-view\n      form=\"form\"\n      component=\"component\"\n      data=\"submission.data\"\n      ignore=\"ignore\"\n      submission=\"submission\"\n      ng-if=\"isVisible(component)\"\n    ></formio-component-view>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/submissions.html',
@@ -78108,7 +78410,7 @@ app.run([
     );
 
     $templateCache.put('formio/component-view.html',
-      "<div name=\"{{ componentId }}\" class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}} formio-component-{{ component.key }}\" id=\"form-group-{{ componentId }}\" ng-style=\"component.style\" ng-hide=\"component.hidden\">\n  <formio-element ng-if=\"shouldShow\"></formio-element>\n</div>\n"
+      "<div name=\"{{ componentId }}\" class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}} formio-component-{{ component.key }}\" id=\"form-group-{{ componentId }}\" ng-style=\"component.style\">\n  <formio-element></formio-element>\n</div>\n"
     );
 
     $templateCache.put('formio/element-view.html',
@@ -78116,14 +78418,14 @@ app.run([
     );
 
     $templateCache.put('formio/errors.html',
-      "<div ng-show=\"formioForm[componentId].$error && !formioForm[componentId].$pristine\">\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.email\">{{ component.label || component.placeholder || component.key }} {{'must be a valid email' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.required\">{{ component.label || component.placeholder || component.key }} {{'is required' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.number\">{{ component.label || component.placeholder || component.key }} {{'must be a number' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.maxlength\">{{ component.label || component.placeholder || component.key }} {{'must be shorter than' | formioTranslate}} {{ component.validate.maxLength + 1 }} {{'characters' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.minlength\">{{ component.label || component.placeholder || component.key }} {{'must be longer than' | formioTranslate}} {{ component.validate.minLength - 1 }} {{'characters' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.min\">{{ component.label || component.placeholder || component.key }} {{'must be higher than' | formioTranslate}} {{ component.validate.min - 1 }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.max\">{{ component.label || component.placeholder || component.key }} {{'must be lower than' | formioTranslate}} {{ component.validate.max + 1 }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.custom\">{{ component.customError | formioTranslate }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.pattern\">{{ component.label || component.placeholder || component.key }} {{'does not match the pattern' | formioTranslate}} {{ component.validate.pattern }}</p>\n</div>\n"
+      "<div ng-show=\"formioForm[componentId].$error && !formioForm[componentId].$pristine\">\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.email\">{{ component.label || component.placeholder || component.key }} {{'must be a valid email' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.required\">{{ component.label || component.placeholder || component.key }} {{'is required' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.number\">{{ component.label || component.placeholder || component.key }} {{'must be a number' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.maxlength\">{{ component.label || component.placeholder || component.key }} {{'must be shorter than' | formioTranslate}} {{ component.validate.maxLength + 1 }} {{'characters' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.minlength\">{{ component.label || component.placeholder || component.key }} {{'must be longer than' | formioTranslate}} {{ component.validate.minLength - 1 }} {{'characters' | formioTranslate}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.min\">{{ component.label || component.placeholder || component.key }} {{'must be higher than' | formioTranslate}} {{ component.validate.min - 1 }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.max\">{{ component.label || component.placeholder || component.key }} {{'must be lower than' | formioTranslate}} {{ component.validate.max + 1 }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.custom\">{{ component.customError | formioTranslate }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.pattern\">{{ component.label || component.placeholder || component.key }} {{'does not match the pattern' | formioTranslate}} {{ component.validate.pattern }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.day\">{{ component.label || component.placeholder || component.key }} {{'must be a valid date' | formioTranslate}}.</p>\n</div>\n"
     );
   }
 ]);
 
 _dereq_('./components');
 
-},{"./components":56,"./directives/customValidator":72,"./directives/formio":73,"./directives/formioComponent":74,"./directives/formioComponentView":75,"./directives/formioDelete":76,"./directives/formioElement":77,"./directives/formioErrors":78,"./directives/formioSubmission":79,"./directives/formioSubmissions":80,"./directives/formioWizard":81,"./factories/FormioScope":82,"./factories/FormioUtils":83,"./factories/formioInterceptor":84,"./factories/formioTableView":85,"./filters/flattenComponents":86,"./filters/safehtml":87,"./filters/tableComponents":88,"./filters/tableFieldView":89,"./filters/tableView":90,"./filters/translate":91,"./polyfills/polyfills":95,"./providers/Formio":96}],94:[function(_dereq_,module,exports){
+},{"./components":58,"./directives/customValidator":74,"./directives/formio":75,"./directives/formioComponent":76,"./directives/formioComponentView":77,"./directives/formioDelete":78,"./directives/formioElement":79,"./directives/formioErrors":80,"./directives/formioSubmission":81,"./directives/formioSubmissions":82,"./directives/formioWizard":83,"./factories/FormioScope":84,"./factories/FormioUtils":85,"./factories/formioInterceptor":86,"./factories/formioTableView":87,"./filters/flattenComponents":88,"./filters/safehtml":89,"./filters/tableComponents":90,"./filters/tableFieldView":91,"./filters/tableView":92,"./filters/translate":93,"./polyfills/polyfills":97,"./providers/Formio":98}],96:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -78154,13 +78456,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],95:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":94}],96:[function(_dereq_,module,exports){
+},{"./Object.assign":96}],98:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -78228,7 +78530,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":27}],97:[function(_dereq_,module,exports){
+},{"formiojs":27}],99:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -78265,7 +78567,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],98:[function(_dereq_,module,exports){
+},{}],100:[function(_dereq_,module,exports){
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module unless amdModuleId is set
@@ -78656,7 +78958,7 @@ return SignaturePad;
 
 }));
 
-},{}],99:[function(_dereq_,module,exports){
+},{}],101:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -81050,7 +81352,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],100:[function(_dereq_,module,exports){
+},{}],102:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -81445,7 +81747,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],101:[function(_dereq_,module,exports){
+},{}],103:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81515,7 +81817,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],102:[function(_dereq_,module,exports){
+},{}],104:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81589,7 +81891,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],103:[function(_dereq_,module,exports){
+},{}],105:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81652,7 +81954,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],104:[function(_dereq_,module,exports){
+},{}],106:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81700,7 +82002,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],105:[function(_dereq_,module,exports){
+},{}],107:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -81794,7 +82096,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],106:[function(_dereq_,module,exports){
+},{}],108:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81845,7 +82147,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],107:[function(_dereq_,module,exports){
+},{}],109:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81894,7 +82196,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],108:[function(_dereq_,module,exports){
+},{}],110:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81957,7 +82259,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],109:[function(_dereq_,module,exports){
+},{}],111:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82019,7 +82321,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],110:[function(_dereq_,module,exports){
+},{}],112:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82071,7 +82373,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],111:[function(_dereq_,module,exports){
+},{}],113:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82243,7 +82545,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],112:[function(_dereq_,module,exports){
+},{}],114:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82313,7 +82615,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],113:[function(_dereq_,module,exports){
+},{}],115:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82360,7 +82662,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],114:[function(_dereq_,module,exports){
+},{}],116:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82415,7 +82717,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],115:[function(_dereq_,module,exports){
+},{}],117:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82499,7 +82801,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],116:[function(_dereq_,module,exports){
+},{}],118:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82559,7 +82861,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],117:[function(_dereq_,module,exports){
+},{}],119:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82619,7 +82921,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],118:[function(_dereq_,module,exports){
+},{}],120:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -82661,7 +82963,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":101,"./button":102,"./checkbox":103,"./columns":104,"./components":105,"./container":106,"./content":107,"./currency":108,"./custom":109,"./datagrid":110,"./datetime":111,"./day":112,"./email":113,"./fieldset":114,"./file":115,"./hidden":116,"./htmlelement":117,"./number":119,"./page":120,"./panel":121,"./password":122,"./phonenumber":123,"./radio":124,"./resource":125,"./select":126,"./selectboxes":127,"./signature":128,"./survey":129,"./table":130,"./textarea":131,"./textfield":132,"./well":133}],119:[function(_dereq_,module,exports){
+},{"./address":103,"./button":104,"./checkbox":105,"./columns":106,"./components":107,"./container":108,"./content":109,"./currency":110,"./custom":111,"./datagrid":112,"./datetime":113,"./day":114,"./email":115,"./fieldset":116,"./file":117,"./hidden":118,"./htmlelement":119,"./number":121,"./page":122,"./panel":123,"./password":124,"./phonenumber":125,"./radio":126,"./resource":127,"./select":128,"./selectboxes":129,"./signature":130,"./survey":131,"./table":132,"./textarea":133,"./textfield":134,"./well":135}],121:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82731,7 +83033,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],120:[function(_dereq_,module,exports){
+},{}],122:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82752,7 +83054,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],121:[function(_dereq_,module,exports){
+},{}],123:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82819,7 +83121,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],122:[function(_dereq_,module,exports){
+},{}],124:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82886,7 +83188,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],123:[function(_dereq_,module,exports){
+},{}],125:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82956,7 +83258,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],124:[function(_dereq_,module,exports){
+},{}],126:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83022,7 +83324,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],125:[function(_dereq_,module,exports){
+},{}],127:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83108,7 +83410,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],126:[function(_dereq_,module,exports){
+},{}],128:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83333,7 +83635,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],127:[function(_dereq_,module,exports){
+},{}],129:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83403,7 +83705,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],128:[function(_dereq_,module,exports){
+},{}],130:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83464,7 +83766,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],129:[function(_dereq_,module,exports){
+},{}],131:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83528,7 +83830,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],130:[function(_dereq_,module,exports){
+},{}],132:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83599,7 +83901,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],131:[function(_dereq_,module,exports){
+},{}],133:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83639,7 +83941,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],132:[function(_dereq_,module,exports){
+},{}],134:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83711,7 +84013,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],133:[function(_dereq_,module,exports){
+},{}],135:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -83757,7 +84059,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],134:[function(_dereq_,module,exports){
+},{}],136:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -83960,7 +84262,7 @@ module.exports = {
   }
 };
 
-},{}],135:[function(_dereq_,module,exports){
+},{}],137:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -84027,7 +84329,7 @@ module.exports = {
   ]
 };
 
-},{}],136:[function(_dereq_,module,exports){
+},{}],138:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 module.exports = ['debounce', function(debounce) {
@@ -84302,7 +84604,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{}],137:[function(_dereq_,module,exports){
+},{}],139:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -84318,7 +84620,7 @@ module.exports = [
   }
 ];
 
-},{}],138:[function(_dereq_,module,exports){
+},{}],140:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -84406,7 +84708,7 @@ module.exports = [
   }
 ];
 
-},{"formio-utils":26,"lodash":33}],139:[function(_dereq_,module,exports){
+},{"formio-utils":26,"lodash":33}],141:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$scope',
@@ -84589,7 +84891,7 @@ module.exports = [
   }
 ];
 
-},{}],140:[function(_dereq_,module,exports){
+},{}],142:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -84613,7 +84915,7 @@ module.exports = [
   }
 ];
 
-},{}],141:[function(_dereq_,module,exports){
+},{}],143:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -84635,7 +84937,7 @@ module.exports = [
   }
 ];
 
-},{}],142:[function(_dereq_,module,exports){
+},{}],144:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -84702,7 +85004,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
   };
 }];
 
-},{}],143:[function(_dereq_,module,exports){
+},{}],145:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -84738,7 +85040,7 @@ module.exports = function() {
   };
 };
 
-},{}],144:[function(_dereq_,module,exports){
+},{}],146:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -84822,7 +85124,7 @@ module.exports = function() {
   };
 };
 
-},{}],145:[function(_dereq_,module,exports){
+},{}],147:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -84865,7 +85167,7 @@ module.exports = function() {
   };
 };
 
-},{}],146:[function(_dereq_,module,exports){
+},{}],148:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -84886,7 +85188,7 @@ module.exports = [
   }
 ];
 
-},{}],147:[function(_dereq_,module,exports){
+},{}],149:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -84938,7 +85240,7 @@ module.exports = function() {
   };
 };
 
-},{}],148:[function(_dereq_,module,exports){
+},{}],150:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -84977,7 +85279,7 @@ module.exports = function() {
   };
 };
 
-},{}],149:[function(_dereq_,module,exports){
+},{}],151:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -85014,7 +85316,7 @@ module.exports = function() {
   };
 };
 
-},{}],150:[function(_dereq_,module,exports){
+},{}],152:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -85037,7 +85339,7 @@ module.exports = function() {
   };
 };
 
-},{}],151:[function(_dereq_,module,exports){
+},{}],153:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -85116,7 +85418,7 @@ module.exports = function() {
   };
 };
 
-},{}],152:[function(_dereq_,module,exports){
+},{}],154:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -85150,7 +85452,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],153:[function(_dereq_,module,exports){
+},{}],155:[function(_dereq_,module,exports){
 (function (global){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
@@ -85161,9 +85463,9 @@ global._ = _dereq_('lodash');
 _dereq_('./ngFormBuilder.js');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ngFormBuilder.js":154,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":92}],154:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":156,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":94}],156:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.1 | https://unpkg.com/ng-formio-builder@2.4.1/LICENSE.txt */
+/*! ng-formio-builder v2.4.5 | https://unpkg.com/ng-formio-builder@2.4.5/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -85266,5 +85568,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":118,"./constants/commonOptions":134,"./constants/formOptions":135,"./directives/formBuilder":136,"./directives/formBuilderComponent":137,"./directives/formBuilderConditional":138,"./directives/formBuilderDnd":139,"./directives/formBuilderElement":140,"./directives/formBuilderList":141,"./directives/formBuilderOption":142,"./directives/formBuilderOptionCustomValidation":143,"./directives/formBuilderOptionKey":144,"./directives/formBuilderOptionTags":145,"./directives/formBuilderRow":146,"./directives/formBuilderTable":147,"./directives/formBuilderTooltip":148,"./directives/jsonInput":149,"./directives/validApiKey":150,"./directives/valueBuilder":151,"./factories/debounce":152}]},{},[153])(153)
+},{"./components":120,"./constants/commonOptions":136,"./constants/formOptions":137,"./directives/formBuilder":138,"./directives/formBuilderComponent":139,"./directives/formBuilderConditional":140,"./directives/formBuilderDnd":141,"./directives/formBuilderElement":142,"./directives/formBuilderList":143,"./directives/formBuilderOption":144,"./directives/formBuilderOptionCustomValidation":145,"./directives/formBuilderOptionKey":146,"./directives/formBuilderOptionTags":147,"./directives/formBuilderRow":148,"./directives/formBuilderTable":149,"./directives/formBuilderTooltip":150,"./directives/jsonInput":151,"./directives/validApiKey":152,"./directives/valueBuilder":153,"./factories/debounce":154}]},{},[155])(155)
 });
