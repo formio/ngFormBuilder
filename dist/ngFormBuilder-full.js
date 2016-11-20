@@ -83774,6 +83774,7 @@ module.exports = function(app) {
                 return 'submit';
               case 'reset':
                 return 'reset';
+              case 'event':
               case 'oauth':
               default:
                 return 'button';
@@ -83784,6 +83785,9 @@ module.exports = function(app) {
             switch (settings.action) {
               case 'submit':
                 return;
+              case 'event':
+                $scope.$emit($scope.component.event, $scope.data);
+                break;
               case 'reset':
                 $scope.resetForm();
                 break;
@@ -87814,47 +87818,32 @@ var formioUtils = _dereq_('formio-utils');
 
 module.exports = function() {
   return {
+    checkVisible: function(component, data) {
+      if (data && !formioUtils.checkCondition(component, data)) {
+        if (data.hasOwnProperty(component.key)) {
+          delete data[component.key];
+        }
+        return false;
+      }
+      return true;
+    },
     isVisible: function(component, subData, data, hide) {
       // If the component is in the hideComponents array, then hide it by default.
       if (Array.isArray(hide) && (hide.indexOf(component.key) !== -1)) {
         return false;
       }
 
-      // Show by default.
-      var shown = true;
-
-      // Check local submission first.
-      if (subData) {
-        shown &= formioUtils.checkCondition(component, subData);
+      // First check local data.
+      if (!this.checkVisible(component, subData)) {
+        return false;
       }
 
-      // Check global data.
-      if (shown && data) {
-        shown &= formioUtils.checkCondition(component, data);
+      // Now check global data.
+      if (!this.checkVisible(component, data)) {
+        return false;
       }
 
-      var timestamp = Date.now();
-
-      // Break infinite loops when components show each other.
-      component.count = component.count || 0;
-      var diff = timestamp - (component.lastChanged || 0);
-      if (component.hasOwnProperty('visible') && component.count >= 3 && (diff < 100)) {
-        return component.visible;
-      }
-      else {
-        component.count = 0;
-      }
-
-      component.visible = shown;
-      component.lastChanged = timestamp;
-      component.count++;
-
-      // Make sure to delete the data for invisible fields.
-      if (!shown && data && data.hasOwnProperty(component.key)) {
-        delete data[component.key];
-      }
-
-      return shown;
+      return true;
     },
     flattenComponents: formioUtils.flattenComponents,
     eachComponent: formioUtils.eachComponent,
@@ -95293,7 +95282,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":158,"angular-drag-and-drop-lists":1,"lodash":35,"ng-ckeditor/ng-ckeditor":38,"ng-dialog":39,"ng-formio/src/formio-full.js":96}],158:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.5 | https://unpkg.com/ng-formio-builder@2.4.5/LICENSE.txt */
+/*! ng-formio-builder v2.4.6 | https://unpkg.com/ng-formio-builder@2.4.6/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
