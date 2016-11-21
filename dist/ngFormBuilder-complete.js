@@ -77474,14 +77474,6 @@ module.exports = function() {
           session = angular.fromJson(session);
         }
 
-        var getForm = function() {
-          var element = $element.find('#formio-wizard-form');
-          if (!element.length) {
-            return {};
-          }
-          return element.children().scope().formioForm;
-        };
-
         $scope.formio = null;
         $scope.page = {};
         $scope.pages = [];
@@ -77491,8 +77483,54 @@ module.exports = function() {
           $scope.submission = session ? {data: session.data} : {data: {}};
         }
         $scope.currentPage = session ? session.page : 0;
-
         $scope.formioAlerts = [];
+
+        var getForm = function() {
+          var element = $element.find('#formio-wizard-form');
+          if (!element.length) {
+            return {};
+          }
+          return element.children().scope().formioForm;
+        };
+
+        // Show the current page.
+        var showPage = function(scroll) {
+          $scope.wizardLoaded = false;
+          $scope.page.components = [];
+          $scope.page.components.length = 0;
+          setTimeout(function() {
+            // If the page is past the components length, try to clear first.
+            if ($scope.currentPage >= $scope.pages.length) {
+              $scope.clear();
+            }
+
+            if ($scope.storage && !$scope.readOnly) {
+              localStorage.setItem($scope.storage, angular.toJson({
+                page: $scope.currentPage,
+                data: $scope.submission.data
+              }));
+            }
+
+            $scope.page.components = $scope.pages[$scope.currentPage].components;
+            $scope.formioAlerts = [];
+            if (scroll) {
+              window.scrollTo(0, $scope.wizardTop);
+            }
+            $scope.wizardLoaded = true;
+            $scope.$emit('wizardPage', $scope.currentPage);
+            setTimeout($scope.$apply.bind($scope), 10);
+          }, 1);
+        };
+
+        if (!$scope.form && $scope.src) {
+          (new Formio($scope.src)).loadForm().then(function(form) {
+            $scope.form = form;
+            if (!$scope.wizardLoaded) {
+              showPage();
+            }
+          });
+        }
+
         // Shows the given alerts (single or array), and dismisses old alerts
         this.showAlerts = $scope.showAlerts = function(alerts) {
           $scope.formioAlerts = [].concat(alerts);
@@ -77504,40 +77542,6 @@ module.exports = function() {
           }
           $scope.submission = {data: {}};
           $scope.currentPage = 0;
-        };
-
-        // Show the current page.
-        var showPage = function(scroll) {
-          // If the page is past the components length, try to clear first.
-          if ($scope.currentPage >= $scope.pages.length) {
-            $scope.clear();
-          }
-
-          $scope.wizardLoaded = false;
-          if ($scope.storage && !$scope.readOnly) {
-            localStorage.setItem($scope.storage, angular.toJson({
-              page: $scope.currentPage,
-              data: $scope.submission.data
-            }));
-          }
-          $scope.page.components = $scope.pages[$scope.currentPage].components;
-          var pageElement = angular.element(document.createElement('formio'));
-          $scope.wizardElement.html($compile(pageElement.attr({
-            src: "'" + $scope.src + "'",
-            form: 'page',
-            submission: 'submission',
-            'read-only': 'readOnly',
-            'hide-components': 'hideComponents',
-            'disable-components': 'disableComponents',
-            'formio-options': 'formioOptions',
-            id: 'formio-wizard-form'
-          }))($scope));
-          $scope.wizardLoaded = true;
-          $scope.formioAlerts = [];
-          if (scroll) {
-            window.scrollTo(0, $scope.wizardTop);
-          }
-          $scope.$emit('wizardPage', $scope.currentPage);
         };
 
         // Check for errors.
@@ -78379,7 +78383,7 @@ app.run([
     );
 
     $templateCache.put('formio-wizard.html',
-      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate }}</div>\n  <div class=\"formio-wizard\"></div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
+      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
     );
 
     $templateCache.put('formio-delete.html',
@@ -85455,7 +85459,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":156,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":94}],156:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.9 | https://unpkg.com/ng-formio-builder@2.4.9/LICENSE.txt */
+/*! ng-formio-builder v2.4.10 | https://unpkg.com/ng-formio-builder@2.4.10/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
