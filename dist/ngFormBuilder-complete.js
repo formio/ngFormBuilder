@@ -77460,6 +77460,7 @@ module.exports = function() {
       'FormioScope',
       'FormioUtils',
       '$http',
+      '$timeout',
       function(
         $scope,
         $compile,
@@ -77467,7 +77468,8 @@ module.exports = function() {
         Formio,
         FormioScope,
         FormioUtils,
-        $http
+        $http,
+        $timeout
       ) {
         var session = ($scope.storage && !$scope.readOnly) ? localStorage.getItem($scope.storage) : false;
         if (session) {
@@ -77498,7 +77500,7 @@ module.exports = function() {
           $scope.wizardLoaded = false;
           $scope.page.components = [];
           $scope.page.components.length = 0;
-          setTimeout(function() {
+          $timeout(function() {
             // If the page is past the components length, try to clear first.
             if ($scope.currentPage >= $scope.pages.length) {
               $scope.clear();
@@ -77518,8 +77520,8 @@ module.exports = function() {
             }
             $scope.wizardLoaded = true;
             $scope.$emit('wizardPage', $scope.currentPage);
-            setTimeout($scope.$apply.bind($scope), 10);
-          }, 1);
+            $timeout($scope.$apply.bind($scope));
+          });
         };
 
         if (!$scope.form && $scope.src) {
@@ -85459,7 +85461,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":156,"angular-drag-and-drop-lists":1,"lodash":33,"ng-ckeditor/ng-ckeditor":36,"ng-dialog":37,"ng-formio/src/formio-complete.js":94}],156:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.4.10 | https://unpkg.com/ng-formio-builder@2.4.10/LICENSE.txt */
+/*! ng-formio-builder v2.4.11 | https://unpkg.com/ng-formio-builder@2.4.11/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
