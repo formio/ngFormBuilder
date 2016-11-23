@@ -9,6 +9,7 @@ module.exports = [
     ngDialog,
     dndDragIframeWorkaround
   ) {
+    $scope.builder = true;
     $scope.hideCount = (_.isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
     $scope.$watch('hideDndBoxCount', function(hideCount) {
       $scope.hideCount = hideCount ? hideCount : 1;
