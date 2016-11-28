@@ -20,6 +20,7 @@ module.exports = function() {
     controller: [
       '$scope',
       function($scope) {
+        $scope.builder = true;
         var changeTable = function() {
           /*eslint-disable max-depth */
           if ($scope.component.numRows && $scope.component.numCols) {

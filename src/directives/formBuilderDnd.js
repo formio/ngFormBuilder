@@ -1,15 +1,18 @@
 module.exports = [
   '$scope',
+  '$rootScope',
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
   function(
     $scope,
+    $rootScope,
     formioComponents,
     ngDialog,
     dndDragIframeWorkaround
   ) {
     $scope.builder = true;
+    $rootScope.builder = true;
     $scope.hideCount = (_.isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
     $scope.$watch('hideDndBoxCount', function(hideCount) {
       $scope.hideCount = hideCount ? hideCount : 1;
@@ -121,6 +124,7 @@ module.exports = [
       var childScope = $scope.$new(false);
       childScope.component = component;
       childScope.data = {};
+      childScope.builder = true;
 
       if (component.key) {
         childScope.data[component.key] = component.multiple ? [''] : '';
@@ -133,7 +137,8 @@ module.exports = [
         template: 'formio/components/settings.html',
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
-        controller: ['$scope', 'Formio', '$controller', function($scope, Formio, $controller) {
+        controller: ['$scope', 'Formio', '$controller', '$timeout', function($scope, Formio, $controller, $timeout) {
+          $scope.builder = true;
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit
