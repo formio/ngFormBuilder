@@ -1,10 +1,12 @@
 module.exports = [
   '$scope',
+  '$rootScope',
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
   function(
     $scope,
+    $rootScope,
     formioComponents,
     ngDialog,
     dndDragIframeWorkaround
@@ -26,6 +28,9 @@ module.exports = [
     };
 
     $scope.addComponent = function(component, index) {
+      if (index === 'undefined') {
+        index = -1;
+      }
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);

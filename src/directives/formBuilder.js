@@ -43,6 +43,29 @@ module.exports = ['debounce', function(debounce) {
         $scope.form.page = 0;
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
 
+        var iframe = null;
+        $scope.$on('iframe-pdfReady', function() {
+          iframe = angular.element('#formio-iframe')[0];
+        });
+        var sendIframeMessage = function(message) {
+          if (iframe) {
+            iframe.contentWindow.postMessage(JSON.stringify(message), '*');
+          }
+        };
+        $scope.pdftypes = [
+          formioComponents.components.textfield,
+          formioComponents.components.checkbox,
+          formioComponents.components.signature
+        ];
+        $scope.$on('fbDragDrop', function(event, component) {
+          component.settings.overlay = {
+            page: '1',
+            top: component.fbDropY,
+            left: component.fbDropX
+          };
+          sendIframeMessage({name: 'createElement', data: component.settings});
+        });
+
         var setNumPages = function() {
           if (!$scope.form) {
             return;
