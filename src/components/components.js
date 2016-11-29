@@ -25,10 +25,10 @@ module.exports = function(app) {
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
                 '<div class="panel-heading">Preview</div>' +
                 '<div class="panel-body">' +
-                  '<formio-component component="component" data="data" formio="formio" builder="builder"></formio-component>' +
+                  '<formio-component component="component" data="data" formio="::formio" builder="builder"></formio-component>' +
                 '</div>' +
               '</div>' +
-              '<formio-settings-info component="component" data="data" formio="formio"></formio-settings-info>' +
+              '<formio-settings-info component="component" data="data" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
                 '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
