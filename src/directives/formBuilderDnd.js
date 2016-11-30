@@ -124,8 +124,6 @@ module.exports = [
       var childScope = $scope.$new(false);
       childScope.component = component;
       childScope.data = {};
-      childScope.builder = true;
-
       if (component.key) {
         childScope.data[component.key] = component.multiple ? [''] : '';
       }
@@ -137,8 +135,7 @@ module.exports = [
         template: 'formio/components/settings.html',
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
-        controller: ['$scope', 'Formio', '$controller', '$timeout', function($scope, Formio, $controller, $timeout) {
-          $scope.builder = true;
+        controller: ['$scope', 'Formio', '$controller', function($scope, Formio, $controller) {
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit
