@@ -94260,6 +94260,9 @@ module.exports = ['debounce', function(debounce) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
+            if (!$scope.form.display) {
+              $scope.form.display = 'form';
+            }
             if (!$scope.options.noSubmit && $scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
