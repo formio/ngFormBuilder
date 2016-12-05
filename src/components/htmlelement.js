@@ -40,10 +40,10 @@ module.exports = function(app) {
             'data="component.attrs" ' +
             'label="Attributes" ' +
             'tooltip-text="The attributes for this HTML element. Only safe attributes are allowed, such as src, href, and title." ' +
-            'value-property="attr" ' +
-            'label-property="value" ' +
-            'value-label="Attribute" ' +
-            'label-label="Value" ' +
+            'value-property="value" ' +
+            'label-property="attr" ' +
+            'value-label="Value" ' +
+            'label-label="Attribute" ' +
             'no-autocomplete-value="true" ' +
           '></value-builder>' +
           '<div class="form-group">' +
