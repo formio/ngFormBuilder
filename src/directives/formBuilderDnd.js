@@ -1,11 +1,13 @@
 module.exports = [
   '$scope',
+  '$element',
   '$rootScope',
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
   function(
     $scope,
+    $element,
     $rootScope,
     formioComponents,
     ngDialog,
@@ -17,6 +19,9 @@ module.exports = [
     });
 
     $scope.formComponents = formioComponents.components;
+    if (!$scope.component) {
+      $scope.component = $scope.form;
+    }
 
     // Components depend on this existing
     $scope.data = {};
@@ -26,6 +31,40 @@ module.exports = [
       args[0] = 'formBuilder:' + args[0];
       $scope.$emit.apply($scope, args);
     };
+
+    var iframe = null;
+    $scope.$on('iframe-pdfReady', function() {
+      iframe = $element.find('#formio-iframe')[0];
+    });
+    $scope.$on('iframe-elementClick', function(event, data) {
+      angular.forEach($scope.component.components, function(component) {
+        if (component.overlay && (component.overlay.id === data.id)) {
+          $scope.editComponent(component);
+        }
+      });
+    });
+    $scope.$on('iframe-elementMove', function(event, data) {
+      angular.forEach($scope.component.components, function(component) {
+        if (component.overlay && (component.overlay.id === data.id)) {
+          component.overlay.top = data.top;
+          component.overlay.left = data.left;
+        }
+      });
+    });
+    var sendIframeMessage = function(message) {
+      if (iframe) {
+        iframe.contentWindow.postMessage(JSON.stringify(message), '*');
+      }
+    };
+    $scope.$on('fbDragDrop', function(event, component) {
+      component.settings.overlay = {
+        id: Math.random().toString(36).substring(7),
+        page: '1',
+        top: component.fbDropY,
+        left: component.fbDropX
+      };
+      $scope.addComponent(component.settings);
+    });
 
     $scope.addComponent = function(component, index) {
       if (index === 'undefined') {
@@ -44,6 +83,7 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
+      sendIframeMessage({name: 'createElement', data: component});
 
       // If this is a root component and the display is a wizard, then we know
       // that they dropped the component outside of where it is supposed to go...
@@ -86,13 +126,21 @@ module.exports = [
       var list = $scope.component.components;
       list.splice(list.indexOf(oldComponent), 1, newComponent);
       $scope.$emit('update', newComponent);
+      sendIframeMessage({name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
       if ($scope.component.components.indexOf(component) !== -1) {
         $scope.component.components.splice($scope.component.components.indexOf(component), 1);
         $scope.emit('remove', component);
+        sendIframeMessage({name: 'removeElement', data: component});
       }
+    };
+
+    $scope.saveComponent = function(component) {
+      $scope.$emit('update', component);
+      sendIframeMessage({name: 'updateElement', data: component});
+      ngDialog.closeAll(true);
     };
 
     $scope.removeComponent = function(component, shouldConfirm) {

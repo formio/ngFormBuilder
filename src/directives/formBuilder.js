@@ -36,35 +36,15 @@ module.exports = ['debounce', function(debounce) {
         if (!$scope.form.components) {
           $scope.form.components = [];
         }
+        if (!$scope.form.display) {
+          $scope.form.display = 'form';
+        }
         if (!$scope.options.noSubmit && !$scope.form.components.length) {
           $scope.form.components.push(submitButton);
         }
         $scope.hideCount = 2;
         $scope.form.page = 0;
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
-
-        var iframe = null;
-        $scope.$on('iframe-pdfReady', function() {
-          iframe = angular.element('#formio-iframe')[0];
-        });
-        var sendIframeMessage = function(message) {
-          if (iframe) {
-            iframe.contentWindow.postMessage(JSON.stringify(message), '*');
-          }
-        };
-        $scope.pdftypes = [
-          formioComponents.components.textfield,
-          formioComponents.components.checkbox,
-          formioComponents.components.signature
-        ];
-        $scope.$on('fbDragDrop', function(event, component) {
-          component.settings.overlay = {
-            page: '1',
-            top: component.fbDropY,
-            left: component.fbDropX
-          };
-          sendIframeMessage({name: 'createElement', data: component.settings});
-        });
 
         var setNumPages = function() {
           if (!$scope.form) {
@@ -99,6 +79,9 @@ module.exports = ['debounce', function(debounce) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
+            if (!$scope.form.display) {
+              $scope.form.display = 'form';
+            }
             if (!$scope.options.noSubmit && $scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
@@ -173,6 +156,12 @@ module.exports = ['debounce', function(debounce) {
             delete $scope.formComponents[key];
           }
         });
+
+        $scope.pdftypes = [
+          $scope.formComponents.textfield,
+          $scope.formComponents.checkbox,
+          $scope.formComponents.signature
+        ];
 
         $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
         $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {

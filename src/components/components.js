@@ -30,7 +30,7 @@ module.exports = function(app) {
               '</div>' +
               '<formio-settings-info component="component" data="data" formio="formio"></formio-settings-info>' +
               '<div class="form-group">' +
-                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
+                '<button type="submit" class="btn btn-success" ng-click="saveComponent(component)">Save</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
                 '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">Remove</button>' +
               '</div>' +
@@ -79,6 +79,30 @@ module.exports = function(app) {
           '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
           '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
           '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
+          '<uib-accordion>' +
+          '  <div uib-accordion-group heading="Overlay" class="panel panel-default">' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-style">Style</label>' +
+          '      <input class="form-control" id="overlay-style" name="overlay-style" ng-model="component.overlay.style"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-left">Left</label>' +
+          '      <input class="form-control" id="overlay-left" name="overlay-left" ng-model="component.overlay.left"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-right">Top</label>' +
+          '      <input class="form-control" id="overlay-top" name="overlay-top" ng-model="component.overlay.top"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-width">Width</label>' +
+          '      <input class="form-control" id="overlay-width" name="overlay-width" ng-model="component.overlay.width"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-height">Height</label>' +
+          '      <input class="form-control" id="overlay-height" name="overlay-height" ng-model="component.overlay.height"></input>' +
+          '    </div>' +
+          '  </div>' +
+          '</uib-accordion>' +
         '</ng-form>'
       );
 

@@ -44,7 +44,7 @@
       <li><a class="label label-success" style="font-size:1em;" ng-click="newPage()" data-toggle="tooltip" title="Create Page"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> page</a></li>
     </ol>
     <div class="dropzone">
-      <div ng-if="form.display === 'pdf'">
+      <div ng-if="form.display === 'pdf'" ng-controller="formBuilderDnd">
         <div form-builder-droppable style="width:100%;height:2000px;position:absolute;" id="fb-drop-zone"></div>
         <formio form="form" ng-init="form.builder = true;"></formio>
       </div>
