@@ -10,6 +10,7 @@ module.exports = [
           $scope,
           formioComponents
         ) {
+          $scope.builder = true;
           $scope.formComponent = formioComponents.components[$scope.component.type] || formioComponents.components.custom;
           if ($scope.formComponent.fbtemplate) {
             $scope.template = $scope.formComponent.fbtemplate;

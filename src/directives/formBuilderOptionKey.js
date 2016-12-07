@@ -35,15 +35,13 @@ module.exports = function() {
       };
 
       var iterateKey = function(componentKey) {
-        if (componentKey.match(suffixRegex)) {
-          componentKey = componentKey.replace(suffixRegex, function(suffix) {
-            return Number(suffix) + 1;
-          });
+        if (!componentKey.match(suffixRegex)) {
+          return componentKey + '1';
         }
-        else {
-          componentKey += '1';
-        }
-        return componentKey;
+
+        return componentKey.replace(suffixRegex, function(suffix) {
+          return Number(suffix) + 1;
+        });
       };
 
       // Appends a number to a component.key to keep it unique

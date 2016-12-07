@@ -1,14 +1,18 @@
 module.exports = [
   '$scope',
+  '$rootScope',
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
   function(
     $scope,
+    $rootScope,
     formioComponents,
     ngDialog,
     dndDragIframeWorkaround
   ) {
+    $scope.builder = true;
+    $rootScope.builder = true;
     $scope.hideCount = (_.isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
     $scope.$watch('hideDndBoxCount', function(hideCount) {
       $scope.hideCount = hideCount ? hideCount : 1;
@@ -120,7 +124,6 @@ module.exports = [
       var childScope = $scope.$new(false);
       childScope.component = component;
       childScope.data = {};
-
       if (component.key) {
         childScope.data[component.key] = component.multiple ? [''] : '';
       }

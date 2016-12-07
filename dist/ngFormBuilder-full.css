@@ -306,7 +306,7 @@ body.ngdialog-open {
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
- * Version: 0.19.5 - 2016-10-24T23:13:59.551Z
+ * Version: 0.19.3 - 2016-08-17T06:16:42.140Z
  * License: MIT
  */
 
@@ -405,13 +405,8 @@ body > .select2-container.open {
 }
 
 /* Fix input width for Selectize theme */
-.selectize-control.single > .selectize-input > input {
+.selectize-control > .selectize-input > input {
   width: 100%;
-}
-
-/* Fix line break when there's at least one item selected with the Selectize theme */
-.selectize-control.multi > .selectize-input > input {
-  margin: 0 !important;
 }
 
 /* Fix dropdown width for Selectize theme */
@@ -628,50 +623,6 @@ body > .ui-select-bootstrap.open {
   right: 10px;
   margin-top: -2px;
 }
-
-/* Spinner */
-.ui-select-refreshing {
-    position: absolute;
-    right: 0;
-    padding: 8px 27px;
-    top: 1px;
-    display: inline-block;
-    font-family: 'Glyphicons Halflings';
-    font-style: normal;
-    font-weight: normal;
-    line-height: 1;
-    -webkit-font-smoothing:antialiased;
- }
- 
-@-webkit-keyframes ui-select-spin {
-  0% {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  100% {
-    -webkit-transform: rotate(359deg);
-    transform: rotate(359deg);
-  }
-}
-@keyframes ui-select-spin {
-  0% {
-    -webkit-transform: rotate(0deg);
-    transform: rotate(0deg);
-  }
-  100% {
-    -webkit-transform: rotate(359deg);
-    transform: rotate(359deg);
-  }
-}
-
-.ui-select-spin {
-  -webkit-animation: ui-select-spin 2s infinite linear;
-  animation: ui-select-spin 2s infinite linear;
-}
-
-.ui-select-refreshing.ng-animate {
-  -webkit-animation: none 0s;
-} 
 tags-input {
   display: block;
 }
@@ -879,10 +830,6 @@ tags-input .autocomplete .suggestion-item em {
   background-color: #fff;
 }
 
-.glyphicon.formio-hidden {
-  display: none;
-}
-
 /* Handle overflow of long matched placeholder/text without covering caret */
 .has-feedback .form-control.ui-select-toggle {
   padding-right: 20px;
@@ -899,16 +846,8 @@ tags-input .autocomplete .suggestion-item em {
   min-width: 200px;
 }
 
-/* FOR-109 */
-.input-group .form-control {
-  z-index: inherit;
-}
 .input-group .form-control.ui-select-search {
   float: none;
-}
-.form-group .form-field-type-select {
-  display: inline-block;
-  width: 100%;
 }
 
 /* Fix Safari bug that prevents you from typing in draggable password fields */
@@ -974,10 +913,6 @@ input[type="password"][draggable="true"] {
   margin-top: 4px;
 }
 
-.form-field-type-table .form-group {
-  margin-bottom: 0px;
-}
-
 /* FA-877 - Fix component widths in the data grid with prefix/sufix. */
 .input-group {
   width: 100%;
@@ -1010,14 +945,13 @@ input[type="password"][draggable="true"] {
 .bs-wizard {border-bottom: solid 1px #e0e0e0; padding: 0 0 10px 0;line-height: 1em;}
 .bs-wizard > .bs-wizard-step {padding: 0; position: relative;}
 .bs-wizard > .bs-wizard-step + .bs-wizard-step {}
-.bs-wizard > .bs-wizard-step .bs-wizard-stepnum-wrapper {position:absolute;width:100%}
 .bs-wizard > .bs-wizard-step .bs-wizard-stepnum {color: #595959; font-size: 12px; line-height:15px;}
 .bs-wizard > .bs-wizard-step .bs-wizard-info {color: #999; font-size: 14px;}
 .bs-wizard > .bs-wizard-step > .bs-wizard-dot {position: absolute; width: 30px; height: 30px; display: block; top: 25px; left: 50%; margin-top: -15px; margin-left: -15px; border-radius: 50%; cursor:pointer;z-index:10;}
-.bs-wizard.hasTitles > .bs-wizard-step > .bs-wizard-dot {top: 45px;}
+.bs-wizard.hasTitles > .bs-wizard-step > .bs-wizard-dot {top: 40px;}
 .bs-wizard > .bs-wizard-step > .bs-wizard-dot > .bs-wizard-dot-inner {width: 14px; height: 14px; border-radius: 50px; position: absolute; top: 8px; left: 8px; }
 .bs-wizard > .bs-wizard-step > .progress {position: relative; border-radius: 0px; height: 10px; box-shadow: none; margin: 20px 0;border: none;padding: 0;}
-.bs-wizard.hasTitles > .bs-wizard-step > .progress {margin-top: 40px;}
+.bs-wizard.hasTitles > .bs-wizard-step.noTitle > .progress {margin-top: 35px;}
 .bs-wizard > .bs-wizard-step > .progress > .progress-bar {width:0px; box-shadow: none;}
 .bs-wizard > .bs-wizard-step.complete > .progress > .progress-bar {width:100%;border-radius:0;}
 .bs-wizard > .bs-wizard-step.active > .progress > .progress-bar {width:50%;}
