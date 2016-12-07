@@ -4,6 +4,16 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('datetime', {
         onEdit: ['$scope', function($scope) {
+          // FOR-34 - Update 12hr time display in the field, not only time picker.
+          $scope.$watch('component.timePicker.showMeridian', function(value) {
+            var _old = value ? 'HH' : 'hh';
+            var _new = !value ? 'HH' : 'hh';
+
+            if ($scope.component.enableTime) {
+              $scope.component.format = $scope.component.format.toString().replace(_old, _new);
+            }
+          });
+
           $scope.setFormat = function() {
             if ($scope.component.enableDate && $scope.component.enableTime) {
               $scope.component.format = 'yyyy-MM-dd HH:mm';
