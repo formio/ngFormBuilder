@@ -25,7 +25,7 @@ module.exports = function(app) {
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
                 '<div class="panel-heading">Preview</div>' +
                 '<div class="panel-body">' +
-                  '<formio-component component="component" data="data" formio="::formio" builder="::builder"></formio-component>' +
+                  '<formio-component component="component" data="data" formio="::formio"></formio-component>' +
                 '</div>' +
               '</div>' +
               '<formio-settings-info component="component" data="data" formio="::formio"></formio-settings-info>' +
