@@ -18,13 +18,15 @@ module.exports = ['debounce', function(debounce) {
       'Formio',
       'FormioUtils',
       'dndDragIframeWorkaround',
+      '$interval',
       function(
         $scope,
         formioComponents,
         ngDialog,
         Formio,
         FormioUtils,
-        dndDragIframeWorkaround
+        dndDragIframeWorkaround,
+        $interval
       ) {
         $scope.options = $scope.options || {};
 
@@ -238,14 +240,16 @@ module.exports = ['debounce', function(debounce) {
         $scope.capitalize = _.capitalize;
 
         // Set the root list height to the height of the formbuilder for ease of form building.
-        (function setRootListHeight() {
-          var listHeight = angular.element('.rootlist').height('inherit').height();
-          var builderHeight = angular.element('.formbuilder').height();
+        var rootlistEL = angular.element('.rootlist');
+        var formbuilderEL = angular.element('.formbuilder');
+
+        $interval(function setRootListHeight() {
+          var listHeight = rootlistEL.height('inherit').height();
+          var builderHeight = formbuilderEL.height();
           if ((builderHeight - listHeight) > 100) {
-            angular.element('.rootlist').height(builderHeight);
+            rootlistEL.height(builderHeight);
           }
-          setTimeout(setRootListHeight, 1000);
-        })();
+        }, 1000);
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
@@ -255,9 +259,6 @@ module.exports = ['debounce', function(debounce) {
       var scrollSidebar = debounce(function() {
         // Disable all buttons within the form.
         angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
-        scope.$watch('form', function() {
-          angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
-        }, true);
 
         // Make the left column follow the form.
         var formComponents = angular.element('.formcomponents');
