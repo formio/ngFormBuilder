@@ -86070,11 +86070,17 @@ module.exports = [
         }
       });
     });
-    $scope.$on('iframe-elementMove', function(event, data) {
+    $scope.$on('iframe-elementUpdate', function(event, data) {
       angular.forEach($scope.component.components, function(component) {
         if (component.overlay && (component.overlay.id === data.id)) {
-          component.overlay.top = data.top;
-          component.overlay.left = data.left;
+          if (data.top && data.left) {
+            component.overlay.top = data.top;
+            component.overlay.left = data.left;
+          }
+          if (data.width && data.height) {
+            component.overlay.width = data.width;
+            component.overlay.height = data.height;
+          }
         }
       });
     });
@@ -86110,7 +86116,7 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
-      sendIframeMessage({name: 'createElement', data: component});
+      sendIframeMessage({name: 'addElement', data: component});
 
       // If this is a root component and the display is a wizard, then we know
       // that they dropped the component outside of where it is supposed to go...
