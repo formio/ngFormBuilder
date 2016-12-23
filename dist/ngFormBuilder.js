@@ -353,6 +353,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
@@ -448,10 +449,10 @@ module.exports = function(app) {
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
                 '<div class="panel-heading">Preview</div>' +
                 '<div class="panel-body">' +
-                  '<formio-component component="component" data="data" formio="::formio" builder="::builder"></formio-component>' +
+                  '<formio-component component="component" data="{}" formio="::formio"></formio-component>' +
                 '</div>' +
               '</div>' +
-              '<formio-settings-info component="component" data="data" formio="::formio"></formio-settings-info>' +
+              '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
                 '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
@@ -1021,6 +1022,9 @@ module.exports = function(app) {
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.year.placeholder" label="Year Placeholder"></form-builder-option>' +
           '<form-builder-option property="dayFirst" type="checkbox" label="Day first" title="Display the Day field before the Month field."></form-builder-option>' +
+          '<form-builder-option property="fields.day.hide" type="checkbox" label="Hide Day" title="Hide the day part of the component."></form-builder-option>' +
+          '<form-builder-option property="fields.month.hide" type="checkbox" label="Hide Month" title="Hide the month part of the component."></form-builder-option>' +
+          '<form-builder-option property="fields.year.hide" type="checkbox" label="Hide Year" title="Hide the year part of the component."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
@@ -2049,6 +2053,7 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
       );
 
@@ -2625,6 +2630,11 @@ module.exports = {
     label: 'Condensed',
     type: 'checkbox',
     tooltip: 'Condense the size of the table.'
+  },
+  datagridLabel: {
+    label: 'Datagrid Label',
+    type: 'checkbox',
+    tooltip: 'Show the label when in a datagrid.'
   },
   'validate.required': {
     label: 'Required',
