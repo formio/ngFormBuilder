@@ -81263,6 +81263,37 @@ module.exports = function() {
       ) {
         return;
       }
+
+      var _get = function(item, path, def) {
+        if (!item) {
+          return def || undefined;
+        }
+        if (!path) {
+          return item;
+        }
+
+        // If the path is a string, turn it into an array.
+        if (typeof path === 'string') {
+          path = path.split('.');
+        }
+        // If the path is an array, take the first element, and recurse its path
+        if (path instanceof Array) {
+          var current = path.shift();
+          if (item.hasOwnProperty(current)) {
+            // If there are no more path items, stop here.
+            if (path.length === 0) {
+              return item[current];
+            }
+
+            return _get(item[current], path);
+          }
+
+          return undefined;
+        }
+
+        return undefined;
+      };
+
       ctrl.$validators.custom = function(modelValue, viewValue) {
         var valid = true;
         /*eslint-disable no-unused-vars */
@@ -81275,7 +81306,7 @@ module.exports = function() {
 
         var custom = scope.component.validate.custom;
         custom = custom.replace(/({{\s{0,}(.*[^\s]){1}\s{0,}}})/g, function(match, $1, $2) {
-          return 'scope.submission.data.' + $2;
+          return _get(scope.submission.data, $2);
         });
 
         try {
@@ -90346,7 +90377,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":159,"angular-drag-and-drop-lists":1,"lodash":35,"ng-ckeditor/ng-ckeditor":38,"ng-dialog":39,"ng-formio/src/formio-complete.js":97}],159:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.6.6 | https://unpkg.com/ng-formio-builder@2.6.6/LICENSE.txt */
+/*! ng-formio-builder v2.6.7 | https://unpkg.com/ng-formio-builder@2.6.7/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
