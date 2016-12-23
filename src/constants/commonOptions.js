@@ -134,6 +134,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Condense the size of the table.'
   },
+  datagridLabel: {
+    label: 'Datagrid Label',
+    type: 'checkbox',
+    tooltip: 'Show the label when in a datagrid.'
+  },
   'validate.required': {
     label: 'Required',
     type: 'checkbox',
