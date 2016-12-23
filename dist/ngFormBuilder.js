@@ -449,10 +449,10 @@ module.exports = function(app) {
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
                 '<div class="panel-heading">Preview</div>' +
                 '<div class="panel-body">' +
-                  '<formio-component component="component" data="data" formio="::formio" builder="::builder"></formio-component>' +
+                  '<formio-component component="component" data="{}" formio="::formio"></formio-component>' +
                 '</div>' +
               '</div>' +
-              '<formio-settings-info component="component" data="data" formio="::formio"></formio-settings-info>' +
+              '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
                 '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
@@ -2053,6 +2053,7 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
       );
 
@@ -3895,7 +3896,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.5.2 | https://unpkg.com/ng-formio-builder@2.5.2/LICENSE.txt */
+/*! ng-formio-builder v2.6.5 | https://unpkg.com/ng-formio-builder@2.6.5/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
