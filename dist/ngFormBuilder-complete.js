@@ -2684,7 +2684,7 @@ module.exports = 'ngSanitize';
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.3.2 - 2016-12-27
+ * Version: 2.4.0 - 2016-12-29
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -3493,7 +3493,7 @@ function($animateCss) {
 
 angular.module('ui.bootstrap.dateparser', [])
 
-.service('uibDateParser', ['$log', '$locale', 'dateFilter', 'orderByFilter', function($log, $locale, dateFilter, orderByFilter) {
+.service('uibDateParser', ['$log', '$locale', 'dateFilter', 'orderByFilter', 'filterFilter', function($log, $locale, dateFilter, orderByFilter, filterFilter) {
   // Pulled from https://github.com/mbostock/d3/blob/master/src/format/requote.js
   var SPECIAL_CHARACTERS_REGEXP = /[\\\^\$\*\+\?\|\[\]\(\)\.\{\}]/g;
 
@@ -3735,6 +3735,23 @@ angular.module('ui.bootstrap.dateparser', [])
   };
 
   this.init();
+
+  function getFormatCodeToRegex(key) {
+    return filterFilter(formatCodeToRegex, {key: key}, true)[0];
+  }
+
+  this.getParser = function (key) {
+    var f = getFormatCodeToRegex(key);
+    return f && f.apply || null;
+  };
+
+  this.overrideParser = function (key, parser) {
+    var f = getFormatCodeToRegex(key);
+    if (f && angular.isFunction(parser)) {
+      this.parsers = {};
+      f.apply = parser;
+    }
+  }.bind(this);
 
   function createParser(format) {
     var map = [], regex = format.split('');
@@ -80482,234 +80499,279 @@ module.exports = function(app) {
             return value;
           }
         },
-        controller: ['$rootScope', '$scope', '$http', 'Formio', '$interpolate', function($rootScope, $scope, $http, Formio, $interpolate) {
-          // FOR-71 - Skip functionality in the builder view.
-          if ($scope.builder) return;
-          var settings = $scope.component;
-          var options = {cache: true};
-          $scope.nowrap = true;
-          $scope.hasNextPage = false;
-          $scope.selectItems = [];
-          var selectValues = $scope.component.selectValues;
-          var valueProp = $scope.component.valueProperty;
-          $scope.getSelectItem = function(item) {
-            if (!item) {
-              return '';
-            }
-            if (settings.dataSrc === 'values') {
-              return item.value;
-            }
-
-            // Allow dot notation in the value property.
-            if (valueProp.indexOf('.') !== -1) {
-              var parts = valueProp.split('.');
-              var prop = item;
-              for (var i in parts) {
-                prop = prop[parts[i]];
+        controller: [
+          '$rootScope',
+          '$scope',
+          '$http',
+          'Formio',
+          '$interpolate',
+          '$q',
+          function(
+            $rootScope,
+            $scope,
+            $http,
+            Formio,
+            $interpolate,
+            $q
+          ) {
+            // FOR-71 - Skip functionality in the builder view.
+            if ($scope.builder) return;
+            var settings = $scope.component;
+            var options = {cache: true};
+            $scope.nowrap = true;
+            $scope.hasNextPage = false;
+            $scope.selectItems = [];
+            var initialized = $q.defer();
+            var selectValues = $scope.component.selectValues;
+            var valueProp = $scope.component.valueProperty;
+            $scope.getSelectItem = function(item) {
+              if (!item) {
+                return '';
               }
-              return prop;
-            }
+              if (settings.dataSrc === 'values') {
+                return item.value;
+              }
 
-            return valueProp ? item[valueProp] : item;
-          };
-
-          $scope.refreshItems = angular.noop;
-          $scope.$on('refreshList', function(event, url, input) {
-            $scope.refreshItems(input, url);
-          });
-
-          // Add a watch if they wish to refresh on selection of another field.
-          var refreshWatch;
-          if (settings.refreshOn) {
-            // Remove the old watch.
-            if (refreshWatch) refreshWatch();
-            if (settings.refreshOn === 'data') {
-              refreshWatch = $scope.$watch('data', function() {
-                $scope.refreshItems();
-                if (settings.clearOnRefresh) {
-                  $scope.data[settings.key] = settings.multiple ? [] : '';
+              // Allow dot notation in the value property.
+              if (valueProp.indexOf('.') !== -1) {
+                var parts = valueProp.split('.');
+                var prop = item;
+                for (var i in parts) {
+                  if (prop.hasOwnProperty(parts[i])) {
+                    prop = prop[parts[i]];
+                  }
                 }
-              }, true);
-
-              return;
-            }
-
-            refreshWatch = $scope.$watch('data.' + settings.refreshOn, function(newValue, oldValue) {
-              $scope.refreshItems();
-              if (settings.clearOnRefresh && (newValue !== oldValue)) {
-                $scope.data[settings.key] = settings.multiple ? [] : '';
+                return prop;
               }
+
+              return valueProp ? item[valueProp] : item;
+            };
+
+            $scope.refreshItems = angular.noop;
+            $scope.$on('refreshList', function(event, url, input) {
+              $scope.refreshItems(input, url);
             });
-          }
 
-          switch (settings.dataSrc) {
-            case 'values':
-              $scope.selectItems = settings.data.values;
-              break;
-            case 'json':
-              try {
-                $scope.selectItems = angular.fromJson(settings.data.json);
+            // Add a watch if they wish to refresh on selection of another field.
+            var refreshWatch, refreshWatchRow;
+            if (settings.refreshOn) {
+              // Remove the old watch.
+              var refreshing = false;
+              if (refreshWatch) refreshWatch();
+              if (refreshWatchRow) refreshWatchRow();
 
-                if (selectValues) {
-                  // Allow dot notation in the selectValue property.
-                  if (selectValues.indexOf('.') !== -1) {
-                    var parts = selectValues.split('.');
-                    var select = $scope.selectItems;
-                    for (var i in parts) {
-                      select = select[parts[i]];
-                    }
-                    $scope.selectItems = select;
+              // Refresh the data.
+              var refreshValue = function() {
+                if (refreshing) {
+                  return;
+                }
+                refreshing = true;
+                var tempData = $scope.data[settings.key];
+                $scope.data[settings.key] = settings.multiple ? [] : '';
+                if (!settings.clearOnRefresh) {
+                  setTimeout(function() {
+                    $scope.data[settings.key] = tempData;
+                    refreshing = false;
+                  }, 10);
+                }
+              };
+
+              // Refresh the value.
+              var refreshValueWhenReady = function() {
+                initialized.promise.then(function() {
+                  var refreshPromise = $scope.refreshItems();
+                  if (refreshPromise) {
+                    refreshPromise.then(refreshValue);
                   }
                   else {
-                    $scope.selectItems = $scope.selectItems[selectValues];
+                    refreshValue();
                   }
-                }
+                });
+              };
+              if (settings.refreshOn === 'data') {
+                refreshWatch = $scope.$watch('data', refreshValueWhenReady, true);
+                return;
               }
-              catch (error) {
-                $scope.selectItems = [];
-              }
-              break;
-            case 'custom':
-              $scope.refreshItems = function() {
+
+              refreshWatchRow = $scope.$watch('data.' + settings.refreshOn, refreshValueWhenReady);
+              refreshWatch = $scope.$watch('submission.data.' + settings.refreshOn, refreshValueWhenReady);
+            }
+
+            switch (settings.dataSrc) {
+              case 'values':
+                $scope.selectItems = settings.data.values;
+                initialized.resolve();
+                break;
+              case 'json':
                 try {
-                  /* eslint-disable no-unused-vars */
-                  var data = _.cloneDeep($scope.submission.data);
-                  /* eslint-enable no-unused-vars */
-                  $scope.selectItems = eval('(function(data) { var values = [];' + settings.data.custom.toString() + '; return values; })(data)');
+                  $scope.selectItems = angular.fromJson(settings.data.json);
+
+                  if (selectValues) {
+                    // Allow dot notation in the selectValue property.
+                    if (selectValues.indexOf('.') !== -1) {
+                      var parts = selectValues.split('.');
+                      var select = $scope.selectItems;
+                      for (var i in parts) {
+                        select = select[parts[i]];
+                      }
+                      $scope.selectItems = select;
+                    }
+                    else {
+                      $scope.selectItems = $scope.selectItems[selectValues];
+                    }
+                  }
                 }
                 catch (error) {
                   $scope.selectItems = [];
                 }
-              };
-              $scope.refreshItems();
-              break;
-            case 'url':
-            case 'resource':
-              var url = '';
-              if (settings.dataSrc === 'url') {
-                url = settings.data.url;
-                if (url.substr(0, 1) === '/') {
-                  url = Formio.getBaseUrl() + settings.data.url;
-                }
-
-                // Disable auth for outgoing requests.
-                if (!settings.authenticate && url.indexOf(Formio.getBaseUrl()) === -1) {
-                  options = {
-                    disableJWT: true,
-                    headers: {
-                      Authorization: undefined,
-                      Pragma: undefined,
-                      'Cache-Control': undefined
-                    }
-                  };
-                }
-              }
-              else {
-                url = Formio.getBaseUrl();
-                if (settings.data.project) {
-                  url += '/project/' + settings.data.project;
-                }
-                url += '/form/' + settings.data.resource + '/submission';
-              }
-
-              options.params = {
-                limit: 100,
-                skip: 0
-              };
-
-              $scope.loadMoreItems = function($select, $event) {
-                $event.stopPropagation();
-                $event.preventDefault();
-                options.params.skip += options.params.limit;
-                $scope.refreshItems(null, null, true);
-              };
-
-              if (url) {
-                $scope.selectLoading = false;
-                $scope.hasNextPage = true;
-                $scope.refreshItems = function(input, newUrl, append) {
-                  newUrl = newUrl || url;
-                  newUrl = $interpolate(newUrl)({
-                    data: $scope.data,
-                    formioBase: $rootScope.apiBase || 'https://api.form.io'
-                  });
-                  if (!newUrl) {
-                    return;
+                initialized.resolve();
+                break;
+              case 'custom':
+                $scope.refreshItems = function() {
+                  try {
+                    /* eslint-disable no-unused-vars */
+                    var data = _.cloneDeep($scope.submission.data);
+                    var row = _.cloneDeep($scope.data);
+                    /* eslint-enable no-unused-vars */
+                    $scope.selectItems = eval('(function(data, row) { var values = [];' + settings.data.custom.toString() + '; return values; })(data, row)');
                   }
-
-                  // Do not want to call if it is already loading.
-                  if ($scope.selectLoading) {
-                    return;
+                  catch (error) {
+                    $scope.selectItems = [];
                   }
-
-                  // If this is a search, then add that to the filter.
-                  if (settings.searchField && input) {
-                    newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') +
-                      encodeURIComponent(settings.searchField) +
-                      '=' +
-                      encodeURIComponent(input);
-                  }
-
-                  // Add the other filter.
-                  if (settings.filter) {
-                    var filter = $interpolate(settings.filter)({data: $scope.data});
-                    newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') + filter;
-                  }
-
-                  // If they wish to return only some fields.
-                  if (settings.selectFields) {
-                    options.params.select = settings.selectFields;
-                  }
-
-                  // Set the new result.
-                  var setResult = function(data) {
-                    // coerce the data into an array.
-                    if (!(data instanceof Array)) {
-                      data = [data];
-                    }
-
-                    if (data.length < options.params.limit) {
-                      $scope.hasNextPage = false;
-                    }
-                    if (append) {
-                      $scope.selectItems = $scope.selectItems.concat(data);
-                    }
-                    else {
-                      $scope.selectItems = data;
-                    }
-                  };
-
-                  $scope.selectLoading = true;
-                  $http.get(newUrl, options).then(function(result) {
-                    var data = result.data;
-                    if (data) {
-                      // If the selectValue prop is defined, use it.
-                      if (selectValues) {
-                        setResult(_.get(data, selectValues, []));
-                      }
-                      // Attempt to default to the formio settings for a resource.
-                      else if (data.hasOwnProperty('data')) {
-                        setResult(data.data);
-                      }
-                      else if (data.hasOwnProperty('items')) {
-                        setResult(data.items);
-                      }
-                      // Use the data itself.
-                      else {
-                        setResult(data);
-                      }
-                    }
-                  })['finally'](function() {
-                    $scope.selectLoading = false;
-                  });
+                  initialized.resolve();
                 };
                 $scope.refreshItems();
-              }
-              break;
-            default:
-              $scope.selectItems = [];
+                break;
+              case 'url':
+              case 'resource':
+                var url = '';
+                if (settings.dataSrc === 'url') {
+                  url = settings.data.url;
+                  if (url.substr(0, 1) === '/') {
+                    url = Formio.getBaseUrl() + settings.data.url;
+                  }
+
+                  // Disable auth for outgoing requests.
+                  if (!settings.authenticate && url.indexOf(Formio.getBaseUrl()) === -1) {
+                    options = {
+                      disableJWT: true,
+                      headers: {
+                        Authorization: undefined,
+                        Pragma: undefined,
+                        'Cache-Control': undefined
+                      }
+                    };
+                  }
+                }
+                else {
+                  url = Formio.getBaseUrl();
+                  if (settings.data.project) {
+                    url += '/project/' + settings.data.project;
+                  }
+                  url += '/form/' + settings.data.resource + '/submission';
+                }
+
+                options.params = {
+                  limit: 100,
+                  skip: 0
+                };
+
+                $scope.loadMoreItems = function($select, $event) {
+                  $event.stopPropagation();
+                  $event.preventDefault();
+                  options.params.skip += options.params.limit;
+                  $scope.refreshItems(null, null, true);
+                };
+
+                if (url) {
+                  $scope.selectLoading = false;
+                  $scope.hasNextPage = true;
+                  $scope.refreshItems = function(input, newUrl, append) {
+                    newUrl = newUrl || url;
+                    newUrl = $interpolate(newUrl)({
+                      data: $scope.data,
+                      formioBase: $rootScope.apiBase || 'https://api.form.io'
+                    });
+                    if (!newUrl) {
+                      return;
+                    }
+
+                    // Do not want to call if it is already loading.
+                    if ($scope.selectLoading) {
+                      return;
+                    }
+
+                    // If this is a search, then add that to the filter.
+                    if (settings.searchField && input) {
+                      newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') +
+                        encodeURIComponent(settings.searchField) +
+                        '=' +
+                        encodeURIComponent(input);
+                    }
+
+                    // Add the other filter.
+                    if (settings.filter) {
+                      var filter = $interpolate(settings.filter)({data: $scope.data});
+                      newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') + filter;
+                    }
+
+                    // If they wish to return only some fields.
+                    if (settings.selectFields) {
+                      options.params.select = settings.selectFields;
+                    }
+
+                    // Set the new result.
+                    var setResult = function(data) {
+                      // coerce the data into an array.
+                      if (!(data instanceof Array)) {
+                        data = [data];
+                      }
+
+                      if (data.length < options.params.limit) {
+                        $scope.hasNextPage = false;
+                      }
+                      if (append) {
+                        $scope.selectItems = $scope.selectItems.concat(data);
+                      }
+                      else {
+                        $scope.selectItems = data;
+                      }
+                    };
+
+                    $scope.selectLoading = true;
+                    return $http.get(newUrl, options).then(function(result) {
+                      var data = result.data;
+                      if (data) {
+                        // If the selectValue prop is defined, use it.
+                        if (selectValues) {
+                          setResult(_.get(data, selectValues, []));
+                        }
+                        // Attempt to default to the formio settings for a resource.
+                        else if (data.hasOwnProperty('data')) {
+                          setResult(data.data);
+                        }
+                        else if (data.hasOwnProperty('items')) {
+                          setResult(data.items);
+                        }
+                        // Use the data itself.
+                        else {
+                          setResult(data);
+                        }
+                      }
+                    })['finally'](function() {
+                      $scope.selectLoading = false;
+                      initialized.resolve();
+                    });
+                  };
+                  $scope.refreshItems();
+                }
+                break;
+              default:
+                $scope.selectItems = [];
+                initialized.resolve();
+            }
           }
-        }],
+        ],
         settings: {
           input: true,
           tableView: true,
@@ -82647,6 +82709,14 @@ module.exports = function() {
               }
               else if (component.conditional && component.conditional.when) {
                 hasConditionalPages = true;
+              }
+              // Make sure this page is not in the hide compoenents array.
+              if (
+                ($scope.hideComponents) &&
+                (component.key) &&
+                ($scope.hideComponents.indexOf(component.key) !== -1)
+              ) {
+                return;
               }
               allPages.push(component);
               $scope.pages.push(component);
@@ -90400,7 +90470,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":159,"angular-drag-and-drop-lists":1,"lodash":35,"ng-ckeditor/ng-ckeditor":38,"ng-dialog":39,"ng-formio/src/formio-complete.js":97}],159:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.6.9 | https://unpkg.com/ng-formio-builder@2.6.9/LICENSE.txt */
+/*! ng-formio-builder v2.7.0 | https://unpkg.com/ng-formio-builder@2.7.0/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
