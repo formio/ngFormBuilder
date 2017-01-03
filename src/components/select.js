@@ -206,6 +206,7 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
       );
 

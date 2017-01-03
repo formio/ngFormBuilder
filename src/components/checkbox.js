@@ -41,6 +41,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
