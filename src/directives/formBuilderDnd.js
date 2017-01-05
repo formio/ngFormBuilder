@@ -3,15 +3,19 @@ module.exports = [
   '$element',
   '$rootScope',
   'formioComponents',
+  'FormioUtils',
   'ngDialog',
   'dndDragIframeWorkaround',
+  '$timeout',
   function(
     $scope,
     $element,
     $rootScope,
     formioComponents,
+    FormioUtils,
     ngDialog,
-    dndDragIframeWorkaround
+    dndDragIframeWorkaround,
+    $timeout
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -121,8 +125,10 @@ module.exports = [
       }
 
       // Add the component to the components array.
-      $scope.$apply(function() {
-        $scope.component.components.splice(index, 0, component);
+      $timeout(function() {
+        $scope.$apply(function() {
+          $scope.component.components.splice(index, 0, component);
+        });
       });
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
@@ -146,6 +152,37 @@ module.exports = [
     };
 
     $scope.saveComponent = function(component) {
+      // If this is a single radio button with Value and Key, we need to
+      // add a new Hidden field to store the value, and make this component
+      // not persistent and no tableview.
+      if (
+        (component.type === 'checkbox') &&
+        (component.inputType === 'radio') &&
+        (component.name && component.value)
+      ) {
+        component.persistent = false;
+        component.tableView = false;
+        var found = false;
+        FormioUtils.eachComponent($scope.form.components, function(comp) {
+          if (comp.type === 'hidden' && comp.key === component.name) {
+            found = true;
+          }
+        });
+        if (!found) {
+          // Add the hidden component.
+          $scope.addComponent({
+            type: 'hidden',
+            input: true,
+            tableView: true,
+            key: component.name,
+            label: component.name,
+            protected: false,
+            unique: false,
+            persistent: true
+          }, 0);
+        }
+      }
+
       $scope.$emit('update', component);
       sendIframeMessage({name: 'updateElement', data: component});
       ngDialog.closeAll(true);

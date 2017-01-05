@@ -219,6 +219,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -316,6 +317,18 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('checkbox', {
         icon: 'fa fa-check-square',
+        onEdit: ['$scope', function($scope) {
+          $scope.inputTypes = [
+            {
+              name: 'checkbox',
+              title: 'Checkbox'
+            },
+            {
+              name: 'radio',
+              title: 'Radio'
+            }
+          ];
+        }],
         views: [
           {
             name: 'Display',
@@ -353,11 +366,24 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">Input Type</label>' +
+            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title for inputType in inputTypes" ng-model="component.inputType"></select>' +
+          '</div>' +
+          '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
+          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">Radio Key</label>' +
+          '  <input type="text" class="form-control" id="name" name="name" ng-model="component.name" placeholder="{{ component.key }}" />' +
+          '</div>' +
+          '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
+          '  <label for="value" form-builder-tooltip="The value used with this radio button.">Radio Value</label>' +
+          '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
+          '</div>' +
           '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -686,6 +712,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -807,6 +834,7 @@ module.exports = function(app) {
         '<form-builder-option property="condensed"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="hidden"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -909,6 +937,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1053,6 +1082,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1241,6 +1271,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1472,6 +1503,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1637,6 +1669,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1699,6 +1732,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1766,6 +1800,7 @@ module.exports = function(app) {
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -1853,6 +1888,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -2021,6 +2057,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -2140,6 +2177,7 @@ module.exports = function(app) {
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -2210,6 +2248,7 @@ module.exports = function(app) {
           '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -2273,6 +2312,7 @@ module.exports = function(app) {
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -2452,6 +2492,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -2604,6 +2645,11 @@ module.exports = {
     label: 'Persistent',
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
+  },
+  hidden: {
+    label: 'Hidden',
+    type: 'checkbox',
+    tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
   },
   block: {
     label: 'Block',
@@ -2958,7 +3004,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.pdftypes = [
           $scope.formComponents.textfield,
           $scope.formComponents.checkbox,
-          $scope.formComponents.signature
+          $scope.formComponents.signature,
+          $scope.formComponents.select,
+          $scope.formComponents.textarea
         ];
 
         $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
@@ -3190,15 +3238,19 @@ module.exports = [
   '$element',
   '$rootScope',
   'formioComponents',
+  'FormioUtils',
   'ngDialog',
   'dndDragIframeWorkaround',
+  '$timeout',
   function(
     $scope,
     $element,
     $rootScope,
     formioComponents,
+    FormioUtils,
     ngDialog,
-    dndDragIframeWorkaround
+    dndDragIframeWorkaround,
+    $timeout
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -3308,8 +3360,10 @@ module.exports = [
       }
 
       // Add the component to the components array.
-      $scope.$apply(function() {
-        $scope.component.components.splice(index, 0, component);
+      $timeout(function() {
+        $scope.$apply(function() {
+          $scope.component.components.splice(index, 0, component);
+        });
       });
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
@@ -3333,6 +3387,37 @@ module.exports = [
     };
 
     $scope.saveComponent = function(component) {
+      // If this is a single radio button with Value and Key, we need to
+      // add a new Hidden field to store the value, and make this component
+      // not persistent and no tableview.
+      if (
+        (component.type === 'checkbox') &&
+        (component.inputType === 'radio') &&
+        (component.name && component.value)
+      ) {
+        component.persistent = false;
+        component.tableView = false;
+        var found = false;
+        FormioUtils.eachComponent($scope.form.components, function(comp) {
+          if (comp.type === 'hidden' && comp.key === component.name) {
+            found = true;
+          }
+        });
+        if (!found) {
+          // Add the hidden component.
+          $scope.addComponent({
+            type: 'hidden',
+            input: true,
+            tableView: true,
+            key: component.name,
+            label: component.name,
+            protected: false,
+            unique: false,
+            persistent: true
+          }, 0);
+        }
+      }
+
       $scope.$emit('update', component);
       sendIframeMessage({name: 'updateElement', data: component});
       ngDialog.closeAll(true);

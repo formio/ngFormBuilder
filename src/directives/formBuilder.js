@@ -162,7 +162,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.pdftypes = [
           $scope.formComponents.textfield,
           $scope.formComponents.checkbox,
-          $scope.formComponents.signature
+          $scope.formComponents.signature,
+          $scope.formComponents.select,
+          $scope.formComponents.textarea
         ];
 
         $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
