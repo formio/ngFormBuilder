@@ -3360,11 +3360,8 @@ module.exports = [
       }
 
       // Add the component to the components array.
-      $timeout(function() {
-        $scope.$apply(function() {
-          $scope.component.components.splice(index, 0, component);
-        });
-      });
+      $scope.component.components.splice(index, 0, component);
+      $timeout($scope.$apply.bind($scope));
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
       return true;
