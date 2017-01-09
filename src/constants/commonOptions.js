@@ -19,6 +19,11 @@ module.exports = {
     placeholder: 'Placeholder',
     tooltip: 'The placeholder text that will appear when this field is empty.'
   },
+  description: {
+    label: 'Description',
+    placeholder: 'Placeholder',
+    tooltip: 'The description for this field that will appear below it.'
+  },
   inputMask: {
     label: 'Input Mask',
     placeholder: 'Input Mask',
