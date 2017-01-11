@@ -1,0 +1,282 @@
+.component-form-group {
+  position: relative;
+}
+
+.component-btn-group {
+  position: absolute;
+  right: 0;
+  z-index: 1000;
+}
+
+.component-btn-group .component-settings-button {
+  float: right;
+  z-index: 1001;
+  margin: 4px 4px 0 0;
+}
+
+.component-form-group.col-xs-6 {
+  clear: right;
+}
+
+li .component-btn-group .component-settings-button {
+  z-index: 1001;
+  -webkit-box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
+  -moz-box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
+  box-shadow: 0px 0px 10px 1px rgba(48,113,169,0.6);
+}
+
+li:not(:hover) .component-btn-group .component-settings-button {
+  display: none;
+}
+
+.formbuilder .nav-tabs {
+  margin-bottom: 0;
+}
+
+.form-builder-panel .panel-body {
+  padding: 5px;
+}
+
+.form-component-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.form-component-list li {
+  margin-bottom: 10px;
+}
+
+.btn-xxs, .btn-group-xxs > .btn, .component-btn-group .component-settings-button {
+  padding: 2px 2px;
+  font-size: 10px;
+  line-height: 1.2em;
+  border-radius: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.ngdialog.ngdialog-theme-default.component-settings .ngdialog-content {
+  width: 65%;
+}
+
+#component-settings .tab-pane {
+  padding: 10px;
+}
+
+#component-settings .nav-tabs {
+  font-size: 12px;
+}
+
+.component-settings-key {
+  margin: -1em 1em 1em 1em;
+}
+
+/***************************** Required styles *****************************/
+
+/**
+ * For the correct positioning of the placeholder element, the dnd-list and
+ * it's children must have position: relative
+ */
+ul[dnd-list],
+ul[dnd-list] > li {
+  position: relative;
+}
+
+tr[dnd-list],
+tr[dnd-list] > th {
+  position: relative;
+}
+
+/***************************** Dropzone Styling *****************************/
+
+/**
+ * The dnd-list should always have a min-height,
+ * otherwise you can't drop to it once it's empty
+ */
+ul.component-list {
+  min-height: 42px;
+  margin: 0px;
+  padding-left: 0px;
+}
+
+/**
+ * The dnd-lists's child elements currently MUST have
+ * position: relative. Otherwise we can not determine
+ * whether the mouse pointer is in the upper or lower
+ * half of the element we are dragging over. In other
+ * browsers we can use event.offsetY for this.
+ */
+ul.component-list li {
+  display: block;
+  padding: 0px;
+}
+
+.dropzone {
+  min-height: 150px;
+  min-width: 150px;
+}
+
+/**
+ * Reduce opacity of elements during the drag operation. This allows the user
+ * to see where he is dropping his element, even if the element is huge. The
+ * .dndDragging class is automatically set during the drag operation.
+ */
+.dropzone .dndDragging {
+  opacity: 0.7;
+}
+
+/**
+ * The dndDraggingSource class will be applied to the source element of a drag
+ * operation. It makes sense to hide it to give the user the feeling that he's
+ * actually moving it. Note that the source element has also .dndDragging class.
+ */
+.dropzone .dndDraggingSource {
+  display: none;
+}
+
+/**
+ * An element with .dndPlaceholder class will be added as child of the dnd-list
+ * while the user is dragging over it.
+ */
+.dropzone .dndPlaceholder {
+  background-color: #ddd;
+  min-height: 50px;
+  min-width: 50px;
+  position: relative;
+}
+
+/**
+ * An overlay that is shown while dragging. This way, elements like iframes in
+ * a content component do not interfere with dragging.
+ */
+.dropzone .dndOverlay {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  opacity: 0;
+}
+
+/***************************** Element Selection *****************************/
+
+.dropzone .selected .item {
+  color: #3c763d;
+  background-color: #dff0d8;
+}
+
+.dropzone .selected .box {
+  border-color: #d6e9c6;
+}
+
+.dropzone .selected .box > h3 {
+  color: #3c763d;
+  background-color: #dff0d8;
+  background-image: linear-gradient(to bottom,#dff0d8 0,#d0e9c6 100%);
+  border-color: #d6e9c6;
+}
+
+/***************************** Element type specific styles *****************************/
+
+.dropzone .item {
+  padding: 20px;
+}
+
+.dropzone .container-element {
+  margin: 10px;
+}
+
+.dropzone .container-element .column {
+  float: left;
+  width: 50%;
+}
+
+.dropzone .component-list {
+  padding-bottom: 5px;
+}
+
+/***************************** Toolbox *****************************/
+
+.toolbox ul {
+  list-style: none;
+  padding-left: 0px;
+  cursor: move;
+}
+
+.toolbox button {
+  margin: 5px;
+  width: 123px;
+  opacity: 1.0;
+}
+
+.toolbox .dndDragging {
+  opacity: 0.5;
+}
+
+.toolbox .dndDraggingSource {
+  opacity: 1.0;
+}
+
+/***************************** Trashcan *****************************/
+
+.trashcan ul {
+  list-style: none;
+  padding-left: 0px;
+}
+
+.trashcan img {
+  width: 100%;
+  -webkit-filter: grayscale(100%);
+  -moz-filter: grayscale(100%);
+  filter: grayscale(100%);
+}
+
+.trashcan .dndDragover img {
+  width: 100%;
+  -webkit-filter: none;
+  -moz-filter: none;
+  filter: none;
+}
+
+.trashcan .dndPlaceholder {
+  display: none;
+}
+
+.ui-select-toggle.btn {
+  text-align: left;
+}
+
+/***************************** Layout Styling *****************************/
+
+.form-builder-component .form-field-type-fieldset fieldset,
+.form-builder-component .form-field-type-container fieldset {
+  padding: 5px;
+  margin-left: -5px;
+  margin-right: -5px;
+  border: dotted 2px #e8e8e8;
+}
+
+.form-builder-component .form-field-type-columns .formio-column {
+  padding: 10px;
+  border: dotted 2px #e8e8e8;
+}
+
+/****************************** Data Grid Styling *************************/
+
+.datagrid-dnd {
+  padding: 5px;
+  border: dotted 2px #e8e8e8;
+  min-height: inherit;
+}
+
+/***************************** Form Component Buttons *********************/
+
+.formcomponents .formcomponentcontainer {
+  margin: 0 2px 2px 0;
+}
+
+.formcomponents .formcomponent {
+  text-align: left;
+  padding-left: 15px;
+}
