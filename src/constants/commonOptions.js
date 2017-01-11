@@ -21,7 +21,7 @@ module.exports = {
   },
   description: {
     label: 'Description',
-    placeholder: 'Placeholder',
+    placeholder: 'Description',
     tooltip: 'The description for this field that will appear below it.'
   },
   inputMask: {
