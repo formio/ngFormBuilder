@@ -89503,6 +89503,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
+          if (!component.settings.hasOwnProperty('isConfigurable')) {
+            component.settings.isConfigurable = true;
+          }
           if (component.settings.hasOwnProperty('builder') && !component.settings.builder || component.disabled) {
             delete $scope.formComponents[key];
           }
@@ -89765,7 +89768,7 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && !component.isNonEditable && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (component.isNew && component.isConfigurable && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
       }
       else {
@@ -90562,7 +90565,7 @@ app.run([
     });
 
     $templateCache.put('formio/formbuilder/editbuttons.html',
-      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.isNonEditable\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
+      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::!hideMoveButton && component.isConfigurable\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.isNonEditable\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/component.html',
