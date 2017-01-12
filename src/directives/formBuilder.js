@@ -148,6 +148,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.formComponents = _.cloneDeep(formioComponents.components);
         _.each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
+          if (!component.settings.hasOwnProperty('isConfigurable')) {
+            component.settings.isConfigurable = true;
+          }
           if (component.settings.hasOwnProperty('builder') && !component.settings.builder || component.disabled) {
             delete $scope.formComponents[key];
           }
