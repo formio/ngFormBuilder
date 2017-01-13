@@ -31,7 +31,7 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (component.isNew && component.isConfigurable && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
       }
       else {
