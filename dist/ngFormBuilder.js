@@ -656,6 +656,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
           '<form-builder-option property="suffix"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -880,6 +881,7 @@ module.exports = function(app) {
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="defaultDate"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
@@ -1440,6 +1442,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
           '<form-builder-option property="suffix"></form-builder-option>' +
@@ -1607,6 +1610,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
           '<form-builder-option property="suffix"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -1667,6 +1671,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
           '<form-builder-option property="suffix"></form-builder-option>' +
@@ -1992,6 +1997,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
@@ -2011,7 +2017,7 @@ module.exports = function(app) {
           '<ng-switch on="component.dataSrc">' +
             '<div class="form-group" ng-switch-when="json">' +
               '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">Data Source Raw JSON</label>' +
-              '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" rows="3">{{ component.data.json }}</textarea>' +
+              '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" json-input rows="3">{{ component.data.json }}</textarea>' +
             '</div>' +
             '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
@@ -2420,6 +2426,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
           '<form-builder-option property="suffix"></form-builder-option>' +
@@ -2515,6 +2522,11 @@ module.exports = {
     label: 'Placeholder',
     placeholder: 'Placeholder',
     tooltip: 'The placeholder text that will appear when this field is empty.'
+  },
+  description: {
+    label: 'Description',
+    placeholder: 'Description for this field.',
+    tooltip: 'The description is text that will appear below the input field.'
   },
   inputMask: {
     label: 'Input Mask',
@@ -3896,7 +3908,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.7.1 | https://unpkg.com/ng-formio-builder@2.7.1/LICENSE.txt */
+/*! ng-formio-builder v2.8.1 | https://unpkg.com/ng-formio-builder@2.8.1/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
