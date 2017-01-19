@@ -47,7 +47,7 @@ module.exports = function(app) {
             '<select class="form-control" id="action" name="action" ng-options="action.name as action.title for action in actions" ng-model="component.action"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.action === \'event\'">' +
-          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button event\' | formioTranslate}}</label>' +
+          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button Event\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
           '</div>' +
           '<div class="form-group">' +
