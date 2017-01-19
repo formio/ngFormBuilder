@@ -31,7 +31,7 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel | formioTranslate }}</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
               '</div>',
     replace: true,
     link: function($scope, el, attrs) {
