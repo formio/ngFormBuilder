@@ -27,7 +27,7 @@ module.exports = ['COMMON_OPTIONS', 'formioTranslate', function(COMMON_OPTIONS, 
         name: property,
         type: type,
         'ng-model': 'component.' + property,
-        placeholder: placeholder
+        placeholder: formioTranslate(placeholder)
       };
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
