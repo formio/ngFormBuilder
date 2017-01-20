@@ -1,4 +1,4 @@
-// Create an AngularJS service called formioTranslate
+// Create an AngularJS service called formioTranslator
 module.exports = ['$injector', function($injector) {
   var $translate, gettextCatalog;
   if($injector.has('$translate')) {

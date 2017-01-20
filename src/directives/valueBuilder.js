@@ -14,24 +14,24 @@ module.exports = function() {
     },
     restrict: 'E',
     template: '<div class="form-group">' +
-                '<label form-builder-tooltip="{{ tooltipText | formioTranslate }}">{{ label | formioTranslate }}</label>' +
+                '<label form-builder-tooltip="{{ tooltipText | formioTranslator }}">{{ label | formioTranslator }}</label>' +
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-6">{{ labelLabel | formioTranslate }}</th>' +
-                      '<th class="col-xs-4">{{ valueLabel | formioTranslate }}</th>' +
+                      '<th class="col-xs-6">{{ labelLabel | formioTranslator }}</th>' +
+                      '<th class="col-xs-4">{{ valueLabel | formioTranslator }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel | formioTranslate }}"/></td>' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel | formioTranslator }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslator }}"/></td>' +
                       '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslator }}</button>' +
               '</div>',
     replace: true,
     link: function($scope, el, attrs) {

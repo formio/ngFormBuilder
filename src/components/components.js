@@ -7,32 +7,32 @@ module.exports = function(app) {
         '<form id="component-settings" novalidate>' +
           '<div class="row">' +
             '<div class="col-md-6">' +
-              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} {{\'Component\' | formioTranslate}}</p>' +
+              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} {{\'Component\' | formioTranslator}}</p>' +
             '</div>' +
             '<div class="col-md-6">' +
               '<div class="pull-right" ng-if="::formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
-                '<a ng-href="{{ ::formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> {{\'Help!\' | formioTranslate}}</a>' +
+                '<a ng-href="{{ ::formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> {{\'Help!\' | formioTranslator}}</a>' +
               '</div>' +
             '</div>' +
           '</div>' +
           '<div class="row">' +
             '<div class="col-xs-6">' +
               '<uib-tabset>' +
-                '<uib-tab ng-repeat="view in ::formComponent.views" heading="{{ ::view.name | formioTranslate }}"><ng-include src="::view.template"></ng-include></uib-tab>' +
+                '<uib-tab ng-repeat="view in ::formComponent.views" heading="{{ ::view.name | formioTranslator }}"><ng-include src="::view.template"></ng-include></uib-tab>' +
               '</uib-tabset>' +
             '</div>' +
             '<div class="col-xs-6">' +
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
-                '<div class="panel-heading">{{\'Preview\' | formioTranslate}}</div>' +
+                '<div class="panel-heading">{{\'Preview\' | formioTranslator}}</div>' +
                 '<div class="panel-body">' +
                   '<formio-component component="component" data="{}" formio="::formio"></formio-component>' +
                 '</div>' +
               '</div>' +
               '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
-                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
-                '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">{{\'Cancel\' | formioTranslate}}</button>&nbsp;' +
-                '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">{{\'Remove\' | formioTranslate}}</button>' +
+                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslator}}</button>&nbsp;' +
+                '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">{{\'Cancel\' | formioTranslator}}</button>&nbsp;' +
+                '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">{{\'Remove\' | formioTranslator}}</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
