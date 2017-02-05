@@ -3913,7 +3913,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.8.2 | https://unpkg.com/ng-formio-builder@2.8.2/LICENSE.txt */
+/*! ng-formio-builder v2.9.6 | https://unpkg.com/ng-formio-builder@2.9.6/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
