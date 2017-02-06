@@ -38,6 +38,7 @@ module.exports = function(app) {
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +
         '<form-builder-option property="condensed"></form-builder-option>' +
+        '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +

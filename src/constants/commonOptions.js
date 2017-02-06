@@ -64,6 +64,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'When the Refresh On field is changed, clear the selected value.'
   },
+  clearOnHide: {
+    label: 'Clear Value When Hidden',
+    type: 'checkbox',
+    tooltip: 'When a field is hidden, clear the value.'
+  },
   unique: {
     label: 'Unique',
     type: 'checkbox',
