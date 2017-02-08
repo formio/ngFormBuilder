@@ -88713,8 +88713,13 @@ module.exports = function(app) {
               true: true,
               false: false
             };
-            if ($scope.data && $scope.data[$scope.component.key] && !($scope.data[$scope.component.key] instanceof Boolean)) {
-              $scope.data[$scope.component.key] = boolean[$scope.data[$scope.component.key]] || false;
+            if ($scope.data && $scope.data.hasOwnProperty($scope.component.key) && !($scope.data[$scope.component.key] instanceof Boolean)) {
+              if ($scope.component.validate && $scope.component.validate.required && !$scope.data[$scope.component.key]) {
+                delete $scope.data[$scope.component.key];
+              }
+              else {
+                $scope.data[$scope.component.key] = boolean[$scope.data[$scope.component.key]] || false;
+              }
               loadComplete();
             }
           });
@@ -89179,6 +89184,17 @@ module.exports = function(app) {
             }
           });
 
+          // If they have 12 hour time enabled, we need to ensure that we see the meridian in the format.
+          if (
+            $scope.component.enableTime &&
+            $scope.component.timePicker &&
+            $scope.component.timePicker.showMeridian &&
+            ($scope.component.format.indexOf('mm') !== -1) &&
+            ($scope.component.format.indexOf('a') === -1)
+          ) {
+            $scope.component.format += ' a';
+          }
+
           if ($scope.component.defaultDate.length === 0) {
             $scope.component.defaultDate = '';
           }
@@ -89222,7 +89238,7 @@ module.exports = function(app) {
           label: '',
           key: 'datetimeField',
           placeholder: '',
-          format: 'yyyy-MM-dd HH:mm',
+          format: 'yyyy-MM-dd HH:mm a',
           enableDate: true,
           enableTime: true,
           defaultDate: '',
@@ -91551,7 +91567,7 @@ module.exports = function() {
             }
             if ($scope.submission.data.hasOwnProperty(component.key)) {
               var value = $scope.submission.data[component.key];
-              if (component.type === 'number') {
+              if (component.type === 'number' && (value !== null)) {
                 submissionData.data[component.key] = value ? parseFloat(value) : 0;
               }
               else {
@@ -100525,7 +100541,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./ngFormBuilder.js":162,"angular-drag-and-drop-lists":1,"lodash":37,"ng-ckeditor/ng-ckeditor":40,"ng-dialog":41,"ng-formio/src/formio-full.js":100}],162:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.8.2 | https://unpkg.com/ng-formio-builder@2.8.2/LICENSE.txt */
+/*! ng-formio-builder v2.9.6 | https://unpkg.com/ng-formio-builder@2.9.6/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
