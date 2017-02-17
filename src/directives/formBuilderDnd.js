@@ -83,7 +83,7 @@ module.exports = [
         index = -1;
       }
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
       }
       else {
