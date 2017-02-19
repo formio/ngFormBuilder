@@ -227,6 +227,8 @@ module.exports = [
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
         controller: ['$scope', 'Formio', '$controller', function($scope, Formio, $controller) {
+          $scope.editorVisible = true;
+
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit
@@ -236,6 +238,17 @@ module.exports = [
 
           $scope.$watch('component.multiple', function(value) {
             $scope.data[$scope.component.key] = value ? [''] : '';
+          });
+
+          var editorDebounce = null;
+          $scope.$watchCollection('component.wysiwyg', function() {
+            $scope.editorVisible = false;
+            if (editorDebounce) {
+              clearTimeout(editorDebounce);
+            }
+            editorDebounce = setTimeout(function() {
+              $scope.editorVisible = true;
+            }, 200);
           });
 
           // Watch the settings label and auto set the key from it.

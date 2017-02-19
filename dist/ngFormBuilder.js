@@ -217,6 +217,7 @@ module.exports = function(app) {
             '<input type="text" class="form-control" id="mapKey" name="mapKey" ng-model="component.map.key" placeholder="xxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxx"/>' +
           '</div>' +
           '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -381,6 +382,7 @@ module.exports = function(app) {
           '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -475,7 +477,11 @@ module.exports = function(app) {
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
                 '<div class="panel-heading">Preview</div>' +
                 '<div class="panel-body">' +
-                  '<formio-component component="component" data="{}" formio="::formio"></formio-component>' +
+                  '<div class="form-group" ng-if="component.wysiwyg && editorVisible">' +
+                    '<label for="editor-preview" class="control-label" ng-if="component.label">{{ component.label }}</label>' +
+                    '<textarea class="form-control" id="editor-preview" ng-if="component.wysiwyg && editorVisible" ckeditor="component.wysiwyg"></textarea>' +
+                  '</div>' +
+                  '<formio-component ng-if="!component.wysiwyg" component="component" data="{}" formio="::formio"></formio-component>' +
                 '</div>' +
               '</div>' +
               '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
@@ -599,6 +605,7 @@ module.exports = function(app) {
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -626,6 +633,27 @@ module.exports = function(app) {
         icon: 'fa fa-html5',
         documentation: 'http://help.form.io/userguide/#content-component',
         controller: function(settings, $scope) {
+          $scope.ckeditorOptions = {
+            toolbarGroups:  [
+              {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
+              {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
+              {name: 'links', groups: ['links']},
+              {name: 'insert', groups: ['insert']},
+              '/',
+              {name: 'styles', groups: ['Styles', 'Format', 'Font', 'FontSize']},
+              {name: 'colors', groups: ['colors']},
+              {name: 'clipboard', groups: ['clipboard', 'undo']},
+              {name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing']},
+              {name: 'document', groups: ['mode', 'document', 'doctools']},
+              {name: 'others', groups: ['others']},
+              {name: 'tools', groups: ['tools']}
+            ],
+            extraPlugins: 'justify,font',
+            removeButtons: 'Cut,Copy,Paste,Underline,Subscript,Superscript,Scayt,About',
+            uiColor: '#eeeeee',
+            height: '400px',
+            width: '100%'
+          };
           $scope.$watch('component.html', function() {
             $scope.$emit('formBuilder:update');
           });
@@ -652,7 +680,7 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/content.html',
         '<div class="form-group">' +
-          '<textarea ckeditor ng-model="component.html"><textarea>' +
+          '<textarea ckeditor="ckeditorOptions" ng-model="component.html"><textarea>' +
         '</div>'
       );
       $templateCache.put('formio/components/common/display.html',
@@ -712,6 +740,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -806,6 +835,10 @@ module.exports = function(app) {
             template: 'formio/components/datagrid/display.html'
           },
           {
+            name: 'Validation',
+            template: 'formio/components/datagrid/validate.html'
+          },
+          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -833,11 +866,20 @@ module.exports = function(app) {
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +
         '<form-builder-option property="condensed"></form-builder-option>' +
+        '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/datagrid/validate.html',
+        '<ng-form>' +
+        '<form-builder-option property="validate.minLength"></form-builder-option>' +
+        '<form-builder-option property="validate.maxLength"></form-builder-option>' +
+        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
     }
@@ -937,6 +979,7 @@ module.exports = function(app) {
           '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1082,6 +1125,7 @@ module.exports = function(app) {
           '<form-builder-option property="fields.year.hide" type="checkbox" label="Hide Year" title="Hide the year part of the component."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1271,6 +1315,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1504,6 +1549,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1671,6 +1717,7 @@ module.exports = function(app) {
           '<form-builder-option property="suffix"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1735,6 +1782,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1803,6 +1851,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -1892,6 +1941,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -2061,6 +2111,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -2186,6 +2237,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the checkboxes horizontally."></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -2258,6 +2310,7 @@ module.exports = function(app) {
           '<form-builder-option property="backgroundColor" label="Background Color" placeholder="Background Color" title="The background color of the signature area."></form-builder-option>' +
           '<form-builder-option property="penColor" label="Pen Color" placeholder="Pen Color" title="The ink color for the signature area."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -2321,6 +2374,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -2421,7 +2475,7 @@ module.exports = function(app) {
         views: [
           {
             name: 'Display',
-            template: 'formio/components/textfield/display.html'
+            template: 'formio/components/textarea/display.html'
           },
           {
             name: 'Data',
@@ -2446,6 +2500,71 @@ module.exports = function(app) {
         ],
         documentation: 'http://help.form.io/userguide/#textarea'
       });
+    }
+  ]);
+  app.controller('wysiwygSettings', ['$scope', function($scope) {
+    $scope.wysiwygEnabled = !!$scope.component.wysiwyg;
+    $scope.wysiwygSettings = {
+      toolbarGroups:  [
+        {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
+        {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
+        {name: 'links', groups: ['links']},
+        {name: 'insert', groups: ['insert']},
+        '/',
+        {name: 'styles', groups: ['Styles', 'Format', 'Font', 'FontSize']},
+        {name: 'colors', groups: ['colors']},
+        {name: 'clipboard', groups: ['clipboard', 'undo']},
+        {name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing']},
+        {name: 'document', groups: ['mode', 'document', 'doctools']},
+        {name: 'others', groups: ['others']},
+        {name: 'tools', groups: ['tools']}
+      ],
+      extraPlugins: 'justify,font',
+      removeButtons: 'Cut,Copy,Paste,Underline,Subscript,Superscript,Scayt,About',
+      uiColor: '#eeeeee',
+      height: '400px',
+      width: '100%'
+    };
+    $scope.$watch('wysiwygEnabled', function(value) {
+      $scope.component.wysiwyg = value ? $scope.wysiwygSettings : false;
+    });
+    $scope.$watch('wysiwygSettings', function(value) {
+      if ($scope.wysiwygEnabled) {
+        $scope.component.wysiwyg = value;
+      }
+    });
+  }]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      // Create the settings markup.
+      $templateCache.put('formio/components/textarea/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
+          '<form-builder-option property="inputMask"></form-builder-option>' +
+          '<div ng-controller="wysiwygSettings">' +
+            '<div class="checkbox">' +
+              '<label><input type="checkbox" ng-model="wysiwygEnabled"> Enable WYWIWYG</label>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label for="wysiwyg">WYSIWYG Settings</label>' +
+              '<textarea class="form-control" rows="5" id="wysiwyg" ng-model="wysiwygSettings" json-input placeholder="Enter the CKEditor JSON configuration to turn this TextArea into a WYSIWYG."></textarea>' +
+            '</div>' +
+          '</div>' +
+          '<form-builder-option property="prefix"></form-builder-option>' +
+          '<form-builder-option property="suffix"></form-builder-option>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="protected"></form-builder-option>' +
+          '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
     }
   ]);
 };
@@ -2502,6 +2621,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -2637,6 +2757,11 @@ module.exports = {
     label: 'Clear Value On Refresh',
     type: 'checkbox',
     tooltip: 'When the Refresh On field is changed, clear the selected value.'
+  },
+  clearOnHide: {
+    label: 'Clear Value When Hidden',
+    type: 'checkbox',
+    tooltip: 'When a field is hidden, clear the value.'
   },
   unique: {
     label: 'Unique',
@@ -3479,6 +3604,8 @@ module.exports = [
         scope: childScope,
         className: 'ngdialog-theme-default component-settings',
         controller: ['$scope', 'Formio', '$controller', function($scope, Formio, $controller) {
+          $scope.editorVisible = true;
+
           // Allow the component to add custom logic to the edit page.
           if (
             $scope.formComponent && $scope.formComponent.onEdit
@@ -3488,6 +3615,17 @@ module.exports = [
 
           $scope.$watch('component.multiple', function(value) {
             $scope.data[$scope.component.key] = value ? [''] : '';
+          });
+
+          var editorDebounce = null;
+          $scope.$watchCollection('component.wysiwyg', function() {
+            $scope.editorVisible = false;
+            if (editorDebounce) {
+              clearTimeout(editorDebounce);
+            }
+            editorDebounce = setTimeout(function() {
+              $scope.editorVisible = true;
+            }, 200);
           });
 
           // Watch the settings label and auto set the key from it.
@@ -4088,7 +4226,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.9.6 | https://unpkg.com/ng-formio-builder@2.9.6/LICENSE.txt */
+/*! ng-formio-builder v2.10.3 | https://unpkg.com/ng-formio-builder@2.10.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -4098,7 +4236,7 @@ var app = angular.module('ngFormBuilder', [
   'dndLists',
   'ngDialog',
   'ui.bootstrap.accordion',
-  'ngCkeditor'
+  'ckeditor'
 ]);
 
 app.constant('FORM_OPTIONS', _dereq_('./constants/formOptions'));
