@@ -81619,19 +81619,19 @@ module.exports = function(app) {
             var defaults = {
               toolbarGroups:  [
                 {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
-                {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph']},
+                {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
                 {name: 'links', groups: ['links']},
                 {name: 'insert', groups: ['insert']},
                 '/',
-                {name: 'styles', groups: ['styles']},
+                {name: 'styles', groups: ['Styles', 'Format', 'Font', 'FontSize']},
                 {name: 'colors', groups: ['colors']},
                 {name: 'clipboard', groups: ['clipboard', 'undo']},
                 {name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing']},
-                {name: 'forms', groups: ['forms']},
                 {name: 'document', groups: ['mode', 'document', 'doctools']},
                 {name: 'others', groups: ['others']},
                 {name: 'tools', groups: ['tools']}
               ],
+              extraPlugins: 'justify,font',
               removeButtons: 'Cut,Copy,Paste,Underline,Subscript,Superscript,Scayt,About',
               uiColor: '#eeeeee',
               height: '400px',
@@ -87725,19 +87725,19 @@ module.exports = function(app) {
           $scope.ckeditorOptions = {
             toolbarGroups:  [
               {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
-              {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph']},
+              {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
               {name: 'links', groups: ['links']},
               {name: 'insert', groups: ['insert']},
               '/',
-              {name: 'styles', groups: ['styles']},
+              {name: 'styles', groups: ['Styles', 'Format', 'Font', 'FontSize']},
               {name: 'colors', groups: ['colors']},
               {name: 'clipboard', groups: ['clipboard', 'undo']},
               {name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing']},
-              {name: 'forms', groups: ['forms']},
               {name: 'document', groups: ['mode', 'document', 'doctools']},
               {name: 'others', groups: ['others']},
               {name: 'tools', groups: ['tools']}
             ],
+            extraPlugins: 'justify,font',
             removeButtons: 'Cut,Copy,Paste,Underline,Subscript,Superscript,Scayt,About',
             uiColor: '#eeeeee',
             height: '400px',
@@ -89582,19 +89582,19 @@ module.exports = function(app) {
     $scope.wysiwygSettings = {
       toolbarGroups:  [
         {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
-        {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph']},
+        {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
         {name: 'links', groups: ['links']},
         {name: 'insert', groups: ['insert']},
         '/',
-        {name: 'styles', groups: ['styles']},
+        {name: 'styles', groups: ['Styles', 'Format', 'Font', 'FontSize']},
         {name: 'colors', groups: ['colors']},
         {name: 'clipboard', groups: ['clipboard', 'undo']},
         {name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing']},
-        {name: 'forms', groups: ['forms']},
         {name: 'document', groups: ['mode', 'document', 'doctools']},
         {name: 'others', groups: ['others']},
         {name: 'tools', groups: ['tools']}
       ],
+      extraPlugins: 'justify,font',
       removeButtons: 'Cut,Copy,Paste,Underline,Subscript,Superscript,Scayt,About',
       uiColor: '#eeeeee',
       height: '400px',
@@ -91201,7 +91201,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":161,"angular-drag-and-drop-lists":2,"lodash":36,"ng-dialog":39,"ng-formio/src/formio-complete.js":99}],161:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.10.2 | https://unpkg.com/ng-formio-builder@2.10.2/LICENSE.txt */
+/*! ng-formio-builder v2.10.3 | https://unpkg.com/ng-formio-builder@2.10.3/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
