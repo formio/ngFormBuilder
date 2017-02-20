@@ -100388,14 +100388,14 @@ module.exports = [
     });
     $scope.$on('iframe-elementClick', function(event, data) {
       angular.forEach($scope.component.components, function(component) {
-        if (component.overlay && (component.overlay.id === data.id)) {
+        if (component.id === data.id) {
           $scope.editComponent(component);
         }
       });
     });
     $scope.$on('iframe-elementUpdate', function(event, data) {
       angular.forEach($scope.component.components, function(component) {
-        if (component.overlay && (component.overlay.id === data.id)) {
+        if (component.id === data.id) {
           if (data.top && data.left) {
             component.overlay.top = data.top;
             component.overlay.left = data.left;
@@ -100413,8 +100413,8 @@ module.exports = [
       }
     };
     $scope.$on('fbDragDrop', function(event, component) {
+      component.settings.id = Math.random().toString(36).substring(7);
       component.settings.overlay = {
-        id: Math.random().toString(36).substring(7),
         page: '1',
         top: component.fbDropY,
         left: component.fbDropX
