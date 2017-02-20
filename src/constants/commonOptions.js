@@ -209,7 +209,7 @@ module.exports = {
   },
   'addResource': {
     label: 'Show Add Resource Button',
-    type: "checkbox",
+    type: 'checkbox',
     tooltip: 'Include a button for adding a new resource'
   },
   'addResourceLabel': {
