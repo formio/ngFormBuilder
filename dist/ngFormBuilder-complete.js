@@ -83589,28 +83589,31 @@ module.exports = function() {
       return '</tbody></table>';
     };
 
-    var makeRow = function(data) {
-      var view = '<tr>';
+    var makeRow = function(data, noRow) {
+      var view = !noRow ? '<tr>' : '';
 
       if (typeof data === 'string' || typeof data === 'number') {
         view += '<td>' + data + '</td>';
+      }
+      else if (data === null || data === undefined) {
+        view += '<td></td>';
       }
       else if (data instanceof Array) {
         data.forEach(function(item) {
           view += makeRow(item);
         });
       }
-      else if (typeof data === 'object') {
+      else if (typeof data === 'object' && data !== null && data !== undefined) {
         var labels = Object.keys(data);
 
-        view += startTable(labels);
+        view += '<td>' + startTable(labels);
         labels.forEach(function(key) {
-          view += makeRow(data[key]);
+          view += makeRow(data[key], true);
         });
-        view += finishTable();
+        view += finishTable() + '</td>';
       }
 
-      view += '</tr>';
+      view += !noRow ? '</tr>' : '';
       return view;
     };
 
@@ -83626,6 +83629,7 @@ module.exports = function() {
     else {
       label = '';
     }
+
     view += startTable(label);
     view += makeRow(data);
     view += finishTable();
@@ -91376,7 +91380,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":161,"angular-drag-and-drop-lists":2,"lodash":36,"ng-dialog":39,"ng-formio/src/formio-complete.js":99}],161:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.10.3 | https://unpkg.com/ng-formio-builder@2.10.3/LICENSE.txt */
+/*! ng-formio-builder v2.10.4 | https://unpkg.com/ng-formio-builder@2.10.4/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
