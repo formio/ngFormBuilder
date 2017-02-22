@@ -8,6 +8,7 @@ module.exports = function(app) {
         documentation: 'http://help.form.io/userguide/#content-component',
         controller: function(settings, $scope) {
           $scope.ckeditorOptions = {
+            allowedContent: true,
             toolbarGroups:  [
               {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
               {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
