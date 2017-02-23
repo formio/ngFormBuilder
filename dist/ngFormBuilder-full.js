@@ -100116,10 +100116,18 @@ module.exports = ['debounce', function(debounce) {
 
         $scope.pdftypes = [
           $scope.formComponents.textfield,
+          $scope.formComponents.number,
+          $scope.formComponents.password,
+          $scope.formComponents.email,
+          $scope.formComponents.phoneNumber,
+          $scope.formComponents.address,
+          $scope.formComponents.currency,
           $scope.formComponents.checkbox,
           $scope.formComponents.signature,
           $scope.formComponents.select,
-          $scope.formComponents.textarea
+          $scope.formComponents.textarea,
+          $scope.formComponents.datetime,
+          $scope.formComponents.day
         ];
 
         $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
