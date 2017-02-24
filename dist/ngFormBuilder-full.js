@@ -100454,6 +100454,13 @@ module.exports = [
       });
     };
 
+    // Clone form component
+    $scope.cloneComponent = function(component) {
+      $scope.formElement = angular.copy(component);
+      $scope.formElement.key = component.key + '' + $scope.form.components.length;
+      $scope.form.components.push($scope.formElement);
+    };
+
     // Add to scope so it can be used in templates
     $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
   }
@@ -101105,7 +101112,7 @@ app.run([
     });
 
     $templateCache.put('formio/formbuilder/editbuttons.html',
-      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
+      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button\" style=\"z-index: 1000\" ng-click=\"cloneComponent(component)\"><span class=\"glyphicon glyphicon-new-window\"></span></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/component.html',
