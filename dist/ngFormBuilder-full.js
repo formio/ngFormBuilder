@@ -100394,36 +100394,21 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
-    var iframe = null;
-    $scope.$on('iframe-pdfReady', function() {
-      iframe = $element.find('#formio-iframe')[0];
-    });
-    $scope.$on('iframe-elementClick', function(event, data) {
+    $scope.$on('iframe-componentClick', function(event, data) {
       angular.forEach($scope.component.components, function(component) {
         if (component.id === data.id) {
           $scope.editComponent(component);
         }
       });
     });
-    $scope.$on('iframe-elementUpdate', function(event, data) {
+    $scope.$on('iframe-componentUpdate', function(event, data) {
       angular.forEach($scope.component.components, function(component) {
         if (component.id === data.id) {
-          if (data.top && data.left) {
-            component.overlay.top = data.top;
-            component.overlay.left = data.left;
-          }
-          if (data.width && data.height) {
-            component.overlay.width = data.width;
-            component.overlay.height = data.height;
-          }
+          component.overlay = data.overlay;
         }
       });
     });
-    var sendIframeMessage = function(message) {
-      if (iframe) {
-        iframe.contentWindow.postMessage(JSON.stringify(message), '*');
-      }
-    };
+
     $scope.$on('fbDragDrop', function(event, component) {
       component.settings.id = Math.random().toString(36).substring(7);
       component.settings.overlay = {
@@ -100451,7 +100436,7 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
-      sendIframeMessage({name: 'addElement', data: component});
+      $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
 
       // If this is a root component and the display is a wizard, then we know
       // that they dropped the component outside of where it is supposed to go...
@@ -100492,15 +100477,15 @@ module.exports = [
     $scope.updateComponent = function(newComponent, oldComponent) {
       var list = $scope.component.components;
       list.splice(list.indexOf(oldComponent), 1, newComponent);
-      $scope.$emit('update', newComponent);
-      sendIframeMessage({name: 'updateElement', data: newComponent});
+      $scope.emit('update', newComponent);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
       if ($scope.component.components.indexOf(component) !== -1) {
         $scope.component.components.splice($scope.component.components.indexOf(component), 1);
         $scope.emit('remove', component);
-        sendIframeMessage({name: 'removeElement', data: component});
+        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
       }
     };
 
@@ -100536,8 +100521,8 @@ module.exports = [
         }
       }
 
-      $scope.$emit('update', component);
-      sendIframeMessage({name: 'updateElement', data: component});
+      $scope.emit('update', component);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
       ngDialog.closeAll(true);
     };
 
