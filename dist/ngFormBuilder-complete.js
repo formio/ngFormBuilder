@@ -90292,14 +90292,12 @@ module.exports = ['debounce', function(debounce) {
           $scope.formComponents.password,
           $scope.formComponents.email,
           $scope.formComponents.phoneNumber,
-          $scope.formComponents.address,
           $scope.formComponents.currency,
           $scope.formComponents.checkbox,
           $scope.formComponents.signature,
           $scope.formComponents.select,
           $scope.formComponents.textarea,
-          $scope.formComponents.datetime,
-          $scope.formComponents.day
+          $scope.formComponents.datetime
         ];
 
         $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
