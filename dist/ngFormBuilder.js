@@ -368,6 +368,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
     }
@@ -584,6 +585,7 @@ module.exports = function(app) {
         documentation: 'http://help.form.io/userguide/#content-component',
         controller: function(settings, $scope) {
           $scope.ckeditorOptions = {
+            allowedContent: true,
             toolbarGroups:  [
               {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
               {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
@@ -4058,7 +4060,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],54:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.10.4 | https://unpkg.com/ng-formio-builder@2.10.4/LICENSE.txt */
+/*! ng-formio-builder v2.10.6 | https://unpkg.com/ng-formio-builder@2.10.6/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 

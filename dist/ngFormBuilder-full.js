@@ -88504,13 +88504,19 @@ module.exports = {
       if (data && (value === null || typeof value === 'undefined')) {
         value = this.getValue({data: data}, cond.when);
       }
+      // FOR-400 - Fix issue where falsey values were being evaluated as show=true
       if (value === null || typeof value === 'undefined') {
-        value = component.hasOwnProperty('defaultValue') ? component.defaultValue : '';
+        return false;
       }
       // Special check for selectboxes component.
       if (typeof value === 'object' && value.hasOwnProperty(cond.eq)) {
         return value[cond.eq].toString() === cond.show.toString();
       }
+      // FOR-179 - Check for multiple values.
+      if (value instanceof Array && value.indexOf(cond.eq) !== -1) {
+        return (cond.show.toString() === 'true');
+      }
+
       return (value.toString() === cond.eq.toString()) === (cond.show.toString() === 'true');
     }
 
@@ -88537,18 +88543,7 @@ module.exports = {
         return null;
       }
 
-      if (data instanceof Array) {
-        for (i = 0; i < data.length; i++) {
-          if (typeof data[i] === 'object') {
-            value = search(data[i]);
-          }
-
-          if (value) {
-            return value;
-          }
-        }
-      }
-      else if (typeof data === 'object') {
+      if (typeof data === 'object' && !(data instanceof Array)) {
         if (data.hasOwnProperty(key)) {
           return data[key];
         }
@@ -88849,22 +88844,32 @@ module.exports = function(app) {
         tableView: function(data) {
           return data ? 'Yes' : 'No';
         },
-        controller: ['$scope', function($scope) {
+        controller: ['$scope', '$timeout', function($scope, $timeout) {
           if ($scope.builder) return;
+          var boolean = {
+            true: true,
+            false: false
+          };
+          var defaultValue = $scope.component.hasOwnProperty('defaultValue')
+            ? boolean[$scope.component.defaultValue] || false
+            : false;
+
+          // On the first load, attempt to set the default value.
+          $scope.data[$scope.component.key] = boolean[$scope.data[$scope.component.key]] || defaultValue;
+
           // FA-850 - Ensure the checked value is always a boolean object when loaded, then unbind the watch.
-          var loadComplete = $scope.$watch('data.' + $scope.component.key, function() {
-            var boolean = {
-              true: true,
-              false: false
-            };
-            if ($scope.data && $scope.data.hasOwnProperty($scope.component.key) && !($scope.data[$scope.component.key] instanceof Boolean)) {
-              if ($scope.component.validate && $scope.component.validate.required && !$scope.data[$scope.component.key]) {
+          $scope.$watch('data.' + $scope.component.key, function() {
+            if (!$scope.data || !$scope.component.key) return;
+
+            // If the component is required, and its current value is false, delete the entry.
+            if (
+              $scope.component.validate
+              && $scope.component.validate.required
+              && (boolean[$scope.data[$scope.component.key]] || false) === false
+            ) {
+              $timeout(function() {
                 delete $scope.data[$scope.component.key];
-              }
-              else {
-                $scope.data[$scope.component.key] = boolean[$scope.data[$scope.component.key]] || false;
-              }
-              loadComplete();
+              });
             }
           });
         }],
@@ -88892,7 +88897,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/checkbox.html',
-        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n    >\n    <span ng-if=\"!(component.hideLabel && component.datagridLabel === false)\">{{ component.label | formioTranslate:null:builder }}</span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
+        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n    >\n    <span ng-if=\"!(component.hideLabel && component.datagridLabel === false)\">{{ component.label | formioTranslate:null:builder }}</span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
       );
     }
   ]);
@@ -89375,6 +89380,11 @@ module.exports = function(app) {
         controller: ['$scope', '$timeout', function($scope, $timeout) {
           if ($scope.builder) return;
 
+          // Close calendar pop up when tabbing off button
+          $scope.onKeyDown = function(event) {
+            return event.keyCode === 9 ? false : $scope.calendarOpen;
+          };
+
           var dateValue = function() {
             // If the date is set, then return the true date value.
             if ($scope.data[$scope.component.key]) {
@@ -89485,7 +89495,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/datetime.html', FormioUtils.fieldWrap(
-        "<div class=\"input-group\">\n  <input\n    type=\"text\"\n    class=\"form-control\"\n    name=\"{{ componentId }}\"\n    id=\"{{ componentId }}\"\n    ng-focus=\"calendarOpen = autoOpen\"\n    ng-click=\"calendarOpen = true\"\n    ng-init=\"calendarOpen = false\"\n    ng-disabled=\"readOnly\"\n    ng-required=\"isRequired(component)\"\n    is-open=\"calendarOpen\"\n    datetime-picker=\"{{ component.format }}\"\n    min-date=\"component.minDate\"\n    max-date=\"component.maxDate\"\n    datepicker-mode=\"component.datepickerMode\"\n    when-closed=\"onClosed()\"\n    custom-validator=\"component.validate.custom\"\n    enable-date=\"component.enableDate\"\n    enable-time=\"component.enableTime\"\n    ng-model=\"data[component.key]\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    placeholder=\"{{ component.placeholder | formioTranslate:null:builder }}\"\n    datepicker-options=\"component.datePicker\"\n    timepicker-options=\"component.timePicker\"\n  />\n  <span class=\"input-group-btn\">\n    <button type=\"button\" ng-disabled=\"readOnly\" class=\"btn btn-default\" ng-click=\"calendarOpen = true\">\n      <i ng-if=\"component.enableDate\" class=\"glyphicon glyphicon-calendar\"></i>\n      <i ng-if=\"!component.enableDate\" class=\"glyphicon glyphicon-time\"></i>\n    </button>\n  </span>\n</div>\n"
+        "<div class=\"input-group\">\n  <input\n    type=\"text\"\n    class=\"form-control\"\n    name=\"{{ componentId }}\"\n    id=\"{{ componentId }}\"\n    ng-focus=\"calendarOpen = autoOpen\"\n    ng-click=\"calendarOpen = true\"\n    ng-init=\"calendarOpen = false\"\n    ng-disabled=\"readOnly\"\n    ng-required=\"isRequired(component)\"\n    is-open=\"calendarOpen\"\n    datetime-picker=\"{{ component.format }}\"\n    min-date=\"component.minDate\"\n    max-date=\"component.maxDate\"\n    datepicker-mode=\"component.datepickerMode\"\n    when-closed=\"onClosed()\"\n    custom-validator=\"component.validate.custom\"\n    enable-date=\"component.enableDate\"\n    enable-time=\"component.enableTime\"\n    ng-model=\"data[component.key]\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    placeholder=\"{{ component.placeholder | formioTranslate:null:builder }}\"\n    datepicker-options=\"component.datePicker\"\n    timepicker-options=\"component.timePicker\"\n  />\n  <span class=\"input-group-btn\">\n    <button type=\"button\" ng-disabled=\"readOnly\" class=\"btn btn-default\" ng-click=\"calendarOpen = true\" ng-keydown=\"calendarOpen = onKeyDown($event)\">\n      <i ng-if=\"component.enableDate\" class=\"glyphicon glyphicon-calendar\"></i>\n      <i ng-if=\"!component.enableDate\" class=\"glyphicon glyphicon-time\"></i>\n    </button>\n  </span>\n</div>\n"
       ));
     }
   ]);
@@ -89805,6 +89815,10 @@ module.exports = function(app) {
         function($scope) {
           if ($scope.builder) return;
           $scope.removeFile = function(event, index) {
+            var component = $scope.$parent.component;
+            if (component.storage === 'url') {
+              $scope.$parent.formio.makeRequest('', component.url + '/' + $scope.files[index].name, 'delete');
+            }
             event.preventDefault();
             $scope.files.splice(index, 1);
           };
@@ -89833,6 +89847,10 @@ module.exports = function(app) {
         function($scope) {
           if ($scope.builder) return;
           $scope.removeFile = function(event, index) {
+            var component = $scope.$parent.component;
+            if (component.storage === 'url') {
+              $scope.$parent.formio.makeRequest('', component.url + '/' + $scope.files[index].name, 'delete');
+            }
             event.preventDefault();
             $scope.files.splice(index, 1);
           };
@@ -89892,7 +89910,7 @@ module.exports = function(app) {
         form: '=',
         width: '='
       },
-      template: '<img ng-src="{{ imageSrc }}" alt="{{ file.name }}" ng-style="{width: width}" />',
+      template: '<img ng-src="{{ file.imageSrc }}" alt="{{ file.name }}" ng-style="{width: width}" />',
       controller: [
         '$rootScope',
         '$scope',
@@ -89907,7 +89925,7 @@ module.exports = function(app) {
           var formio = new Formio($scope.form);
           formio.downloadFile($scope.file)
             .then(function(result) {
-              $scope.imageSrc = result.url;
+              $scope.file.imageSrc = result.url;
               $scope.$apply();
             });
         }
@@ -89930,6 +89948,9 @@ module.exports = function(app) {
 
       // This fixes new fields having an empty space in the array.
       if ($scope.data && $scope.data[$scope.component.key] === '') {
+        $scope.data[$scope.component.key] = [];
+      }
+      if ($scope.data && $scope.data[$scope.component.key] === undefined) {
         $scope.data[$scope.component.key] = [];
       }
       if ($scope.data && $scope.data[$scope.component.key] && $scope.data[$scope.component.key][0] === '') {
@@ -92012,11 +92033,13 @@ module.exports = [
         '$http',
         '$controller',
         'FormioUtils',
+        '$timeout',
         function(
           $scope,
           $http,
           $controller,
-          FormioUtils
+          FormioUtils,
+          $timeout
         ) {
           $scope.builder = $scope.builder || false;
           // Options to match jquery.maskedinput masks
@@ -92187,7 +92210,7 @@ module.exports = [
               component.controller($scope.component, $scope, $http, Formio);
             }
             else {
-              $controller(component.controller, {$scope: $scope});
+              $controller(component.controller, {$scope: $scope, $timeout: $timeout});
             }
           }
 
@@ -93295,8 +93318,9 @@ var formioUtils = _dereq_('formio-utils');
 module.exports = function() {
   return {
     checkVisible: function(component, row, data) {
-      if (!formioUtils.checkCondition(component, row, data)) {
-        if (!component.hasOwnProperty('clearOnHide') || component.clearOnHide !== false) {
+      var visible = formioUtils.checkCondition(component, row, data);
+      if (!visible) {
+        if (!component.hasOwnProperty('clearOnHide') || component.clearOnHide.toString() === 'true') {
           if (row && row.hasOwnProperty(component.key)) {
             delete row[component.key];
           }
@@ -97339,6 +97363,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
     }
@@ -97555,6 +97580,7 @@ module.exports = function(app) {
         documentation: 'http://help.form.io/userguide/#content-component',
         controller: function(settings, $scope) {
           $scope.ckeditorOptions = {
+            allowedContent: true,
             toolbarGroups:  [
               {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
               {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
@@ -101040,7 +101066,7 @@ _dereq_('./ngFormBuilder.js');
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":163,"angular-drag-and-drop-lists":2,"lodash":38,"ng-dialog":41,"ng-formio/src/formio-full.js":101}],163:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.10.4 | https://unpkg.com/ng-formio-builder@2.10.4/LICENSE.txt */
+/*! ng-formio-builder v2.10.6 | https://unpkg.com/ng-formio-builder@2.10.6/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
