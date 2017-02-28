@@ -3,7 +3,7 @@
 * Tooltip text can be provided via title attribute or
 * as the value for this directive.
 */
-module.exports = ['formioTranslator', function(formioTranslator) {
+module.exports = ['formioTranslate', function(formioTranslate) {
   return {
     restrict: 'A',
     replace: false,
@@ -14,7 +14,7 @@ module.exports = ['formioTranslator', function(formioTranslator) {
           html: true,
           trigger: 'manual',
           placement: 'right',
-          content: formioTranslator(attrs.title || attrs.formBuilderTooltip)
+          content: formioTranslate(attrs.title || attrs.formBuilderTooltip)
         }).on('mouseenter', function() {
           var $self = angular.element(this);
           $self.popover('show');

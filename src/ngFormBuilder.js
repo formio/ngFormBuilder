@@ -15,8 +15,6 @@ app.constant('FORM_OPTIONS', require('./constants/formOptions'));
 
 app.constant('COMMON_OPTIONS', require('./constants/commonOptions'));
 
-app.factory('formioTranslator', require('./factories/formioTranslator'));
-
 app.factory('debounce', require('./factories/debounce'));
 
 app.directive('formBuilder', require('./directives/formBuilder'));
@@ -50,8 +48,6 @@ app.directive('formBuilderTooltip', require('./directives/formBuilderTooltip'));
 app.directive('valueBuilder', require('./directives/valueBuilder'));
 
 app.directive('formBuilderConditional', require('./directives/formBuilderConditional'));
-
-app.filter('formioTranslator', require('./filters/formioTranslator'));
 
 /**
  * This workaround handles the fact that iframes capture mouse drag
