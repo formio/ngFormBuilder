@@ -2,4 +2,5 @@
   <div class="btn btn-xxs btn-danger component-settings-button" style="z-index: 1000" ng-click="removeComponent(component, formComponent.confirmRemove)"><span class="glyphicon glyphicon-remove"></span></div>
   <div ng-if="::!hideMoveButton" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000"><span class="glyphicon glyphicon glyphicon-move"></span></div>
   <div ng-if="::formComponent.views && !component.lockConfiguration" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="editComponent(component)"><span class="glyphicon glyphicon-cog"></span></div>
+  <div ng-if="::formComponent.views && !component.lockConfiguration" class="btn btn-xxs btn-default component-settings-button" style="z-index: 1000" ng-click="cloneComponent(component)"><span class="glyphicon glyphicon-new-window"></span></div>
 </div>

@@ -4,7 +4,7 @@
     "dist/ngFormBuilder.js",
     "css/ngFormBuilder.css"
   ],
-  "version": "2.9.6",
+  "version": "2.10.6",
   "authors": [
     "Travis Tidwell <travis@form.io>"
   ],
@@ -21,10 +21,10 @@
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-bootstrap": "^2.5.0",
     "lodash": "^4.17.4",
-    "ng-ckeditor": "formio/ng-ckeditor#master",
     "ng-dialog": "^0.6.6",
-    "ng-formio": "^2.9.6",
-    "ng-tags-input": "^3.1.1"
+    "ng-formio": "^2.10.6",
+    "ng-tags-input": "^3.1.1",
+    "angular-ckeditor": "^1.0.3"
   },
   "devDependencies": {
     "font-awesome": "^4.6.3"

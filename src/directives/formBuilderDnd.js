@@ -177,6 +177,13 @@ module.exports = [
       });
     };
 
+    // Clone form component
+    $scope.cloneComponent = function(component) {
+      $scope.formElement = angular.copy(component);
+      $scope.formElement.key = component.key + '' + $scope.form.components.length;
+      $scope.form.components.push($scope.formElement);
+    };
+
     // Add to scope so it can be used in templates
     $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
   }
