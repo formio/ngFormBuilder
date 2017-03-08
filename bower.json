@@ -18,7 +18,7 @@
     "tests"
   ],
   "dependencies": {
-    "angular-drag-and-drop-lists": "^1.4.0",
+    "angular-drag-and-drop-lists": "^2.1.0",
     "angular-bootstrap": "^2.5.0",
     "lodash": "^4.17.4",
     "ng-ckeditor": "formio/ng-ckeditor#master",
