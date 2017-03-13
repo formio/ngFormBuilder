@@ -6,6 +6,7 @@ module.exports = ['debounce', function(debounce) {
     scope: {
       form: '=?',
       src: '=',
+      url: '=?',
       type: '=',
       onSave: '=',
       onCancel: '=',
@@ -44,6 +45,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.hideCount = 2;
         $scope.form.page = 0;
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
+        if ($scope.url) {
+          $scope.formio = new Formio($scope.url);
+        }
 
         var setNumPages = function() {
           if (!$scope.form) {
@@ -74,7 +78,7 @@ module.exports = ['debounce', function(debounce) {
         };
 
         // Load the form.
-        if ($scope.formio && $scope.formio.formId) {
+        if ($scope.src && $scope.formio && $scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
