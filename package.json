@@ -1,6 +1,6 @@
 {
   "name": "ng-formio-builder",
-  "version": "2.11.1",
+  "version": "2.11.2",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
