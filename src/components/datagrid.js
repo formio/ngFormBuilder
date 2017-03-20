@@ -11,10 +11,6 @@ module.exports = function(app) {
             template: 'formio/components/datagrid/display.html'
           },
           {
-            name: 'Validation',
-            template: 'formio/components/datagrid/validate.html'
-          },
-          {
             name: 'API',
             template: 'formio/components/common/api.html'
           },
@@ -42,19 +38,10 @@ module.exports = function(app) {
         '<form-builder-option property="bordered"></form-builder-option>' +
         '<form-builder-option property="hover"></form-builder-option>' +
         '<form-builder-option property="condensed"></form-builder-option>' +
-        '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
-        '</ng-form>'
-      );
-
-      $templateCache.put('formio/components/datagrid/validate.html',
-        '<ng-form>' +
-        '<form-builder-option property="validate.minLength"></form-builder-option>' +
-        '<form-builder-option property="validate.maxLength"></form-builder-option>' +
-        '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
     }

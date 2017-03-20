@@ -8,7 +8,7 @@ var app = angular.module('ngFormBuilder', [
   'dndLists',
   'ngDialog',
   'ui.bootstrap.accordion',
-  'ckeditor'
+  'ngCkeditor'
 ]);
 
 app.constant('FORM_OPTIONS', require('./constants/formOptions'));
