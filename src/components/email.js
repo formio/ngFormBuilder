@@ -1,9 +1,11 @@
+var _cloneDeep = require('lodash/cloneDeep');
+var _each = require('lodash/each');
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
     function(formioComponentsProvider) {
-      var views = _.cloneDeep(formioComponentsProvider.$get().components.textfield.views);
-      _.each(views, function(view) {
+      var views = _cloneDeep(formioComponentsProvider.$get().components.textfield.views);
+      _each(views, function(view) {
         if (view.name === 'Validation') {
           view.template = 'formio/components/email/validate.html';
         }

@@ -8,7 +8,8 @@ module.exports = [
         // # of items needed in the list before hiding the
         // drag and drop prompt div
         hideDndBoxCount: '=',
-        rootList: '='
+        rootList: '=',
+        options: '='
       },
       restrict: 'E',
       replace: true,
