@@ -90,5 +90,5 @@ module.exports = ['FormioUtils', function(FormioUtils) {
 
   return {
     uniquify: uniquify
-  }
+  };
 }];
