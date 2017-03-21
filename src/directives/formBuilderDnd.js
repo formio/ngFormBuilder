@@ -4,12 +4,14 @@ module.exports = [
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
+  'BuilderUtils',
   function(
     $scope,
     $rootScope,
     formioComponents,
     ngDialog,
-    dndDragIframeWorkaround
+    dndDragIframeWorkaround,
+    BuilderUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -36,6 +38,10 @@ module.exports = [
       }
       else {
         component.isNew = false;
+        
+        // ensure the component has a key.
+        component.key = component.key || component.label || 'component';
+        BuilderUtils.uniquify($scope.form, component);
       }
 
       // Refresh all CKEditor instances
@@ -139,9 +145,7 @@ module.exports = [
           $scope.editorVisible = true;
 
           // Allow the component to add custom logic to the edit page.
-          if (
-            $scope.formComponent && $scope.formComponent.onEdit
-          ) {
+          if ($scope.formComponent && $scope.formComponent.onEdit) {
             $controller($scope.formComponent.onEdit, {$scope: $scope});
           }
 
@@ -176,17 +180,16 @@ module.exports = [
         var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
         if (cancelled) {
           if (component.isNew) {
-            remove(component);
+            return remove(component);
           }
-          else {
-            // Revert to old settings, but use the same object reference
-            _.assign(component, previousSettings);
-          }
+
+          // Revert to old settings, but use the same object reference
+          _.assign(component, previousSettings);
+          return;
         }
-        else {
-          delete component.isNew;
-          $scope.emit('edit', component);
-        }
+
+        delete component.isNew;
+        $scope.emit('edit', component);
       });
     };
 
