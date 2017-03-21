@@ -1,5 +1,6 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.formioBuilder = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 'use strict';
+
 module.exports = {
   /**
    * Determine if a component is a layout component or not.
@@ -112,61 +113,6 @@ module.exports = {
   },
 
   /**
-   * Checks the conditions for a provided component and data.
-   *
-   * @param component
-   *   The component to check for the condition.
-   * @param row
-   *   The data within a row
-   * @param data
-   *   The full submission data.
-   *
-   * @returns {boolean}
-   */
-  checkCondition: function(component, row, data) {
-    if (component.hasOwnProperty('customConditional') && component.customConditional) {
-      try {
-        var script = '(function() { var show = true;';
-        script += component.customConditional.toString();
-        script += '; return show; })()';
-        var result = eval(script);
-        return result.toString() === 'true';
-      }
-      catch (e) {
-        console.warn('An error occurred in a custom conditional statement for component ' + component.key, e);
-        return true;
-      }
-    }
-    else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
-      var cond = component.conditional;
-      var value = null;
-      if (row) {
-        value = this.getValue({data: row}, cond.when);
-      }
-      if (data && (value === null || typeof value === 'undefined')) {
-        value = this.getValue({data: data}, cond.when);
-      }
-      // FOR-400 - Fix issue where falsey values were being evaluated as show=true
-      if (value === null || typeof value === 'undefined') {
-        return false;
-      }
-      // Special check for selectboxes component.
-      if (typeof value === 'object' && value.hasOwnProperty(cond.eq)) {
-        return value[cond.eq].toString() === cond.show.toString();
-      }
-      // FOR-179 - Check for multiple values.
-      if (value instanceof Array && value.indexOf(cond.eq) !== -1) {
-        return (cond.show.toString() === 'true');
-      }
-
-      return (value.toString() === cond.eq.toString()) === (cond.show.toString() === 'true');
-    }
-
-    // Default to show.
-    return true;
-  },
-
-  /**
    * Get the value for a component key, in the given submission.
    *
    * @param {Object} submission
@@ -185,7 +131,18 @@ module.exports = {
         return null;
       }
 
-      if (typeof data === 'object' && !(data instanceof Array)) {
+      if (data instanceof Array) {
+        for (i = 0; i < data.length; i++) {
+          if (typeof data[i] === 'object') {
+            value = search(data[i]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+      else if (typeof data === 'object') {
         if (data.hasOwnProperty(key)) {
           return data[key];
         }
@@ -9490,12 +9447,14 @@ module.exports = [
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
+  'BuilderUtils',
   function(
     $scope,
     $rootScope,
     formioComponents,
     ngDialog,
-    dndDragIframeWorkaround
+    dndDragIframeWorkaround,
+    BuilderUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -9521,6 +9480,11 @@ module.exports = [
         $scope.editComponent(component);
       }
       else {
+        // ensure the component has a key.
+        component.key = component.key || component.label || 'component';
+        BuilderUtils.uniquify($scope.form, component);
+
+        // Update the component to not be flagged as new anymore.
         component.isNew = false;
       }
 
@@ -9625,9 +9589,7 @@ module.exports = [
           $scope.editorVisible = true;
 
           // Allow the component to add custom logic to the edit page.
-          if (
-            $scope.formComponent && $scope.formComponent.onEdit
-          ) {
+          if ($scope.formComponent && $scope.formComponent.onEdit) {
             $controller($scope.formComponent.onEdit, {$scope: $scope});
           }
 
@@ -9662,17 +9624,16 @@ module.exports = [
         var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
         if (cancelled) {
           if (component.isNew) {
-            remove(component);
+            return remove(component);
           }
-          else {
-            // Revert to old settings, but use the same object reference
-            _assign(component, previousSettings);
-          }
+
+          // Revert to old settings, but use the same object reference
+          _assign(component, previousSettings);
+          return;
         }
-        else {
-          delete component.isNew;
-          $scope.emit('edit', component);
-        }
+
+        delete component.isNew;
+        $scope.emit('edit', component);
       });
     };
 
@@ -9858,46 +9819,10 @@ module.exports = function() {
                 '</p>' +
               '</div>';
     },
-    controller: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
-      var suffixRegex = /(\d+)$/;
-
-      // Prebuild a list of existing components.
-      var existingComponents = {};
-      FormioUtils.eachComponent($scope.form.components, function(component) {
-        // Don't add to existing components if current component or if it is new. (New could mean same as another item).
-        if (component.key && ($scope.component.key !== component.key || $scope.component.isNew)) {
-          existingComponents[component.key] = component;
-        }
-      }, true);
-
-      var keyExists = function(component) {
-        if (existingComponents.hasOwnProperty(component.key)) {
-          return true;
-        }
-        return false;
-      };
-
-      var iterateKey = function(componentKey) {
-        if (!componentKey.match(suffixRegex)) {
-          return componentKey + '1';
-        }
-
-        return componentKey.replace(suffixRegex, function(suffix) {
-          return Number(suffix) + 1;
-        });
-      };
-
-      // Appends a number to a component.key to keep it unique
-      var uniquify = function() {
-        if (!$scope.component.key) {
-          return;
-        }
-        while (keyExists($scope.component)) {
-          $scope.component.key = iterateKey($scope.component.key);
-        }
-      };
-
-      $scope.$watch('component.key', uniquify);
+    controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
+      $scope.$watch('component.key', function() {
+        BuilderUtils.uniquify($scope.form, $scope.component);
+      });
 
       $scope.onBlur = function() {
         $scope.component.lockKey = true;
@@ -9907,7 +9832,7 @@ module.exports = function() {
         if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key
-          uniquify();
+          BuilderUtils.uniquify($scope.form, $scope.component);
         }
       };
 
@@ -10223,6 +10148,103 @@ module.exports = function() {
 
 },{"lodash/camelCase":165,"lodash/map":193}],258:[function(_dereq_,module,exports){
 "use strict";
+'use strict';
+
+module.exports = ['FormioUtils', function(FormioUtils) {
+  var suffixRegex = /(\d+)$/;
+
+  /**
+   * Memoize the given form components in a map, using the component keys.
+   *
+   * @param {Array} components
+   *   An array of the form components.
+   * @param {Object} input
+   *   The input component we're trying to uniquify.
+   *
+   * @returns {Object}
+   *   The memoized form components.
+   */
+  var findExistingComponents = function(components, input) {
+    // Prebuild a list of existing components.
+    var existingComponents = {};
+    FormioUtils.eachComponent(components, function(component) {
+      // If theres no key, we cant compare components.
+      if (!component.key) return;
+
+      // A component is pre-existing if the key is unique, or the key is a duplicate and its not flagged as the new component.
+      if (
+        (component.key !== input.key) ||
+        ((component.key === input.key) && (component.isNew !== input.isNew))
+      ) {
+        existingComponents[component.key] = component;
+      }
+    }, true);
+
+    return existingComponents;
+  };
+
+  /**
+   * Determine if the given component key already exists in the memoization.
+   *
+   * @param {Object} memoization
+   *   The form components map.
+   * @param component
+   *   The component to uniquify.
+   *
+   * @returns {boolean}
+   *   Whether or not the key exists.
+   */
+  var keyExists = function(memoization, component) {
+    if (memoization.hasOwnProperty(component.key)) {
+      return true;
+    }
+    return false;
+  };
+
+  /**
+   * Iterate the given key to make it unique.
+   *
+   * @param {String} componentKey
+   *   Modify the component key to be unique.
+   *
+   * @returns {String}
+   *   The new component key.
+   */
+  var iterateKey = function(componentKey) {
+    if (!componentKey.match(suffixRegex)) {
+      return componentKey + '1';
+    }
+
+    return componentKey.replace(suffixRegex, function(suffix) {
+      return Number(suffix) + 1;
+    });
+  };
+
+  /**
+   * Appends a number to a component.key to keep it unique
+   *
+   * @param {Object} form
+   *   The components parent form.
+   * @param {Object} component
+   *   The component to uniquify
+   */
+  var uniquify = function(form, component) {
+    var memoization = findExistingComponents(form.components, component);
+    if (!component.key) {
+      return;
+    }
+    while (keyExists(memoization, component)) {
+      component.key = iterateKey(component.key);
+    }
+  };
+
+  return {
+    uniquify: uniquify
+  };
+}];
+
+},{}],259:[function(_dereq_,module,exports){
+"use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
   // The service is actually this function, which we call with the func
@@ -10255,9 +10277,9 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],259:[function(_dereq_,module,exports){
+},{}],260:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.13.1 | https://unpkg.com/ng-formio-builder@2.13.1/LICENSE.txt */
+/*! ng-formio-builder v2.13.2 | https://unpkg.com/ng-formio-builder@2.13.2/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -10275,6 +10297,8 @@ app.constant('FORM_OPTIONS', _dereq_('./constants/formOptions'));
 app.constant('COMMON_OPTIONS', _dereq_('./constants/commonOptions'));
 
 app.factory('debounce', _dereq_('./factories/debounce'));
+
+app.factory('BuilderUtils', _dereq_('./factories/BuilderUtils'));
 
 app.directive('formBuilder', _dereq_('./directives/formBuilder'));
 
@@ -10360,5 +10384,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":224,"./constants/commonOptions":240,"./constants/formOptions":241,"./directives/formBuilder":242,"./directives/formBuilderComponent":243,"./directives/formBuilderConditional":244,"./directives/formBuilderDnd":245,"./directives/formBuilderElement":246,"./directives/formBuilderList":247,"./directives/formBuilderOption":248,"./directives/formBuilderOptionCustomValidation":249,"./directives/formBuilderOptionKey":250,"./directives/formBuilderOptionTags":251,"./directives/formBuilderRow":252,"./directives/formBuilderTable":253,"./directives/formBuilderTooltip":254,"./directives/jsonInput":255,"./directives/validApiKey":256,"./directives/valueBuilder":257,"./factories/debounce":258}]},{},[259])(259)
+},{"./components":224,"./constants/commonOptions":240,"./constants/formOptions":241,"./directives/formBuilder":242,"./directives/formBuilderComponent":243,"./directives/formBuilderConditional":244,"./directives/formBuilderDnd":245,"./directives/formBuilderElement":246,"./directives/formBuilderList":247,"./directives/formBuilderOption":248,"./directives/formBuilderOptionCustomValidation":249,"./directives/formBuilderOptionKey":250,"./directives/formBuilderOptionTags":251,"./directives/formBuilderRow":252,"./directives/formBuilderTable":253,"./directives/formBuilderTooltip":254,"./directives/jsonInput":255,"./directives/validApiKey":256,"./directives/valueBuilder":257,"./factories/BuilderUtils":258,"./factories/debounce":259}]},{},[260])(260)
 });
