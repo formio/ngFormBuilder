@@ -37,11 +37,12 @@ module.exports = [
         $scope.editComponent(component);
       }
       else {
-        component.isNew = false;
-        
         // ensure the component has a key.
         component.key = component.key || component.label || 'component';
         BuilderUtils.uniquify($scope.form, component);
+
+        // Update the component to not be flagged as new anymore.
+        component.isNew = false;
       }
 
       // Refresh all CKEditor instances
