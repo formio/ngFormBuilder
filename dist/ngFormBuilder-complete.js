@@ -79537,7 +79537,7 @@ module.exports = [
       else {
         // ensure the component has a key.
         component.key = component.key || component.label || 'component';
-        BuilderUtils.uniquify($scope.form, component);
+        BuilderUtils.uniquify($scope.form, component, true);
 
         // Update the component to not be flagged as new anymore.
         component.isNew = false;
@@ -79875,6 +79875,10 @@ module.exports = function() {
               '</div>';
     },
     controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
+      // Allow the component to have its key iterated once, outside of the watch to stop an infinite loop.
+      BuilderUtils.uniquify($scope.form, $scope.component, true);
+
+      // Watch the key to uniquify the key every time it changes.
       $scope.$watch('component.key', function() {
         BuilderUtils.uniquify($scope.form, $scope.component);
       });
@@ -80282,12 +80286,19 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    *   The components parent form.
    * @param {Object} component
    *   The component to uniquify
+   * @param {Object} iterateDefault
+   *   Whether or not to iterate the component key (this coerces the key to be in the form of key + #)
    */
-  var uniquify = function(form, component) {
-    var memoization = findExistingComponents(form.components, component);
+  var uniquify = function(form, component, iterateDefault) {
     if (!component.key) {
       return;
     }
+
+    if (iterateDefault) {
+      component.key = iterateKey(component.key);
+    }
+
+    var memoization = findExistingComponents(form.components, component);
     while (keyExists(memoization, component)) {
       component.key = iterateKey(component.key);
     }
