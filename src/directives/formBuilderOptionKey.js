@@ -16,6 +16,10 @@ module.exports = function() {
               '</div>';
     },
     controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
+      // Allow the component to have its key iterated once, outside of the watch to stop an infinite loop.
+      BuilderUtils.uniquify($scope.form, $scope.component, true);
+
+      // Watch the key to uniquify the key every time it changes.
       $scope.$watch('component.key', function() {
         BuilderUtils.uniquify($scope.form, $scope.component);
       });

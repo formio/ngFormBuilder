@@ -42,7 +42,7 @@ module.exports = [
       else {
         // ensure the component has a key.
         component.key = component.key || component.label || 'component';
-        BuilderUtils.uniquify($scope.form, component);
+        BuilderUtils.uniquify($scope.form, component, true);
 
         // Update the component to not be flagged as new anymore.
         component.isNew = false;
