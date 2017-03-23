@@ -1,5 +1,5 @@
 'use strict';
-var utils = require('formio-utils');
+var utils = require('formiojs/utils');
 var _get = require('lodash/get');
 var _reject = require('lodash/reject');
 module.exports = [
