@@ -16,19 +16,12 @@ module.exports = function() {
               '</div>';
     },
     controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
-      // Allow the component to have its key iterated once, outside of the watch to stop an infinite loop.
-      BuilderUtils.uniquify($scope.form, $scope.component, true);
-
-      // Watch the key to uniquify the key every time it changes.
-      $scope.$watch('component.key', function() {
-        BuilderUtils.uniquify($scope.form, $scope.component);
-      });
+      BuilderUtils.uniquify($scope.form, $scope.component);
 
       $scope.onBlur = function() {
         $scope.component.lockKey = true;
 
-        // If they try to input an empty key, refill it with default and let uniquify
-        // make it unique
+        // If they try to input an empty key, refill it with default and let uniquify make it unique.
         if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key

@@ -8,13 +8,15 @@ module.exports = [
   'ngDialog',
   'dndDragIframeWorkaround',
   'BuilderUtils',
+  'FormioUtils',
   function(
     $scope,
     $rootScope,
     formioComponents,
     ngDialog,
     dndDragIframeWorkaround,
-    BuilderUtils
+    BuilderUtils,
+    FormioUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -36,16 +38,25 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
         $scope.editComponent(component);
       }
       else {
-        // ensure the component has a key.
+        // Ensure the component has a key.
         component.key = component.key || component.label || 'component';
-        BuilderUtils.uniquify($scope.form, component, true);
+
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
+        BuilderUtils.uniquify($scope.form, component);
 
         // Update the component to not be flagged as new anymore.
-        component.isNew = false;
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
       }
 
       // Refresh all CKEditor instances
@@ -176,6 +187,7 @@ module.exports = [
                 delete $scope.data[$scope.component.key];
               }
               $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
+              BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });
@@ -192,7 +204,9 @@ module.exports = [
           return;
         }
 
-        delete component.isNew;
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
         $scope.emit('edit', component);
       });
     };

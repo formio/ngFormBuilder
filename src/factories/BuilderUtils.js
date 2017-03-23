@@ -24,7 +24,8 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       // A component is pre-existing if the key is unique, or the key is a duplicate and its not flagged as the new component.
       if (
         (component.key !== input.key) ||
-        ((component.key === input.key) && (component.isNew !== input.isNew))
+        ((component.key === input.key) && (component.isNew !== input.isNew)) ||
+        (component.key && input.isNew)
       ) {
         existingComponents[component.key] = component;
       }
@@ -44,8 +45,8 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    * @returns {boolean}
    *   Whether or not the key exists.
    */
-  var keyExists = function(memoization, component) {
-    if (memoization.hasOwnProperty(component.key)) {
+  var keyExists = function(memoization, key) {
+    if (memoization.hasOwnProperty(key)) {
       return true;
     }
     return false;
@@ -54,18 +55,18 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   /**
    * Iterate the given key to make it unique.
    *
-   * @param {String} componentKey
+   * @param {String} key
    *   Modify the component key to be unique.
    *
    * @returns {String}
    *   The new component key.
    */
-  var iterateKey = function(componentKey) {
-    if (!componentKey.match(suffixRegex)) {
-      return componentKey + '1';
+  var iterateKey = function(key) {
+    if (!key.match(suffixRegex)) {
+      return key + '1';
     }
 
-    return componentKey.replace(suffixRegex, function(suffix) {
+    return key.replace(suffixRegex, function(suffix) {
       return Number(suffix) + 1;
     });
   };
@@ -77,22 +78,27 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    *   The components parent form.
    * @param {Object} component
    *   The component to uniquify
-   * @param {Object} iterateDefault
-   *   Whether or not to iterate the component key (this coerces the key to be in the form of key + #)
    */
-  var uniquify = function(form, component, iterateDefault) {
-    if (!component.key) {
-      return;
-    }
+  var uniquify = function(form, component) {
+    var isNew = component.isNew || false;
 
-    if (iterateDefault) {
-      component.key = iterateKey(component.key);
-    }
+    // Recurse into all child components.
+    FormioUtils.eachComponent([component], function(component) {
+      // Force the component isNew to be the same as the parent.
+      component.isNew = isNew;
 
-    var memoization = findExistingComponents(form.components, component);
-    while (keyExists(memoization, component)) {
-      component.key = iterateKey(component.key);
-    }
+      // Skip key uniquification if this component doesn't have a key.
+      if (!component.key) {
+        return;
+      }
+
+      var memoization = findExistingComponents(form.components, component);
+      while (keyExists(memoization, component.key)) {
+        component.key = iterateKey(component.key);
+      }
+    });
+
+    return component;
   };
 
   return {
