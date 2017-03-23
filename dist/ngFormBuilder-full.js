@@ -86632,13 +86632,15 @@ module.exports = [
   'ngDialog',
   'dndDragIframeWorkaround',
   'BuilderUtils',
+  'FormioUtils',
   function(
     $scope,
     $rootScope,
     formioComponents,
     ngDialog,
     dndDragIframeWorkaround,
-    BuilderUtils
+    BuilderUtils,
+    FormioUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -86660,16 +86662,25 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
         $scope.editComponent(component);
       }
       else {
-        // ensure the component has a key.
+        // Ensure the component has a key.
         component.key = component.key || component.label || 'component';
-        BuilderUtils.uniquify($scope.form, component, true);
+
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
+        BuilderUtils.uniquify($scope.form, component);
 
         // Update the component to not be flagged as new anymore.
-        component.isNew = false;
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
       }
 
       // Refresh all CKEditor instances
@@ -86800,6 +86811,7 @@ module.exports = [
                 delete $scope.data[$scope.component.key];
               }
               $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
+              BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });
@@ -86816,7 +86828,9 @@ module.exports = [
           return;
         }
 
-        delete component.isNew;
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
         $scope.emit('edit', component);
       });
     };
@@ -87004,19 +87018,12 @@ module.exports = function() {
               '</div>';
     },
     controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
-      // Allow the component to have its key iterated once, outside of the watch to stop an infinite loop.
-      BuilderUtils.uniquify($scope.form, $scope.component, true);
-
-      // Watch the key to uniquify the key every time it changes.
-      $scope.$watch('component.key', function() {
-        BuilderUtils.uniquify($scope.form, $scope.component);
-      });
+      BuilderUtils.uniquify($scope.form, $scope.component);
 
       $scope.onBlur = function() {
         $scope.component.lockKey = true;
 
-        // If they try to input an empty key, refill it with default and let uniquify
-        // make it unique
+        // If they try to input an empty key, refill it with default and let uniquify make it unique.
         if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key
@@ -87362,7 +87369,8 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       // A component is pre-existing if the key is unique, or the key is a duplicate and its not flagged as the new component.
       if (
         (component.key !== input.key) ||
-        ((component.key === input.key) && (component.isNew !== input.isNew))
+        ((component.key === input.key) && (component.isNew !== input.isNew)) ||
+        (component.key && input.isNew)
       ) {
         existingComponents[component.key] = component;
       }
@@ -87382,8 +87390,8 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    * @returns {boolean}
    *   Whether or not the key exists.
    */
-  var keyExists = function(memoization, component) {
-    if (memoization.hasOwnProperty(component.key)) {
+  var keyExists = function(memoization, key) {
+    if (memoization.hasOwnProperty(key)) {
       return true;
     }
     return false;
@@ -87392,18 +87400,18 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   /**
    * Iterate the given key to make it unique.
    *
-   * @param {String} componentKey
+   * @param {String} key
    *   Modify the component key to be unique.
    *
    * @returns {String}
    *   The new component key.
    */
-  var iterateKey = function(componentKey) {
-    if (!componentKey.match(suffixRegex)) {
-      return componentKey + '1';
+  var iterateKey = function(key) {
+    if (!key.match(suffixRegex)) {
+      return key + '1';
     }
 
-    return componentKey.replace(suffixRegex, function(suffix) {
+    return key.replace(suffixRegex, function(suffix) {
       return Number(suffix) + 1;
     });
   };
@@ -87415,22 +87423,27 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    *   The components parent form.
    * @param {Object} component
    *   The component to uniquify
-   * @param {Object} iterateDefault
-   *   Whether or not to iterate the component key (this coerces the key to be in the form of key + #)
    */
-  var uniquify = function(form, component, iterateDefault) {
-    if (!component.key) {
-      return;
-    }
+  var uniquify = function(form, component) {
+    var isNew = component.isNew || false;
 
-    if (iterateDefault) {
-      component.key = iterateKey(component.key);
-    }
+    // Recurse into all child components.
+    FormioUtils.eachComponent([component], function(component) {
+      // Force the component isNew to be the same as the parent.
+      component.isNew = isNew;
 
-    var memoization = findExistingComponents(form.components, component);
-    while (keyExists(memoization, component)) {
-      component.key = iterateKey(component.key);
-    }
+      // Skip key uniquification if this component doesn't have a key.
+      if (!component.key) {
+        return;
+      }
+
+      var memoization = findExistingComponents(form.components, component);
+      while (keyExists(memoization, component.key)) {
+        component.key = iterateKey(component.key);
+      }
+    });
+
+    return component;
   };
 
   return {
