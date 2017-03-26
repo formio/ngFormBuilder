@@ -1,3 +1,4 @@
+var _clone = require('lodash/clone');
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -46,7 +47,7 @@ module.exports = function(app) {
             var fields = [];
             FormioUtils.eachComponent(components, function(component) {
               if (component.key && component.input && (component.type !== 'button') && component.key !== $scope.component.key) {
-                var comp = _.clone(component);
+                var comp = _clone(component);
                 if (!comp.label) {
                   comp.label = comp.key;
                 }

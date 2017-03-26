@@ -1,3 +1,6 @@
+var _isNumber = require('lodash/isNumber');
+var _camelCase = require('lodash/camelCase');
+var _assign = require('lodash/assign');
 module.exports = [
   '$scope',
   '$element',
@@ -19,7 +22,7 @@ module.exports = [
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
-    $scope.hideCount = (_.isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
+    $scope.hideCount = (_isNumber($scope.hideDndBoxCount) ? $scope.hideDndBoxCount : 1);
     $scope.$watch('hideDndBoxCount', function(hideCount) {
       $scope.hideCount = hideCount ? hideCount : 1;
     });
@@ -243,7 +246,7 @@ module.exports = [
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
-              $scope.component.key = _.camelCase($scope.component.label.replace(invalidRegex, ''));
+              $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });
@@ -256,7 +259,7 @@ module.exports = [
           }
           else {
             // Revert to old settings, but use the same object reference
-            _.assign(component, previousSettings);
+            _assign(component, previousSettings);
           }
         }
         else {

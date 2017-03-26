@@ -1,6 +1,8 @@
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
 */
+var _map = require('lodash/map');
+var _camelCase = require('lodash/camelCase');
 module.exports = function() {
   return {
     scope: {
@@ -62,10 +64,10 @@ module.exports = function() {
             return;
           }
 
-          _.map(newValue, function(entry, i) {
+          _map(newValue, function(entry, i) {
             if (entry[$scope.labelProperty] !== oldValue[i][$scope.labelProperty]) {// label changed
-              if (entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _.camelCase(oldValue[i][$scope.labelProperty])) {
-                entry[$scope.valueProperty] = _.camelCase(entry[$scope.labelProperty]);
+              if (entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _camelCase(oldValue[i][$scope.labelProperty])) {
+                entry[$scope.valueProperty] = _camelCase(entry[$scope.labelProperty]);
               }
             }
           });
