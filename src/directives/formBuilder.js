@@ -1,4 +1,11 @@
 /*eslint max-statements: 0*/
+var _cloneDeep = require('lodash/cloneDeep');
+var _each = require('lodash/each');
+var _omitBy = require('lodash/omitBy');
+var _groupBy = require('lodash/groupBy');
+var _upperFirst = require('lodash/upperFirst');
+var _merge = require('lodash/merge');
+var _capitalize = require('lodash/capitalize');
 module.exports = ['debounce', function(debounce) {
   return {
     replace: true,
@@ -6,6 +13,7 @@ module.exports = ['debounce', function(debounce) {
     scope: {
       form: '=?',
       src: '=',
+      url: '=?',
       type: '=',
       onSave: '=',
       onCancel: '=',
@@ -44,6 +52,9 @@ module.exports = ['debounce', function(debounce) {
         $scope.hideCount = 2;
         $scope.form.page = 0;
         $scope.formio = $scope.src ? new Formio($scope.src) : null;
+        if ($scope.url) {
+          $scope.formio = new Formio($scope.url);
+        }
 
         var setNumPages = function() {
           if (!$scope.form) {
@@ -74,7 +85,7 @@ module.exports = ['debounce', function(debounce) {
         };
 
         // Load the form.
-        if ($scope.formio && $scope.formio.formId) {
+        if ($scope.src && $scope.formio && $scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
@@ -145,16 +156,16 @@ module.exports = ['debounce', function(debounce) {
           setNumPages();
         });
 
-        $scope.formComponents = _.cloneDeep(formioComponents.components);
-        _.each($scope.formComponents, function(component, key) {
+        $scope.formComponents = _cloneDeep(formioComponents.components);
+        _each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
           if (component.settings.hasOwnProperty('builder') && !component.settings.builder || component.disabled) {
             delete $scope.formComponents[key];
           }
         });
 
-        $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
-        $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
+        $scope.formComponentGroups = _cloneDeep(_omitBy(formioComponents.groups, 'disabled'));
+        $scope.formComponentsByGroup = _groupBy($scope.formComponents, function(component) {
           return component.group;
         });
 
@@ -170,7 +181,7 @@ module.exports = ['debounce', function(debounce) {
 
           $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
             // Iterate through all resources.
-            _.each(resources, function(resource) {
+            _each(resources, function(resource) {
               var resourceKey = resource.name;
 
               // Add a legend for this resource.
@@ -185,11 +196,11 @@ module.exports = ['debounce', function(debounce) {
 
                 var componentName = component.label;
                 if (!componentName && component.key) {
-                  componentName = _.upperFirst(component.key);
+                  componentName = _upperFirst(component.key);
                 }
 
-                $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
-                  _.cloneDeep(formioComponents.components[component.type], true),
+                $scope.formComponentsByGroup.resource[resourceKey].push(_merge(
+                  _cloneDeep(formioComponents.components[component.type], true),
                   {
                     title: componentName,
                     group: 'resource',
@@ -225,7 +236,7 @@ module.exports = ['debounce', function(debounce) {
           $scope.$emit('formUpdate', $scope.form);
         };
 
-        $scope.capitalize = _.capitalize;
+        $scope.capitalize = _capitalize;
 
         // Set the root list height to the height of the formbuilder for ease of form building.
         var rootlistEL = angular.element('.rootlist');

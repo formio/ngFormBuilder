@@ -1,6 +1,7 @@
 /**
  * A directive for a table builder
  */
+var _merge = require('lodash/merge');
 module.exports = function() {
   return {
     restrict: 'E',
@@ -37,7 +38,7 @@ module.exports = function() {
                 tmpTable[row][col] = {components:[]};
               }
             }
-            $scope.component.rows = _.merge(tmpTable, $scope.component.rows);
+            $scope.component.rows = _merge(tmpTable, $scope.component.rows);
             /*eslint-enable max-depth */
           }
         };

@@ -1,6 +1,7 @@
 /**
 * A directive for a field to edit a component's tags.
 */
+var _map = require('lodash/map');
 module.exports = function() {
   return {
     restrict: 'E',
@@ -14,7 +15,7 @@ module.exports = function() {
     },
     controller: ['$scope', function($scope) {
       $scope.component.tags = $scope.component.tags || [];
-      $scope.tags = _.map($scope.component.tags, function(tag) {
+      $scope.tags = _map($scope.component.tags, function(tag) {
         return {text: tag};
       });
 
