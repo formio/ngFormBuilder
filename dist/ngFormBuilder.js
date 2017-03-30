@@ -9794,10 +9794,10 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
-      var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
+      var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
-      var input = angular.element('<input>');
+      var input = type === 'textarea' ? angular.element('<textarea></textarea>') : angular.element('<input>');
       var inputAttrs = {
         id: property,
         name: property,
@@ -9822,7 +9822,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       input.attr(inputAttrs);
 
       // Checkboxes have a slightly different layout
-      if (inputAttrs.type.toLowerCase() === 'checkbox') {
+      if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
                 '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
@@ -10367,7 +10367,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],261:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.14.0 | https://unpkg.com/ng-formio-builder@2.14.0/LICENSE.txt */
+/*! ng-formio-builder v2.14.1 | https://unpkg.com/ng-formio-builder@2.14.1/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
