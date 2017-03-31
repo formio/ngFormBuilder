@@ -17,6 +17,8 @@ app.constant('COMMON_OPTIONS', require('./constants/commonOptions'));
 
 app.factory('debounce', require('./factories/debounce'));
 
+app.factory('BuilderUtils', require('./factories/BuilderUtils'));
+
 app.directive('formBuilder', require('./directives/formBuilder'));
 
 app.directive('formBuilderComponent', require('./directives/formBuilderComponent'));

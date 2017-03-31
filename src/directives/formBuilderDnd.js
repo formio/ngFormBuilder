@@ -7,12 +7,16 @@ module.exports = [
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
+  'BuilderUtils',
+  'FormioUtils',
   function(
     $scope,
     $rootScope,
     formioComponents,
     ngDialog,
-    dndDragIframeWorkaround
+    dndDragIframeWorkaround,
+    BuilderUtils,
+    FormioUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -34,11 +38,25 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
         $scope.editComponent(component);
       }
       else {
-        component.isNew = false;
+        // Ensure the component has a key.
+        component.key = component.key || component.label || 'component';
+
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
+        BuilderUtils.uniquify($scope.form, component);
+
+        // Update the component to not be flagged as new anymore.
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
       }
 
       // Refresh all CKEditor instances
@@ -142,9 +160,7 @@ module.exports = [
           $scope.editorVisible = true;
 
           // Allow the component to add custom logic to the edit page.
-          if (
-            $scope.formComponent && $scope.formComponent.onEdit
-          ) {
+          if ($scope.formComponent && $scope.formComponent.onEdit) {
             $controller($scope.formComponent.onEdit, {$scope: $scope});
           }
 
@@ -171,6 +187,7 @@ module.exports = [
                 delete $scope.data[$scope.component.key];
               }
               $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
+              BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });
@@ -179,17 +196,18 @@ module.exports = [
         var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
         if (cancelled) {
           if (component.isNew) {
-            remove(component);
+            return remove(component);
           }
-          else {
-            // Revert to old settings, but use the same object reference
-            _assign(component, previousSettings);
-          }
+
+          // Revert to old settings, but use the same object reference
+          _assign(component, previousSettings);
+          return;
         }
-        else {
-          delete component.isNew;
-          $scope.emit('edit', component);
-        }
+
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
+        $scope.emit('edit', component);
       });
     };
 

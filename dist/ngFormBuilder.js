@@ -9508,12 +9508,16 @@ module.exports = [
   'formioComponents',
   'ngDialog',
   'dndDragIframeWorkaround',
+  'BuilderUtils',
+  'FormioUtils',
   function(
     $scope,
     $rootScope,
     formioComponents,
     ngDialog,
-    dndDragIframeWorkaround
+    dndDragIframeWorkaround,
+    BuilderUtils,
+    FormioUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -9535,11 +9539,25 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
         $scope.editComponent(component);
       }
       else {
-        component.isNew = false;
+        // Ensure the component has a key.
+        component.key = component.key || component.label || 'component';
+
+        // Force the component to be flagged as new.
+        component.isNew = true;
+
+        BuilderUtils.uniquify($scope.form, component);
+
+        // Update the component to not be flagged as new anymore.
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
       }
 
       // Refresh all CKEditor instances
@@ -9643,9 +9661,7 @@ module.exports = [
           $scope.editorVisible = true;
 
           // Allow the component to add custom logic to the edit page.
-          if (
-            $scope.formComponent && $scope.formComponent.onEdit
-          ) {
+          if ($scope.formComponent && $scope.formComponent.onEdit) {
             $controller($scope.formComponent.onEdit, {$scope: $scope});
           }
 
@@ -9672,6 +9688,7 @@ module.exports = [
                 delete $scope.data[$scope.component.key];
               }
               $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
+              BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
           });
@@ -9680,17 +9697,18 @@ module.exports = [
         var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
         if (cancelled) {
           if (component.isNew) {
-            remove(component);
+            return remove(component);
           }
-          else {
-            // Revert to old settings, but use the same object reference
-            _assign(component, previousSettings);
-          }
+
+          // Revert to old settings, but use the same object reference
+          _assign(component, previousSettings);
+          return;
         }
-        else {
-          delete component.isNew;
-          $scope.emit('edit', component);
-        }
+
+        FormioUtils.eachComponent([component], function(child) {
+          delete child.isNew;
+        }, true);
+        $scope.emit('edit', component);
       });
     };
 
@@ -9776,10 +9794,10 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
-      var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
+      var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
-      var input = angular.element('<input>');
+      var input = type === 'textarea' ? angular.element('<textarea></textarea>') : angular.element('<input>');
       var inputAttrs = {
         id: property,
         name: property,
@@ -9804,7 +9822,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       input.attr(inputAttrs);
 
       // Checkboxes have a slightly different layout
-      if (inputAttrs.type.toLowerCase() === 'checkbox') {
+      if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
                 '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +
@@ -9876,56 +9894,17 @@ module.exports = function() {
                 '</p>' +
               '</div>';
     },
-    controller: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
-      var suffixRegex = /(\d+)$/;
-
-      // Prebuild a list of existing components.
-      var existingComponents = {};
-      FormioUtils.eachComponent($scope.form.components, function(component) {
-        // Don't add to existing components if current component or if it is new. (New could mean same as another item).
-        if (component.key && ($scope.component.key !== component.key || $scope.component.isNew)) {
-          existingComponents[component.key] = component;
-        }
-      }, true);
-
-      var keyExists = function(component) {
-        if (existingComponents.hasOwnProperty(component.key)) {
-          return true;
-        }
-        return false;
-      };
-
-      var iterateKey = function(componentKey) {
-        if (!componentKey.match(suffixRegex)) {
-          return componentKey + '1';
-        }
-
-        return componentKey.replace(suffixRegex, function(suffix) {
-          return Number(suffix) + 1;
-        });
-      };
-
-      // Appends a number to a component.key to keep it unique
-      var uniquify = function() {
-        if (!$scope.component.key) {
-          return;
-        }
-        while (keyExists($scope.component)) {
-          $scope.component.key = iterateKey($scope.component.key);
-        }
-      };
-
-      $scope.$watch('component.key', uniquify);
+    controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
+      BuilderUtils.uniquify($scope.form, $scope.component);
 
       $scope.onBlur = function() {
         $scope.component.lockKey = true;
 
-        // If they try to input an empty key, refill it with default and let uniquify
-        // make it unique
+        // If they try to input an empty key, refill it with default and let uniquify make it unique.
         if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key
-          uniquify();
+          BuilderUtils.uniquify($scope.form, $scope.component);
         }
       };
 
@@ -10241,6 +10220,119 @@ module.exports = function() {
 
 },{"lodash/camelCase":166,"lodash/map":194}],259:[function(_dereq_,module,exports){
 "use strict";
+'use strict';
+
+module.exports = ['FormioUtils', function(FormioUtils) {
+  var suffixRegex = /(\d+)$/;
+
+  /**
+   * Memoize the given form components in a map, using the component keys.
+   *
+   * @param {Array} components
+   *   An array of the form components.
+   * @param {Object} input
+   *   The input component we're trying to uniquify.
+   *
+   * @returns {Object}
+   *   The memoized form components.
+   */
+  var findExistingComponents = function(components, input) {
+    // Prebuild a list of existing components.
+    var existingComponents = {};
+    FormioUtils.eachComponent(components, function(component) {
+      // If theres no key, we cant compare components.
+      if (!component.key) return;
+
+      // A component is pre-existing if the key is unique, or the key is a duplicate and its not flagged as the new component.
+      if (
+        (component.key !== input.key) ||
+        ((component.key === input.key) && (component.isNew !== input.isNew))
+      ) {
+        existingComponents[component.key] = component;
+      }
+    }, true);
+
+    return existingComponents;
+  };
+
+  /**
+   * Determine if the given component key already exists in the memoization.
+   *
+   * @param {Object} memoization
+   *   The form components map.
+   * @param component
+   *   The component to uniquify.
+   *
+   * @returns {boolean}
+   *   Whether or not the key exists.
+   */
+  var keyExists = function(memoization, key) {
+    if (memoization.hasOwnProperty(key)) {
+      return true;
+    }
+    return false;
+  };
+
+  /**
+   * Iterate the given key to make it unique.
+   *
+   * @param {String} key
+   *   Modify the component key to be unique.
+   *
+   * @returns {String}
+   *   The new component key.
+   */
+  var iterateKey = function(key) {
+    if (!key.match(suffixRegex)) {
+      return key + '1';
+    }
+
+    return key.replace(suffixRegex, function(suffix) {
+      return Number(suffix) + 1;
+    });
+  };
+
+  /**
+   * Appends a number to a component.key to keep it unique
+   *
+   * @param {Object} form
+   *   The components parent form.
+   * @param {Object} component
+   *   The component to uniquify
+   */
+  var uniquify = function(form, component) {
+    var isNew = component.isNew || false;
+
+    // Recurse into all child components.
+    FormioUtils.eachComponent([component], function(component) {
+      // Force the component isNew to be the same as the parent.
+      component.isNew = isNew;
+
+      // Skip key uniquification if this component doesn't have a key.
+      if (!component.key) {
+        return;
+      }
+
+      if (!component.key.match(suffixRegex)) {
+        component.key = component.key + '1';
+      }
+
+      var memoization = findExistingComponents(form.components, component);
+      while (keyExists(memoization, component.key)) {
+        component.key = iterateKey(component.key);
+      }
+    });
+
+    return component;
+  };
+
+  return {
+    uniquify: uniquify
+  };
+}];
+
+},{}],260:[function(_dereq_,module,exports){
+"use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
   // The service is actually this function, which we call with the func
@@ -10273,9 +10365,9 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],260:[function(_dereq_,module,exports){
+},{}],261:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.14.1 | https://unpkg.com/ng-formio-builder@2.14.1/LICENSE.txt */
+/*! ng-formio-builder v2.14.3 | https://unpkg.com/ng-formio-builder@2.14.3/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
@@ -10293,6 +10385,8 @@ app.constant('FORM_OPTIONS', _dereq_('./constants/formOptions'));
 app.constant('COMMON_OPTIONS', _dereq_('./constants/commonOptions'));
 
 app.factory('debounce', _dereq_('./factories/debounce'));
+
+app.factory('BuilderUtils', _dereq_('./factories/BuilderUtils'));
 
 app.directive('formBuilder', _dereq_('./directives/formBuilder'));
 
@@ -10378,5 +10472,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":225,"./constants/commonOptions":241,"./constants/formOptions":242,"./directives/formBuilder":243,"./directives/formBuilderComponent":244,"./directives/formBuilderConditional":245,"./directives/formBuilderDnd":246,"./directives/formBuilderElement":247,"./directives/formBuilderList":248,"./directives/formBuilderOption":249,"./directives/formBuilderOptionCustomValidation":250,"./directives/formBuilderOptionKey":251,"./directives/formBuilderOptionTags":252,"./directives/formBuilderRow":253,"./directives/formBuilderTable":254,"./directives/formBuilderTooltip":255,"./directives/jsonInput":256,"./directives/validApiKey":257,"./directives/valueBuilder":258,"./factories/debounce":259}]},{},[260])(260)
+},{"./components":225,"./constants/commonOptions":241,"./constants/formOptions":242,"./directives/formBuilder":243,"./directives/formBuilderComponent":244,"./directives/formBuilderConditional":245,"./directives/formBuilderDnd":246,"./directives/formBuilderElement":247,"./directives/formBuilderList":248,"./directives/formBuilderOption":249,"./directives/formBuilderOptionCustomValidation":250,"./directives/formBuilderOptionKey":251,"./directives/formBuilderOptionTags":252,"./directives/formBuilderRow":253,"./directives/formBuilderTable":254,"./directives/formBuilderTooltip":255,"./directives/jsonInput":256,"./directives/validApiKey":257,"./directives/valueBuilder":258,"./factories/BuilderUtils":259,"./factories/debounce":260}]},{},[261])(261)
 });
