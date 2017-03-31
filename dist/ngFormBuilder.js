@@ -9539,7 +9539,7 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
+      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         // Force the component to be flagged as new.
         component.isNew = true;
 
