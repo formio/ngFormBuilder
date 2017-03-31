@@ -86446,7 +86446,8 @@ module.exports = ['debounce', function(debounce) {
                       label: component.label,
                       key: component.key,
                       lockKey: true,
-                      source: resource._id
+                      source: resource._id,
+                      isNew: true
                     }
                   }
                 ));
