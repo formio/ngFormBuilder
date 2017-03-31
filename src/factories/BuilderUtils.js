@@ -62,7 +62,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    */
   var iterateKey = function(key) {
     if (!key.match(suffixRegex)) {
-      return key + '1';
+      return key + '2';
     }
 
     return key.replace(suffixRegex, function(suffix) {
@@ -89,10 +89,6 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       // Skip key uniquification if this component doesn't have a key.
       if (!component.key) {
         return;
-      }
-
-      if (!component.key.match(suffixRegex)) {
-        component.key = component.key + '1';
       }
 
       var memoization = findExistingComponents(form.components, component);
