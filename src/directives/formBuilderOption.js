@@ -18,10 +18,10 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
-      var type = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
+      var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
-      var input = angular.element('<input>');
+      var input = type === 'textarea' ? angular.element('<textarea></textarea>') : angular.element('<input>');
       var inputAttrs = {
         id: property,
         name: property,
@@ -46,7 +46,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       input.attr(inputAttrs);
 
       // Checkboxes have a slightly different layout
-      if (inputAttrs.type.toLowerCase() === 'checkbox') {
+      if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
                 '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
                 input.prop('outerHTML') +

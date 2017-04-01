@@ -62,6 +62,8 @@ app.directive('formBuilderDroppable', function() {
   };
 });
 
+app.factory('BuilderUtils', require('./factories/BuilderUtils'));
+
 app.directive('formBuilder', require('./directives/formBuilder'));
 
 app.directive('formBuilderComponent', require('./directives/formBuilderComponent'));

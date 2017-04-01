@@ -15,56 +15,17 @@ module.exports = function() {
                 '</p>' +
               '</div>';
     },
-    controller: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
-      var suffixRegex = /(\d+)$/;
-
-      // Prebuild a list of existing components.
-      var existingComponents = {};
-      FormioUtils.eachComponent($scope.form.components, function(component) {
-        // Don't add to existing components if current component or if it is new. (New could mean same as another item).
-        if (component.key && ($scope.component.key !== component.key || $scope.component.isNew)) {
-          existingComponents[component.key] = component;
-        }
-      }, true);
-
-      var keyExists = function(component) {
-        if (existingComponents.hasOwnProperty(component.key)) {
-          return true;
-        }
-        return false;
-      };
-
-      var iterateKey = function(componentKey) {
-        if (!componentKey.match(suffixRegex)) {
-          return componentKey + '1';
-        }
-
-        return componentKey.replace(suffixRegex, function(suffix) {
-          return Number(suffix) + 1;
-        });
-      };
-
-      // Appends a number to a component.key to keep it unique
-      var uniquify = function() {
-        if (!$scope.component.key) {
-          return;
-        }
-        while (keyExists($scope.component)) {
-          $scope.component.key = iterateKey($scope.component.key);
-        }
-      };
-
-      $scope.$watch('component.key', uniquify);
+    controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
+      BuilderUtils.uniquify($scope.form, $scope.component);
 
       $scope.onBlur = function() {
         $scope.component.lockKey = true;
 
-        // If they try to input an empty key, refill it with default and let uniquify
-        // make it unique
+        // If they try to input an empty key, refill it with default and let uniquify make it unique.
         if (!$scope.component.key && $scope.formComponents[$scope.component.type].settings.key) {
           $scope.component.key = $scope.formComponents[$scope.component.type].settings.key;
           $scope.component.lockKey = false; // Also unlock key
-          uniquify();
+          BuilderUtils.uniquify($scope.form, $scope.component);
         }
       };
 
