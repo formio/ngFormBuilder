@@ -109628,29 +109628,33 @@ module.exports = function() {
           $scope.formioAlerts = [].concat(alerts);
         };
 
-        $scope.getIframeSrc = function(src) {
-          var iframeSrc = src + '?token=' + Formio.getToken();
+        $scope.getIframeSrc = function(pdf) {
+          var iframeSrc = pdf.src + '.html';
+          var params = [];
           if ($scope.form.builder) {
-            iframeSrc += '&builder=1';
+            params.push('builder=1');
           }
           if ($scope.readOnly) {
-            iframeSrc += '&readonly=1';
+            params.push('readonly=1');
+          }
+          if (params.length) {
+            iframeSrc += '?' + params.join('&');
           }
           return iframeSrc;
         };
 
-        $scope.getPDFDownload = function(src) {
-          var iframe = $scope.getIframeSrc(src);
-          var download = iframe.replace('/pdf/', '/download/');
-          if ($scope.form && $scope.form._id) {
-            download += '&form=' + $scope.form._id;
-            if ($scope.form.project) {
-              download += '&project=' + $scope.form.project;
-            }
+        $scope.getPDFDownload = function(pdf) {
+          var download = '';
+          if ($scope.formio && $scope.formio.submissionUrl) {
+            download = $scope.formio.submissionUrl;
           }
-          if ($scope.submission && $scope.submission._id) {
-            download += '&submission=' + $scope.submission._id;
+          else {
+            download = Formio.baseUrl + '/project/' + $scope.form.project + '/';
+            download += '/form/' + $scope.form._id;
+            download += '/submission/' + $scope.submission._id;
           }
+          download += '/download/' + pdf.id;
+          download += '?token=' + Formio.getToken();
           return download;
         };
 
