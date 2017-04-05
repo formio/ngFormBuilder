@@ -8,7 +8,7 @@
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
+module.exports = ['COMMON_OPTIONS', 'formioTranslate', function(COMMON_OPTIONS, formioTranslate) {
   return {
     restrict: 'E',
     require: 'property',
@@ -27,7 +27,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
         name: property,
         type: type,
         'ng-model': 'component.' + property,
-        placeholder: placeholder
+        placeholder: formioTranslate(placeholder)
       };
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
@@ -48,15 +48,15 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       // Checkboxes have a slightly different layout
       if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' +
                 input.prop('outerHTML') +
-                ' ' + label + '</label>' +
+                ' ' + formioTranslate(label) + '</label>' +
               '</div>';
       }
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label>' +
                 input.prop('outerHTML') +
               '</div>';
     }
