@@ -6473,19 +6473,19 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">Action</label>' +
+            '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">{{\'Action\' | formioTranslate}}</label>' +
             '<select class="form-control" id="action" name="action" ng-options="action.name as action.title for action in actions" ng-model="component.action"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.action === \'event\'">' +
-          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">Button Event</label>' +
+          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button Event\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+            '<label for="theme" form-builder-tooltip="The color theme of this panel.">{{\'Theme\' | formioTranslate}}</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="size" form-builder-tooltip="The size of this button.">Size</label>' +
+            '<label for="size" form-builder-tooltip="The size of this button.">{{\'Size\' | formioTranslate}}</label>' +
             '<select class="form-control" id="size" name="size" ng-options="size.name as size.title for size in sizes" ng-model="component.size"></select>' +
           '</div>' +
           '<form-builder-option property="leftIcon"></form-builder-option>' +
@@ -6625,23 +6625,23 @@ module.exports = function(app) {
         '<form id="component-settings" novalidate>' +
           '<div class="row">' +
             '<div class="col-md-6">' +
-              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} Component</p>' +
+              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} {{\'Component\' | formioTranslate}}</p>' +
             '</div>' +
             '<div class="col-md-6">' +
               '<div class="pull-right" ng-if="::formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
-                '<a ng-href="{{ ::formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+                '<a ng-href="{{ ::formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> {{\'Help!\' | formioTranslate}}</a>' +
               '</div>' +
             '</div>' +
           '</div>' +
           '<div class="row">' +
             '<div class="col-xs-6">' +
               '<uib-tabset>' +
-                '<uib-tab ng-repeat="view in ::formComponent.views" heading="{{ ::view.name }}"><ng-include src="::view.template"></ng-include></uib-tab>' +
+                '<uib-tab ng-repeat="view in ::formComponent.views" heading="{{ ::view.name | formioTranslate }}"><ng-include src="::view.template"></ng-include></uib-tab>' +
               '</uib-tabset>' +
             '</div>' +
             '<div class="col-xs-6">' +
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
-                '<div class="panel-heading">Preview</div>' +
+                '<div class="panel-heading">{{\'Preview\' | formioTranslate}}</div>' +
                 '<div class="panel-body">' +
                   '<div class="form-group" ng-if="component.wysiwyg && editorVisible">' +
                     '<label for="editor-preview" class="control-label" ng-if="component.label">{{ component.label }}</label>' +
@@ -6652,9 +6652,9 @@ module.exports = function(app) {
               '</div>' +
               '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
-                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">Save</button>&nbsp;' +
-                '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
-                '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">Remove</button>' +
+                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
+                '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">{{\'Cancel\' | formioTranslate}}</button>&nbsp;' +
+                '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">{{\'Remove\' | formioTranslate}}</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -9779,7 +9779,7 @@ module.exports = [
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
+module.exports = ['COMMON_OPTIONS', 'formioTranslate', function(COMMON_OPTIONS, formioTranslate) {
   return {
     restrict: 'E',
     require: 'property',
@@ -9798,7 +9798,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
         name: property,
         type: type,
         'ng-model': 'component.' + property,
-        placeholder: placeholder
+        placeholder: formioTranslate(placeholder)
       };
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
@@ -9819,15 +9819,15 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       // Checkboxes have a slightly different layout
       if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' +
                 input.prop('outerHTML') +
-                ' ' + label + '</label>' +
+                ' ' + formioTranslate(label) + '</label>' +
               '</div>';
       }
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label>' +
                 input.prop('outerHTML') +
               '</div>';
     }
@@ -10040,7 +10040,7 @@ module.exports = function() {
 * Tooltip text can be provided via title attribute or
 * as the value for this directive.
 */
-module.exports = function() {
+module.exports = ['formioTranslate', function(formioTranslate) {
   return {
     restrict: 'A',
     replace: false,
@@ -10051,7 +10051,7 @@ module.exports = function() {
           html: true,
           trigger: 'manual',
           placement: 'right',
-          content: attrs.title || attrs.formBuilderTooltip
+          content: formioTranslate(attrs.title || attrs.formBuilderTooltip)
         }).on('mouseenter', function() {
           var $self = angular.element(this);
           $self.popover('show');
@@ -10070,7 +10070,7 @@ module.exports = function() {
       }
     }
   };
-};
+}];
 
 },{}],256:[function(_dereq_,module,exports){
 "use strict";
@@ -10152,24 +10152,24 @@ module.exports = function() {
     },
     restrict: 'E',
     template: '<div class="form-group">' +
-                '<label form-builder-tooltip="{{ tooltipText }}">{{ label }}</label>' +
+                '<label form-builder-tooltip="{{ tooltipText | formioTranslate }}">{{ label | formioTranslate }}</label>' +
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-6">{{ labelLabel }}</th>' +
-                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
+                      '<th class="col-xs-6">{{ labelLabel | formioTranslate }}</th>' +
+                      '<th class="col-xs-4">{{ valueLabel | formioTranslate }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
                       '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
               '</div>',
     replace: true,
     link: function($scope, el, attrs) {

@@ -54,10 +54,10 @@
     "angular-ckeditor": "github:lemonde/angular-ckeditor#v1.0.3",
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-ui-bootstrap": "^2.5.0",
-    "formiojs": "^2.4.0",
+    "formiojs": "^2.4.1",
     "lodash": "^4.17.4",
     "ng-dialog": "^0.6.6",
-    "ng-formio": "^2.14.3",
+    "ng-formio": "^2.15.1",
     "ng-tags-input": "^3.1.1"
   }
 }
