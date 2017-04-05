@@ -38,18 +38,12 @@ module.exports = [
 
     $scope.addComponent = function(component, index) {
       // Only edit immediately for components that are not resource comps.
-      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
-        // Force the component to be flagged as new.
-        component.isNew = true;
-
+      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
       }
       else {
         // Ensure the component has a key.
         component.key = component.key || component.label || 'component';
-
-        // Force the component to be flagged as new.
-        component.isNew = true;
 
         BuilderUtils.uniquify($scope.form, component);
 
