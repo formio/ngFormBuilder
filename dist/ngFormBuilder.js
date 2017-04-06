@@ -9779,13 +9779,15 @@ module.exports = [
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', 'formioTranslate', function(COMMON_OPTIONS, formioTranslate) {
+module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter) {
   return {
     restrict: 'E',
     require: 'property',
     priority: 2,
     replace: true,
     template: function(el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
@@ -10040,11 +10042,13 @@ module.exports = function() {
 * Tooltip text can be provided via title attribute or
 * as the value for this directive.
 */
-module.exports = ['formioTranslate', function(formioTranslate) {
+module.exports = ['$filter', function($filter) {
   return {
     restrict: 'A',
     replace: false,
     link: function($scope, el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       if (attrs.formBuilderTooltip || attrs.title) {
         var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
         tooltip.popover({
@@ -10358,7 +10362,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],261:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.14.3 | https://unpkg.com/ng-formio-builder@2.14.3/LICENSE.txt */
+/*! ng-formio-builder v2.15.0 | https://unpkg.com/ng-formio-builder@2.15.0/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
