@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
 
+## 2.15.1
+### Fixed
+ - Fix issue with translate injector.
+ 
 ## 2.15.0
 ### Added
  - babel-preset-es2015 to devDependencies
