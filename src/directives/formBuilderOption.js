@@ -8,13 +8,15 @@
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', 'formioTranslate', function(COMMON_OPTIONS, formioTranslate) {
+module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter) {
   return {
     restrict: 'E',
     require: 'property',
     priority: 2,
     replace: true,
     template: function(el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
