@@ -3,18 +3,20 @@
 * Tooltip text can be provided via title attribute or
 * as the value for this directive.
 */
-module.exports = function() {
+module.exports = ['$filter', function($filter) {
   return {
     restrict: 'A',
     replace: false,
     link: function($scope, el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       if (attrs.formBuilderTooltip || attrs.title) {
         var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
         tooltip.popover({
           html: true,
           trigger: 'manual',
           placement: 'right',
-          content: attrs.title || attrs.formBuilderTooltip
+          content: formioTranslate(attrs.title || attrs.formBuilderTooltip)
         }).on('mouseenter', function() {
           var $self = angular.element(this);
           $self.popover('show');
@@ -33,4 +35,4 @@ module.exports = function() {
       }
     }
   };
-};
+}];

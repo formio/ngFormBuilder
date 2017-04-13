@@ -1,4 +1,4423 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.formioBuilder = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+(function (global){
+'use strict';
+
+// Intentionally use native-promise-only here... Other promise libraries (es6-promise)
+// duck-punch the global Promise definition which messes up Angular 2 since it
+// also duck-punches the global Promise definition. For now, keep native-promise-only.
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
+  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+};
+
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
+
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+
+var Promise = _dereq_("native-promise-only");
+_dereq_('whatwg-fetch');
+var EventEmitter = _dereq_('eventemitter2').EventEmitter2;
+var copy = _dereq_('shallow-copy');
+
+/**
+ * The Formio interface class.
+ *
+ *   let formio = new Formio('https://examples.form.io/example');
+ */
+
+var Formio = function () {
+  function Formio(path) {
+    var _this = this;
+
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck(this, Formio);
+
+    // Ensure we have an instance of Formio.
+    if (!(this instanceof Formio)) {
+      return new Formio(path);
+    }
+
+    // Initialize our variables.
+    this.base = '';
+    this.projectsUrl = '';
+    this.projectUrl = '';
+    this.projectId = '';
+    this.formUrl = '';
+    this.formsUrl = '';
+    this.formId = '';
+    this.submissionsUrl = '';
+    this.submissionUrl = '';
+    this.submissionId = '';
+    this.actionsUrl = '';
+    this.actionId = '';
+    this.actionUrl = '';
+    this.query = '';
+
+    if (options.hasOwnProperty('base')) {
+      this.base = options.base;
+    } else if (Formio.baseUrl) {
+      this.base = Formio.baseUrl;
+    } else {
+      this.base = window.location.href.match(/http[s]?:\/\/api./)[0];
+    }
+
+    if (!path) {
+      // Allow user to create new projects if this was instantiated without
+      // a url
+      this.projectUrl = this.base + '/project';
+      this.projectsUrl = this.base + '/project';
+      this.projectId = false;
+      this.query = '';
+      return;
+    }
+
+    if (options.hasOwnProperty('project')) {
+      this.projectUrl = options.project;
+    }
+
+    var project = this.projectUrl || Formio.projectUrl;
+
+    // The baseURL is the same as the projectUrl. This is almost certainly against
+    // the Open Source server.
+    if (project && this.base === project) {
+      this.noProject = true;
+      this.projectUrl = this.base;
+    }
+
+    // Normalize to an absolute path.
+    if (path.indexOf('http') !== 0 && path.indexOf('//') !== 0) {
+      path = this.base + path;
+    }
+
+    var hostparts = Formio.getUrlParts(path);
+    var parts = [];
+    var hostName = hostparts[1] + hostparts[2];
+    path = hostparts.length > 3 ? hostparts[3] : '';
+    var queryparts = path.split('?');
+    if (queryparts.length > 1) {
+      path = queryparts[0];
+      this.query = '?' + queryparts[1];
+    }
+
+    // Register a specific path.
+    var registerPath = function registerPath(name, base) {
+      _this[name + 'sUrl'] = base + '/' + name;
+      var regex = new RegExp('\/' + name + '\/([^/]+)');
+      if (path.search(regex) !== -1) {
+        parts = path.match(regex);
+        _this[name + 'Url'] = parts ? base + parts[0] : '';
+        _this[name + 'Id'] = parts.length > 1 ? parts[1] : '';
+        base += parts[0];
+      }
+      return base;
+    };
+
+    // Register an array of items.
+    var registerItems = function registerItems(items, base, staticBase) {
+      for (var i in items) {
+        if (items.hasOwnProperty(i)) {
+          var item = items[i];
+          if (item instanceof Array) {
+            registerItems(item, base, true);
+          } else {
+            var newBase = registerPath(item, base);
+            base = staticBase ? base : newBase;
+          }
+        }
+      }
+    };
+
+    if (!this.projectUrl || this.projectUrl === this.base) {
+      this.projectUrl = hostName;
+    }
+
+    if (!this.noProject) {
+      // Determine the projectUrl and projectId
+      if (path.search(/(^|\/)(project)($|\/)/) !== -1) {
+        // Get project id as project/:projectId.
+        registerItems(['project'], hostName);
+      } else if (hostName === this.base) {
+        // Get project id as first part of path (subdirectory).
+        if (hostparts.length > 3 && path.split('/').length > 1) {
+          var pathParts = path.split('/');
+          pathParts.shift(); // Throw away the first /.
+          this.projectId = pathParts.shift();
+          path = '/' + pathParts.join('/');
+          this.projectUrl = hostName + '/' + this.projectId;
+        }
+      } else {
+        // Get project id from subdomain.
+        if (hostparts.length > 2 && (hostparts[2].split('.').length > 2 || hostName.indexOf('localhost') !== -1)) {
+          this.projectUrl = hostName;
+          this.projectId = hostparts[2].split('.')[0];
+        }
+      }
+      this.projectsUrl = this.projectsUrl || this.base + '/project';
+    }
+
+    // Configure Form urls and form ids.
+    if (path.search(/(^|\/)(project|form)($|\/)/) !== -1) {
+      registerItems(['form', ['submission', 'action']], this.projectUrl);
+    } else {
+      var subRegEx = new RegExp('\/(submission|action)($|\/.*)');
+      var subs = path.match(subRegEx);
+      this.pathType = subs && subs.length > 1 ? subs[1] : '';
+      path = path.replace(subRegEx, '');
+      path = path.replace(/\/$/, '');
+      this.formsUrl = this.projectUrl + '/form';
+      this.formUrl = this.projectUrl + path;
+      this.formId = path.replace(/^\/+|\/+$/g, '');
+      var items = ['submission', 'action'];
+      for (var i in items) {
+        if (items.hasOwnProperty(i)) {
+          var item = items[i];
+          this[item + 'sUrl'] = this.projectUrl + path + '/' + item;
+          if (this.pathType === item && subs.length > 2 && subs[2]) {
+            this[item + 'Id'] = subs[2].replace(/^\/+|\/+$/g, '');
+            this[item + 'Url'] = this.projectUrl + path + subs[0];
+          }
+        }
+      }
+    }
+
+    // Set the app url if it is not set.
+    if (!Formio.projectUrlSet) {
+      Formio.projectUrl = this.projectUrl;
+    }
+  }
+
+  _createClass(Formio, [{
+    key: 'delete',
+    value: function _delete(type, opts) {
+      var _id = type + 'Id';
+      var _url = type + 'Url';
+      if (!this[_id]) {
+        Promise.reject('Nothing to delete');
+      }
+      Formio.cache = {};
+      return this.makeRequest(type, this[_url], 'delete', null, opts);
+    }
+  }, {
+    key: 'index',
+    value: function index(type, query, opts) {
+      var _url = type + 'Url';
+      query = query || '';
+      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
+        query = '?' + Formio.serialize(query.params);
+      }
+      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
+    }
+  }, {
+    key: 'save',
+    value: function save(type, data, opts) {
+      var _id = type + 'Id';
+      var _url = type + 'Url';
+      var method = this[_id] || data._id ? 'put' : 'post';
+      var reqUrl = this[_id] ? this[_url] : this[type + 'sUrl'];
+      if (!this[_id] && data._id && method === 'put' && reqUrl.indexOf(data._id) === -1) {
+        reqUrl += '/' + data._id;
+      }
+      Formio.cache = {};
+      return this.makeRequest(type, reqUrl + this.query, method, data, opts);
+    }
+  }, {
+    key: 'load',
+    value: function load(type, query, opts) {
+      var _id = type + 'Id';
+      var _url = type + 'Url';
+      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
+        query = Formio.serialize(query.params);
+      }
+      if (query) {
+        query = this.query ? this.query + '&' + query : '?' + query;
+      } else {
+        query = this.query;
+      }
+      if (!this[_id]) {
+        return Promise.reject('Missing ' + _id);
+      }
+      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
+    }
+  }, {
+    key: 'makeRequest',
+    value: function makeRequest(type, url, method, data, opts) {
+      method = (method || 'GET').toUpperCase();
+      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
+        opts = {};
+      }
+
+      var requestArgs = {
+        formio: this,
+        type: type,
+        url: url,
+        method: method,
+        data: data,
+        opts: opts
+      };
+
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('request', requestArgs).then(function (result) {
+          if (result === null || result === undefined) {
+            return Formio.request(url, method, data, opts.header, opts);
+          }
+          return result;
+        });
+      });
+
+      return Formio.pluginAlter('wrapRequestPromise', request, requestArgs);
+    }
+  }, {
+    key: 'loadProject',
+    value: function loadProject(query, opts) {
+      return this.load('project', query, opts);
+    }
+  }, {
+    key: 'saveProject',
+    value: function saveProject(data, opts) {
+      return this.save('project', data, opts);
+    }
+  }, {
+    key: 'deleteProject',
+    value: function deleteProject(opts) {
+      return this.delete('project', opts);
+    }
+  }, {
+    key: 'loadForm',
+    value: function loadForm(query, opts) {
+      return this.load('form', query, opts);
+    }
+  }, {
+    key: 'saveForm',
+    value: function saveForm(data, opts) {
+      return this.save('form', data, opts);
+    }
+  }, {
+    key: 'deleteForm',
+    value: function deleteForm(opts) {
+      return this.delete('form', opts);
+    }
+  }, {
+    key: 'loadForms',
+    value: function loadForms(query, opts) {
+      return this.index('forms', query, opts);
+    }
+  }, {
+    key: 'loadSubmission',
+    value: function loadSubmission(query, opts) {
+      return this.load('submission', query, opts);
+    }
+  }, {
+    key: 'saveSubmission',
+    value: function saveSubmission(data, opts) {
+      return this.save('submission', data, opts);
+    }
+  }, {
+    key: 'deleteSubmission',
+    value: function deleteSubmission(opts) {
+      return this.delete('submission', opts);
+    }
+  }, {
+    key: 'loadSubmissions',
+    value: function loadSubmissions(query, opts) {
+      return this.index('submissions', query, opts);
+    }
+  }, {
+    key: 'loadAction',
+    value: function loadAction(query, opts) {
+      return this.load('action', query, opts);
+    }
+  }, {
+    key: 'saveAction',
+    value: function saveAction(data, opts) {
+      return this.save('action', data, opts);
+    }
+  }, {
+    key: 'deleteAction',
+    value: function deleteAction(opts) {
+      return this.delete('action', opts);
+    }
+  }, {
+    key: 'loadActions',
+    value: function loadActions(query, opts) {
+      return this.index('actions', query, opts);
+    }
+  }, {
+    key: 'availableActions',
+    value: function availableActions() {
+      return this.makeRequest('availableActions', this.formUrl + '/actions');
+    }
+  }, {
+    key: 'actionInfo',
+    value: function actionInfo(name) {
+      return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name);
+    }
+
+    /**
+     * Returns a temporary authentication token for single purpose token generation.
+     */
+
+  }, {
+    key: 'getTempToken',
+    value: function getTempToken(expire, allowed) {
+      var token = Formio.getToken();
+      if (!token) {
+        return Promise.reject('You must be authenticated to generate a temporary auth token.');
+      }
+      return this.makeRequest('tempToken', this.projectUrl + '/token', 'GET', null, {
+        header: new Headers({
+          'x-expire': expire,
+          'x-allow': allowed
+        })
+      });
+    }
+  }, {
+    key: 'uploadFile',
+    value: function uploadFile(storage, file, fileName, dir, progressCallback, url) {
+      var requestArgs = {
+        provider: storage,
+        method: 'upload',
+        file: file,
+        fileName: fileName,
+        dir: dir
+      };
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
+          if (storage && (result === null || result === undefined)) {
+            if (Formio.providers.storage.hasOwnProperty(storage)) {
+              var provider = new Formio.providers.storage[storage](this);
+              return provider.uploadFile(file, fileName, dir, progressCallback, url);
+            } else {
+              throw 'Storage provider not found';
+            }
+          }
+          return result || { url: '' };
+        }.bind(this));
+      }.bind(this));
+
+      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
+    }
+  }, {
+    key: 'downloadFile',
+    value: function downloadFile(file) {
+      var requestArgs = {
+        method: 'download',
+        file: file
+      };
+
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
+          if (file.storage && (result === null || result === undefined)) {
+            if (Formio.providers.storage.hasOwnProperty(file.storage)) {
+              var provider = new Formio.providers.storage[file.storage](this);
+              return provider.downloadFile(file);
+            } else {
+              throw 'Storage provider not found';
+            }
+          }
+          return result || { url: '' };
+        }.bind(this));
+      }.bind(this));
+
+      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
+    }
+  }], [{
+    key: 'loadProjects',
+    value: function loadProjects(query, opts) {
+      query = query || '';
+      if ((typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
+        query = '?' + serialize(query.params);
+      }
+      return Formio.makeStaticRequest(Formio.baseUrl + '/project' + query);
+    }
+  }, {
+    key: 'getUrlParts',
+    value: function getUrlParts(url) {
+      var regex = '^(http[s]?:\\/\\/)';
+      if (this.base && url.indexOf(this.base) === 0) {
+        regex += '(' + this.base.replace(/^http[s]?:\/\//, '') + ')';
+      } else {
+        regex += '([^/]+)';
+      }
+      regex += '($|\\/.*)';
+      return url.match(new RegExp(regex));
+    }
+  }, {
+    key: 'serialize',
+    value: function serialize(obj) {
+      var str = [];
+      for (var p in obj) {
+        if (obj.hasOwnProperty(p)) {
+          str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+        }
+      }return str.join("&");
+    }
+  }, {
+    key: 'makeStaticRequest',
+    value: function makeStaticRequest(url, method, data, opts) {
+      method = (method || 'GET').toUpperCase();
+      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
+        opts = {};
+      }
+      var requestArgs = {
+        url: url,
+        method: method,
+        data: data
+      };
+
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('staticRequest', requestArgs).then(function (result) {
+          if (result === null || result === undefined) {
+            return Formio.request(url, method, data, opts.header, opts);
+          }
+          return result;
+        });
+      });
+
+      return Formio.pluginAlter('wrapStaticRequestPromise', request, requestArgs);
+    }
+  }, {
+    key: 'request',
+    value: function request(url, method, data, header, opts) {
+      if (!url) {
+        return Promise.reject('No url provided');
+      }
+      method = (method || 'GET').toUpperCase();
+
+      // For reverse compatibility, if they provided the ignoreCache parameter,
+      // then change it back to the options format where that is a parameter.
+      if (typeof opts === 'boolean') {
+        opts = { ignoreCache: opts };
+      }
+      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
+        opts = {};
+      }
+
+      var cacheKey = btoa(url);
+
+      return new Promise(function (resolve, reject) {
+        // Get the cached promise to save multiple loads.
+        if (!opts.ignoreCache && method === 'GET' && Formio.cache.hasOwnProperty(cacheKey)) {
+          return resolve(Formio.cache[cacheKey]);
+        }
+
+        var requestToken = '';
+        resolve(new Promise(function (resolve, reject) {
+          // Set up and fetch request
+          var headers = header || new Headers({
+            'Accept': 'application/json',
+            'Content-type': 'application/json; charset=UTF-8'
+          });
+          var token = Formio.getToken();
+          if (token && !opts.noToken) {
+            headers.append('x-jwt-token', token);
+          }
+
+          var options = {
+            method: method,
+            headers: headers,
+            mode: 'cors'
+          };
+          if (data) {
+            options.body = JSON.stringify(data);
+          }
+
+          requestToken = headers.get('x-jwt-token');
+          resolve(fetch(url, options));
+        }).catch(function (err) {
+          err.message = 'Could not connect to API server (' + err.message + ')';
+          err.networkError = true;
+          throw err;
+        }).then(function (response) {
+          if (!response.ok) {
+            if (response.status === 440) {
+              Formio.setToken(null);
+              Formio.events.emit('formio.sessionExpired', response.body);
+            } else if (response.status === 401) {
+              Formio.events.emit('formio.unauthorized', response.body);
+            }
+            // Parse and return the error as a rejected promise to reject this promise
+            return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (error) {
+              throw error;
+            });
+          }
+
+          // Handle fetch results
+          var token = response.headers.get('x-jwt-token');
+
+          // In some strange cases, the fetch library will return an x-jwt-token without sending
+          // one to the server. This has even been debugged on the server to verify that no token
+          // was introduced with the request, but the response contains a token. This is an Invalid
+          // case where we do not send an x-jwt-token and get one in return for any GET request.
+          var tokenIntroduced = false;
+          if (method === 'GET' && !requestToken && token && url.indexOf('token=') === -1 && url.indexOf('x-jwt-token=' === -1)) {
+            console.warn('Token was introduced in request.');
+            tokenIntroduced = true;
+          }
+
+          if (response.status >= 200 && response.status < 300 && token && token !== '' && !tokenIntroduced) {
+            Formio.setToken(token);
+          }
+          // 204 is no content. Don't try to .json() it.
+          if (response.status === 204) {
+            return {};
+          }
+          return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (result) {
+            // Add some content-range metadata to the result here
+            var range = response.headers.get('content-range');
+            if (range && (typeof result === 'undefined' ? 'undefined' : _typeof(result)) === 'object') {
+              range = range.split('/');
+              if (range[0] !== '*') {
+                var skipLimit = range[0].split('-');
+                result.skip = Number(skipLimit[0]);
+                result.limit = skipLimit[1] - skipLimit[0] + 1;
+              }
+              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
+            }
+
+            if (!opts.getHeaders) {
+              return result;
+            }
+
+            var headers = {};
+            response.headers.forEach(function (item, key) {
+              headers[key] = item;
+            });
+
+            return new Promise(function (resolve, reject) {
+              resolve({ result: result, headers: headers });
+            });
+          });
+        }).catch(function (err) {
+          if (err === 'Bad Token') {
+            Formio.setToken(null);
+            Formio.events.emit('formio.badToken', err);
+          }
+          if (Formio.cache.hasOwnProperty(cacheKey)) {
+            // Remove failed promises from cache
+            delete Formio.cache[cacheKey];
+          }
+          // Propagate error so client can handle accordingly
+          throw err;
+        }));
+      }).then(function (result) {
+        // Save the cache
+        if (method === 'GET') {
+          Formio.cache[cacheKey] = Promise.resolve(result);
+        }
+
+        // Shallow copy result so modifications don't end up in cache
+        if (Array.isArray(result)) {
+          var resultCopy = result.map(copy);
+          resultCopy.skip = result.skip;
+          resultCopy.limit = result.limit;
+          resultCopy.serverCount = result.serverCount;
+          return resultCopy;
+        }
+        return copy(result);
+      });
+    }
+  }, {
+    key: 'setToken',
+    value: function setToken(token) {
+      token = token || '';
+      if (token === this.token) {
+        return;
+      }
+      this.token = token;
+      if (!token) {
+        Formio.setUser(null);
+        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+        try {
+          return localStorage.removeItem('formioToken');
+        } catch (err) {
+          return;
+        }
+      }
+      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+      try {
+        localStorage.setItem('formioToken', token);
+      } catch (err) {
+        // Do nothing.
+      }
+      return Formio.currentUser(); // Run this so user is updated if null
+    }
+  }, {
+    key: 'getToken',
+    value: function getToken() {
+      if (this.token) {
+        return this.token;
+      }
+      try {
+        var token = localStorage.getItem('formioToken') || '';
+        this.token = token;
+        return token;
+      } catch (e) {
+        return '';
+      }
+    }
+  }, {
+    key: 'setUser',
+    value: function setUser(user) {
+      if (!user) {
+        this.setToken(null);
+        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+        try {
+          return localStorage.removeItem('formioUser');
+        } catch (err) {
+          return;
+        }
+      }
+      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+      try {
+        localStorage.setItem('formioUser', JSON.stringify(user));
+      } catch (err) {
+        // Do nothing.
+      }
+    }
+  }, {
+    key: 'getUser',
+    value: function getUser() {
+      try {
+        return JSON.parse(localStorage.getItem('formioUser') || null);
+      } catch (e) {
+        return;
+      }
+    }
+  }, {
+    key: 'setBaseUrl',
+    value: function setBaseUrl(url) {
+      Formio.baseUrl = url;
+      if (!Formio.projectUrlSet) {
+        Formio.projectUrl = url;
+      }
+    }
+  }, {
+    key: 'getBaseUrl',
+    value: function getBaseUrl() {
+      return Formio.baseUrl;
+    }
+  }, {
+    key: 'setApiUrl',
+    value: function setApiUrl(url) {
+      return Formio.setBaseUrl(url);
+    }
+  }, {
+    key: 'getApiUrl',
+    value: function getApiUrl() {
+      return Formio.getBaseUrl();
+    }
+  }, {
+    key: 'setAppUrl',
+    value: function setAppUrl(url) {
+      console.warn('Formio.setAppUrl() is deprecated. Use Formio.setProjectUrl instead.');
+      Formio.projectUrl = url;
+      Formio.projectUrlSet = true;
+    }
+  }, {
+    key: 'setProjectUrl',
+    value: function setProjectUrl(url) {
+      Formio.projectUrl = url;
+      Formio.projectUrlSet = true;
+    }
+  }, {
+    key: 'getAppUrl',
+    value: function getAppUrl() {
+      console.warn('Formio.getAppUrl() is deprecated. Use Formio.getProjectUrl instead.');
+      return Formio.projectUrl;
+    }
+  }, {
+    key: 'getProjectUrl',
+    value: function getProjectUrl() {
+      return Formio.projectUrl;
+    }
+  }, {
+    key: 'clearCache',
+    value: function clearCache() {
+      Formio.cache = {};
+    }
+  }, {
+    key: 'noop',
+    value: function noop() {}
+  }, {
+    key: 'identity',
+    value: function identity(value) {
+      return value;
+    }
+  }, {
+    key: 'deregisterPlugin',
+    value: function deregisterPlugin(plugin) {
+      var beforeLength = Formio.plugins.length;
+      Formio.plugins = Formio.plugins.filter(function (p) {
+        if (p !== plugin && p.__name !== plugin) return true;
+        (p.deregister || Formio.noop).call(p, Formio);
+        return false;
+      });
+      return beforeLength !== Formio.plugins.length;
+    }
+  }, {
+    key: 'registerPlugin',
+    value: function registerPlugin(plugin, name) {
+      Formio.plugins.push(plugin);
+      Formio.plugins.sort(function (a, b) {
+        return (b.priority || 0) - (a.priority || 0);
+      });
+      plugin.__name = name;
+      (plugin.init || Formio.noop).call(plugin, Formio);
+    }
+  }, {
+    key: 'getPlugin',
+    value: function getPlugin(name) {
+      return Formio.plugins.reduce(function (result, plugin) {
+        if (result) return result;
+        if (plugin.__name === name) return plugin;
+      }, null);
+    }
+  }, {
+    key: 'pluginWait',
+    value: function pluginWait(pluginFn) {
+      var args = [].slice.call(arguments, 1);
+      return Promise.all(Formio.plugins.map(function (plugin) {
+        return (plugin[pluginFn] || Formio.noop).apply(plugin, args);
+      }));
+    }
+  }, {
+    key: 'pluginGet',
+    value: function pluginGet(pluginFn) {
+      var args = [].slice.call(arguments, 0);
+      var callPlugin = function callPlugin(index, pluginFn) {
+        var plugin = Formio.plugins[index];
+        if (!plugin) return Promise.resolve(null);
+        return Promise.resolve((plugin && plugin[pluginFn] || Formio.noop).apply(plugin, [].slice.call(arguments, 2))).then(function (result) {
+          if (result !== null && result !== undefined) return result;
+          return callPlugin.apply(null, [index + 1].concat(args));
+        });
+      };
+      return callPlugin.apply(null, [0].concat(args));
+    }
+  }, {
+    key: 'pluginAlter',
+    value: function pluginAlter(pluginFn, value) {
+      var args = [].slice.call(arguments, 2);
+      return Formio.plugins.reduce(function (value, plugin) {
+        return (plugin[pluginFn] || Formio.identity).apply(plugin, [value].concat(args));
+      }, value);
+    }
+  }, {
+    key: 'currentUser',
+    value: function currentUser() {
+      var url = Formio.baseUrl + '/current';
+      var user = this.getUser();
+      if (user) {
+        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(user), {
+          url: url,
+          method: 'GET'
+        });
+      }
+      var token = this.getToken();
+      if (!token) {
+        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(null), {
+          url: url,
+          method: 'GET'
+        });
+      }
+      return Formio.makeStaticRequest(url).then(function (response) {
+        Formio.setUser(response);
+        return response;
+      });
+    }
+  }, {
+    key: 'logout',
+    value: function logout() {
+      Formio.setToken(null);
+      Formio.setUser(null);
+      Formio.clearCache();
+      return Formio.makeStaticRequest(Formio.baseUrl + '/logout');
+    }
+
+    /**
+     * Attach an HTML form to Form.io.
+     *
+     * @param form
+     */
+
+  }, {
+    key: 'form',
+    value: function form(_form, options, done) {
+      // Fix the parameters.
+      if (!done && typeof options === 'function') {
+        done = options;
+        options = {};
+      }
+
+      done = done || function () {
+        console.log(arguments);
+      };
+      options = options || {};
+
+      // IF they provide a jquery object, then select the element.
+      if (_form.jquery) {
+        _form = _form[0];
+      }
+      if (!_form) {
+        return done('Invalid Form');
+      }
+
+      var getAction = function getAction() {
+        return options.form || _form.getAttribute('action');
+      };
+
+      /**
+       * Returns the current submission object.
+       * @returns {{data: {}}}
+       */
+      var getSubmission = function getSubmission() {
+        var submission = { data: {} };
+        var setValue = function setValue(path, value) {
+          var isArray = path.substr(-2) === '[]';
+          if (isArray) {
+            path = path.replace('[]', '');
+          }
+          var paths = path.replace(/\[|\]\[/g, '.').replace(/\]$/g, '').split('.');
+          var current = submission;
+          while (path = paths.shift()) {
+            if (!paths.length) {
+              if (isArray) {
+                if (!current[path]) {
+                  current[path] = [];
+                }
+                current[path].push(value);
+              } else {
+                current[path] = value;
+              }
+            } else {
+              if (!current[path]) {
+                current[path] = {};
+              }
+              current = current[path];
+            }
+          }
+        };
+
+        // Get the form data from this form.
+        var formData = new FormData(_form);
+        var entries = formData.entries();
+        var entry = null;
+        while (entry = entries.next().value) {
+          setValue(entry[0], entry[1]);
+        }
+        return submission;
+      };
+
+      // Submits the form.
+      var submit = function submit(event) {
+        if (event) {
+          event.preventDefault();
+        }
+        var action = getAction();
+        if (!action) {
+          return;
+        }
+        new Formio(action).saveSubmission(getSubmission()).then(function (sub) {
+          done(null, sub);
+        }, done);
+      };
+
+      // Attach formio to the provided form.
+      if (_form.attachEvent) {
+        _form.attachEvent('submit', submit);
+      } else {
+        _form.addEventListener('submit', submit);
+      }
+
+      return {
+        submit: submit,
+        getAction: getAction,
+        getSubmission: getSubmission
+      };
+    }
+  }, {
+    key: 'fieldData',
+    value: function fieldData(data, component) {
+      if (!data) {
+        return '';
+      }
+      if (!component || !component.key) {
+        return data;
+      }
+      if (component.key.indexOf('.') !== -1) {
+        var value = data;
+        var parts = component.key.split('.');
+        var key = '';
+        for (var i = 0; i < parts.length; i++) {
+          key = parts[i];
+
+          // Handle nested resources
+          if (value.hasOwnProperty('_id')) {
+            value = value.data;
+          }
+
+          // Return if the key is not found on the value.
+          if (!value.hasOwnProperty(key)) {
+            return;
+          }
+
+          // Convert old single field data in submissions to multiple
+          if (key === parts[parts.length - 1] && component.multiple && !Array.isArray(value[key])) {
+            value[key] = [value[key]];
+          }
+
+          // Set the value of this key.
+          value = value[key];
+        }
+        return value;
+      } else {
+        // Convert old single field data in submissions to multiple
+        if (component.multiple && !Array.isArray(data[component.key])) {
+          data[component.key] = [data[component.key]];
+        }
+        return data[component.key];
+      }
+    }
+  }]);
+
+  return Formio;
+}();
+
+// Define all the static properties.
+
+
+exports.Formio = Formio;
+Formio.baseUrl = 'https://api.form.io';
+Formio.projectUrl = Formio.baseUrl;
+Formio.projectUrlSet = false;
+Formio.plugins = [];
+Formio.cache = {};
+Formio.providers = _dereq_('./providers');
+Formio.events = new EventEmitter({
+  wildcard: false,
+  maxListeners: 0
+});
+
+module.exports = global.Formio = Formio;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./providers":2,"eventemitter2":8,"native-promise-only":61,"shallow-copy":62,"whatwg-fetch":63}],2:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  storage: _dereq_('./storage')
+};
+
+},{"./storage":4}],3:[function(_dereq_,module,exports){
+'use strict';
+
+var Promise = _dereq_("native-promise-only");
+var dropbox = function dropbox(formio) {
+  return {
+    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
+      return new Promise(function (resolve, reject) {
+        // Send the file with data.
+        var xhr = new XMLHttpRequest();
+
+        if (typeof progressCallback === 'function') {
+          xhr.upload.onprogress = progressCallback;
+        }
+
+        var fd = new FormData();
+        fd.append('name', fileName);
+        fd.append('dir', dir);
+        fd.append('file', file);
+
+        // Fire on network error.
+        xhr.onerror = function (err) {
+          err.networkError = true;
+          reject(err);
+        };
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            var response = JSON.parse(xhr.response);
+            response.storage = 'dropbox';
+            response.size = file.size;
+            response.type = file.type;
+            response.url = response.path_lower;
+            resolve(response);
+          } else {
+            reject(xhr.response || 'Unable to upload file');
+          }
+        };
+
+        xhr.onabort = function (err) {
+          reject(err);
+        };
+
+        xhr.open('POST', formio.formUrl + '/storage/dropbox');
+        var token = false;
+        try {
+          token = localStorage.getItem('formioToken');
+        } catch (e) {
+          // Swallow error.
+        }
+        if (token) {
+          xhr.setRequestHeader('x-jwt-token', token);
+        }
+        xhr.send(fd);
+      });
+    },
+    downloadFile: function downloadFile(file) {
+      var token = false;
+      try {
+        token = localStorage.getItem('formioToken');
+      } catch (e) {
+        // Swallow error.
+      }
+      file.url = formio.formUrl + '/storage/dropbox?path_lower=' + file.path_lower + (token ? '&x-jwt-token=' + token : '');
+      return Promise.resolve(file);
+    }
+  };
+};
+
+dropbox.title = 'Dropbox';
+module.exports = dropbox;
+
+},{"native-promise-only":61}],4:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  dropbox: _dereq_('./dropbox.js'),
+  s3: _dereq_('./s3.js'),
+  url: _dereq_('./url.js')
+};
+
+},{"./dropbox.js":3,"./s3.js":5,"./url.js":6}],5:[function(_dereq_,module,exports){
+'use strict';
+
+var Promise = _dereq_("native-promise-only");
+var s3 = function s3(formio) {
+  return {
+    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
+      return new Promise(function (resolve, reject) {
+        // Send the pre response to sign the upload.
+        var pre = new XMLHttpRequest();
+
+        var prefd = new FormData();
+        prefd.append('name', fileName);
+        prefd.append('size', file.size);
+        prefd.append('type', file.type);
+
+        // This only fires on a network error.
+        pre.onerror = function (err) {
+          err.networkError = true;
+          reject(err);
+        };
+
+        pre.onabort = function (err) {
+          reject(err);
+        };
+
+        pre.onload = function () {
+          if (pre.status >= 200 && pre.status < 300) {
+            var response = JSON.parse(pre.response);
+
+            // Send the file with data.
+            var xhr = new XMLHttpRequest();
+
+            if (typeof progressCallback === 'function') {
+              xhr.upload.onprogress = progressCallback;
+            }
+
+            response.data.fileName = fileName;
+            response.data.key += dir + fileName;
+
+            var fd = new FormData();
+            for (var key in response.data) {
+              fd.append(key, response.data[key]);
+            }
+            fd.append('file', file);
+
+            // Fire on network error.
+            xhr.onerror = function (err) {
+              err.networkError = true;
+              reject(err);
+            };
+
+            xhr.onload = function () {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve({
+                  storage: 's3',
+                  name: fileName,
+                  bucket: response.bucket,
+                  key: response.data.key,
+                  url: response.url + response.data.key,
+                  acl: response.data.acl,
+                  size: file.size,
+                  type: file.type
+                });
+              } else {
+                reject(xhr.response || 'Unable to upload file');
+              }
+            };
+
+            xhr.onabort = function (err) {
+              reject(err);
+            };
+
+            xhr.open('POST', response.url);
+
+            xhr.send(fd);
+          } else {
+            reject(pre.response || 'Unable to sign file');
+          }
+        };
+
+        pre.open('POST', formio.formUrl + '/storage/s3');
+
+        pre.setRequestHeader('Accept', 'application/json');
+        pre.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        var token = false;
+        try {
+          token = localStorage.getItem('formioToken');
+        } catch (e) {
+          // swallow error.
+        }
+        if (token) {
+          pre.setRequestHeader('x-jwt-token', token);
+        }
+
+        pre.send(JSON.stringify({
+          name: fileName,
+          size: file.size,
+          type: file.type
+        }));
+      });
+    },
+    downloadFile: function downloadFile(file) {
+      if (file.acl !== 'public-read') {
+        return formio.makeRequest('file', formio.formUrl + '/storage/s3?bucket=' + file.bucket + '&key=' + file.key, 'GET');
+      } else {
+        return Promise.resolve(file);
+      }
+    }
+  };
+};
+
+s3.title = 'S3';
+module.exports = s3;
+
+},{"native-promise-only":61}],6:[function(_dereq_,module,exports){
+'use strict';
+
+var Promise = _dereq_("native-promise-only");
+var url = function url(formio) {
+  return {
+    title: 'Url',
+    name: 'url',
+    uploadFile: function uploadFile(file, fileName, dir, progressCallback, url) {
+      return new Promise(function (resolve, reject) {
+        var data = {
+          dir: dir,
+          name: fileName,
+          file: file
+        };
+
+        // Send the file with data.
+        var xhr = new XMLHttpRequest();
+
+        if (typeof progressCallback === 'function') {
+          xhr.upload.onprogress = progressCallback;
+        }
+
+        var fd = new FormData();
+        for (var key in data) {
+          fd.append(key, data[key]);
+        }
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Need to test if xhr.response is decoded or not.
+            var respData = {};
+            try {
+              respData = typeof xhr.response === 'string' ? JSON.parse(xhr.response) : {};
+              respData = respData && respData.data ? respData.data : {};
+            } catch (err) {
+              respData = {};
+            }
+
+            resolve({
+              storage: 'url',
+              name: fileName,
+              url: xhr.responseURL + '/' + fileName,
+              size: file.size,
+              type: file.type,
+              data: respData
+            });
+          } else {
+            reject(xhr.response || 'Unable to upload file');
+          }
+        };
+
+        // Fire on network error.
+        xhr.onerror = function () {
+          reject(xhr);
+        };
+
+        xhr.onabort = function () {
+          reject(xhr);
+        };
+
+        xhr.open('POST', url);
+        var token = localStorage.getItem('formioToken');
+        if (token) {
+          xhr.setRequestHeader('x-jwt-token', token);
+        }
+        xhr.send(fd);
+      });
+    },
+    downloadFile: function downloadFile(file) {
+      // Return the original as there is nothing to do.
+      return Promise.resolve(file);
+    }
+  };
+};
+
+url.title = 'Url';
+module.exports = url;
+
+},{"native-promise-only":61}],7:[function(_dereq_,module,exports){
+'use strict';
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
+  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+};
+
+var _get = _dereq_('lodash/get');
+module.exports = {
+  /**
+   * Determine if a component is a layout component or not.
+   *
+   * @param {Object} component
+   *   The component to check.
+   *
+   * @returns {Boolean}
+   *   Whether or not the component is a layout component.
+   */
+  isLayoutComponent: function isLayoutComponent(component) {
+    return component.columns && Array.isArray(component.columns) || component.rows && Array.isArray(component.rows) || component.components && Array.isArray(component.components) ? true : false;
+  },
+
+  /**
+   * Iterate through each component within a form.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Function} fn
+   *   The iteration function to invoke for each component.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   * @param {String} path
+   *   The current data path of the element. Example: data.user.firstName
+   */
+  eachComponent: function eachComponent(components, fn, includeAll, path) {
+    if (!components) return;
+    path = path || '';
+    components.forEach(function (component) {
+      var hasColumns = component.columns && Array.isArray(component.columns);
+      var hasRows = component.rows && Array.isArray(component.rows);
+      var hasComps = component.components && Array.isArray(component.components);
+      var noRecurse = false;
+      var newPath = component.key ? path ? path + '.' + component.key : component.key : '';
+
+      if (includeAll || component.tree || !hasColumns && !hasRows && !hasComps) {
+        noRecurse = fn(component, newPath);
+      }
+
+      var subPath = function subPath() {
+        if (component.key && (component.type === 'datagrid' || component.type === 'container')) {
+          return newPath;
+        }
+        return path;
+      };
+
+      if (!noRecurse) {
+        if (hasColumns) {
+          component.columns.forEach(function (column) {
+            eachComponent(column.components, fn, includeAll, subPath());
+          });
+        } else if (hasRows) {
+          [].concat.apply([], component.rows).forEach(function (row) {
+            eachComponent(row.components, fn, includeAll, subPath());
+          });
+        } else if (hasComps) {
+          eachComponent(component.components, fn, includeAll, subPath());
+        }
+      }
+    });
+  },
+
+  /**
+   * Get a component by its key
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {String} key
+   *   The key of the component to get.
+   *
+   * @returns {Object}
+   *   The component that matches the given key, or undefined if not found.
+   */
+  getComponent: function getComponent(components, key) {
+    var result;
+    module.exports.eachComponent(components, function (component) {
+      if (component.key === key) {
+        result = component;
+      }
+    });
+    return result;
+  },
+
+  /**
+   * Flatten the form components for data manipulation.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   *
+   * @returns {Object}
+   *   The flattened components map.
+   */
+  flattenComponents: function flattenComponents(components, includeAll) {
+    var flattened = {};
+    module.exports.eachComponent(components, function (component, path) {
+      flattened[path] = component;
+    }, includeAll);
+    return flattened;
+  },
+
+  /**
+   * Checks the conditions for a provided component and data.
+   *
+   * @param component
+   *   The component to check for the condition.
+   * @param row
+   *   The data within a row
+   * @param data
+   *   The full submission data.
+   *
+   * @returns {boolean}
+   */
+  checkCondition: function checkCondition(component, row, data) {
+    if (component.hasOwnProperty('customConditional') && component.customConditional) {
+      try {
+        var script = '(function() { var show = true;';
+        script += component.customConditional.toString();
+        script += '; return show; })()';
+        var result = eval(script);
+        return result.toString() === 'true';
+      } catch (e) {
+        console.warn('An error occurred in a custom conditional statement for component ' + component.key, e);
+        return true;
+      }
+    } else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
+      var cond = component.conditional;
+      var value = null;
+      if (row) {
+        value = this.getValue({ data: row }, cond.when);
+      }
+      if (data && (value === null || typeof value === 'undefined')) {
+        value = this.getValue({ data: data }, cond.when);
+      }
+      // FOR-400 - Fix issue where falsey values were being evaluated as show=true
+      if (value === null || typeof value === 'undefined') {
+        return false;
+      }
+      // Special check for selectboxes component.
+      if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.hasOwnProperty(cond.eq)) {
+        return value[cond.eq].toString() === cond.show.toString();
+      }
+      // FOR-179 - Check for multiple values.
+      if (value instanceof Array && value.indexOf(cond.eq) !== -1) {
+        return cond.show.toString() === 'true';
+      }
+
+      return value.toString() === cond.eq.toString() === (cond.show.toString() === 'true');
+    }
+
+    // Default to show.
+    return true;
+  },
+
+  /**
+   * Get the value for a component key, in the given submission.
+   *
+   * @param {Object} submission
+   *   A submission object to search.
+   * @param {String} key
+   *   A for components API key to search for.
+   */
+  getValue: function getValue(submission, key) {
+    var data = submission.data || {};
+
+    var search = function search(data) {
+      var i;
+      var value;
+
+      if (!data) {
+        return null;
+      }
+
+      if ((typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object' && !(data instanceof Array)) {
+        if (data.hasOwnProperty(key)) {
+          return data[key];
+        }
+
+        var keys = Object.keys(data);
+        for (i = 0; i < keys.length; i++) {
+          if (_typeof(data[keys[i]]) === 'object') {
+            value = search(data[keys[i]]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+    };
+
+    return search(data);
+  },
+
+  /**
+   * Interpolate a string and add data replacements.
+   *
+   * @param string
+   * @param data
+   * @returns {XML|string|*|void}
+   */
+  interpolate: function interpolate(string, data) {
+    return string.replace(/\{\{\s*([^\s]*)\s*\}\}/g, function (match, token) {
+      return _get(data, token);
+    });
+  }
+};
+
+},{"lodash/get":53}],8:[function(_dereq_,module,exports){
+/*!
+ * EventEmitter2
+ * https://github.com/hij1nx/EventEmitter2
+ *
+ * Copyright (c) 2013 hij1nx
+ * Licensed under the MIT license.
+ */
+;!function(undefined) {
+
+  var isArray = Array.isArray ? Array.isArray : function _isArray(obj) {
+    return Object.prototype.toString.call(obj) === "[object Array]";
+  };
+  var defaultMaxListeners = 10;
+
+  function init() {
+    this._events = {};
+    if (this._conf) {
+      configure.call(this, this._conf);
+    }
+  }
+
+  function configure(conf) {
+    if (conf) {
+      this._conf = conf;
+
+      conf.delimiter && (this.delimiter = conf.delimiter);
+      this._events.maxListeners = conf.maxListeners !== undefined ? conf.maxListeners : defaultMaxListeners;
+      conf.wildcard && (this.wildcard = conf.wildcard);
+      conf.newListener && (this.newListener = conf.newListener);
+      conf.verboseMemoryLeak && (this.verboseMemoryLeak = conf.verboseMemoryLeak);
+
+      if (this.wildcard) {
+        this.listenerTree = {};
+      }
+    } else {
+      this._events.maxListeners = defaultMaxListeners;
+    }
+  }
+
+  function logPossibleMemoryLeak(count, eventName) {
+    var errorMsg = '(node) warning: possible EventEmitter memory ' +
+        'leak detected. %d listeners added. ' +
+        'Use emitter.setMaxListeners() to increase limit.';
+
+    if(this.verboseMemoryLeak){
+      errorMsg += ' Event name: %s.';
+      console.error(errorMsg, count, eventName);
+    } else {
+      console.error(errorMsg, count);
+    }
+
+    if (console.trace){
+      console.trace();
+    }
+  }
+
+  function EventEmitter(conf) {
+    this._events = {};
+    this.newListener = false;
+    this.verboseMemoryLeak = false;
+    configure.call(this, conf);
+  }
+  EventEmitter.EventEmitter2 = EventEmitter; // backwards compatibility for exporting EventEmitter property
+
+  //
+  // Attention, function return type now is array, always !
+  // It has zero elements if no any matches found and one or more
+  // elements (leafs) if there are matches
+  //
+  function searchListenerTree(handlers, type, tree, i) {
+    if (!tree) {
+      return [];
+    }
+    var listeners=[], leaf, len, branch, xTree, xxTree, isolatedBranch, endReached,
+        typeLength = type.length, currentType = type[i], nextType = type[i+1];
+    if (i === typeLength && tree._listeners) {
+      //
+      // If at the end of the event(s) list and the tree has listeners
+      // invoke those listeners.
+      //
+      if (typeof tree._listeners === 'function') {
+        handlers && handlers.push(tree._listeners);
+        return [tree];
+      } else {
+        for (leaf = 0, len = tree._listeners.length; leaf < len; leaf++) {
+          handlers && handlers.push(tree._listeners[leaf]);
+        }
+        return [tree];
+      }
+    }
+
+    if ((currentType === '*' || currentType === '**') || tree[currentType]) {
+      //
+      // If the event emitted is '*' at this part
+      // or there is a concrete match at this patch
+      //
+      if (currentType === '*') {
+        for (branch in tree) {
+          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
+            listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+1));
+          }
+        }
+        return listeners;
+      } else if(currentType === '**') {
+        endReached = (i+1 === typeLength || (i+2 === typeLength && nextType === '*'));
+        if(endReached && tree._listeners) {
+          // The next element has a _listeners, add it to the handlers.
+          listeners = listeners.concat(searchListenerTree(handlers, type, tree, typeLength));
+        }
+
+        for (branch in tree) {
+          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
+            if(branch === '*' || branch === '**') {
+              if(tree[branch]._listeners && !endReached) {
+                listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], typeLength));
+              }
+              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
+            } else if(branch === nextType) {
+              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+2));
+            } else {
+              // No match on this one, shift into the tree but not in the type array.
+              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
+            }
+          }
+        }
+        return listeners;
+      }
+
+      listeners = listeners.concat(searchListenerTree(handlers, type, tree[currentType], i+1));
+    }
+
+    xTree = tree['*'];
+    if (xTree) {
+      //
+      // If the listener tree will allow any match for this part,
+      // then recursively explore all branches of the tree
+      //
+      searchListenerTree(handlers, type, xTree, i+1);
+    }
+
+    xxTree = tree['**'];
+    if(xxTree) {
+      if(i < typeLength) {
+        if(xxTree._listeners) {
+          // If we have a listener on a '**', it will catch all, so add its handler.
+          searchListenerTree(handlers, type, xxTree, typeLength);
+        }
+
+        // Build arrays of matching next branches and others.
+        for(branch in xxTree) {
+          if(branch !== '_listeners' && xxTree.hasOwnProperty(branch)) {
+            if(branch === nextType) {
+              // We know the next element will match, so jump twice.
+              searchListenerTree(handlers, type, xxTree[branch], i+2);
+            } else if(branch === currentType) {
+              // Current node matches, move into the tree.
+              searchListenerTree(handlers, type, xxTree[branch], i+1);
+            } else {
+              isolatedBranch = {};
+              isolatedBranch[branch] = xxTree[branch];
+              searchListenerTree(handlers, type, { '**': isolatedBranch }, i+1);
+            }
+          }
+        }
+      } else if(xxTree._listeners) {
+        // We have reached the end and still on a '**'
+        searchListenerTree(handlers, type, xxTree, typeLength);
+      } else if(xxTree['*'] && xxTree['*']._listeners) {
+        searchListenerTree(handlers, type, xxTree['*'], typeLength);
+      }
+    }
+
+    return listeners;
+  }
+
+  function growListenerTree(type, listener) {
+
+    type = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+
+    //
+    // Looks for two consecutive '**', if so, don't add the event at all.
+    //
+    for(var i = 0, len = type.length; i+1 < len; i++) {
+      if(type[i] === '**' && type[i+1] === '**') {
+        return;
+      }
+    }
+
+    var tree = this.listenerTree;
+    var name = type.shift();
+
+    while (name !== undefined) {
+
+      if (!tree[name]) {
+        tree[name] = {};
+      }
+
+      tree = tree[name];
+
+      if (type.length === 0) {
+
+        if (!tree._listeners) {
+          tree._listeners = listener;
+        }
+        else {
+          if (typeof tree._listeners === 'function') {
+            tree._listeners = [tree._listeners];
+          }
+
+          tree._listeners.push(listener);
+
+          if (
+            !tree._listeners.warned &&
+            this._events.maxListeners > 0 &&
+            tree._listeners.length > this._events.maxListeners
+          ) {
+            tree._listeners.warned = true;
+            logPossibleMemoryLeak.call(this, tree._listeners.length, name);
+          }
+        }
+        return true;
+      }
+      name = type.shift();
+    }
+    return true;
+  }
+
+  // By default EventEmitters will print a warning if more than
+  // 10 listeners are added to it. This is a useful default which
+  // helps finding memory leaks.
+  //
+  // Obviously not all Emitters should be limited to 10. This function allows
+  // that to be increased. Set to zero for unlimited.
+
+  EventEmitter.prototype.delimiter = '.';
+
+  EventEmitter.prototype.setMaxListeners = function(n) {
+    if (n !== undefined) {
+      this._events || init.call(this);
+      this._events.maxListeners = n;
+      if (!this._conf) this._conf = {};
+      this._conf.maxListeners = n;
+    }
+  };
+
+  EventEmitter.prototype.event = '';
+
+  EventEmitter.prototype.once = function(event, fn) {
+    this.many(event, 1, fn);
+    return this;
+  };
+
+  EventEmitter.prototype.many = function(event, ttl, fn) {
+    var self = this;
+
+    if (typeof fn !== 'function') {
+      throw new Error('many only accepts instances of Function');
+    }
+
+    function listener() {
+      if (--ttl === 0) {
+        self.off(event, listener);
+      }
+      fn.apply(this, arguments);
+    }
+
+    listener._origin = fn;
+
+    this.on(event, listener);
+
+    return self;
+  };
+
+  EventEmitter.prototype.emit = function() {
+
+    this._events || init.call(this);
+
+    var type = arguments[0];
+
+    if (type === 'newListener' && !this.newListener) {
+      if (!this._events.newListener) {
+        return false;
+      }
+    }
+
+    var al = arguments.length;
+    var args,l,i,j;
+    var handler;
+
+    if (this._all && this._all.length) {
+      handler = this._all.slice();
+      if (al > 3) {
+        args = new Array(al);
+        for (j = 0; j < al; j++) args[j] = arguments[j];
+      }
+
+      for (i = 0, l = handler.length; i < l; i++) {
+        this.event = type;
+        switch (al) {
+        case 1:
+          handler[i].call(this, type);
+          break;
+        case 2:
+          handler[i].call(this, type, arguments[1]);
+          break;
+        case 3:
+          handler[i].call(this, type, arguments[1], arguments[2]);
+          break;
+        default:
+          handler[i].apply(this, args);
+        }
+      }
+    }
+
+    if (this.wildcard) {
+      handler = [];
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      searchListenerTree.call(this, handler, ns, this.listenerTree, 0);
+    } else {
+      handler = this._events[type];
+      if (typeof handler === 'function') {
+        this.event = type;
+        switch (al) {
+        case 1:
+          handler.call(this);
+          break;
+        case 2:
+          handler.call(this, arguments[1]);
+          break;
+        case 3:
+          handler.call(this, arguments[1], arguments[2]);
+          break;
+        default:
+          args = new Array(al - 1);
+          for (j = 1; j < al; j++) args[j - 1] = arguments[j];
+          handler.apply(this, args);
+        }
+        return true;
+      } else if (handler) {
+        // need to make copy of handlers because list can change in the middle
+        // of emit call
+        handler = handler.slice();
+      }
+    }
+
+    if (handler && handler.length) {
+      if (al > 3) {
+        args = new Array(al - 1);
+        for (j = 1; j < al; j++) args[j - 1] = arguments[j];
+      }
+      for (i = 0, l = handler.length; i < l; i++) {
+        this.event = type;
+        switch (al) {
+        case 1:
+          handler[i].call(this);
+          break;
+        case 2:
+          handler[i].call(this, arguments[1]);
+          break;
+        case 3:
+          handler[i].call(this, arguments[1], arguments[2]);
+          break;
+        default:
+          handler[i].apply(this, args);
+        }
+      }
+      return true;
+    } else if (!this._all && type === 'error') {
+      if (arguments[1] instanceof Error) {
+        throw arguments[1]; // Unhandled 'error' event
+      } else {
+        throw new Error("Uncaught, unspecified 'error' event.");
+      }
+      return false;
+    }
+
+    return !!this._all;
+  };
+
+  EventEmitter.prototype.emitAsync = function() {
+
+    this._events || init.call(this);
+
+    var type = arguments[0];
+
+    if (type === 'newListener' && !this.newListener) {
+        if (!this._events.newListener) { return Promise.resolve([false]); }
+    }
+
+    var promises= [];
+
+    var al = arguments.length;
+    var args,l,i,j;
+    var handler;
+
+    if (this._all) {
+      if (al > 3) {
+        args = new Array(al);
+        for (j = 1; j < al; j++) args[j] = arguments[j];
+      }
+      for (i = 0, l = this._all.length; i < l; i++) {
+        this.event = type;
+        switch (al) {
+        case 1:
+          promises.push(this._all[i].call(this, type));
+          break;
+        case 2:
+          promises.push(this._all[i].call(this, type, arguments[1]));
+          break;
+        case 3:
+          promises.push(this._all[i].call(this, type, arguments[1], arguments[2]));
+          break;
+        default:
+          promises.push(this._all[i].apply(this, args));
+        }
+      }
+    }
+
+    if (this.wildcard) {
+      handler = [];
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      searchListenerTree.call(this, handler, ns, this.listenerTree, 0);
+    } else {
+      handler = this._events[type];
+    }
+
+    if (typeof handler === 'function') {
+      this.event = type;
+      switch (al) {
+      case 1:
+        promises.push(handler.call(this));
+        break;
+      case 2:
+        promises.push(handler.call(this, arguments[1]));
+        break;
+      case 3:
+        promises.push(handler.call(this, arguments[1], arguments[2]));
+        break;
+      default:
+        args = new Array(al - 1);
+        for (j = 1; j < al; j++) args[j - 1] = arguments[j];
+        promises.push(handler.apply(this, args));
+      }
+    } else if (handler && handler.length) {
+      if (al > 3) {
+        args = new Array(al - 1);
+        for (j = 1; j < al; j++) args[j - 1] = arguments[j];
+      }
+      for (i = 0, l = handler.length; i < l; i++) {
+        this.event = type;
+        switch (al) {
+        case 1:
+          promises.push(handler[i].call(this));
+          break;
+        case 2:
+          promises.push(handler[i].call(this, arguments[1]));
+          break;
+        case 3:
+          promises.push(handler[i].call(this, arguments[1], arguments[2]));
+          break;
+        default:
+          promises.push(handler[i].apply(this, args));
+        }
+      }
+    } else if (!this._all && type === 'error') {
+      if (arguments[1] instanceof Error) {
+        return Promise.reject(arguments[1]); // Unhandled 'error' event
+      } else {
+        return Promise.reject("Uncaught, unspecified 'error' event.");
+      }
+    }
+
+    return Promise.all(promises);
+  };
+
+  EventEmitter.prototype.on = function(type, listener) {
+    if (typeof type === 'function') {
+      this.onAny(type);
+      return this;
+    }
+
+    if (typeof listener !== 'function') {
+      throw new Error('on only accepts instances of Function');
+    }
+    this._events || init.call(this);
+
+    // To avoid recursion in the case that type == "newListeners"! Before
+    // adding it to the listeners, first emit "newListeners".
+    this.emit('newListener', type, listener);
+
+    if (this.wildcard) {
+      growListenerTree.call(this, type, listener);
+      return this;
+    }
+
+    if (!this._events[type]) {
+      // Optimize the case of one listener. Don't need the extra array object.
+      this._events[type] = listener;
+    }
+    else {
+      if (typeof this._events[type] === 'function') {
+        // Change to array.
+        this._events[type] = [this._events[type]];
+      }
+
+      // If we've already got an array, just append.
+      this._events[type].push(listener);
+
+      // Check for listener leak
+      if (
+        !this._events[type].warned &&
+        this._events.maxListeners > 0 &&
+        this._events[type].length > this._events.maxListeners
+      ) {
+        this._events[type].warned = true;
+        logPossibleMemoryLeak.call(this, this._events[type].length, type);
+      }
+    }
+
+    return this;
+  };
+
+  EventEmitter.prototype.onAny = function(fn) {
+    if (typeof fn !== 'function') {
+      throw new Error('onAny only accepts instances of Function');
+    }
+
+    if (!this._all) {
+      this._all = [];
+    }
+
+    // Add the function to the event listener collection.
+    this._all.push(fn);
+    return this;
+  };
+
+  EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+
+  EventEmitter.prototype.off = function(type, listener) {
+    if (typeof listener !== 'function') {
+      throw new Error('removeListener only takes instances of Function');
+    }
+
+    var handlers,leafs=[];
+
+    if(this.wildcard) {
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
+    }
+    else {
+      // does not use listeners(), so no side effect of creating _events[type]
+      if (!this._events[type]) return this;
+      handlers = this._events[type];
+      leafs.push({_listeners:handlers});
+    }
+
+    for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
+      var leaf = leafs[iLeaf];
+      handlers = leaf._listeners;
+      if (isArray(handlers)) {
+
+        var position = -1;
+
+        for (var i = 0, length = handlers.length; i < length; i++) {
+          if (handlers[i] === listener ||
+            (handlers[i].listener && handlers[i].listener === listener) ||
+            (handlers[i]._origin && handlers[i]._origin === listener)) {
+            position = i;
+            break;
+          }
+        }
+
+        if (position < 0) {
+          continue;
+        }
+
+        if(this.wildcard) {
+          leaf._listeners.splice(position, 1);
+        }
+        else {
+          this._events[type].splice(position, 1);
+        }
+
+        if (handlers.length === 0) {
+          if(this.wildcard) {
+            delete leaf._listeners;
+          }
+          else {
+            delete this._events[type];
+          }
+        }
+
+        this.emit("removeListener", type, listener);
+
+        return this;
+      }
+      else if (handlers === listener ||
+        (handlers.listener && handlers.listener === listener) ||
+        (handlers._origin && handlers._origin === listener)) {
+        if(this.wildcard) {
+          delete leaf._listeners;
+        }
+        else {
+          delete this._events[type];
+        }
+
+        this.emit("removeListener", type, listener);
+      }
+    }
+
+    function recursivelyGarbageCollect(root) {
+      if (root === undefined) {
+        return;
+      }
+      var keys = Object.keys(root);
+      for (var i in keys) {
+        var key = keys[i];
+        var obj = root[key];
+        if ((obj instanceof Function) || (typeof obj !== "object") || (obj === null))
+          continue;
+        if (Object.keys(obj).length > 0) {
+          recursivelyGarbageCollect(root[key]);
+        }
+        if (Object.keys(obj).length === 0) {
+          delete root[key];
+        }
+      }
+    }
+    recursivelyGarbageCollect(this.listenerTree);
+
+    return this;
+  };
+
+  EventEmitter.prototype.offAny = function(fn) {
+    var i = 0, l = 0, fns;
+    if (fn && this._all && this._all.length > 0) {
+      fns = this._all;
+      for(i = 0, l = fns.length; i < l; i++) {
+        if(fn === fns[i]) {
+          fns.splice(i, 1);
+          this.emit("removeListenerAny", fn);
+          return this;
+        }
+      }
+    } else {
+      fns = this._all;
+      for(i = 0, l = fns.length; i < l; i++)
+        this.emit("removeListenerAny", fns[i]);
+      this._all = [];
+    }
+    return this;
+  };
+
+  EventEmitter.prototype.removeListener = EventEmitter.prototype.off;
+
+  EventEmitter.prototype.removeAllListeners = function(type) {
+    if (arguments.length === 0) {
+      !this._events || init.call(this);
+      return this;
+    }
+
+    if (this.wildcard) {
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      var leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
+
+      for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
+        var leaf = leafs[iLeaf];
+        leaf._listeners = null;
+      }
+    }
+    else if (this._events) {
+      this._events[type] = null;
+    }
+    return this;
+  };
+
+  EventEmitter.prototype.listeners = function(type) {
+    if (this.wildcard) {
+      var handlers = [];
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      searchListenerTree.call(this, handlers, ns, this.listenerTree, 0);
+      return handlers;
+    }
+
+    this._events || init.call(this);
+
+    if (!this._events[type]) this._events[type] = [];
+    if (!isArray(this._events[type])) {
+      this._events[type] = [this._events[type]];
+    }
+    return this._events[type];
+  };
+
+  EventEmitter.prototype.listenerCount = function(type) {
+    return this.listeners(type).length;
+  };
+
+  EventEmitter.prototype.listenersAny = function() {
+
+    if(this._all) {
+      return this._all;
+    }
+    else {
+      return [];
+    }
+
+  };
+
+  if (typeof define === 'function' && define.amd) {
+     // AMD. Register as an anonymous module.
+    define(function() {
+      return EventEmitter;
+    });
+  } else if (typeof exports === 'object') {
+    // CommonJS
+    module.exports = EventEmitter;
+  }
+  else {
+    // Browser global.
+    window.EventEmitter2 = EventEmitter;
+  }
+}();
+
+},{}],9:[function(_dereq_,module,exports){
+var hashClear = _dereq_('./_hashClear'),
+    hashDelete = _dereq_('./_hashDelete'),
+    hashGet = _dereq_('./_hashGet'),
+    hashHas = _dereq_('./_hashHas'),
+    hashSet = _dereq_('./_hashSet');
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+module.exports = Hash;
+
+},{"./_hashClear":27,"./_hashDelete":28,"./_hashGet":29,"./_hashHas":30,"./_hashSet":31}],10:[function(_dereq_,module,exports){
+var listCacheClear = _dereq_('./_listCacheClear'),
+    listCacheDelete = _dereq_('./_listCacheDelete'),
+    listCacheGet = _dereq_('./_listCacheGet'),
+    listCacheHas = _dereq_('./_listCacheHas'),
+    listCacheSet = _dereq_('./_listCacheSet');
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+module.exports = ListCache;
+
+},{"./_listCacheClear":35,"./_listCacheDelete":36,"./_listCacheGet":37,"./_listCacheHas":38,"./_listCacheSet":39}],11:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative'),
+    root = _dereq_('./_root');
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map');
+
+module.exports = Map;
+
+},{"./_getNative":24,"./_root":48}],12:[function(_dereq_,module,exports){
+var mapCacheClear = _dereq_('./_mapCacheClear'),
+    mapCacheDelete = _dereq_('./_mapCacheDelete'),
+    mapCacheGet = _dereq_('./_mapCacheGet'),
+    mapCacheHas = _dereq_('./_mapCacheHas'),
+    mapCacheSet = _dereq_('./_mapCacheSet');
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+module.exports = MapCache;
+
+},{"./_mapCacheClear":40,"./_mapCacheDelete":41,"./_mapCacheGet":42,"./_mapCacheHas":43,"./_mapCacheSet":44}],13:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/** Built-in value references. */
+var Symbol = root.Symbol;
+
+module.exports = Symbol;
+
+},{"./_root":48}],14:[function(_dereq_,module,exports){
+/**
+ * A specialized version of `_.map` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the new mapped array.
+ */
+function arrayMap(array, iteratee) {
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      result = Array(length);
+
+  while (++index < length) {
+    result[index] = iteratee(array[index], index, array);
+  }
+  return result;
+}
+
+module.exports = arrayMap;
+
+},{}],15:[function(_dereq_,module,exports){
+var eq = _dereq_('./eq');
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+module.exports = assocIndexOf;
+
+},{"./eq":52}],16:[function(_dereq_,module,exports){
+var castPath = _dereq_('./_castPath'),
+    toKey = _dereq_('./_toKey');
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = castPath(path, object);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+module.exports = baseGet;
+
+},{"./_castPath":20,"./_toKey":50}],17:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol'),
+    getRawTag = _dereq_('./_getRawTag'),
+    objectToString = _dereq_('./_objectToString');
+
+/** `Object#toString` result references. */
+var nullTag = '[object Null]',
+    undefinedTag = '[object Undefined]';
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
+}
+
+module.exports = baseGetTag;
+
+},{"./_Symbol":13,"./_getRawTag":25,"./_objectToString":47}],18:[function(_dereq_,module,exports){
+var isFunction = _dereq_('./isFunction'),
+    isMasked = _dereq_('./_isMasked'),
+    isObject = _dereq_('./isObject'),
+    toSource = _dereq_('./_toSource');
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Used for built-in method references. */
+var funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+module.exports = baseIsNative;
+
+},{"./_isMasked":34,"./_toSource":51,"./isFunction":55,"./isObject":56}],19:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol'),
+    arrayMap = _dereq_('./_arrayMap'),
+    isArray = _dereq_('./isArray'),
+    isSymbol = _dereq_('./isSymbol');
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isArray(value)) {
+    // Recursively convert values (susceptible to call stack limits).
+    return arrayMap(value, baseToString) + '';
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+module.exports = baseToString;
+
+},{"./_Symbol":13,"./_arrayMap":14,"./isArray":54,"./isSymbol":58}],20:[function(_dereq_,module,exports){
+var isArray = _dereq_('./isArray'),
+    isKey = _dereq_('./_isKey'),
+    stringToPath = _dereq_('./_stringToPath'),
+    toString = _dereq_('./toString');
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value, object) {
+  if (isArray(value)) {
+    return value;
+  }
+  return isKey(value, object) ? [value] : stringToPath(toString(value));
+}
+
+module.exports = castPath;
+
+},{"./_isKey":32,"./_stringToPath":49,"./isArray":54,"./toString":60}],21:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+module.exports = coreJsData;
+
+},{"./_root":48}],22:[function(_dereq_,module,exports){
+(function (global){
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+module.exports = freeGlobal;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],23:[function(_dereq_,module,exports){
+var isKeyable = _dereq_('./_isKeyable');
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+module.exports = getMapData;
+
+},{"./_isKeyable":33}],24:[function(_dereq_,module,exports){
+var baseIsNative = _dereq_('./_baseIsNative'),
+    getValue = _dereq_('./_getValue');
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+module.exports = getNative;
+
+},{"./_baseIsNative":18,"./_getValue":26}],25:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the raw `toStringTag`.
+ */
+function getRawTag(value) {
+  var isOwn = hasOwnProperty.call(value, symToStringTag),
+      tag = value[symToStringTag];
+
+  try {
+    value[symToStringTag] = undefined;
+    var unmasked = true;
+  } catch (e) {}
+
+  var result = nativeObjectToString.call(value);
+  if (unmasked) {
+    if (isOwn) {
+      value[symToStringTag] = tag;
+    } else {
+      delete value[symToStringTag];
+    }
+  }
+  return result;
+}
+
+module.exports = getRawTag;
+
+},{"./_Symbol":13}],26:[function(_dereq_,module,exports){
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+module.exports = getValue;
+
+},{}],27:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+  this.size = 0;
+}
+
+module.exports = hashClear;
+
+},{"./_nativeCreate":46}],28:[function(_dereq_,module,exports){
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  var result = this.has(key) && delete this.__data__[key];
+  this.size -= result ? 1 : 0;
+  return result;
+}
+
+module.exports = hashDelete;
+
+},{}],29:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+module.exports = hashGet;
+
+},{"./_nativeCreate":46}],30:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
+}
+
+module.exports = hashHas;
+
+},{"./_nativeCreate":46}],31:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  this.size += this.has(key) ? 0 : 1;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+module.exports = hashSet;
+
+},{"./_nativeCreate":46}],32:[function(_dereq_,module,exports){
+var isArray = _dereq_('./isArray'),
+    isSymbol = _dereq_('./isSymbol');
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/;
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+module.exports = isKey;
+
+},{"./isArray":54,"./isSymbol":58}],33:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+module.exports = isKeyable;
+
+},{}],34:[function(_dereq_,module,exports){
+var coreJsData = _dereq_('./_coreJsData');
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+module.exports = isMasked;
+
+},{"./_coreJsData":21}],35:[function(_dereq_,module,exports){
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+  this.size = 0;
+}
+
+module.exports = listCacheClear;
+
+},{}],36:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype;
+
+/** Built-in value references. */
+var splice = arrayProto.splice;
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  --this.size;
+  return true;
+}
+
+module.exports = listCacheDelete;
+
+},{"./_assocIndexOf":15}],37:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+module.exports = listCacheGet;
+
+},{"./_assocIndexOf":15}],38:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+module.exports = listCacheHas;
+
+},{"./_assocIndexOf":15}],39:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    ++this.size;
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+module.exports = listCacheSet;
+
+},{"./_assocIndexOf":15}],40:[function(_dereq_,module,exports){
+var Hash = _dereq_('./_Hash'),
+    ListCache = _dereq_('./_ListCache'),
+    Map = _dereq_('./_Map');
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.size = 0;
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+module.exports = mapCacheClear;
+
+},{"./_Hash":9,"./_ListCache":10,"./_Map":11}],41:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  var result = getMapData(this, key)['delete'](key);
+  this.size -= result ? 1 : 0;
+  return result;
+}
+
+module.exports = mapCacheDelete;
+
+},{"./_getMapData":23}],42:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+module.exports = mapCacheGet;
+
+},{"./_getMapData":23}],43:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+module.exports = mapCacheHas;
+
+},{"./_getMapData":23}],44:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  var data = getMapData(this, key),
+      size = data.size;
+
+  data.set(key, value);
+  this.size += data.size == size ? 0 : 1;
+  return this;
+}
+
+module.exports = mapCacheSet;
+
+},{"./_getMapData":23}],45:[function(_dereq_,module,exports){
+var memoize = _dereq_('./memoize');
+
+/** Used as the maximum memoize cache size. */
+var MAX_MEMOIZE_SIZE = 500;
+
+/**
+ * A specialized version of `_.memoize` which clears the memoized function's
+ * cache when it exceeds `MAX_MEMOIZE_SIZE`.
+ *
+ * @private
+ * @param {Function} func The function to have its output memoized.
+ * @returns {Function} Returns the new memoized function.
+ */
+function memoizeCapped(func) {
+  var result = memoize(func, function(key) {
+    if (cache.size === MAX_MEMOIZE_SIZE) {
+      cache.clear();
+    }
+    return key;
+  });
+
+  var cache = result.cache;
+  return result;
+}
+
+module.exports = memoizeCapped;
+
+},{"./memoize":59}],46:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative');
+
+/* Built-in method references that are verified to be native. */
+var nativeCreate = getNative(Object, 'create');
+
+module.exports = nativeCreate;
+
+},{"./_getNative":24}],47:[function(_dereq_,module,exports){
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/**
+ * Converts `value` to a string using `Object.prototype.toString`.
+ *
+ * @private
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ */
+function objectToString(value) {
+  return nativeObjectToString.call(value);
+}
+
+module.exports = objectToString;
+
+},{}],48:[function(_dereq_,module,exports){
+var freeGlobal = _dereq_('./_freeGlobal');
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+module.exports = root;
+
+},{"./_freeGlobal":22}],49:[function(_dereq_,module,exports){
+var memoizeCapped = _dereq_('./_memoizeCapped');
+
+/** Used to match property names within property paths. */
+var reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoizeCapped(function(string) {
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+module.exports = stringToPath;
+
+},{"./_memoizeCapped":45}],50:[function(_dereq_,module,exports){
+var isSymbol = _dereq_('./isSymbol');
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+module.exports = toKey;
+
+},{"./isSymbol":58}],51:[function(_dereq_,module,exports){
+/** Used for built-in method references. */
+var funcProto = Function.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to convert.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+module.exports = toSource;
+
+},{}],52:[function(_dereq_,module,exports){
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+module.exports = eq;
+
+},{}],53:[function(_dereq_,module,exports){
+var baseGet = _dereq_('./_baseGet');
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+},{"./_baseGet":16}],54:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+module.exports = isArray;
+
+},{}],55:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObject = _dereq_('./isObject');
+
+/** `Object#toString` result references. */
+var asyncTag = '[object AsyncFunction]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    proxyTag = '[object Proxy]';
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  if (!isObject(value)) {
+    return false;
+  }
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+  var tag = baseGetTag(value);
+  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+}
+
+module.exports = isFunction;
+
+},{"./_baseGetTag":17,"./isObject":56}],56:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
+}
+
+module.exports = isObject;
+
+},{}],57:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && typeof value == 'object';
+}
+
+module.exports = isObjectLike;
+
+},{}],58:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && baseGetTag(value) == symbolTag);
+}
+
+module.exports = isSymbol;
+
+},{"./_baseGetTag":17,"./isObjectLike":57}],59:[function(_dereq_,module,exports){
+var MapCache = _dereq_('./_MapCache');
+
+/** Error message constants. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `clear`, `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result) || cache;
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Expose `MapCache`.
+memoize.Cache = MapCache;
+
+module.exports = memoize;
+
+},{"./_MapCache":12}],60:[function(_dereq_,module,exports){
+var baseToString = _dereq_('./_baseToString');
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+module.exports = toString;
+
+},{"./_baseToString":19}],61:[function(_dereq_,module,exports){
+(function (global){
+/*! Native Promise Only
+    v0.8.1 (c) Kyle Simpson
+    MIT License: http://getify.mit-license.org
+*/
+
+(function UMD(name,context,definition){
+	// special form of UMD for polyfilling across evironments
+	context[name] = context[name] || definition();
+	if (typeof module != "undefined" && module.exports) { module.exports = context[name]; }
+	else if (typeof define == "function" && define.amd) { define(function $AMD$(){ return context[name]; }); }
+})("Promise",typeof global != "undefined" ? global : this,function DEF(){
+	/*jshint validthis:true */
+	"use strict";
+
+	var builtInProp, cycle, scheduling_queue,
+		ToString = Object.prototype.toString,
+		timer = (typeof setImmediate != "undefined") ?
+			function timer(fn) { return setImmediate(fn); } :
+			setTimeout
+	;
+
+	// dammit, IE8.
+	try {
+		Object.defineProperty({},"x",{});
+		builtInProp = function builtInProp(obj,name,val,config) {
+			return Object.defineProperty(obj,name,{
+				value: val,
+				writable: true,
+				configurable: config !== false
+			});
+		};
+	}
+	catch (err) {
+		builtInProp = function builtInProp(obj,name,val) {
+			obj[name] = val;
+			return obj;
+		};
+	}
+
+	// Note: using a queue instead of array for efficiency
+	scheduling_queue = (function Queue() {
+		var first, last, item;
+
+		function Item(fn,self) {
+			this.fn = fn;
+			this.self = self;
+			this.next = void 0;
+		}
+
+		return {
+			add: function add(fn,self) {
+				item = new Item(fn,self);
+				if (last) {
+					last.next = item;
+				}
+				else {
+					first = item;
+				}
+				last = item;
+				item = void 0;
+			},
+			drain: function drain() {
+				var f = first;
+				first = last = cycle = void 0;
+
+				while (f) {
+					f.fn.call(f.self);
+					f = f.next;
+				}
+			}
+		};
+	})();
+
+	function schedule(fn,self) {
+		scheduling_queue.add(fn,self);
+		if (!cycle) {
+			cycle = timer(scheduling_queue.drain);
+		}
+	}
+
+	// promise duck typing
+	function isThenable(o) {
+		var _then, o_type = typeof o;
+
+		if (o != null &&
+			(
+				o_type == "object" || o_type == "function"
+			)
+		) {
+			_then = o.then;
+		}
+		return typeof _then == "function" ? _then : false;
+	}
+
+	function notify() {
+		for (var i=0; i<this.chain.length; i++) {
+			notifyIsolated(
+				this,
+				(this.state === 1) ? this.chain[i].success : this.chain[i].failure,
+				this.chain[i]
+			);
+		}
+		this.chain.length = 0;
+	}
+
+	// NOTE: This is a separate function to isolate
+	// the `try..catch` so that other code can be
+	// optimized better
+	function notifyIsolated(self,cb,chain) {
+		var ret, _then;
+		try {
+			if (cb === false) {
+				chain.reject(self.msg);
+			}
+			else {
+				if (cb === true) {
+					ret = self.msg;
+				}
+				else {
+					ret = cb.call(void 0,self.msg);
+				}
+
+				if (ret === chain.promise) {
+					chain.reject(TypeError("Promise-chain cycle"));
+				}
+				else if (_then = isThenable(ret)) {
+					_then.call(ret,chain.resolve,chain.reject);
+				}
+				else {
+					chain.resolve(ret);
+				}
+			}
+		}
+		catch (err) {
+			chain.reject(err);
+		}
+	}
+
+	function resolve(msg) {
+		var _then, self = this;
+
+		// already triggered?
+		if (self.triggered) { return; }
+
+		self.triggered = true;
+
+		// unwrap
+		if (self.def) {
+			self = self.def;
+		}
+
+		try {
+			if (_then = isThenable(msg)) {
+				schedule(function(){
+					var def_wrapper = new MakeDefWrapper(self);
+					try {
+						_then.call(msg,
+							function $resolve$(){ resolve.apply(def_wrapper,arguments); },
+							function $reject$(){ reject.apply(def_wrapper,arguments); }
+						);
+					}
+					catch (err) {
+						reject.call(def_wrapper,err);
+					}
+				})
+			}
+			else {
+				self.msg = msg;
+				self.state = 1;
+				if (self.chain.length > 0) {
+					schedule(notify,self);
+				}
+			}
+		}
+		catch (err) {
+			reject.call(new MakeDefWrapper(self),err);
+		}
+	}
+
+	function reject(msg) {
+		var self = this;
+
+		// already triggered?
+		if (self.triggered) { return; }
+
+		self.triggered = true;
+
+		// unwrap
+		if (self.def) {
+			self = self.def;
+		}
+
+		self.msg = msg;
+		self.state = 2;
+		if (self.chain.length > 0) {
+			schedule(notify,self);
+		}
+	}
+
+	function iteratePromises(Constructor,arr,resolver,rejecter) {
+		for (var idx=0; idx<arr.length; idx++) {
+			(function IIFE(idx){
+				Constructor.resolve(arr[idx])
+				.then(
+					function $resolver$(msg){
+						resolver(idx,msg);
+					},
+					rejecter
+				);
+			})(idx);
+		}
+	}
+
+	function MakeDefWrapper(self) {
+		this.def = self;
+		this.triggered = false;
+	}
+
+	function MakeDef(self) {
+		this.promise = self;
+		this.state = 0;
+		this.triggered = false;
+		this.chain = [];
+		this.msg = void 0;
+	}
+
+	function Promise(executor) {
+		if (typeof executor != "function") {
+			throw TypeError("Not a function");
+		}
+
+		if (this.__NPO__ !== 0) {
+			throw TypeError("Not a promise");
+		}
+
+		// instance shadowing the inherited "brand"
+		// to signal an already "initialized" promise
+		this.__NPO__ = 1;
+
+		var def = new MakeDef(this);
+
+		this["then"] = function then(success,failure) {
+			var o = {
+				success: typeof success == "function" ? success : true,
+				failure: typeof failure == "function" ? failure : false
+			};
+			// Note: `then(..)` itself can be borrowed to be used against
+			// a different promise constructor for making the chained promise,
+			// by substituting a different `this` binding.
+			o.promise = new this.constructor(function extractChain(resolve,reject) {
+				if (typeof resolve != "function" || typeof reject != "function") {
+					throw TypeError("Not a function");
+				}
+
+				o.resolve = resolve;
+				o.reject = reject;
+			});
+			def.chain.push(o);
+
+			if (def.state !== 0) {
+				schedule(notify,def);
+			}
+
+			return o.promise;
+		};
+		this["catch"] = function $catch$(failure) {
+			return this.then(void 0,failure);
+		};
+
+		try {
+			executor.call(
+				void 0,
+				function publicResolve(msg){
+					resolve.call(def,msg);
+				},
+				function publicReject(msg) {
+					reject.call(def,msg);
+				}
+			);
+		}
+		catch (err) {
+			reject.call(def,err);
+		}
+	}
+
+	var PromisePrototype = builtInProp({},"constructor",Promise,
+		/*configurable=*/false
+	);
+
+	// Note: Android 4 cannot use `Object.defineProperty(..)` here
+	Promise.prototype = PromisePrototype;
+
+	// built-in "brand" to signal an "uninitialized" promise
+	builtInProp(PromisePrototype,"__NPO__",0,
+		/*configurable=*/false
+	);
+
+	builtInProp(Promise,"resolve",function Promise$resolve(msg) {
+		var Constructor = this;
+
+		// spec mandated checks
+		// note: best "isPromise" check that's practical for now
+		if (msg && typeof msg == "object" && msg.__NPO__ === 1) {
+			return msg;
+		}
+
+		return new Constructor(function executor(resolve,reject){
+			if (typeof resolve != "function" || typeof reject != "function") {
+				throw TypeError("Not a function");
+			}
+
+			resolve(msg);
+		});
+	});
+
+	builtInProp(Promise,"reject",function Promise$reject(msg) {
+		return new this(function executor(resolve,reject){
+			if (typeof resolve != "function" || typeof reject != "function") {
+				throw TypeError("Not a function");
+			}
+
+			reject(msg);
+		});
+	});
+
+	builtInProp(Promise,"all",function Promise$all(arr) {
+		var Constructor = this;
+
+		// spec mandated checks
+		if (ToString.call(arr) != "[object Array]") {
+			return Constructor.reject(TypeError("Not an array"));
+		}
+		if (arr.length === 0) {
+			return Constructor.resolve([]);
+		}
+
+		return new Constructor(function executor(resolve,reject){
+			if (typeof resolve != "function" || typeof reject != "function") {
+				throw TypeError("Not a function");
+			}
+
+			var len = arr.length, msgs = Array(len), count = 0;
+
+			iteratePromises(Constructor,arr,function resolver(idx,msg) {
+				msgs[idx] = msg;
+				if (++count === len) {
+					resolve(msgs);
+				}
+			},reject);
+		});
+	});
+
+	builtInProp(Promise,"race",function Promise$race(arr) {
+		var Constructor = this;
+
+		// spec mandated checks
+		if (ToString.call(arr) != "[object Array]") {
+			return Constructor.reject(TypeError("Not an array"));
+		}
+
+		return new Constructor(function executor(resolve,reject){
+			if (typeof resolve != "function" || typeof reject != "function") {
+				throw TypeError("Not a function");
+			}
+
+			iteratePromises(Constructor,arr,function resolver(idx,msg){
+				resolve(msg);
+			},reject);
+		});
+	});
+
+	return Promise;
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],62:[function(_dereq_,module,exports){
+module.exports = function (obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    
+    var copy;
+    
+    if (isArray(obj)) {
+        var len = obj.length;
+        copy = Array(len);
+        for (var i = 0; i < len; i++) {
+            copy[i] = obj[i];
+        }
+    }
+    else {
+        var keys = objectKeys(obj);
+        copy = {};
+        
+        for (var i = 0, l = keys.length; i < l; i++) {
+            var key = keys[i];
+            copy[key] = obj[key];
+        }
+    }
+    return copy;
+};
+
+var objectKeys = Object.keys || function (obj) {
+    var keys = [];
+    for (var key in obj) {
+        if ({}.hasOwnProperty.call(obj, key)) keys.push(key);
+    }
+    return keys;
+};
+
+var isArray = Array.isArray || function (xs) {
+    return {}.toString.call(xs) === '[object Array]';
+};
+
+},{}],63:[function(_dereq_,module,exports){
+(function(self) {
+  'use strict';
+
+  if (self.fetch) {
+    return
+  }
+
+  function normalizeName(name) {
+    if (typeof name !== 'string') {
+      name = String(name)
+    }
+    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
+      throw new TypeError('Invalid character in header field name')
+    }
+    return name.toLowerCase()
+  }
+
+  function normalizeValue(value) {
+    if (typeof value !== 'string') {
+      value = String(value)
+    }
+    return value
+  }
+
+  function Headers(headers) {
+    this.map = {}
+
+    if (headers instanceof Headers) {
+      headers.forEach(function(value, name) {
+        this.append(name, value)
+      }, this)
+
+    } else if (headers) {
+      Object.getOwnPropertyNames(headers).forEach(function(name) {
+        this.append(name, headers[name])
+      }, this)
+    }
+  }
+
+  Headers.prototype.append = function(name, value) {
+    name = normalizeName(name)
+    value = normalizeValue(value)
+    var list = this.map[name]
+    if (!list) {
+      list = []
+      this.map[name] = list
+    }
+    list.push(value)
+  }
+
+  Headers.prototype['delete'] = function(name) {
+    delete this.map[normalizeName(name)]
+  }
+
+  Headers.prototype.get = function(name) {
+    var values = this.map[normalizeName(name)]
+    return values ? values[0] : null
+  }
+
+  Headers.prototype.getAll = function(name) {
+    return this.map[normalizeName(name)] || []
+  }
+
+  Headers.prototype.has = function(name) {
+    return this.map.hasOwnProperty(normalizeName(name))
+  }
+
+  Headers.prototype.set = function(name, value) {
+    this.map[normalizeName(name)] = [normalizeValue(value)]
+  }
+
+  Headers.prototype.forEach = function(callback, thisArg) {
+    Object.getOwnPropertyNames(this.map).forEach(function(name) {
+      this.map[name].forEach(function(value) {
+        callback.call(thisArg, value, name, this)
+      }, this)
+    }, this)
+  }
+
+  function consumed(body) {
+    if (body.bodyUsed) {
+      return Promise.reject(new TypeError('Already read'))
+    }
+    body.bodyUsed = true
+  }
+
+  function fileReaderReady(reader) {
+    return new Promise(function(resolve, reject) {
+      reader.onload = function() {
+        resolve(reader.result)
+      }
+      reader.onerror = function() {
+        reject(reader.error)
+      }
+    })
+  }
+
+  function readBlobAsArrayBuffer(blob) {
+    var reader = new FileReader()
+    reader.readAsArrayBuffer(blob)
+    return fileReaderReady(reader)
+  }
+
+  function readBlobAsText(blob) {
+    var reader = new FileReader()
+    reader.readAsText(blob)
+    return fileReaderReady(reader)
+  }
+
+  var support = {
+    blob: 'FileReader' in self && 'Blob' in self && (function() {
+      try {
+        new Blob()
+        return true
+      } catch(e) {
+        return false
+      }
+    })(),
+    formData: 'FormData' in self,
+    arrayBuffer: 'ArrayBuffer' in self
+  }
+
+  function Body() {
+    this.bodyUsed = false
+
+
+    this._initBody = function(body) {
+      this._bodyInit = body
+      if (typeof body === 'string') {
+        this._bodyText = body
+      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+        this._bodyBlob = body
+      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+        this._bodyFormData = body
+      } else if (!body) {
+        this._bodyText = ''
+      } else if (support.arrayBuffer && ArrayBuffer.prototype.isPrototypeOf(body)) {
+        // Only support ArrayBuffers for POST method.
+        // Receiving ArrayBuffers happens via Blobs, instead.
+      } else {
+        throw new Error('unsupported BodyInit type')
+      }
+
+      if (!this.headers.get('content-type')) {
+        if (typeof body === 'string') {
+          this.headers.set('content-type', 'text/plain;charset=UTF-8')
+        } else if (this._bodyBlob && this._bodyBlob.type) {
+          this.headers.set('content-type', this._bodyBlob.type)
+        }
+      }
+    }
+
+    if (support.blob) {
+      this.blob = function() {
+        var rejected = consumed(this)
+        if (rejected) {
+          return rejected
+        }
+
+        if (this._bodyBlob) {
+          return Promise.resolve(this._bodyBlob)
+        } else if (this._bodyFormData) {
+          throw new Error('could not read FormData body as blob')
+        } else {
+          return Promise.resolve(new Blob([this._bodyText]))
+        }
+      }
+
+      this.arrayBuffer = function() {
+        return this.blob().then(readBlobAsArrayBuffer)
+      }
+
+      this.text = function() {
+        var rejected = consumed(this)
+        if (rejected) {
+          return rejected
+        }
+
+        if (this._bodyBlob) {
+          return readBlobAsText(this._bodyBlob)
+        } else if (this._bodyFormData) {
+          throw new Error('could not read FormData body as text')
+        } else {
+          return Promise.resolve(this._bodyText)
+        }
+      }
+    } else {
+      this.text = function() {
+        var rejected = consumed(this)
+        return rejected ? rejected : Promise.resolve(this._bodyText)
+      }
+    }
+
+    if (support.formData) {
+      this.formData = function() {
+        return this.text().then(decode)
+      }
+    }
+
+    this.json = function() {
+      return this.text().then(JSON.parse)
+    }
+
+    return this
+  }
+
+  // HTTP methods whose capitalization should be normalized
+  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+  function normalizeMethod(method) {
+    var upcased = method.toUpperCase()
+    return (methods.indexOf(upcased) > -1) ? upcased : method
+  }
+
+  function Request(input, options) {
+    options = options || {}
+    var body = options.body
+    if (Request.prototype.isPrototypeOf(input)) {
+      if (input.bodyUsed) {
+        throw new TypeError('Already read')
+      }
+      this.url = input.url
+      this.credentials = input.credentials
+      if (!options.headers) {
+        this.headers = new Headers(input.headers)
+      }
+      this.method = input.method
+      this.mode = input.mode
+      if (!body) {
+        body = input._bodyInit
+        input.bodyUsed = true
+      }
+    } else {
+      this.url = input
+    }
+
+    this.credentials = options.credentials || this.credentials || 'omit'
+    if (options.headers || !this.headers) {
+      this.headers = new Headers(options.headers)
+    }
+    this.method = normalizeMethod(options.method || this.method || 'GET')
+    this.mode = options.mode || this.mode || null
+    this.referrer = null
+
+    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+      throw new TypeError('Body not allowed for GET or HEAD requests')
+    }
+    this._initBody(body)
+  }
+
+  Request.prototype.clone = function() {
+    return new Request(this)
+  }
+
+  function decode(body) {
+    var form = new FormData()
+    body.trim().split('&').forEach(function(bytes) {
+      if (bytes) {
+        var split = bytes.split('=')
+        var name = split.shift().replace(/\+/g, ' ')
+        var value = split.join('=').replace(/\+/g, ' ')
+        form.append(decodeURIComponent(name), decodeURIComponent(value))
+      }
+    })
+    return form
+  }
+
+  function headers(xhr) {
+    var head = new Headers()
+    var pairs = (xhr.getAllResponseHeaders() || '').trim().split('\n')
+    pairs.forEach(function(header) {
+      var split = header.trim().split(':')
+      var key = split.shift().trim()
+      var value = split.join(':').trim()
+      head.append(key, value)
+    })
+    return head
+  }
+
+  Body.call(Request.prototype)
+
+  function Response(bodyInit, options) {
+    if (!options) {
+      options = {}
+    }
+
+    this.type = 'default'
+    this.status = options.status
+    this.ok = this.status >= 200 && this.status < 300
+    this.statusText = options.statusText
+    this.headers = options.headers instanceof Headers ? options.headers : new Headers(options.headers)
+    this.url = options.url || ''
+    this._initBody(bodyInit)
+  }
+
+  Body.call(Response.prototype)
+
+  Response.prototype.clone = function() {
+    return new Response(this._bodyInit, {
+      status: this.status,
+      statusText: this.statusText,
+      headers: new Headers(this.headers),
+      url: this.url
+    })
+  }
+
+  Response.error = function() {
+    var response = new Response(null, {status: 0, statusText: ''})
+    response.type = 'error'
+    return response
+  }
+
+  var redirectStatuses = [301, 302, 303, 307, 308]
+
+  Response.redirect = function(url, status) {
+    if (redirectStatuses.indexOf(status) === -1) {
+      throw new RangeError('Invalid status code')
+    }
+
+    return new Response(null, {status: status, headers: {location: url}})
+  }
+
+  self.Headers = Headers
+  self.Request = Request
+  self.Response = Response
+
+  self.fetch = function(input, init) {
+    return new Promise(function(resolve, reject) {
+      var request
+      if (Request.prototype.isPrototypeOf(input) && !init) {
+        request = input
+      } else {
+        request = new Request(input, init)
+      }
+
+      var xhr = new XMLHttpRequest()
+
+      function responseURL() {
+        if ('responseURL' in xhr) {
+          return xhr.responseURL
+        }
+
+        // Avoid security warnings on getResponseHeader when not allowed by CORS
+        if (/^X-Request-URL:/m.test(xhr.getAllResponseHeaders())) {
+          return xhr.getResponseHeader('X-Request-URL')
+        }
+
+        return
+      }
+
+      xhr.onload = function() {
+        var status = (xhr.status === 1223) ? 204 : xhr.status
+        if (status < 100 || status > 599) {
+          reject(new TypeError('Network request failed'))
+          return
+        }
+        var options = {
+          status: status,
+          statusText: xhr.statusText,
+          headers: headers(xhr),
+          url: responseURL()
+        }
+        var body = 'response' in xhr ? xhr.response : xhr.responseText
+        resolve(new Response(body, options))
+      }
+
+      xhr.onerror = function() {
+        reject(new TypeError('Network request failed'))
+      }
+
+      xhr.ontimeout = function() {
+        reject(new TypeError('Network request failed'))
+      }
+
+      xhr.open(request.method, request.url, true)
+
+      if (request.credentials === 'include') {
+        xhr.withCredentials = true
+      }
+
+      if ('responseType' in xhr && support.blob) {
+        xhr.responseType = 'blob'
+      }
+
+      request.headers.forEach(function(value, name) {
+        xhr.setRequestHeader(name, value)
+      })
+
+      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+    })
+  }
+  self.fetch.polyfill = true
+})(typeof self !== 'undefined' ? self : this);
+
+},{}],64:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = _dereq_('./build/utils');
+
+},{"./build/utils":7}],65:[function(_dereq_,module,exports){
 "use strict";
 (function (root, factory) {
   // AMD
@@ -154,7 +4573,7 @@
   }
 }));
 
-},{}],2:[function(_dereq_,module,exports){
+},{}],66:[function(_dereq_,module,exports){
 /**
  * angular-drag-and-drop-lists v2.1.0
  *
@@ -806,7 +5225,7 @@
 
 })(angular.module('dndLists', []));
 
-},{}],3:[function(_dereq_,module,exports){
+},{}],67:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.3
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -34152,238 +38571,15 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],4:[function(_dereq_,module,exports){
+},{}],68:[function(_dereq_,module,exports){
 _dereq_('./angular');
 module.exports = angular;
 
-},{"./angular":3}],5:[function(_dereq_,module,exports){
-'use strict';
-
-var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
-  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-};
-
-var _get = _dereq_('lodash/get');
-module.exports = {
-  /**
-   * Determine if a component is a layout component or not.
-   *
-   * @param {Object} component
-   *   The component to check.
-   *
-   * @returns {Boolean}
-   *   Whether or not the component is a layout component.
-   */
-  isLayoutComponent: function isLayoutComponent(component) {
-    return component.columns && Array.isArray(component.columns) || component.rows && Array.isArray(component.rows) || component.components && Array.isArray(component.components) ? true : false;
-  },
-
-  /**
-   * Iterate through each component within a form.
-   *
-   * @param {Object} components
-   *   The components to iterate.
-   * @param {Function} fn
-   *   The iteration function to invoke for each component.
-   * @param {Boolean} includeAll
-   *   Whether or not to include layout components.
-   * @param {String} path
-   *   The current data path of the element. Example: data.user.firstName
-   */
-  eachComponent: function eachComponent(components, fn, includeAll, path) {
-    if (!components) return;
-    path = path || '';
-    components.forEach(function (component) {
-      var hasColumns = component.columns && Array.isArray(component.columns);
-      var hasRows = component.rows && Array.isArray(component.rows);
-      var hasComps = component.components && Array.isArray(component.components);
-      var noRecurse = false;
-      var newPath = component.key ? path ? path + '.' + component.key : component.key : '';
-
-      if (includeAll || component.tree || !hasColumns && !hasRows && !hasComps) {
-        noRecurse = fn(component, newPath);
-      }
-
-      var subPath = function subPath() {
-        if (component.key && (component.type === 'datagrid' || component.type === 'container')) {
-          return newPath;
-        }
-        return path;
-      };
-
-      if (!noRecurse) {
-        if (hasColumns) {
-          component.columns.forEach(function (column) {
-            eachComponent(column.components, fn, includeAll, subPath());
-          });
-        } else if (hasRows) {
-          [].concat.apply([], component.rows).forEach(function (row) {
-            eachComponent(row.components, fn, includeAll, subPath());
-          });
-        } else if (hasComps) {
-          eachComponent(component.components, fn, includeAll, subPath());
-        }
-      }
-    });
-  },
-
-  /**
-   * Get a component by its key
-   *
-   * @param {Object} components
-   *   The components to iterate.
-   * @param {String} key
-   *   The key of the component to get.
-   *
-   * @returns {Object}
-   *   The component that matches the given key, or undefined if not found.
-   */
-  getComponent: function getComponent(components, key) {
-    var result;
-    module.exports.eachComponent(components, function (component) {
-      if (component.key === key) {
-        result = component;
-      }
-    });
-    return result;
-  },
-
-  /**
-   * Flatten the form components for data manipulation.
-   *
-   * @param {Object} components
-   *   The components to iterate.
-   * @param {Boolean} includeAll
-   *   Whether or not to include layout components.
-   *
-   * @returns {Object}
-   *   The flattened components map.
-   */
-  flattenComponents: function flattenComponents(components, includeAll) {
-    var flattened = {};
-    module.exports.eachComponent(components, function (component, path) {
-      flattened[path] = component;
-    }, includeAll);
-    return flattened;
-  },
-
-  /**
-   * Checks the conditions for a provided component and data.
-   *
-   * @param component
-   *   The component to check for the condition.
-   * @param row
-   *   The data within a row
-   * @param data
-   *   The full submission data.
-   *
-   * @returns {boolean}
-   */
-  checkCondition: function checkCondition(component, row, data) {
-    if (component.hasOwnProperty('customConditional') && component.customConditional) {
-      try {
-        var script = '(function() { var show = true;';
-        script += component.customConditional.toString();
-        script += '; return show; })()';
-        var result = eval(script);
-        return result.toString() === 'true';
-      } catch (e) {
-        console.warn('An error occurred in a custom conditional statement for component ' + component.key, e);
-        return true;
-      }
-    } else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
-      var cond = component.conditional;
-      var value = null;
-      if (row) {
-        value = this.getValue({ data: row }, cond.when);
-      }
-      if (data && (value === null || typeof value === 'undefined')) {
-        value = this.getValue({ data: data }, cond.when);
-      }
-      // FOR-400 - Fix issue where falsey values were being evaluated as show=true
-      if (value === null || typeof value === 'undefined') {
-        return false;
-      }
-      // Special check for selectboxes component.
-      if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.hasOwnProperty(cond.eq)) {
-        return value[cond.eq].toString() === cond.show.toString();
-      }
-      // FOR-179 - Check for multiple values.
-      if (value instanceof Array && value.indexOf(cond.eq) !== -1) {
-        return cond.show.toString() === 'true';
-      }
-
-      return value.toString() === cond.eq.toString() === (cond.show.toString() === 'true');
-    }
-
-    // Default to show.
-    return true;
-  },
-
-  /**
-   * Get the value for a component key, in the given submission.
-   *
-   * @param {Object} submission
-   *   A submission object to search.
-   * @param {String} key
-   *   A for components API key to search for.
-   */
-  getValue: function getValue(submission, key) {
-    var data = submission.data || {};
-
-    var search = function search(data) {
-      var i;
-      var value;
-
-      if (!data) {
-        return null;
-      }
-
-      if ((typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object' && !(data instanceof Array)) {
-        if (data.hasOwnProperty(key)) {
-          return data[key];
-        }
-
-        var keys = Object.keys(data);
-        for (i = 0; i < keys.length; i++) {
-          if (_typeof(data[keys[i]]) === 'object') {
-            value = search(data[keys[i]]);
-          }
-
-          if (value) {
-            return value;
-          }
-        }
-      }
-    };
-
-    return search(data);
-  },
-
-  /**
-   * Interpolate a string and add data replacements.
-   *
-   * @param string
-   * @param data
-   * @returns {XML|string|*|void}
-   */
-  interpolate: function interpolate(string, data) {
-    return string.replace(/\{\{\s*([^\s]*)\s*\}\}/g, function (match, token) {
-      return _get(data, token);
-    });
-  }
-};
-
-},{"lodash/get":179}],6:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = _dereq_('./build/utils');
-
-},{"./build/utils":5}],7:[function(_dereq_,module,exports){
+},{"./angular":67}],69:[function(_dereq_,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"dup":7,"lodash/get":243}],70:[function(_dereq_,module,exports){
+arguments[4][64][0].apply(exports,arguments)
+},{"./build/utils":69,"dup":64}],71:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -34392,118 +38588,15 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":107,"./_root":152}],8:[function(_dereq_,module,exports){
-var hashClear = _dereq_('./_hashClear'),
-    hashDelete = _dereq_('./_hashDelete'),
-    hashGet = _dereq_('./_hashGet'),
-    hashHas = _dereq_('./_hashHas'),
-    hashSet = _dereq_('./_hashSet');
-
-/**
- * Creates a hash object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Hash(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-module.exports = Hash;
-
-},{"./_hashClear":117,"./_hashDelete":118,"./_hashGet":119,"./_hashHas":120,"./_hashSet":121}],9:[function(_dereq_,module,exports){
-var listCacheClear = _dereq_('./_listCacheClear'),
-    listCacheDelete = _dereq_('./_listCacheDelete'),
-    listCacheGet = _dereq_('./_listCacheGet'),
-    listCacheHas = _dereq_('./_listCacheHas'),
-    listCacheSet = _dereq_('./_listCacheSet');
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-module.exports = ListCache;
-
-},{"./_listCacheClear":132,"./_listCacheDelete":133,"./_listCacheGet":134,"./_listCacheHas":135,"./_listCacheSet":136}],10:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative'),
-    root = _dereq_('./_root');
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map');
-
-module.exports = Map;
-
-},{"./_getNative":107,"./_root":152}],11:[function(_dereq_,module,exports){
-var mapCacheClear = _dereq_('./_mapCacheClear'),
-    mapCacheDelete = _dereq_('./_mapCacheDelete'),
-    mapCacheGet = _dereq_('./_mapCacheGet'),
-    mapCacheHas = _dereq_('./_mapCacheHas'),
-    mapCacheSet = _dereq_('./_mapCacheSet');
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-module.exports = MapCache;
-
-},{"./_mapCacheClear":137,"./_mapCacheDelete":138,"./_mapCacheGet":139,"./_mapCacheHas":140,"./_mapCacheSet":141}],12:[function(_dereq_,module,exports){
+},{"./_getNative":171,"./_root":216}],72:[function(_dereq_,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"./_hashClear":181,"./_hashDelete":182,"./_hashGet":183,"./_hashHas":184,"./_hashSet":185,"dup":9}],73:[function(_dereq_,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"./_listCacheClear":196,"./_listCacheDelete":197,"./_listCacheGet":198,"./_listCacheHas":199,"./_listCacheSet":200,"dup":10}],74:[function(_dereq_,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"./_getNative":171,"./_root":216,"dup":11}],75:[function(_dereq_,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"./_mapCacheClear":201,"./_mapCacheDelete":202,"./_mapCacheGet":203,"./_mapCacheHas":204,"./_mapCacheSet":205,"dup":12}],76:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -34512,7 +38605,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":107,"./_root":152}],13:[function(_dereq_,module,exports){
+},{"./_getNative":171,"./_root":216}],77:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -34521,7 +38614,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":107,"./_root":152}],14:[function(_dereq_,module,exports){
+},{"./_getNative":171,"./_root":216}],78:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -34550,7 +38643,7 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":11,"./_setCacheAdd":153,"./_setCacheHas":154}],15:[function(_dereq_,module,exports){
+},{"./_MapCache":75,"./_setCacheAdd":217,"./_setCacheHas":218}],79:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     stackClear = _dereq_('./_stackClear'),
     stackDelete = _dereq_('./_stackDelete'),
@@ -34579,15 +38672,9 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":9,"./_stackClear":158,"./_stackDelete":159,"./_stackGet":160,"./_stackHas":161,"./_stackSet":162}],16:[function(_dereq_,module,exports){
-var root = _dereq_('./_root');
-
-/** Built-in value references. */
-var Symbol = root.Symbol;
-
-module.exports = Symbol;
-
-},{"./_root":152}],17:[function(_dereq_,module,exports){
+},{"./_ListCache":73,"./_stackClear":222,"./_stackDelete":223,"./_stackGet":224,"./_stackHas":225,"./_stackSet":226}],80:[function(_dereq_,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"./_root":216,"dup":13}],81:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -34595,7 +38682,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":152}],18:[function(_dereq_,module,exports){
+},{"./_root":216}],82:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -34604,7 +38691,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":107,"./_root":152}],19:[function(_dereq_,module,exports){
+},{"./_getNative":171,"./_root":216}],83:[function(_dereq_,module,exports){
 /**
  * Adds the key-value `pair` to `map`.
  *
@@ -34621,7 +38708,7 @@ function addMapEntry(map, pair) {
 
 module.exports = addMapEntry;
 
-},{}],20:[function(_dereq_,module,exports){
+},{}],84:[function(_dereq_,module,exports){
 /**
  * Adds `value` to `set`.
  *
@@ -34638,7 +38725,7 @@ function addSetEntry(set, value) {
 
 module.exports = addSetEntry;
 
-},{}],21:[function(_dereq_,module,exports){
+},{}],85:[function(_dereq_,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -34661,7 +38748,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],22:[function(_dereq_,module,exports){
+},{}],86:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseAggregator` for arrays.
  *
@@ -34685,7 +38772,7 @@ function arrayAggregator(array, setter, iteratee, accumulator) {
 
 module.exports = arrayAggregator;
 
-},{}],23:[function(_dereq_,module,exports){
+},{}],87:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for
  * iteratee shorthands.
@@ -34709,7 +38796,7 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],24:[function(_dereq_,module,exports){
+},{}],88:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for
  * iteratee shorthands.
@@ -34736,7 +38823,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],25:[function(_dereq_,module,exports){
+},{}],89:[function(_dereq_,module,exports){
 var baseTimes = _dereq_('./_baseTimes'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -34787,30 +38874,9 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":71,"./_isIndex":125,"./isArguments":183,"./isArray":184,"./isBuffer":187,"./isTypedArray":195}],26:[function(_dereq_,module,exports){
-/**
- * A specialized version of `_.map` for arrays without support for iteratee
- * shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the new mapped array.
- */
-function arrayMap(array, iteratee) {
-  var index = -1,
-      length = array == null ? 0 : array.length,
-      result = Array(length);
-
-  while (++index < length) {
-    result[index] = iteratee(array[index], index, array);
-  }
-  return result;
-}
-
-module.exports = arrayMap;
-
-},{}],27:[function(_dereq_,module,exports){
+},{"./_baseTimes":135,"./_isIndex":189,"./isArguments":247,"./isArray":248,"./isBuffer":251,"./isTypedArray":259}],90:[function(_dereq_,module,exports){
+arguments[4][14][0].apply(exports,arguments)
+},{"dup":14}],91:[function(_dereq_,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -34832,7 +38898,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],28:[function(_dereq_,module,exports){
+},{}],92:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for
  * iteratee shorthands.
@@ -34860,7 +38926,7 @@ function arrayReduce(array, iteratee, accumulator, initAccum) {
 
 module.exports = arrayReduce;
 
-},{}],29:[function(_dereq_,module,exports){
+},{}],93:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for iteratee
  * shorthands.
@@ -34885,7 +38951,7 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],30:[function(_dereq_,module,exports){
+},{}],94:[function(_dereq_,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -34899,7 +38965,7 @@ function asciiToArray(string) {
 
 module.exports = asciiToArray;
 
-},{}],31:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 /** Used to match words composed of alphanumeric characters. */
 var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
 
@@ -34916,7 +38982,7 @@ function asciiWords(string) {
 
 module.exports = asciiWords;
 
-},{}],32:[function(_dereq_,module,exports){
+},{}],96:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -34938,7 +39004,7 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":38,"./eq":177}],33:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":102,"./eq":241}],97:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -34968,30 +39034,9 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":38,"./eq":177}],34:[function(_dereq_,module,exports){
-var eq = _dereq_('./eq');
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
-    }
-  }
-  return -1;
-}
-
-module.exports = assocIndexOf;
-
-},{"./eq":177}],35:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":102,"./eq":241}],98:[function(_dereq_,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"./eq":241,"dup":15}],99:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -35014,7 +39059,7 @@ function baseAggregator(collection, setter, iteratee, accumulator) {
 
 module.exports = baseAggregator;
 
-},{"./_baseEach":41}],36:[function(_dereq_,module,exports){
+},{"./_baseEach":105}],100:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keys = _dereq_('./keys');
 
@@ -35033,7 +39078,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":87,"./keys":196}],37:[function(_dereq_,module,exports){
+},{"./_copyObject":151,"./keys":260}],101:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -35052,7 +39097,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":87,"./keysIn":197}],38:[function(_dereq_,module,exports){
+},{"./_copyObject":151,"./keysIn":261}],102:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -35079,7 +39124,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":98}],39:[function(_dereq_,module,exports){
+},{"./_defineProperty":162}],103:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     arrayEach = _dereq_('./_arrayEach'),
     assignValue = _dereq_('./_assignValue'),
@@ -35234,7 +39279,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":15,"./_arrayEach":23,"./_assignValue":33,"./_baseAssign":36,"./_baseAssignIn":37,"./_cloneBuffer":79,"./_copyArray":86,"./_copySymbols":88,"./_copySymbolsIn":89,"./_getAllKeys":103,"./_getAllKeysIn":104,"./_getTag":112,"./_initCloneArray":122,"./_initCloneByTag":123,"./_initCloneObject":124,"./isArray":184,"./isBuffer":187,"./isObject":191,"./keys":196}],40:[function(_dereq_,module,exports){
+},{"./_Stack":79,"./_arrayEach":87,"./_assignValue":97,"./_baseAssign":100,"./_baseAssignIn":101,"./_cloneBuffer":143,"./_copyArray":150,"./_copySymbols":152,"./_copySymbolsIn":153,"./_getAllKeys":167,"./_getAllKeysIn":168,"./_getTag":176,"./_initCloneArray":186,"./_initCloneByTag":187,"./_initCloneObject":188,"./isArray":248,"./isBuffer":251,"./isObject":255,"./keys":260}],104:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -35266,7 +39311,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":191}],41:[function(_dereq_,module,exports){
+},{"./isObject":255}],105:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -35282,7 +39327,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":44,"./_createBaseEach":93}],42:[function(_dereq_,module,exports){
+},{"./_baseForOwn":108,"./_createBaseEach":157}],106:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -35305,7 +39350,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./_baseEach":41}],43:[function(_dereq_,module,exports){
+},{"./_baseEach":105}],107:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -35323,7 +39368,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":94}],44:[function(_dereq_,module,exports){
+},{"./_createBaseFor":158}],108:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -35341,33 +39386,9 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":43,"./keys":196}],45:[function(_dereq_,module,exports){
-var castPath = _dereq_('./_castPath'),
-    toKey = _dereq_('./_toKey');
-
-/**
- * The base implementation of `_.get` without support for default values.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @returns {*} Returns the resolved value.
- */
-function baseGet(object, path) {
-  path = castPath(path, object);
-
-  var index = 0,
-      length = path.length;
-
-  while (object != null && index < length) {
-    object = object[toKey(path[index++])];
-  }
-  return (index && index == length) ? object : undefined;
-}
-
-module.exports = baseGet;
-
-},{"./_castPath":76,"./_toKey":165}],46:[function(_dereq_,module,exports){
+},{"./_baseFor":107,"./keys":260}],109:[function(_dereq_,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./_castPath":140,"./_toKey":229,"dup":16}],110:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isArray = _dereq_('./isArray');
 
@@ -35389,37 +39410,9 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":27,"./isArray":184}],47:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol'),
-    getRawTag = _dereq_('./_getRawTag'),
-    objectToString = _dereq_('./_objectToString');
-
-/** `Object#toString` result references. */
-var nullTag = '[object Null]',
-    undefinedTag = '[object Undefined]';
-
-/** Built-in value references. */
-var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-
-/**
- * The base implementation of `getTag` without fallbacks for buggy environments.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  if (value == null) {
-    return value === undefined ? undefinedTag : nullTag;
-  }
-  return (symToStringTag && symToStringTag in Object(value))
-    ? getRawTag(value)
-    : objectToString(value);
-}
-
-module.exports = baseGetTag;
-
-},{"./_Symbol":16,"./_getRawTag":109,"./_objectToString":149}],48:[function(_dereq_,module,exports){
+},{"./_arrayPush":91,"./isArray":248}],111:[function(_dereq_,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"./_Symbol":80,"./_getRawTag":173,"./_objectToString":213,"dup":17}],112:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -35434,7 +39427,7 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],49:[function(_dereq_,module,exports){
+},{}],113:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -35454,7 +39447,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":47,"./isObjectLike":192}],50:[function(_dereq_,module,exports){
+},{"./_baseGetTag":111,"./isObjectLike":256}],114:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -35484,7 +39477,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":51,"./isObjectLike":192}],51:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":115,"./isObjectLike":256}],115:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -35569,7 +39562,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":15,"./_equalArrays":99,"./_equalByTag":100,"./_equalObjects":101,"./_getTag":112,"./isArray":184,"./isBuffer":187,"./isTypedArray":195}],52:[function(_dereq_,module,exports){
+},{"./_Stack":79,"./_equalArrays":163,"./_equalByTag":164,"./_equalObjects":165,"./_getTag":176,"./isArray":248,"./isBuffer":251,"./isTypedArray":259}],116:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -35633,56 +39626,9 @@ function baseIsMatch(object, source, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./_Stack":15,"./_baseIsEqual":50}],53:[function(_dereq_,module,exports){
-var isFunction = _dereq_('./isFunction'),
-    isMasked = _dereq_('./_isMasked'),
-    isObject = _dereq_('./isObject'),
-    toSource = _dereq_('./_toSource');
-
-/**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Used for built-in method references. */
-var funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
- */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
-}
-
-module.exports = baseIsNative;
-
-},{"./_isMasked":129,"./_toSource":166,"./isFunction":188,"./isObject":191}],54:[function(_dereq_,module,exports){
+},{"./_Stack":79,"./_baseIsEqual":114}],117:[function(_dereq_,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"./_isMasked":193,"./_toSource":230,"./isFunction":252,"./isObject":255,"dup":18}],118:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -35744,7 +39690,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":47,"./isLength":189,"./isObjectLike":192}],55:[function(_dereq_,module,exports){
+},{"./_baseGetTag":111,"./isLength":253,"./isObjectLike":256}],119:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -35777,7 +39723,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":59,"./_baseMatchesProperty":60,"./identity":182,"./isArray":184,"./property":204}],56:[function(_dereq_,module,exports){
+},{"./_baseMatches":123,"./_baseMatchesProperty":124,"./identity":246,"./isArray":248,"./property":268}],120:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -35809,7 +39755,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":130,"./_nativeKeys":146}],57:[function(_dereq_,module,exports){
+},{"./_isPrototype":194,"./_nativeKeys":210}],121:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isPrototype = _dereq_('./_isPrototype'),
     nativeKeysIn = _dereq_('./_nativeKeysIn');
@@ -35844,7 +39790,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":130,"./_nativeKeysIn":147,"./isObject":191}],58:[function(_dereq_,module,exports){
+},{"./_isPrototype":194,"./_nativeKeysIn":211,"./isObject":255}],122:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -35868,7 +39814,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":41,"./isArrayLike":185}],59:[function(_dereq_,module,exports){
+},{"./_baseEach":105,"./isArrayLike":249}],123:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -35892,7 +39838,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":52,"./_getMatchData":106,"./_matchesStrictComparable":143}],60:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":116,"./_getMatchData":170,"./_matchesStrictComparable":207}],124:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -35927,7 +39873,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":50,"./_isKey":127,"./_isStrictComparable":131,"./_matchesStrictComparable":143,"./_toKey":165,"./get":179,"./hasIn":181}],61:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":114,"./_isKey":191,"./_isStrictComparable":195,"./_matchesStrictComparable":207,"./_toKey":229,"./get":243,"./hasIn":245}],125:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -35970,7 +39916,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":15,"./_assignMergeValue":32,"./_baseFor":43,"./_baseMergeDeep":62,"./isObject":191,"./keysIn":197}],62:[function(_dereq_,module,exports){
+},{"./_Stack":79,"./_assignMergeValue":96,"./_baseFor":107,"./_baseMergeDeep":126,"./isObject":255,"./keysIn":261}],126:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -36065,7 +40011,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":32,"./_cloneBuffer":79,"./_cloneTypedArray":85,"./_copyArray":86,"./_initCloneObject":124,"./isArguments":183,"./isArray":184,"./isArrayLikeObject":186,"./isBuffer":187,"./isFunction":188,"./isObject":191,"./isPlainObject":193,"./isTypedArray":195,"./toPlainObject":208}],63:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":96,"./_cloneBuffer":143,"./_cloneTypedArray":149,"./_copyArray":150,"./_initCloneObject":188,"./isArguments":247,"./isArray":248,"./isArrayLikeObject":250,"./isBuffer":251,"./isFunction":252,"./isObject":255,"./isPlainObject":257,"./isTypedArray":259,"./toPlainObject":272}],127:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -36097,7 +40043,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":45,"./_baseSet":68,"./_castPath":76}],64:[function(_dereq_,module,exports){
+},{"./_baseGet":109,"./_baseSet":132,"./_castPath":140}],128:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -36113,7 +40059,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],65:[function(_dereq_,module,exports){
+},{}],129:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -36131,7 +40077,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":45}],66:[function(_dereq_,module,exports){
+},{"./_baseGet":109}],130:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.propertyOf` without support for deep paths.
  *
@@ -36147,7 +40093,7 @@ function basePropertyOf(object) {
 
 module.exports = basePropertyOf;
 
-},{}],67:[function(_dereq_,module,exports){
+},{}],131:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity'),
     overRest = _dereq_('./_overRest'),
     setToString = _dereq_('./_setToString');
@@ -36166,7 +40112,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":151,"./_setToString":156,"./identity":182}],68:[function(_dereq_,module,exports){
+},{"./_overRest":215,"./_setToString":220,"./identity":246}],132:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -36215,7 +40161,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":33,"./_castPath":76,"./_isIndex":125,"./_toKey":165,"./isObject":191}],69:[function(_dereq_,module,exports){
+},{"./_assignValue":97,"./_castPath":140,"./_isIndex":189,"./_toKey":229,"./isObject":255}],133:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -36239,7 +40185,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":98,"./constant":174,"./identity":182}],70:[function(_dereq_,module,exports){
+},{"./_defineProperty":162,"./constant":238,"./identity":246}],134:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -36272,7 +40218,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],71:[function(_dereq_,module,exports){
+},{}],135:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -36294,46 +40240,9 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],72:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol'),
-    arrayMap = _dereq_('./_arrayMap'),
-    isArray = _dereq_('./isArray'),
-    isSymbol = _dereq_('./isSymbol');
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isArray(value)) {
-    // Recursively convert values (susceptible to call stack limits).
-    return arrayMap(value, baseToString) + '';
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-module.exports = baseToString;
-
-},{"./_Symbol":16,"./_arrayMap":26,"./isArray":184,"./isSymbol":194}],73:[function(_dereq_,module,exports){
+},{}],136:[function(_dereq_,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"./_Symbol":80,"./_arrayMap":90,"./isArray":248,"./isSymbol":258,"dup":19}],137:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -36349,7 +40258,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],74:[function(_dereq_,module,exports){
+},{}],138:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -36364,7 +40273,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],75:[function(_dereq_,module,exports){
+},{}],139:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -36380,30 +40289,9 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":182}],76:[function(_dereq_,module,exports){
-var isArray = _dereq_('./isArray'),
-    isKey = _dereq_('./_isKey'),
-    stringToPath = _dereq_('./_stringToPath'),
-    toString = _dereq_('./toString');
-
-/**
- * Casts `value` to a path array if it's not one.
- *
- * @private
- * @param {*} value The value to inspect.
- * @param {Object} [object] The object to query keys on.
- * @returns {Array} Returns the cast property path array.
- */
-function castPath(value, object) {
-  if (isArray(value)) {
-    return value;
-  }
-  return isKey(value, object) ? [value] : stringToPath(toString(value));
-}
-
-module.exports = castPath;
-
-},{"./_isKey":127,"./_stringToPath":164,"./isArray":184,"./toString":209}],77:[function(_dereq_,module,exports){
+},{"./identity":246}],140:[function(_dereq_,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"./_isKey":191,"./_stringToPath":228,"./isArray":248,"./toString":273,"dup":20}],141:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -36423,7 +40311,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":70}],78:[function(_dereq_,module,exports){
+},{"./_baseSlice":134}],142:[function(_dereq_,module,exports){
 var Uint8Array = _dereq_('./_Uint8Array');
 
 /**
@@ -36441,7 +40329,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":17}],79:[function(_dereq_,module,exports){
+},{"./_Uint8Array":81}],143:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Detect free variable `exports`. */
@@ -36478,7 +40366,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":152}],80:[function(_dereq_,module,exports){
+},{"./_root":216}],144:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -36496,7 +40384,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":78}],81:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":142}],145:[function(_dereq_,module,exports){
 var addMapEntry = _dereq_('./_addMapEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     mapToArray = _dereq_('./_mapToArray');
@@ -36520,7 +40408,7 @@ function cloneMap(map, isDeep, cloneFunc) {
 
 module.exports = cloneMap;
 
-},{"./_addMapEntry":19,"./_arrayReduce":28,"./_mapToArray":142}],82:[function(_dereq_,module,exports){
+},{"./_addMapEntry":83,"./_arrayReduce":92,"./_mapToArray":206}],146:[function(_dereq_,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -36539,7 +40427,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],83:[function(_dereq_,module,exports){
+},{}],147:[function(_dereq_,module,exports){
 var addSetEntry = _dereq_('./_addSetEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     setToArray = _dereq_('./_setToArray');
@@ -36563,7 +40451,7 @@ function cloneSet(set, isDeep, cloneFunc) {
 
 module.exports = cloneSet;
 
-},{"./_addSetEntry":20,"./_arrayReduce":28,"./_setToArray":155}],84:[function(_dereq_,module,exports){
+},{"./_addSetEntry":84,"./_arrayReduce":92,"./_setToArray":219}],148:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -36583,7 +40471,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":16}],85:[function(_dereq_,module,exports){
+},{"./_Symbol":80}],149:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -36601,7 +40489,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":78}],86:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":142}],150:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -36623,7 +40511,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],87:[function(_dereq_,module,exports){
+},{}],151:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     baseAssignValue = _dereq_('./_baseAssignValue');
 
@@ -36665,7 +40553,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":33,"./_baseAssignValue":38}],88:[function(_dereq_,module,exports){
+},{"./_assignValue":97,"./_baseAssignValue":102}],152:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbols = _dereq_('./_getSymbols');
 
@@ -36683,7 +40571,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":87,"./_getSymbols":110}],89:[function(_dereq_,module,exports){
+},{"./_copyObject":151,"./_getSymbols":174}],153:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbolsIn = _dereq_('./_getSymbolsIn');
 
@@ -36701,15 +40589,9 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":87,"./_getSymbolsIn":111}],90:[function(_dereq_,module,exports){
-var root = _dereq_('./_root');
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-module.exports = coreJsData;
-
-},{"./_root":152}],91:[function(_dereq_,module,exports){
+},{"./_copyObject":151,"./_getSymbolsIn":175}],154:[function(_dereq_,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"./_root":216,"dup":21}],155:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -36734,7 +40616,7 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":22,"./_baseAggregator":35,"./_baseIteratee":55,"./isArray":184}],92:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":86,"./_baseAggregator":99,"./_baseIteratee":119,"./isArray":248}],156:[function(_dereq_,module,exports){
 var baseRest = _dereq_('./_baseRest'),
     isIterateeCall = _dereq_('./_isIterateeCall');
 
@@ -36773,7 +40655,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":67,"./_isIterateeCall":126}],93:[function(_dereq_,module,exports){
+},{"./_baseRest":131,"./_isIterateeCall":190}],157:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -36807,7 +40689,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":185}],94:[function(_dereq_,module,exports){
+},{"./isArrayLike":249}],158:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -36834,7 +40716,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],95:[function(_dereq_,module,exports){
+},{}],159:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -36869,7 +40751,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":77,"./_hasUnicode":115,"./_stringToArray":163,"./toString":209}],96:[function(_dereq_,module,exports){
+},{"./_castSlice":141,"./_hasUnicode":179,"./_stringToArray":227,"./toString":273}],160:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -36895,7 +40777,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":28,"./deburr":175,"./words":211}],97:[function(_dereq_,module,exports){
+},{"./_arrayReduce":92,"./deburr":239,"./words":275}],161:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -36968,7 +40850,7 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":66}],98:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":130}],162:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 var defineProperty = (function() {
@@ -36981,7 +40863,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":107}],99:[function(_dereq_,module,exports){
+},{"./_getNative":171}],163:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -37066,7 +40948,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":14,"./_arraySome":29,"./_cacheHas":74}],100:[function(_dereq_,module,exports){
+},{"./_SetCache":78,"./_arraySome":93,"./_cacheHas":138}],164:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -37180,7 +41062,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":16,"./_Uint8Array":17,"./_equalArrays":99,"./_mapToArray":142,"./_setToArray":155,"./eq":177}],101:[function(_dereq_,module,exports){
+},{"./_Symbol":80,"./_Uint8Array":81,"./_equalArrays":163,"./_mapToArray":206,"./_setToArray":219,"./eq":241}],165:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -37271,15 +41153,9 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":103}],102:[function(_dereq_,module,exports){
-(function (global){
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-module.exports = freeGlobal;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],103:[function(_dereq_,module,exports){
+},{"./_getAllKeys":167}],166:[function(_dereq_,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"dup":22}],167:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbols = _dereq_('./_getSymbols'),
     keys = _dereq_('./keys');
@@ -37297,7 +41173,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":46,"./_getSymbols":110,"./keys":196}],104:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":110,"./_getSymbols":174,"./keys":260}],168:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -37316,27 +41192,9 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":46,"./_getSymbolsIn":111,"./keysIn":197}],105:[function(_dereq_,module,exports){
-var isKeyable = _dereq_('./_isKeyable');
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-module.exports = getMapData;
-
-},{"./_isKeyable":128}],106:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":110,"./_getSymbolsIn":175,"./keysIn":261}],169:[function(_dereq_,module,exports){
+arguments[4][23][0].apply(exports,arguments)
+},{"./_isKeyable":192,"dup":23}],170:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -37362,26 +41220,9 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":131,"./keys":196}],107:[function(_dereq_,module,exports){
-var baseIsNative = _dereq_('./_baseIsNative'),
-    getValue = _dereq_('./_getValue');
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-module.exports = getNative;
-
-},{"./_baseIsNative":53,"./_getValue":113}],108:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":195,"./keys":260}],171:[function(_dereq_,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"./_baseIsNative":117,"./_getValue":177,"dup":24}],172:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /** Built-in value references. */
@@ -37389,55 +41230,9 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":150}],109:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString = objectProto.toString;
-
-/** Built-in value references. */
-var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-
-/**
- * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the raw `toStringTag`.
- */
-function getRawTag(value) {
-  var isOwn = hasOwnProperty.call(value, symToStringTag),
-      tag = value[symToStringTag];
-
-  try {
-    value[symToStringTag] = undefined;
-    var unmasked = true;
-  } catch (e) {}
-
-  var result = nativeObjectToString.call(value);
-  if (unmasked) {
-    if (isOwn) {
-      value[symToStringTag] = tag;
-    } else {
-      delete value[symToStringTag];
-    }
-  }
-  return result;
-}
-
-module.exports = getRawTag;
-
-},{"./_Symbol":16}],110:[function(_dereq_,module,exports){
+},{"./_overArg":214}],173:[function(_dereq_,module,exports){
+arguments[4][25][0].apply(exports,arguments)
+},{"./_Symbol":80,"dup":25}],174:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     stubArray = _dereq_('./stubArray');
 
@@ -37469,7 +41264,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":24,"./stubArray":206}],111:[function(_dereq_,module,exports){
+},{"./_arrayFilter":88,"./stubArray":270}],175:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -37496,7 +41291,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":27,"./_getPrototype":108,"./_getSymbols":110,"./stubArray":206}],112:[function(_dereq_,module,exports){
+},{"./_arrayPush":91,"./_getPrototype":172,"./_getSymbols":174,"./stubArray":270}],176:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -37556,22 +41351,9 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":7,"./_Map":10,"./_Promise":12,"./_Set":13,"./_WeakMap":18,"./_baseGetTag":47,"./_toSource":166}],113:[function(_dereq_,module,exports){
-/**
- * Gets the value at `key` of `object`.
- *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-module.exports = getValue;
-
-},{}],114:[function(_dereq_,module,exports){
+},{"./_DataView":71,"./_Map":74,"./_Promise":76,"./_Set":77,"./_WeakMap":82,"./_baseGetTag":111,"./_toSource":230}],177:[function(_dereq_,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26}],178:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -37612,7 +41394,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":76,"./_isIndex":125,"./_toKey":165,"./isArguments":183,"./isArray":184,"./isLength":189}],115:[function(_dereq_,module,exports){
+},{"./_castPath":140,"./_isIndex":189,"./_toKey":229,"./isArguments":247,"./isArray":248,"./isLength":253}],179:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -37640,7 +41422,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],116:[function(_dereq_,module,exports){
+},{}],180:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -37657,125 +41439,17 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],117:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-  this.size = 0;
-}
-
-module.exports = hashClear;
-
-},{"./_nativeCreate":145}],118:[function(_dereq_,module,exports){
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  var result = this.has(key) && delete this.__data__[key];
-  this.size -= result ? 1 : 0;
-  return result;
-}
-
-module.exports = hashDelete;
-
-},{}],119:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-module.exports = hashGet;
-
-},{"./_nativeCreate":145}],120:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
-}
-
-module.exports = hashHas;
-
-},{"./_nativeCreate":145}],121:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  this.size += this.has(key) ? 0 : 1;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-module.exports = hashSet;
-
-},{"./_nativeCreate":145}],122:[function(_dereq_,module,exports){
+},{}],181:[function(_dereq_,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"./_nativeCreate":209,"dup":27}],182:[function(_dereq_,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],183:[function(_dereq_,module,exports){
+arguments[4][29][0].apply(exports,arguments)
+},{"./_nativeCreate":209,"dup":29}],184:[function(_dereq_,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"./_nativeCreate":209,"dup":30}],185:[function(_dereq_,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"./_nativeCreate":209,"dup":31}],186:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -37803,7 +41477,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],123:[function(_dereq_,module,exports){
+},{}],187:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
     cloneDataView = _dereq_('./_cloneDataView'),
     cloneMap = _dereq_('./_cloneMap'),
@@ -37885,7 +41559,7 @@ function initCloneByTag(object, tag, cloneFunc, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":78,"./_cloneDataView":80,"./_cloneMap":81,"./_cloneRegExp":82,"./_cloneSet":83,"./_cloneSymbol":84,"./_cloneTypedArray":85}],124:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":142,"./_cloneDataView":144,"./_cloneMap":145,"./_cloneRegExp":146,"./_cloneSet":147,"./_cloneSymbol":148,"./_cloneTypedArray":149}],188:[function(_dereq_,module,exports){
 var baseCreate = _dereq_('./_baseCreate'),
     getPrototype = _dereq_('./_getPrototype'),
     isPrototype = _dereq_('./_isPrototype');
@@ -37905,7 +41579,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":40,"./_getPrototype":108,"./_isPrototype":130}],125:[function(_dereq_,module,exports){
+},{"./_baseCreate":104,"./_getPrototype":172,"./_isPrototype":194}],189:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -37929,7 +41603,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],126:[function(_dereq_,module,exports){
+},{}],190:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq'),
     isArrayLike = _dereq_('./isArrayLike'),
     isIndex = _dereq_('./_isIndex'),
@@ -37961,77 +41635,13 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":125,"./eq":177,"./isArrayLike":185,"./isObject":191}],127:[function(_dereq_,module,exports){
-var isArray = _dereq_('./isArray'),
-    isSymbol = _dereq_('./isSymbol');
-
-/** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
-    reIsPlainProp = /^\w*$/;
-
-/**
- * Checks if `value` is a property name and not a property path.
- *
- * @private
- * @param {*} value The value to check.
- * @param {Object} [object] The object to query keys on.
- * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
- */
-function isKey(value, object) {
-  if (isArray(value)) {
-    return false;
-  }
-  var type = typeof value;
-  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
-      value == null || isSymbol(value)) {
-    return true;
-  }
-  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object));
-}
-
-module.exports = isKey;
-
-},{"./isArray":184,"./isSymbol":194}],128:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-module.exports = isKeyable;
-
-},{}],129:[function(_dereq_,module,exports){
-var coreJsData = _dereq_('./_coreJsData');
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-module.exports = isMasked;
-
-},{"./_coreJsData":90}],130:[function(_dereq_,module,exports){
+},{"./_isIndex":189,"./eq":241,"./isArrayLike":249,"./isObject":255}],191:[function(_dereq_,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"./isArray":248,"./isSymbol":258,"dup":32}],192:[function(_dereq_,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33}],193:[function(_dereq_,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"./_coreJsData":154,"dup":34}],194:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -38051,7 +41661,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],131:[function(_dereq_,module,exports){
+},{}],195:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -38068,229 +41678,27 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":191}],132:[function(_dereq_,module,exports){
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-  this.size = 0;
-}
-
-module.exports = listCacheClear;
-
-},{}],133:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype;
-
-/** Built-in value references. */
-var splice = arrayProto.splice;
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  --this.size;
-  return true;
-}
-
-module.exports = listCacheDelete;
-
-},{"./_assocIndexOf":34}],134:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-module.exports = listCacheGet;
-
-},{"./_assocIndexOf":34}],135:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-module.exports = listCacheHas;
-
-},{"./_assocIndexOf":34}],136:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    ++this.size;
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-module.exports = listCacheSet;
-
-},{"./_assocIndexOf":34}],137:[function(_dereq_,module,exports){
-var Hash = _dereq_('./_Hash'),
-    ListCache = _dereq_('./_ListCache'),
-    Map = _dereq_('./_Map');
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.size = 0;
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-module.exports = mapCacheClear;
-
-},{"./_Hash":8,"./_ListCache":9,"./_Map":10}],138:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  var result = getMapData(this, key)['delete'](key);
-  this.size -= result ? 1 : 0;
-  return result;
-}
-
-module.exports = mapCacheDelete;
-
-},{"./_getMapData":105}],139:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-module.exports = mapCacheGet;
-
-},{"./_getMapData":105}],140:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-module.exports = mapCacheHas;
-
-},{"./_getMapData":105}],141:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  var data = getMapData(this, key),
-      size = data.size;
-
-  data.set(key, value);
-  this.size += data.size == size ? 0 : 1;
-  return this;
-}
-
-module.exports = mapCacheSet;
-
-},{"./_getMapData":105}],142:[function(_dereq_,module,exports){
+},{"./isObject":255}],196:[function(_dereq_,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],197:[function(_dereq_,module,exports){
+arguments[4][36][0].apply(exports,arguments)
+},{"./_assocIndexOf":98,"dup":36}],198:[function(_dereq_,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"./_assocIndexOf":98,"dup":37}],199:[function(_dereq_,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"./_assocIndexOf":98,"dup":38}],200:[function(_dereq_,module,exports){
+arguments[4][39][0].apply(exports,arguments)
+},{"./_assocIndexOf":98,"dup":39}],201:[function(_dereq_,module,exports){
+arguments[4][40][0].apply(exports,arguments)
+},{"./_Hash":72,"./_ListCache":73,"./_Map":74,"dup":40}],202:[function(_dereq_,module,exports){
+arguments[4][41][0].apply(exports,arguments)
+},{"./_getMapData":169,"dup":41}],203:[function(_dereq_,module,exports){
+arguments[4][42][0].apply(exports,arguments)
+},{"./_getMapData":169,"dup":42}],204:[function(_dereq_,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"./_getMapData":169,"dup":43}],205:[function(_dereq_,module,exports){
+arguments[4][44][0].apply(exports,arguments)
+},{"./_getMapData":169,"dup":44}],206:[function(_dereq_,module,exports){
 /**
  * Converts `map` to its key-value pairs.
  *
@@ -38310,7 +41718,7 @@ function mapToArray(map) {
 
 module.exports = mapToArray;
 
-},{}],143:[function(_dereq_,module,exports){
+},{}],207:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -38332,43 +41740,11 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],144:[function(_dereq_,module,exports){
-var memoize = _dereq_('./memoize');
-
-/** Used as the maximum memoize cache size. */
-var MAX_MEMOIZE_SIZE = 500;
-
-/**
- * A specialized version of `_.memoize` which clears the memoized function's
- * cache when it exceeds `MAX_MEMOIZE_SIZE`.
- *
- * @private
- * @param {Function} func The function to have its output memoized.
- * @returns {Function} Returns the new memoized function.
- */
-function memoizeCapped(func) {
-  var result = memoize(func, function(key) {
-    if (cache.size === MAX_MEMOIZE_SIZE) {
-      cache.clear();
-    }
-    return key;
-  });
-
-  var cache = result.cache;
-  return result;
-}
-
-module.exports = memoizeCapped;
-
-},{"./memoize":199}],145:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative');
-
-/* Built-in method references that are verified to be native. */
-var nativeCreate = getNative(Object, 'create');
-
-module.exports = nativeCreate;
-
-},{"./_getNative":107}],146:[function(_dereq_,module,exports){
+},{}],208:[function(_dereq_,module,exports){
+arguments[4][45][0].apply(exports,arguments)
+},{"./memoize":263,"dup":45}],209:[function(_dereq_,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"./_getNative":171,"dup":46}],210:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -38376,7 +41752,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":150}],147:[function(_dereq_,module,exports){
+},{"./_overArg":214}],211:[function(_dereq_,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -38398,7 +41774,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],148:[function(_dereq_,module,exports){
+},{}],212:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -38422,31 +41798,9 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":102}],149:[function(_dereq_,module,exports){
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString = objectProto.toString;
-
-/**
- * Converts `value` to a string using `Object.prototype.toString`.
- *
- * @private
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- */
-function objectToString(value) {
-  return nativeObjectToString.call(value);
-}
-
-module.exports = objectToString;
-
-},{}],150:[function(_dereq_,module,exports){
+},{"./_freeGlobal":166}],213:[function(_dereq_,module,exports){
+arguments[4][47][0].apply(exports,arguments)
+},{"dup":47}],214:[function(_dereq_,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -38463,7 +41817,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],151:[function(_dereq_,module,exports){
+},{}],215:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -38501,18 +41855,9 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":21}],152:[function(_dereq_,module,exports){
-var freeGlobal = _dereq_('./_freeGlobal');
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-module.exports = root;
-
-},{"./_freeGlobal":102}],153:[function(_dereq_,module,exports){
+},{"./_apply":85}],216:[function(_dereq_,module,exports){
+arguments[4][48][0].apply(exports,arguments)
+},{"./_freeGlobal":166,"dup":48}],217:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -38533,7 +41878,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],154:[function(_dereq_,module,exports){
+},{}],218:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -38549,7 +41894,7 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],155:[function(_dereq_,module,exports){
+},{}],219:[function(_dereq_,module,exports){
 /**
  * Converts `set` to an array of its values.
  *
@@ -38569,7 +41914,7 @@ function setToArray(set) {
 
 module.exports = setToArray;
 
-},{}],156:[function(_dereq_,module,exports){
+},{}],220:[function(_dereq_,module,exports){
 var baseSetToString = _dereq_('./_baseSetToString'),
     shortOut = _dereq_('./_shortOut');
 
@@ -38585,7 +41930,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":69,"./_shortOut":157}],157:[function(_dereq_,module,exports){
+},{"./_baseSetToString":133,"./_shortOut":221}],221:[function(_dereq_,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -38624,7 +41969,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],158:[function(_dereq_,module,exports){
+},{}],222:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache');
 
 /**
@@ -38641,7 +41986,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":9}],159:[function(_dereq_,module,exports){
+},{"./_ListCache":73}],223:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -38661,7 +42006,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],160:[function(_dereq_,module,exports){
+},{}],224:[function(_dereq_,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -38677,7 +42022,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],161:[function(_dereq_,module,exports){
+},{}],225:[function(_dereq_,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -38693,7 +42038,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],162:[function(_dereq_,module,exports){
+},{}],226:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map'),
     MapCache = _dereq_('./_MapCache');
@@ -38729,7 +42074,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":9,"./_Map":10,"./_MapCache":11}],163:[function(_dereq_,module,exports){
+},{"./_ListCache":73,"./_Map":74,"./_MapCache":75}],227:[function(_dereq_,module,exports){
 var asciiToArray = _dereq_('./_asciiToArray'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeToArray = _dereq_('./_unicodeToArray');
@@ -38749,88 +42094,13 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":30,"./_hasUnicode":115,"./_unicodeToArray":167}],164:[function(_dereq_,module,exports){
-var memoizeCapped = _dereq_('./_memoizeCapped');
-
-/** Used to match property names within property paths. */
-var reLeadingDot = /^\./,
-    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
-
-/** Used to match backslashes in property paths. */
-var reEscapeChar = /\\(\\)?/g;
-
-/**
- * Converts `string` to a property path array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the property path array.
- */
-var stringToPath = memoizeCapped(function(string) {
-  var result = [];
-  if (reLeadingDot.test(string)) {
-    result.push('');
-  }
-  string.replace(rePropName, function(match, number, quote, string) {
-    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
-  });
-  return result;
-});
-
-module.exports = stringToPath;
-
-},{"./_memoizeCapped":144}],165:[function(_dereq_,module,exports){
-var isSymbol = _dereq_('./isSymbol');
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-module.exports = toKey;
-
-},{"./isSymbol":194}],166:[function(_dereq_,module,exports){
-/** Used for built-in method references. */
-var funcProto = Function.prototype;
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to convert.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-module.exports = toSource;
-
-},{}],167:[function(_dereq_,module,exports){
+},{"./_asciiToArray":94,"./_hasUnicode":179,"./_unicodeToArray":231}],228:[function(_dereq_,module,exports){
+arguments[4][49][0].apply(exports,arguments)
+},{"./_memoizeCapped":208,"dup":49}],229:[function(_dereq_,module,exports){
+arguments[4][50][0].apply(exports,arguments)
+},{"./isSymbol":258,"dup":50}],230:[function(_dereq_,module,exports){
+arguments[4][51][0].apply(exports,arguments)
+},{"dup":51}],231:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -38872,7 +42142,7 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],168:[function(_dereq_,module,exports){
+},{}],232:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -38943,7 +42213,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],169:[function(_dereq_,module,exports){
+},{}],233:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -39003,7 +42273,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":33,"./_copyObject":87,"./_createAssigner":92,"./_isPrototype":130,"./isArrayLike":185,"./keys":196}],170:[function(_dereq_,module,exports){
+},{"./_assignValue":97,"./_copyObject":151,"./_createAssigner":156,"./_isPrototype":194,"./isArrayLike":249,"./keys":260}],234:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -39034,7 +42304,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":96,"./capitalize":171}],171:[function(_dereq_,module,exports){
+},{"./_createCompounder":160,"./capitalize":235}],235:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -39059,7 +42329,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":209,"./upperFirst":210}],172:[function(_dereq_,module,exports){
+},{"./toString":273,"./upperFirst":274}],236:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -39097,7 +42367,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"./_baseClone":39}],173:[function(_dereq_,module,exports){
+},{"./_baseClone":103}],237:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -39128,7 +42398,7 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":39}],174:[function(_dereq_,module,exports){
+},{"./_baseClone":103}],238:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -39156,7 +42426,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],175:[function(_dereq_,module,exports){
+},{}],239:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -39203,49 +42473,12 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":97,"./toString":209}],176:[function(_dereq_,module,exports){
+},{"./_deburrLetter":161,"./toString":273}],240:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":178}],177:[function(_dereq_,module,exports){
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-module.exports = eq;
-
-},{}],178:[function(_dereq_,module,exports){
+},{"./forEach":242}],241:[function(_dereq_,module,exports){
+arguments[4][52][0].apply(exports,arguments)
+},{"dup":52}],242:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -39288,42 +42521,9 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":23,"./_baseEach":41,"./_castFunction":75,"./isArray":184}],179:[function(_dereq_,module,exports){
-var baseGet = _dereq_('./_baseGet');
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-module.exports = get;
-
-},{"./_baseGet":45}],180:[function(_dereq_,module,exports){
+},{"./_arrayEach":87,"./_baseEach":105,"./_castFunction":139,"./isArray":248}],243:[function(_dereq_,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"./_baseGet":109,"dup":53}],244:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -39366,7 +42566,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":38,"./_createAggregator":91}],181:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":102,"./_createAggregator":155}],245:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -39402,7 +42602,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":48,"./_hasPath":114}],182:[function(_dereq_,module,exports){
+},{"./_baseHasIn":112,"./_hasPath":178}],246:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -39425,7 +42625,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],183:[function(_dereq_,module,exports){
+},{}],247:[function(_dereq_,module,exports){
 var baseIsArguments = _dereq_('./_baseIsArguments'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -39463,35 +42663,9 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":49,"./isObjectLike":192}],184:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-module.exports = isArray;
-
-},{}],185:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":113,"./isObjectLike":256}],248:[function(_dereq_,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"dup":54}],249:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isLength = _dereq_('./isLength');
 
@@ -39526,7 +42700,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":188,"./isLength":189}],186:[function(_dereq_,module,exports){
+},{"./isFunction":252,"./isLength":253}],250:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -39561,7 +42735,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":185,"./isObjectLike":192}],187:[function(_dereq_,module,exports){
+},{"./isArrayLike":249,"./isObjectLike":256}],251:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -39601,46 +42775,9 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":152,"./stubFalse":207}],188:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObject = _dereq_('./isObject');
-
-/** `Object#toString` result references. */
-var asyncTag = '[object AsyncFunction]',
-    funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    proxyTag = '[object Proxy]';
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  if (!isObject(value)) {
-    return false;
-  }
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 9 which returns 'object' for typed arrays and other constructors.
-  var tag = baseGetTag(value);
-  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
-}
-
-module.exports = isFunction;
-
-},{"./_baseGetTag":47,"./isObject":191}],189:[function(_dereq_,module,exports){
+},{"./_root":216,"./stubFalse":271}],252:[function(_dereq_,module,exports){
+arguments[4][55][0].apply(exports,arguments)
+},{"./_baseGetTag":111,"./isObject":255,"dup":55}],253:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -39677,7 +42814,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],190:[function(_dereq_,module,exports){
+},{}],254:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -39717,71 +42854,11 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":47,"./isObjectLike":192}],191:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return value != null && (type == 'object' || type == 'function');
-}
-
-module.exports = isObject;
-
-},{}],192:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return value != null && typeof value == 'object';
-}
-
-module.exports = isObjectLike;
-
-},{}],193:[function(_dereq_,module,exports){
+},{"./_baseGetTag":111,"./isObjectLike":256}],255:[function(_dereq_,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],256:[function(_dereq_,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"dup":57}],257:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -39845,38 +42922,9 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":47,"./_getPrototype":108,"./isObjectLike":192}],194:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && baseGetTag(value) == symbolTag);
-}
-
-module.exports = isSymbol;
-
-},{"./_baseGetTag":47,"./isObjectLike":192}],195:[function(_dereq_,module,exports){
+},{"./_baseGetTag":111,"./_getPrototype":172,"./isObjectLike":256}],258:[function(_dereq_,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"./_baseGetTag":111,"./isObjectLike":256,"dup":58}],259:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -39905,7 +42953,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":54,"./_baseUnary":73,"./_nodeUtil":148}],196:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":118,"./_baseUnary":137,"./_nodeUtil":212}],260:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -39944,7 +42992,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":25,"./_baseKeys":56,"./isArrayLike":185}],197:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":89,"./_baseKeys":120,"./isArrayLike":249}],261:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -39978,7 +43026,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":25,"./_baseKeysIn":57,"./isArrayLike":185}],198:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":89,"./_baseKeysIn":121,"./isArrayLike":249}],262:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -40033,82 +43081,9 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":26,"./_baseIteratee":55,"./_baseMap":58,"./isArray":184}],199:[function(_dereq_,module,exports){
-var MapCache = _dereq_('./_MapCache');
-
-/** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/**
- * Creates a function that memoizes the result of `func`. If `resolver` is
- * provided, it determines the cache key for storing the result based on the
- * arguments provided to the memoized function. By default, the first argument
- * provided to the memoized function is used as the map cache key. The `func`
- * is invoked with the `this` binding of the memoized function.
- *
- * **Note:** The cache is exposed as the `cache` property on the memoized
- * function. Its creation may be customized by replacing the `_.memoize.Cache`
- * constructor with one whose instances implement the
- * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
- * method interface of `clear`, `delete`, `get`, `has`, and `set`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to have its output memoized.
- * @param {Function} [resolver] The function to resolve the cache key.
- * @returns {Function} Returns the new memoized function.
- * @example
- *
- * var object = { 'a': 1, 'b': 2 };
- * var other = { 'c': 3, 'd': 4 };
- *
- * var values = _.memoize(_.values);
- * values(object);
- * // => [1, 2]
- *
- * values(other);
- * // => [3, 4]
- *
- * object.a = 2;
- * values(object);
- * // => [1, 2]
- *
- * // Modify the result cache.
- * values.cache.set(object, ['a', 'b']);
- * values(object);
- * // => ['a', 'b']
- *
- * // Replace `_.memoize.Cache`.
- * _.memoize.Cache = WeakMap;
- */
-function memoize(func, resolver) {
-  if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-        key = resolver ? resolver.apply(this, args) : args[0],
-        cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result) || cache;
-    return result;
-  };
-  memoized.cache = new (memoize.Cache || MapCache);
-  return memoized;
-}
-
-// Expose `MapCache`.
-memoize.Cache = MapCache;
-
-module.exports = memoize;
-
-},{"./_MapCache":11}],200:[function(_dereq_,module,exports){
+},{"./_arrayMap":90,"./_baseIteratee":119,"./_baseMap":122,"./isArray":248}],263:[function(_dereq_,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"./_MapCache":75,"dup":59}],264:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -40149,7 +43124,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":61,"./_createAssigner":92}],201:[function(_dereq_,module,exports){
+},{"./_baseMerge":125,"./_createAssigner":156}],265:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -40191,7 +43166,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],202:[function(_dereq_,module,exports){
+},{}],266:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -40222,7 +43197,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":55,"./negate":201,"./pickBy":203}],203:[function(_dereq_,module,exports){
+},{"./_baseIteratee":119,"./negate":265,"./pickBy":267}],267:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -40261,7 +43236,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":26,"./_baseIteratee":55,"./_basePickBy":63,"./_getAllKeysIn":104}],204:[function(_dereq_,module,exports){
+},{"./_arrayMap":90,"./_baseIteratee":119,"./_basePickBy":127,"./_getAllKeysIn":168}],268:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -40295,7 +43270,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":64,"./_basePropertyDeep":65,"./_isKey":127,"./_toKey":165}],205:[function(_dereq_,module,exports){
+},{"./_baseProperty":128,"./_basePropertyDeep":129,"./_isKey":191,"./_toKey":229}],269:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -40343,7 +43318,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":24,"./_baseFilter":42,"./_baseIteratee":55,"./isArray":184,"./negate":201}],206:[function(_dereq_,module,exports){
+},{"./_arrayFilter":88,"./_baseFilter":106,"./_baseIteratee":119,"./isArray":248,"./negate":265}],270:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -40368,7 +43343,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],207:[function(_dereq_,module,exports){
+},{}],271:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -40388,7 +43363,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],208:[function(_dereq_,module,exports){
+},{}],272:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -40422,37 +43397,9 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":87,"./keysIn":197}],209:[function(_dereq_,module,exports){
-var baseToString = _dereq_('./_baseToString');
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-module.exports = toString;
-
-},{"./_baseToString":72}],210:[function(_dereq_,module,exports){
+},{"./_copyObject":151,"./keysIn":261}],273:[function(_dereq_,module,exports){
+arguments[4][60][0].apply(exports,arguments)
+},{"./_baseToString":136,"dup":60}],274:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -40476,7 +43423,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":95}],211:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":159}],275:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -40513,7 +43460,7 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":31,"./_hasUnicodeWord":116,"./_unicodeWords":168,"./toString":209}],212:[function(_dereq_,module,exports){
+},{"./_asciiWords":95,"./_hasUnicodeWord":180,"./_unicodeWords":232,"./toString":273}],276:[function(_dereq_,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -41410,7 +44357,7 @@ module.exports = words;
     return m;
 }));
 
-},{"angular":4}],213:[function(_dereq_,module,exports){
+},{"angular":68}],277:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41482,7 +44429,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],214:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41529,19 +44476,19 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">Action</label>' +
+            '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">{{\'Action\' | formioTranslate}}</label>' +
             '<select class="form-control" id="action" name="action" ng-options="action.name as action.title for action in actions" ng-model="component.action"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.action === \'event\'">' +
-          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">Button Event</label>' +
+          '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button Event\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+            '<label for="theme" form-builder-tooltip="The color theme of this panel.">{{\'Theme\' | formioTranslate}}</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="size" form-builder-tooltip="The size of this button.">Size</label>' +
+            '<label for="size" form-builder-tooltip="The size of this button.">{{\'Size\' | formioTranslate}}</label>' +
             '<select class="form-control" id="size" name="size" ng-options="size.name as size.title for size in sizes" ng-model="component.size"></select>' +
           '</div>' +
           '<form-builder-option property="leftIcon"></form-builder-option>' +
@@ -41556,7 +44503,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],215:[function(_dereq_,module,exports){
+},{}],279:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41647,7 +44594,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],216:[function(_dereq_,module,exports){
+},{}],280:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41695,7 +44642,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],217:[function(_dereq_,module,exports){
+},{}],281:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -41706,23 +44653,23 @@ module.exports = function(app) {
         '<form id="component-settings" novalidate>' +
           '<div class="row">' +
             '<div class="col-md-6">' +
-              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} Component</p>' +
+              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} {{\'Component\' | formioTranslate}}</p>' +
             '</div>' +
             '<div class="col-md-6">' +
               '<div class="pull-right" ng-if="::formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
-                '<a ng-href="{{ ::formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> Help!</a>' +
+                '<a ng-href="{{ ::formComponent.documentation }}" target="_blank"><i class="glyphicon glyphicon-new-window"></i> {{\'Help!\' | formioTranslate}}</a>' +
               '</div>' +
             '</div>' +
           '</div>' +
           '<div class="row">' +
             '<div class="col-xs-6">' +
               '<uib-tabset>' +
-                '<uib-tab ng-repeat="view in ::formComponent.views" heading="{{ ::view.name }}"><ng-include src="::view.template"></ng-include></uib-tab>' +
+                '<uib-tab ng-repeat="view in ::formComponent.views" heading="{{ ::view.name | formioTranslate }}"><ng-include src="::view.template"></ng-include></uib-tab>' +
               '</uib-tabset>' +
             '</div>' +
             '<div class="col-xs-6">' +
               '<div class="panel panel-default preview-panel" style="margin-top:44px;">' +
-                '<div class="panel-heading">Preview</div>' +
+                '<div class="panel-heading">{{\'Preview\' | formioTranslate}}</div>' +
                 '<div class="panel-body">' +
                   '<div class="form-group" ng-if="component.wysiwyg && editorVisible">' +
                     '<label for="editor-preview" class="control-label" ng-if="component.label">{{ component.label }}</label>' +
@@ -41733,9 +44680,9 @@ module.exports = function(app) {
               '</div>' +
               '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
-                '<button type="submit" class="btn btn-success" ng-click="saveComponent(component)">Save</button>&nbsp;' +
-                '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">Cancel</button>&nbsp;' +
-                '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">Remove</button>' +
+                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
+                '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">{{\'Cancel\' | formioTranslate}}</button>&nbsp;' +
+                '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">{{\'Remove\' | formioTranslate}}</button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -41817,7 +44764,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],218:[function(_dereq_,module,exports){
+},{}],282:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41869,7 +44816,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],219:[function(_dereq_,module,exports){
+},{}],283:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41940,7 +44887,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],220:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42006,7 +44953,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],221:[function(_dereq_,module,exports){
+},{}],285:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42068,7 +45015,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],222:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42134,7 +45081,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],223:[function(_dereq_,module,exports){
+},{}],287:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42319,7 +45266,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],224:[function(_dereq_,module,exports){
+},{}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42394,7 +45341,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],225:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -42443,7 +45390,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":173,"lodash/each":176}],226:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":237,"lodash/each":240}],290:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42498,7 +45445,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],227:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -42585,7 +45532,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":198}],228:[function(_dereq_,module,exports){
+},{"lodash/map":262}],292:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42645,7 +45592,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],229:[function(_dereq_,module,exports){
+},{}],293:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42705,7 +45652,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],230:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -42747,7 +45694,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":213,"./button":214,"./checkbox":215,"./columns":216,"./components":217,"./container":218,"./content":219,"./currency":220,"./custom":221,"./datagrid":222,"./datetime":223,"./day":224,"./email":225,"./fieldset":226,"./file":227,"./hidden":228,"./htmlelement":229,"./number":231,"./page":232,"./panel":233,"./password":234,"./phonenumber":235,"./radio":236,"./resource":237,"./select":238,"./selectboxes":239,"./signature":240,"./survey":241,"./table":242,"./textarea":243,"./textfield":244,"./well":245}],231:[function(_dereq_,module,exports){
+},{"./address":277,"./button":278,"./checkbox":279,"./columns":280,"./components":281,"./container":282,"./content":283,"./currency":284,"./custom":285,"./datagrid":286,"./datetime":287,"./day":288,"./email":289,"./fieldset":290,"./file":291,"./hidden":292,"./htmlelement":293,"./number":295,"./page":296,"./panel":297,"./password":298,"./phonenumber":299,"./radio":300,"./resource":301,"./select":302,"./selectboxes":303,"./signature":304,"./survey":305,"./table":306,"./textarea":307,"./textfield":308,"./well":309}],295:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42822,7 +45769,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],232:[function(_dereq_,module,exports){
+},{}],296:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42843,7 +45790,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],233:[function(_dereq_,module,exports){
+},{}],297:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42910,7 +45857,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],234:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42980,7 +45927,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],235:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43053,7 +46000,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],236:[function(_dereq_,module,exports){
+},{}],300:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43121,7 +46068,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],237:[function(_dereq_,module,exports){
+},{}],301:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43209,7 +46156,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],238:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -43444,7 +46391,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":172}],239:[function(_dereq_,module,exports){
+},{"lodash/clone":236}],303:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43516,7 +46463,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],240:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43579,7 +46526,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],241:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43645,7 +46592,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],242:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43716,7 +46663,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],243:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43821,7 +46768,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],244:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43896,7 +46843,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],245:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -43942,7 +46889,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],246:[function(_dereq_,module,exports){
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -44165,7 +47112,7 @@ module.exports = {
   }
 };
 
-},{}],247:[function(_dereq_,module,exports){
+},{}],311:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -44232,7 +47179,7 @@ module.exports = {
   ]
 };
 
-},{}],248:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -44468,7 +47415,8 @@ module.exports = ['debounce', function(debounce) {
                       label: component.label,
                       key: component.key,
                       lockKey: true,
-                      source: resource._id
+                      source: resource._id,
+                      isNew: true
                     }
                   }
                 ));
@@ -44539,7 +47487,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":171,"lodash/cloneDeep":173,"lodash/each":176,"lodash/groupBy":180,"lodash/merge":200,"lodash/omitBy":202,"lodash/upperFirst":210}],249:[function(_dereq_,module,exports){
+},{"lodash/capitalize":235,"lodash/cloneDeep":237,"lodash/each":240,"lodash/groupBy":244,"lodash/merge":264,"lodash/omitBy":266,"lodash/upperFirst":274}],313:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -44555,7 +47503,7 @@ module.exports = [
   }
 ];
 
-},{}],250:[function(_dereq_,module,exports){
+},{}],314:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -44642,7 +47590,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":6,"lodash/get":179,"lodash/reject":205}],251:[function(_dereq_,module,exports){
+},{"formiojs/utils":70,"lodash/get":243,"lodash/reject":269}],315:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -44719,18 +47667,12 @@ module.exports = [
         index = -1;
       }
       // Only edit immediately for components that are not resource comps.
-      if (!component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
-        // Force the component to be flagged as new.
-        component.isNew = true;
-
+      if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
       }
       else {
         // Ensure the component has a key.
         component.key = component.key || component.label || 'component';
-
-        // Force the component to be flagged as new.
-        component.isNew = true;
 
         BuilderUtils.uniquify($scope.form, component);
 
@@ -44912,7 +47854,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":169,"lodash/camelCase":170,"lodash/isNumber":190}],252:[function(_dereq_,module,exports){
+},{"lodash/assign":233,"lodash/camelCase":234,"lodash/isNumber":254}],316:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -44937,7 +47879,7 @@ module.exports = [
   }
 ];
 
-},{}],253:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -44960,7 +47902,7 @@ module.exports = [
   }
 ];
 
-},{}],254:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -44972,13 +47914,15 @@ module.exports = [
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
+module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter) {
   return {
     restrict: 'E',
     require: 'property',
     priority: 2,
     replace: true,
     template: function(el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
@@ -44991,7 +47935,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
         name: property,
         type: type,
         'ng-model': 'component.' + property,
-        placeholder: placeholder
+        placeholder: formioTranslate(placeholder)
       };
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
@@ -45012,22 +47956,22 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       // Checkboxes have a slightly different layout
       if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' +
                 input.prop('outerHTML') +
-                ' ' + label + '</label>' +
+                ' ' + formioTranslate(label) + '</label>' +
               '</div>';
       }
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label>' +
                 input.prop('outerHTML') +
               '</div>';
     }
   };
 }];
 
-},{}],255:[function(_dereq_,module,exports){
+},{}],319:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -45063,7 +48007,7 @@ module.exports = function() {
   };
 };
 
-},{}],256:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -45106,7 +48050,7 @@ module.exports = function() {
   };
 };
 
-},{}],257:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -45150,7 +48094,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":198}],258:[function(_dereq_,module,exports){
+},{"lodash/map":262}],322:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -45172,7 +48116,7 @@ module.exports = [
   }
 ];
 
-},{}],259:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -45226,25 +48170,27 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":200}],260:[function(_dereq_,module,exports){
+},{"lodash/merge":264}],324:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
 * Tooltip text can be provided via title attribute or
 * as the value for this directive.
 */
-module.exports = function() {
+module.exports = ['$filter', function($filter) {
   return {
     restrict: 'A',
     replace: false,
     link: function($scope, el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       if (attrs.formBuilderTooltip || attrs.title) {
         var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
         tooltip.popover({
           html: true,
           trigger: 'manual',
           placement: 'right',
-          content: attrs.title || attrs.formBuilderTooltip
+          content: formioTranslate(attrs.title || attrs.formBuilderTooltip)
         }).on('mouseenter', function() {
           var $self = angular.element(this);
           $self.popover('show');
@@ -45263,9 +48209,9 @@ module.exports = function() {
       }
     }
   };
-};
+}];
 
-},{}],261:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -45302,7 +48248,7 @@ module.exports = function() {
   };
 };
 
-},{}],262:[function(_dereq_,module,exports){
+},{}],326:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -45325,7 +48271,7 @@ module.exports = function() {
   };
 };
 
-},{}],263:[function(_dereq_,module,exports){
+},{}],327:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -45345,24 +48291,24 @@ module.exports = function() {
     },
     restrict: 'E',
     template: '<div class="form-group">' +
-                '<label form-builder-tooltip="{{ tooltipText }}">{{ label }}</label>' +
+                '<label form-builder-tooltip="{{ tooltipText | formioTranslate }}">{{ label | formioTranslate }}</label>' +
                 '<table class="table table-condensed">' +
                   '<thead>' +
                     '<tr>' +
-                      '<th class="col-xs-6">{{ labelLabel }}</th>' +
-                      '<th class="col-xs-4">{{ valueLabel }}</th>' +
+                      '<th class="col-xs-6">{{ labelLabel | formioTranslate }}</th>' +
+                      '<th class="col-xs-4">{{ valueLabel | formioTranslate }}</th>' +
                       '<th class="col-xs-2"></th>' +
                     '</tr>' +
                   '</thead>' +
                   '<tbody>' +
                     '<tr ng-repeat="v in data track by $index">' +
-                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel }}"/></td>' +
-                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel }}"/></td>' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
                       '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">Add {{ valueLabel }}</button>' +
+                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
               '</div>',
     replace: true,
     link: function($scope, el, attrs) {
@@ -45406,7 +48352,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":170,"lodash/map":198}],264:[function(_dereq_,module,exports){
+},{"lodash/camelCase":234,"lodash/map":262}],328:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -45434,7 +48380,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       // A component is pre-existing if the key is unique, or the key is a duplicate and its not flagged as the new component.
       if (
         (component.key !== input.key) ||
-        ((component.key === input.key) && (component.isNew !== input.isNew))
+        ((component.key === input.key) && (!!component.isNew !== !!input.isNew))
       ) {
         existingComponents[component.key] = component;
       }
@@ -45472,7 +48418,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
    */
   var iterateKey = function(key) {
     if (!key.match(suffixRegex)) {
-      return key + '1';
+      return key + '2';
     }
 
     return key.replace(suffixRegex, function(suffix) {
@@ -45501,10 +48447,6 @@ module.exports = ['FormioUtils', function(FormioUtils) {
         return;
       }
 
-      if (!component.key.match(suffixRegex)) {
-        component.key = component.key + '1';
-      }
-
       var memoization = findExistingComponents(form.components, component);
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
@@ -45519,7 +48461,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],265:[function(_dereq_,module,exports){
+},{}],329:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -45553,7 +48495,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],266:[function(_dereq_,module,exports){
+},{}],330:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
@@ -45561,9 +48503,9 @@ _dereq_('../bower_components/angular-ckeditor/angular-ckeditor');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":267,"angular-drag-and-drop-lists":2,"ng-dialog":212,"ng-formio/src/formio-complete.js":521}],267:[function(_dereq_,module,exports){
+},{"../bower_components/angular-ckeditor/angular-ckeditor":65,"./ngFormBuilder.js":331,"angular-drag-and-drop-lists":66,"ng-dialog":276,"ng-formio/src/formio-complete.js":573}],331:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.14.3 | https://unpkg.com/ng-formio-builder@2.14.3/LICENSE.txt */
+/*! ng-formio-builder v2.15.1 | https://unpkg.com/ng-formio-builder@2.15.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -45717,7 +48659,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":230,"./constants/commonOptions":246,"./constants/formOptions":247,"./directives/formBuilder":248,"./directives/formBuilderComponent":249,"./directives/formBuilderConditional":250,"./directives/formBuilderDnd":251,"./directives/formBuilderElement":252,"./directives/formBuilderList":253,"./directives/formBuilderOption":254,"./directives/formBuilderOptionCustomValidation":255,"./directives/formBuilderOptionKey":256,"./directives/formBuilderOptionTags":257,"./directives/formBuilderRow":258,"./directives/formBuilderTable":259,"./directives/formBuilderTooltip":260,"./directives/jsonInput":261,"./directives/validApiKey":262,"./directives/valueBuilder":263,"./factories/BuilderUtils":264,"./factories/debounce":265}],268:[function(_dereq_,module,exports){
+},{"./components":294,"./constants/commonOptions":310,"./constants/formOptions":311,"./directives/formBuilder":312,"./directives/formBuilderComponent":313,"./directives/formBuilderConditional":314,"./directives/formBuilderDnd":315,"./directives/formBuilderElement":316,"./directives/formBuilderList":317,"./directives/formBuilderOption":318,"./directives/formBuilderOptionCustomValidation":319,"./directives/formBuilderOptionKey":320,"./directives/formBuilderOptionTags":321,"./directives/formBuilderRow":322,"./directives/formBuilderTable":323,"./directives/formBuilderTooltip":324,"./directives/jsonInput":325,"./directives/validApiKey":326,"./directives/valueBuilder":327,"./factories/BuilderUtils":328,"./factories/debounce":329}],332:[function(_dereq_,module,exports){
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -46320,7 +49262,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],269:[function(_dereq_,module,exports){
+},{}],333:[function(_dereq_,module,exports){
 (function (global){
 /* angular-moment.js / v1.0.1 / (c) 2013, 2014, 2015, 2016 Uri Shaked / MIT Licence */
 
@@ -47061,7 +50003,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":276,"moment":457}],270:[function(_dereq_,module,exports){
+},{"angular":340,"moment":512}],334:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -47819,11 +50761,11 @@ angular.module('ngSanitize').filter('linky', ['$sanitize', function($sanitize) {
 
 })(window, window.angular);
 
-},{}],271:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 _dereq_('./angular-sanitize');
 module.exports = 'ngSanitize';
 
-},{"./angular-sanitize":270}],272:[function(_dereq_,module,exports){
+},{"./angular-sanitize":334}],336:[function(_dereq_,module,exports){
 /*
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
@@ -55600,12 +58542,12 @@ angular.module('ui.bootstrap.datepickerPopup').run(function() {!angular.$$csp().
 angular.module('ui.bootstrap.tooltip').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTooltipCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-tooltip-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-bottom > .tooltip-arrow,[uib-popover-popup].popover.top-left > .arrow,[uib-popover-popup].popover.top-right > .arrow,[uib-popover-popup].popover.bottom-left > .arrow,[uib-popover-popup].popover.bottom-right > .arrow,[uib-popover-popup].popover.left-top > .arrow,[uib-popover-popup].popover.left-bottom > .arrow,[uib-popover-popup].popover.right-top > .arrow,[uib-popover-popup].popover.right-bottom > .arrow,[uib-popover-html-popup].popover.top-left > .arrow,[uib-popover-html-popup].popover.top-right > .arrow,[uib-popover-html-popup].popover.bottom-left > .arrow,[uib-popover-html-popup].popover.bottom-right > .arrow,[uib-popover-html-popup].popover.left-top > .arrow,[uib-popover-html-popup].popover.left-bottom > .arrow,[uib-popover-html-popup].popover.right-top > .arrow,[uib-popover-html-popup].popover.right-bottom > .arrow,[uib-popover-template-popup].popover.top-left > .arrow,[uib-popover-template-popup].popover.top-right > .arrow,[uib-popover-template-popup].popover.bottom-left > .arrow,[uib-popover-template-popup].popover.bottom-right > .arrow,[uib-popover-template-popup].popover.left-top > .arrow,[uib-popover-template-popup].popover.left-bottom > .arrow,[uib-popover-template-popup].popover.right-top > .arrow,[uib-popover-template-popup].popover.right-bottom > .arrow{top:auto;bottom:auto;left:auto;right:auto;margin:0;}[uib-popover-popup].popover,[uib-popover-html-popup].popover,[uib-popover-template-popup].popover{display:block !important;}</style>'); angular.$$uibTooltipCss = true; });
 angular.module('ui.bootstrap.timepicker').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTimepickerCss && angular.element(document).find('head').prepend('<style type="text/css">.uib-time input{width:50px;}</style>'); angular.$$uibTimepickerCss = true; });
 angular.module('ui.bootstrap.typeahead').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTypeaheadCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'); angular.$$uibTypeaheadCss = true; });
-},{}],273:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 _dereq_('./dist/ui-bootstrap-tpls');
 
 module.exports = 'ui.bootstrap';
 
-},{"./dist/ui-bootstrap-tpls":272}],274:[function(_dereq_,module,exports){
+},{"./dist/ui-bootstrap-tpls":336}],338:[function(_dereq_,module,exports){
 /*!
  * angular-ui-mask
  * https://github.com/angular-ui/ui-mask
@@ -56389,7 +59331,7 @@ angular.module('ui.mask', [])
         ]);
 
 }());
-},{}],275:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -89762,9 +92704,9 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],276:[function(_dereq_,module,exports){
-arguments[4][4][0].apply(exports,arguments)
-},{"./angular":275,"dup":4}],277:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
+arguments[4][68][0].apply(exports,arguments)
+},{"./angular":339,"dup":68}],341:[function(_dereq_,module,exports){
 // https://github.com/Gillardo/bootstrap-ui-datetime-picker
 // Version: 2.5.4
 // Released: 2017-01-23 
@@ -90451,7 +93393,7 @@ angular.module('ui.bootstrap.datetimepicker').run(['$templateCache', function($t
 if(typeof exports === 'object' && typeof module === 'object') {
     module.exports = 'ui.bootstrap.datetimepicker';
 }
-},{}],278:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 // This file is autogenerated via the `commonjs` Grunt task. You can require() this file in a CommonJS environment.
 _dereq_('../../js/transition.js')
 _dereq_('../../js/alert.js')
@@ -90465,7 +93407,7 @@ _dereq_('../../js/popover.js')
 _dereq_('../../js/scrollspy.js')
 _dereq_('../../js/tab.js')
 _dereq_('../../js/affix.js')
-},{"../../js/affix.js":279,"../../js/alert.js":280,"../../js/button.js":281,"../../js/carousel.js":282,"../../js/collapse.js":283,"../../js/dropdown.js":284,"../../js/modal.js":285,"../../js/popover.js":286,"../../js/scrollspy.js":287,"../../js/tab.js":288,"../../js/tooltip.js":289,"../../js/transition.js":290}],279:[function(_dereq_,module,exports){
+},{"../../js/affix.js":343,"../../js/alert.js":344,"../../js/button.js":345,"../../js/carousel.js":346,"../../js/collapse.js":347,"../../js/dropdown.js":348,"../../js/modal.js":349,"../../js/popover.js":350,"../../js/scrollspy.js":351,"../../js/tab.js":352,"../../js/tooltip.js":353,"../../js/transition.js":354}],343:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: affix.js v3.3.7
  * http://getbootstrap.com/javascript/#affix
@@ -90629,7 +93571,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],280:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: alert.js v3.3.7
  * http://getbootstrap.com/javascript/#alerts
@@ -90725,7 +93667,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],281:[function(_dereq_,module,exports){
+},{}],345:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: button.js v3.3.7
  * http://getbootstrap.com/javascript/#buttons
@@ -90852,7 +93794,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],282:[function(_dereq_,module,exports){
+},{}],346:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: carousel.js v3.3.7
  * http://getbootstrap.com/javascript/#carousel
@@ -91091,7 +94033,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],283:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: collapse.js v3.3.7
  * http://getbootstrap.com/javascript/#collapse
@@ -91305,7 +94247,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],348:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: dropdown.js v3.3.7
  * http://getbootstrap.com/javascript/#dropdowns
@@ -91472,7 +94414,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],349:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: modal.js v3.3.7
  * http://getbootstrap.com/javascript/#modals
@@ -91813,7 +94755,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: popover.js v3.3.7
  * http://getbootstrap.com/javascript/#popovers
@@ -91923,7 +94865,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],287:[function(_dereq_,module,exports){
+},{}],351:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: scrollspy.js v3.3.7
  * http://getbootstrap.com/javascript/#scrollspy
@@ -92097,7 +95039,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],352:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: tab.js v3.3.7
  * http://getbootstrap.com/javascript/#tabs
@@ -92254,7 +95196,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],353:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: tooltip.js v3.3.7
  * http://getbootstrap.com/javascript/#tooltip
@@ -92776,7 +95718,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],354:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: transition.js v3.3.7
  * http://getbootstrap.com/javascript/#transitions
@@ -92837,2290 +95779,275 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],291:[function(_dereq_,module,exports){
-/*!
- * EventEmitter2
- * https://github.com/hij1nx/EventEmitter2
- *
- * Copyright (c) 2013 hij1nx
- * Licensed under the MIT license.
- */
-;!function(undefined) {
-
-  var isArray = Array.isArray ? Array.isArray : function _isArray(obj) {
-    return Object.prototype.toString.call(obj) === "[object Array]";
-  };
-  var defaultMaxListeners = 10;
-
-  function init() {
-    this._events = {};
-    if (this._conf) {
-      configure.call(this, this._conf);
-    }
-  }
-
-  function configure(conf) {
-    if (conf) {
-      this._conf = conf;
-
-      conf.delimiter && (this.delimiter = conf.delimiter);
-      this._events.maxListeners = conf.maxListeners !== undefined ? conf.maxListeners : defaultMaxListeners;
-      conf.wildcard && (this.wildcard = conf.wildcard);
-      conf.newListener && (this.newListener = conf.newListener);
-      conf.verboseMemoryLeak && (this.verboseMemoryLeak = conf.verboseMemoryLeak);
-
-      if (this.wildcard) {
-        this.listenerTree = {};
-      }
-    } else {
-      this._events.maxListeners = defaultMaxListeners;
-    }
-  }
-
-  function logPossibleMemoryLeak(count, eventName) {
-    var errorMsg = '(node) warning: possible EventEmitter memory ' +
-        'leak detected. %d listeners added. ' +
-        'Use emitter.setMaxListeners() to increase limit.';
-
-    if(this.verboseMemoryLeak){
-      errorMsg += ' Event name: %s.';
-      console.error(errorMsg, count, eventName);
-    } else {
-      console.error(errorMsg, count);
-    }
-
-    if (console.trace){
-      console.trace();
-    }
-  }
-
-  function EventEmitter(conf) {
-    this._events = {};
-    this.newListener = false;
-    this.verboseMemoryLeak = false;
-    configure.call(this, conf);
-  }
-  EventEmitter.EventEmitter2 = EventEmitter; // backwards compatibility for exporting EventEmitter property
-
-  //
-  // Attention, function return type now is array, always !
-  // It has zero elements if no any matches found and one or more
-  // elements (leafs) if there are matches
-  //
-  function searchListenerTree(handlers, type, tree, i) {
-    if (!tree) {
-      return [];
-    }
-    var listeners=[], leaf, len, branch, xTree, xxTree, isolatedBranch, endReached,
-        typeLength = type.length, currentType = type[i], nextType = type[i+1];
-    if (i === typeLength && tree._listeners) {
-      //
-      // If at the end of the event(s) list and the tree has listeners
-      // invoke those listeners.
-      //
-      if (typeof tree._listeners === 'function') {
-        handlers && handlers.push(tree._listeners);
-        return [tree];
-      } else {
-        for (leaf = 0, len = tree._listeners.length; leaf < len; leaf++) {
-          handlers && handlers.push(tree._listeners[leaf]);
-        }
-        return [tree];
-      }
-    }
-
-    if ((currentType === '*' || currentType === '**') || tree[currentType]) {
-      //
-      // If the event emitted is '*' at this part
-      // or there is a concrete match at this patch
-      //
-      if (currentType === '*') {
-        for (branch in tree) {
-          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
-            listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+1));
-          }
-        }
-        return listeners;
-      } else if(currentType === '**') {
-        endReached = (i+1 === typeLength || (i+2 === typeLength && nextType === '*'));
-        if(endReached && tree._listeners) {
-          // The next element has a _listeners, add it to the handlers.
-          listeners = listeners.concat(searchListenerTree(handlers, type, tree, typeLength));
-        }
-
-        for (branch in tree) {
-          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
-            if(branch === '*' || branch === '**') {
-              if(tree[branch]._listeners && !endReached) {
-                listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], typeLength));
-              }
-              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
-            } else if(branch === nextType) {
-              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+2));
-            } else {
-              // No match on this one, shift into the tree but not in the type array.
-              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
-            }
-          }
-        }
-        return listeners;
-      }
-
-      listeners = listeners.concat(searchListenerTree(handlers, type, tree[currentType], i+1));
-    }
-
-    xTree = tree['*'];
-    if (xTree) {
-      //
-      // If the listener tree will allow any match for this part,
-      // then recursively explore all branches of the tree
-      //
-      searchListenerTree(handlers, type, xTree, i+1);
-    }
-
-    xxTree = tree['**'];
-    if(xxTree) {
-      if(i < typeLength) {
-        if(xxTree._listeners) {
-          // If we have a listener on a '**', it will catch all, so add its handler.
-          searchListenerTree(handlers, type, xxTree, typeLength);
-        }
-
-        // Build arrays of matching next branches and others.
-        for(branch in xxTree) {
-          if(branch !== '_listeners' && xxTree.hasOwnProperty(branch)) {
-            if(branch === nextType) {
-              // We know the next element will match, so jump twice.
-              searchListenerTree(handlers, type, xxTree[branch], i+2);
-            } else if(branch === currentType) {
-              // Current node matches, move into the tree.
-              searchListenerTree(handlers, type, xxTree[branch], i+1);
-            } else {
-              isolatedBranch = {};
-              isolatedBranch[branch] = xxTree[branch];
-              searchListenerTree(handlers, type, { '**': isolatedBranch }, i+1);
-            }
-          }
-        }
-      } else if(xxTree._listeners) {
-        // We have reached the end and still on a '**'
-        searchListenerTree(handlers, type, xxTree, typeLength);
-      } else if(xxTree['*'] && xxTree['*']._listeners) {
-        searchListenerTree(handlers, type, xxTree['*'], typeLength);
-      }
-    }
-
-    return listeners;
-  }
-
-  function growListenerTree(type, listener) {
-
-    type = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-
-    //
-    // Looks for two consecutive '**', if so, don't add the event at all.
-    //
-    for(var i = 0, len = type.length; i+1 < len; i++) {
-      if(type[i] === '**' && type[i+1] === '**') {
-        return;
-      }
-    }
-
-    var tree = this.listenerTree;
-    var name = type.shift();
-
-    while (name !== undefined) {
-
-      if (!tree[name]) {
-        tree[name] = {};
-      }
-
-      tree = tree[name];
-
-      if (type.length === 0) {
-
-        if (!tree._listeners) {
-          tree._listeners = listener;
-        }
-        else {
-          if (typeof tree._listeners === 'function') {
-            tree._listeners = [tree._listeners];
-          }
-
-          tree._listeners.push(listener);
-
-          if (
-            !tree._listeners.warned &&
-            this._events.maxListeners > 0 &&
-            tree._listeners.length > this._events.maxListeners
-          ) {
-            tree._listeners.warned = true;
-            logPossibleMemoryLeak.call(this, tree._listeners.length, name);
-          }
-        }
-        return true;
-      }
-      name = type.shift();
-    }
-    return true;
-  }
-
-  // By default EventEmitters will print a warning if more than
-  // 10 listeners are added to it. This is a useful default which
-  // helps finding memory leaks.
-  //
-  // Obviously not all Emitters should be limited to 10. This function allows
-  // that to be increased. Set to zero for unlimited.
-
-  EventEmitter.prototype.delimiter = '.';
-
-  EventEmitter.prototype.setMaxListeners = function(n) {
-    if (n !== undefined) {
-      this._events || init.call(this);
-      this._events.maxListeners = n;
-      if (!this._conf) this._conf = {};
-      this._conf.maxListeners = n;
-    }
-  };
-
-  EventEmitter.prototype.event = '';
-
-  EventEmitter.prototype.once = function(event, fn) {
-    this.many(event, 1, fn);
-    return this;
-  };
-
-  EventEmitter.prototype.many = function(event, ttl, fn) {
-    var self = this;
-
-    if (typeof fn !== 'function') {
-      throw new Error('many only accepts instances of Function');
-    }
-
-    function listener() {
-      if (--ttl === 0) {
-        self.off(event, listener);
-      }
-      fn.apply(this, arguments);
-    }
-
-    listener._origin = fn;
-
-    this.on(event, listener);
-
-    return self;
-  };
-
-  EventEmitter.prototype.emit = function() {
-
-    this._events || init.call(this);
-
-    var type = arguments[0];
-
-    if (type === 'newListener' && !this.newListener) {
-      if (!this._events.newListener) {
-        return false;
-      }
-    }
-
-    var al = arguments.length;
-    var args,l,i,j;
-    var handler;
-
-    if (this._all && this._all.length) {
-      handler = this._all.slice();
-      if (al > 3) {
-        args = new Array(al);
-        for (j = 0; j < al; j++) args[j] = arguments[j];
-      }
-
-      for (i = 0, l = handler.length; i < l; i++) {
-        this.event = type;
-        switch (al) {
-        case 1:
-          handler[i].call(this, type);
-          break;
-        case 2:
-          handler[i].call(this, type, arguments[1]);
-          break;
-        case 3:
-          handler[i].call(this, type, arguments[1], arguments[2]);
-          break;
-        default:
-          handler[i].apply(this, args);
-        }
-      }
-    }
-
-    if (this.wildcard) {
-      handler = [];
-      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-      searchListenerTree.call(this, handler, ns, this.listenerTree, 0);
-    } else {
-      handler = this._events[type];
-      if (typeof handler === 'function') {
-        this.event = type;
-        switch (al) {
-        case 1:
-          handler.call(this);
-          break;
-        case 2:
-          handler.call(this, arguments[1]);
-          break;
-        case 3:
-          handler.call(this, arguments[1], arguments[2]);
-          break;
-        default:
-          args = new Array(al - 1);
-          for (j = 1; j < al; j++) args[j - 1] = arguments[j];
-          handler.apply(this, args);
-        }
-        return true;
-      } else if (handler) {
-        // need to make copy of handlers because list can change in the middle
-        // of emit call
-        handler = handler.slice();
-      }
-    }
-
-    if (handler && handler.length) {
-      if (al > 3) {
-        args = new Array(al - 1);
-        for (j = 1; j < al; j++) args[j - 1] = arguments[j];
-      }
-      for (i = 0, l = handler.length; i < l; i++) {
-        this.event = type;
-        switch (al) {
-        case 1:
-          handler[i].call(this);
-          break;
-        case 2:
-          handler[i].call(this, arguments[1]);
-          break;
-        case 3:
-          handler[i].call(this, arguments[1], arguments[2]);
-          break;
-        default:
-          handler[i].apply(this, args);
-        }
-      }
-      return true;
-    } else if (!this._all && type === 'error') {
-      if (arguments[1] instanceof Error) {
-        throw arguments[1]; // Unhandled 'error' event
-      } else {
-        throw new Error("Uncaught, unspecified 'error' event.");
-      }
-      return false;
-    }
-
-    return !!this._all;
-  };
-
-  EventEmitter.prototype.emitAsync = function() {
-
-    this._events || init.call(this);
-
-    var type = arguments[0];
-
-    if (type === 'newListener' && !this.newListener) {
-        if (!this._events.newListener) { return Promise.resolve([false]); }
-    }
-
-    var promises= [];
-
-    var al = arguments.length;
-    var args,l,i,j;
-    var handler;
-
-    if (this._all) {
-      if (al > 3) {
-        args = new Array(al);
-        for (j = 1; j < al; j++) args[j] = arguments[j];
-      }
-      for (i = 0, l = this._all.length; i < l; i++) {
-        this.event = type;
-        switch (al) {
-        case 1:
-          promises.push(this._all[i].call(this, type));
-          break;
-        case 2:
-          promises.push(this._all[i].call(this, type, arguments[1]));
-          break;
-        case 3:
-          promises.push(this._all[i].call(this, type, arguments[1], arguments[2]));
-          break;
-        default:
-          promises.push(this._all[i].apply(this, args));
-        }
-      }
-    }
-
-    if (this.wildcard) {
-      handler = [];
-      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-      searchListenerTree.call(this, handler, ns, this.listenerTree, 0);
-    } else {
-      handler = this._events[type];
-    }
-
-    if (typeof handler === 'function') {
-      this.event = type;
-      switch (al) {
-      case 1:
-        promises.push(handler.call(this));
-        break;
-      case 2:
-        promises.push(handler.call(this, arguments[1]));
-        break;
-      case 3:
-        promises.push(handler.call(this, arguments[1], arguments[2]));
-        break;
-      default:
-        args = new Array(al - 1);
-        for (j = 1; j < al; j++) args[j - 1] = arguments[j];
-        promises.push(handler.apply(this, args));
-      }
-    } else if (handler && handler.length) {
-      if (al > 3) {
-        args = new Array(al - 1);
-        for (j = 1; j < al; j++) args[j - 1] = arguments[j];
-      }
-      for (i = 0, l = handler.length; i < l; i++) {
-        this.event = type;
-        switch (al) {
-        case 1:
-          promises.push(handler[i].call(this));
-          break;
-        case 2:
-          promises.push(handler[i].call(this, arguments[1]));
-          break;
-        case 3:
-          promises.push(handler[i].call(this, arguments[1], arguments[2]));
-          break;
-        default:
-          promises.push(handler[i].apply(this, args));
-        }
-      }
-    } else if (!this._all && type === 'error') {
-      if (arguments[1] instanceof Error) {
-        return Promise.reject(arguments[1]); // Unhandled 'error' event
-      } else {
-        return Promise.reject("Uncaught, unspecified 'error' event.");
-      }
-    }
-
-    return Promise.all(promises);
-  };
-
-  EventEmitter.prototype.on = function(type, listener) {
-    if (typeof type === 'function') {
-      this.onAny(type);
-      return this;
-    }
-
-    if (typeof listener !== 'function') {
-      throw new Error('on only accepts instances of Function');
-    }
-    this._events || init.call(this);
-
-    // To avoid recursion in the case that type == "newListeners"! Before
-    // adding it to the listeners, first emit "newListeners".
-    this.emit('newListener', type, listener);
-
-    if (this.wildcard) {
-      growListenerTree.call(this, type, listener);
-      return this;
-    }
-
-    if (!this._events[type]) {
-      // Optimize the case of one listener. Don't need the extra array object.
-      this._events[type] = listener;
-    }
-    else {
-      if (typeof this._events[type] === 'function') {
-        // Change to array.
-        this._events[type] = [this._events[type]];
-      }
-
-      // If we've already got an array, just append.
-      this._events[type].push(listener);
-
-      // Check for listener leak
-      if (
-        !this._events[type].warned &&
-        this._events.maxListeners > 0 &&
-        this._events[type].length > this._events.maxListeners
-      ) {
-        this._events[type].warned = true;
-        logPossibleMemoryLeak.call(this, this._events[type].length, type);
-      }
-    }
-
-    return this;
-  };
-
-  EventEmitter.prototype.onAny = function(fn) {
-    if (typeof fn !== 'function') {
-      throw new Error('onAny only accepts instances of Function');
-    }
-
-    if (!this._all) {
-      this._all = [];
-    }
-
-    // Add the function to the event listener collection.
-    this._all.push(fn);
-    return this;
-  };
-
-  EventEmitter.prototype.addListener = EventEmitter.prototype.on;
-
-  EventEmitter.prototype.off = function(type, listener) {
-    if (typeof listener !== 'function') {
-      throw new Error('removeListener only takes instances of Function');
-    }
-
-    var handlers,leafs=[];
-
-    if(this.wildcard) {
-      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-      leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
-    }
-    else {
-      // does not use listeners(), so no side effect of creating _events[type]
-      if (!this._events[type]) return this;
-      handlers = this._events[type];
-      leafs.push({_listeners:handlers});
-    }
-
-    for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
-      var leaf = leafs[iLeaf];
-      handlers = leaf._listeners;
-      if (isArray(handlers)) {
-
-        var position = -1;
-
-        for (var i = 0, length = handlers.length; i < length; i++) {
-          if (handlers[i] === listener ||
-            (handlers[i].listener && handlers[i].listener === listener) ||
-            (handlers[i]._origin && handlers[i]._origin === listener)) {
-            position = i;
-            break;
-          }
-        }
-
-        if (position < 0) {
-          continue;
-        }
-
-        if(this.wildcard) {
-          leaf._listeners.splice(position, 1);
-        }
-        else {
-          this._events[type].splice(position, 1);
-        }
-
-        if (handlers.length === 0) {
-          if(this.wildcard) {
-            delete leaf._listeners;
-          }
-          else {
-            delete this._events[type];
-          }
-        }
-
-        this.emit("removeListener", type, listener);
-
-        return this;
-      }
-      else if (handlers === listener ||
-        (handlers.listener && handlers.listener === listener) ||
-        (handlers._origin && handlers._origin === listener)) {
-        if(this.wildcard) {
-          delete leaf._listeners;
-        }
-        else {
-          delete this._events[type];
-        }
-
-        this.emit("removeListener", type, listener);
-      }
-    }
-
-    function recursivelyGarbageCollect(root) {
-      if (root === undefined) {
-        return;
-      }
-      var keys = Object.keys(root);
-      for (var i in keys) {
-        var key = keys[i];
-        var obj = root[key];
-        if ((obj instanceof Function) || (typeof obj !== "object") || (obj === null))
-          continue;
-        if (Object.keys(obj).length > 0) {
-          recursivelyGarbageCollect(root[key]);
-        }
-        if (Object.keys(obj).length === 0) {
-          delete root[key];
-        }
-      }
-    }
-    recursivelyGarbageCollect(this.listenerTree);
-
-    return this;
-  };
-
-  EventEmitter.prototype.offAny = function(fn) {
-    var i = 0, l = 0, fns;
-    if (fn && this._all && this._all.length > 0) {
-      fns = this._all;
-      for(i = 0, l = fns.length; i < l; i++) {
-        if(fn === fns[i]) {
-          fns.splice(i, 1);
-          this.emit("removeListenerAny", fn);
-          return this;
-        }
-      }
-    } else {
-      fns = this._all;
-      for(i = 0, l = fns.length; i < l; i++)
-        this.emit("removeListenerAny", fns[i]);
-      this._all = [];
-    }
-    return this;
-  };
-
-  EventEmitter.prototype.removeListener = EventEmitter.prototype.off;
-
-  EventEmitter.prototype.removeAllListeners = function(type) {
-    if (arguments.length === 0) {
-      !this._events || init.call(this);
-      return this;
-    }
-
-    if (this.wildcard) {
-      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-      var leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
-
-      for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
-        var leaf = leafs[iLeaf];
-        leaf._listeners = null;
-      }
-    }
-    else if (this._events) {
-      this._events[type] = null;
-    }
-    return this;
-  };
-
-  EventEmitter.prototype.listeners = function(type) {
-    if (this.wildcard) {
-      var handlers = [];
-      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
-      searchListenerTree.call(this, handlers, ns, this.listenerTree, 0);
-      return handlers;
-    }
-
-    this._events || init.call(this);
-
-    if (!this._events[type]) this._events[type] = [];
-    if (!isArray(this._events[type])) {
-      this._events[type] = [this._events[type]];
-    }
-    return this._events[type];
-  };
-
-  EventEmitter.prototype.listenerCount = function(type) {
-    return this.listeners(type).length;
-  };
-
-  EventEmitter.prototype.listenersAny = function() {
-
-    if(this._all) {
-      return this._all;
-    }
-    else {
-      return [];
-    }
-
-  };
-
-  if (typeof define === 'function' && define.amd) {
-     // AMD. Register as an anonymous module.
-    define(function() {
-      return EventEmitter;
-    });
-  } else if (typeof exports === 'object') {
-    // CommonJS
-    module.exports = EventEmitter;
-  }
-  else {
-    // Browser global.
-    window.EventEmitter2 = EventEmitter;
-  }
-}();
-
-},{}],292:[function(_dereq_,module,exports){
-(function (global){
-'use strict';
-
-// Intentionally use native-promise-only here... Other promise libraries (es6-promise)
-// duck-punch the global Promise definition which messes up Angular 2 since it
-// also duck-punches the global Promise definition. For now, keep native-promise-only.
-
-var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
-  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-};
-
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
-  };
-}();
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-var Promise = _dereq_("native-promise-only");
-_dereq_('whatwg-fetch');
-var EventEmitter = _dereq_('eventemitter2').EventEmitter2;
-var copy = _dereq_('shallow-copy');
-
-/**
- * The Formio interface class.
- *
- *   let formio = new Formio('https://examples.form.io/example');
- */
-
-var Formio = function () {
-  function Formio(path) {
-    var _this = this;
-
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-    _classCallCheck(this, Formio);
-
-    // Ensure we have an instance of Formio.
-    if (!(this instanceof Formio)) {
-      return new Formio(path);
-    }
-
-    // Initialize our variables.
-    this.base = '';
-    this.projectsUrl = '';
-    this.projectUrl = '';
-    this.projectId = '';
-    this.formUrl = '';
-    this.formsUrl = '';
-    this.formId = '';
-    this.submissionsUrl = '';
-    this.submissionUrl = '';
-    this.submissionId = '';
-    this.actionsUrl = '';
-    this.actionId = '';
-    this.actionUrl = '';
-    this.query = '';
-
-    if (options.hasOwnProperty('base')) {
-      this.base = options.base;
-    } else if (Formio.baseUrl) {
-      this.base = Formio.baseUrl;
-    } else {
-      this.base = window.location.href.match(/http[s]?:\/\/api./)[0];
-    }
-
-    if (!path) {
-      // Allow user to create new projects if this was instantiated without
-      // a url
-      this.projectUrl = this.base + '/project';
-      this.projectsUrl = this.base + '/project';
-      this.projectId = false;
-      this.query = '';
-      return;
-    }
-
-    if (options.hasOwnProperty('project')) {
-      this.projectUrl = options.project;
-    }
-
-    var project = this.projectUrl || Formio.projectUrl;
-
-    // The baseURL is the same as the projectUrl. This is almost certainly against
-    // the Open Source server.
-    if (project && this.base === project) {
-      this.noProject = true;
-      this.projectUrl = this.base;
-    }
-
-    // Normalize to an absolute path.
-    if (path.indexOf('http') !== 0 && path.indexOf('//') !== 0) {
-      path = this.base + path;
-    }
-
-    var hostparts = Formio.getUrlParts(path);
-    var parts = [];
-    var hostName = hostparts[1] + hostparts[2];
-    path = hostparts.length > 3 ? hostparts[3] : '';
-    var queryparts = path.split('?');
-    if (queryparts.length > 1) {
-      path = queryparts[0];
-      this.query = '?' + queryparts[1];
-    }
-
-    // Register a specific path.
-    var registerPath = function registerPath(name, base) {
-      _this[name + 'sUrl'] = base + '/' + name;
-      var regex = new RegExp('\/' + name + '\/([^/]+)');
-      if (path.search(regex) !== -1) {
-        parts = path.match(regex);
-        _this[name + 'Url'] = parts ? base + parts[0] : '';
-        _this[name + 'Id'] = parts.length > 1 ? parts[1] : '';
-        base += parts[0];
-      }
-      return base;
-    };
-
-    // Register an array of items.
-    var registerItems = function registerItems(items, base, staticBase) {
-      for (var i in items) {
-        if (items.hasOwnProperty(i)) {
-          var item = items[i];
-          if (item instanceof Array) {
-            registerItems(item, base, true);
-          } else {
-            var newBase = registerPath(item, base);
-            base = staticBase ? base : newBase;
-          }
-        }
-      }
-    };
-
-    if (!this.projectUrl || this.projectUrl === this.base) {
-      this.projectUrl = hostName;
-    }
-
-    if (!this.noProject) {
-      // Determine the projectUrl and projectId
-      if (path.search(/(^|\/)(project)($|\/)/) !== -1) {
-        // Get project id as project/:projectId.
-        registerItems(['project'], hostName);
-      } else if (hostName === this.base) {
-        // Get project id as first part of path (subdirectory).
-        if (hostparts.length > 3 && path.split('/').length > 1) {
-          var pathParts = path.split('/');
-          pathParts.shift(); // Throw away the first /.
-          this.projectId = pathParts.shift();
-          path = '/' + pathParts.join('/');
-          this.projectUrl = hostName + '/' + this.projectId;
-        }
-      } else {
-        // Get project id from subdomain.
-        if (hostparts.length > 2 && (hostparts[2].split('.').length > 2 || hostName.indexOf('localhost') !== -1)) {
-          this.projectUrl = hostName;
-          this.projectId = hostparts[2].split('.')[0];
-        }
-      }
-      this.projectsUrl = this.projectsUrl || this.base + '/project';
-    }
-
-    // Configure Form urls and form ids.
-    if (path.search(/(^|\/)(project|form)($|\/)/) !== -1) {
-      registerItems(['form', ['submission', 'action']], this.projectUrl);
-    } else {
-      var subRegEx = new RegExp('\/(submission|action)($|\/.*)');
-      var subs = path.match(subRegEx);
-      this.pathType = subs && subs.length > 1 ? subs[1] : '';
-      path = path.replace(subRegEx, '');
-      path = path.replace(/\/$/, '');
-      this.formsUrl = this.projectUrl + '/form';
-      this.formUrl = this.projectUrl + path;
-      this.formId = path.replace(/^\/+|\/+$/g, '');
-      var items = ['submission', 'action'];
-      for (var i in items) {
-        if (items.hasOwnProperty(i)) {
-          var item = items[i];
-          this[item + 'sUrl'] = this.projectUrl + path + '/' + item;
-          if (this.pathType === item && subs.length > 2 && subs[2]) {
-            this[item + 'Id'] = subs[2].replace(/^\/+|\/+$/g, '');
-            this[item + 'Url'] = this.projectUrl + path + subs[0];
-          }
-        }
-      }
-    }
-
-    // Set the app url if it is not set.
-    if (!Formio.projectUrlSet) {
-      Formio.projectUrl = this.projectUrl;
-    }
-  }
-
-  _createClass(Formio, [{
-    key: 'delete',
-    value: function _delete(type, opts) {
-      var _id = type + 'Id';
-      var _url = type + 'Url';
-      if (!this[_id]) {
-        Promise.reject('Nothing to delete');
-      }
-      Formio.cache = {};
-      return this.makeRequest(type, this[_url], 'delete', null, opts);
-    }
-  }, {
-    key: 'index',
-    value: function index(type, query, opts) {
-      var _url = type + 'Url';
-      query = query || '';
-      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
-        query = '?' + Formio.serialize(query.params);
-      }
-      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
-    }
-  }, {
-    key: 'save',
-    value: function save(type, data, opts) {
-      var _id = type + 'Id';
-      var _url = type + 'Url';
-      var method = this[_id] || data._id ? 'put' : 'post';
-      var reqUrl = this[_id] ? this[_url] : this[type + 'sUrl'];
-      if (!this[_id] && data._id && method === 'put' && reqUrl.indexOf(data._id) === -1) {
-        reqUrl += '/' + data._id;
-      }
-      Formio.cache = {};
-      return this.makeRequest(type, reqUrl + this.query, method, data, opts);
-    }
-  }, {
-    key: 'load',
-    value: function load(type, query, opts) {
-      var _id = type + 'Id';
-      var _url = type + 'Url';
-      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
-        query = Formio.serialize(query.params);
-      }
-      if (query) {
-        query = this.query ? this.query + '&' + query : '?' + query;
-      } else {
-        query = this.query;
-      }
-      if (!this[_id]) {
-        return Promise.reject('Missing ' + _id);
-      }
-      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
-    }
-  }, {
-    key: 'makeRequest',
-    value: function makeRequest(type, url, method, data, opts) {
-      method = (method || 'GET').toUpperCase();
-      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
-        opts = {};
-      }
-
-      var requestArgs = {
-        formio: this,
-        type: type,
-        url: url,
-        method: method,
-        data: data,
-        opts: opts
-      };
-
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('request', requestArgs).then(function (result) {
-          if (result === null || result === undefined) {
-            return Formio.request(url, method, data, opts.header, opts);
-          }
-          return result;
-        });
-      });
-
-      return Formio.pluginAlter('wrapRequestPromise', request, requestArgs);
-    }
-  }, {
-    key: 'loadProject',
-    value: function loadProject(query, opts) {
-      return this.load('project', query, opts);
-    }
-  }, {
-    key: 'saveProject',
-    value: function saveProject(data, opts) {
-      return this.save('project', data, opts);
-    }
-  }, {
-    key: 'deleteProject',
-    value: function deleteProject(opts) {
-      return this.delete('project', opts);
-    }
-  }, {
-    key: 'loadForm',
-    value: function loadForm(query, opts) {
-      return this.load('form', query, opts);
-    }
-  }, {
-    key: 'saveForm',
-    value: function saveForm(data, opts) {
-      return this.save('form', data, opts);
-    }
-  }, {
-    key: 'deleteForm',
-    value: function deleteForm(opts) {
-      return this.delete('form', opts);
-    }
-  }, {
-    key: 'loadForms',
-    value: function loadForms(query, opts) {
-      return this.index('forms', query, opts);
-    }
-  }, {
-    key: 'loadSubmission',
-    value: function loadSubmission(query, opts) {
-      return this.load('submission', query, opts);
-    }
-  }, {
-    key: 'saveSubmission',
-    value: function saveSubmission(data, opts) {
-      return this.save('submission', data, opts);
-    }
-  }, {
-    key: 'deleteSubmission',
-    value: function deleteSubmission(opts) {
-      return this.delete('submission', opts);
-    }
-  }, {
-    key: 'loadSubmissions',
-    value: function loadSubmissions(query, opts) {
-      return this.index('submissions', query, opts);
-    }
-  }, {
-    key: 'loadAction',
-    value: function loadAction(query, opts) {
-      return this.load('action', query, opts);
-    }
-  }, {
-    key: 'saveAction',
-    value: function saveAction(data, opts) {
-      return this.save('action', data, opts);
-    }
-  }, {
-    key: 'deleteAction',
-    value: function deleteAction(opts) {
-      return this.delete('action', opts);
-    }
-  }, {
-    key: 'loadActions',
-    value: function loadActions(query, opts) {
-      return this.index('actions', query, opts);
-    }
-  }, {
-    key: 'availableActions',
-    value: function availableActions() {
-      return this.makeRequest('availableActions', this.formUrl + '/actions');
-    }
-  }, {
-    key: 'actionInfo',
-    value: function actionInfo(name) {
-      return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name);
-    }
-  }, {
-    key: 'uploadFile',
-    value: function uploadFile(storage, file, fileName, dir, progressCallback, url) {
-      var requestArgs = {
-        provider: storage,
-        method: 'upload',
-        file: file,
-        fileName: fileName,
-        dir: dir
-      };
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
-          if (storage && (result === null || result === undefined)) {
-            if (Formio.providers.storage.hasOwnProperty(storage)) {
-              var provider = new Formio.providers.storage[storage](this);
-              return provider.uploadFile(file, fileName, dir, progressCallback, url);
-            } else {
-              throw 'Storage provider not found';
-            }
-          }
-          return result || { url: '' };
-        }.bind(this));
-      }.bind(this));
-
-      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
-    }
-  }, {
-    key: 'downloadFile',
-    value: function downloadFile(file) {
-      var requestArgs = {
-        method: 'download',
-        file: file
-      };
-
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
-          if (file.storage && (result === null || result === undefined)) {
-            if (Formio.providers.storage.hasOwnProperty(file.storage)) {
-              var provider = new Formio.providers.storage[file.storage](this);
-              return provider.downloadFile(file);
-            } else {
-              throw 'Storage provider not found';
-            }
-          }
-          return result || { url: '' };
-        }.bind(this));
-      }.bind(this));
-
-      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
-    }
-  }], [{
-    key: 'loadProjects',
-    value: function loadProjects(query, opts) {
-      query = query || '';
-      if ((typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
-        query = '?' + serialize(query.params);
-      }
-      return Formio.makeStaticRequest(Formio.baseUrl + '/project' + query);
-    }
-  }, {
-    key: 'getUrlParts',
-    value: function getUrlParts(url) {
-      var regex = '^(http[s]?:\\/\\/)';
-      if (this.base && url.indexOf(this.base) === 0) {
-        regex += '(' + this.base.replace(/^http[s]?:\/\//, '') + ')';
-      } else {
-        regex += '([^/]+)';
-      }
-      regex += '($|\\/.*)';
-      return url.match(new RegExp(regex));
-    }
-  }, {
-    key: 'serialize',
-    value: function serialize(obj) {
-      var str = [];
-      for (var p in obj) {
-        if (obj.hasOwnProperty(p)) {
-          str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-        }
-      }return str.join("&");
-    }
-  }, {
-    key: 'makeStaticRequest',
-    value: function makeStaticRequest(url, method, data, opts) {
-      method = (method || 'GET').toUpperCase();
-      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
-        opts = {};
-      }
-      var requestArgs = {
-        url: url,
-        method: method,
-        data: data
-      };
-
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('staticRequest', requestArgs).then(function (result) {
-          if (result === null || result === undefined) {
-            return Formio.request(url, method, data, opts.header, opts);
-          }
-          return result;
-        });
-      });
-
-      return Formio.pluginAlter('wrapStaticRequestPromise', request, requestArgs);
-    }
-  }, {
-    key: 'request',
-    value: function request(url, method, data, header, opts) {
-      if (!url) {
-        return Promise.reject('No url provided');
-      }
-      method = (method || 'GET').toUpperCase();
-
-      // For reverse compatibility, if they provided the ignoreCache parameter,
-      // then change it back to the options format where that is a parameter.
-      if (typeof opts === 'boolean') {
-        opts = { ignoreCache: opts };
-      }
-      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
-        opts = {};
-      }
-
-      var cacheKey = btoa(url);
-
-      return new Promise(function (resolve, reject) {
-        // Get the cached promise to save multiple loads.
-        if (!opts.ignoreCache && method === 'GET' && Formio.cache.hasOwnProperty(cacheKey)) {
-          return resolve(Formio.cache[cacheKey]);
-        }
-
-        var requestToken = '';
-        resolve(new Promise(function (resolve, reject) {
-          // Set up and fetch request
-          var headers = header || new Headers({
-            'Accept': 'application/json',
-            'Content-type': 'application/json; charset=UTF-8'
-          });
-          var token = Formio.getToken();
-          if (token && !opts.noToken) {
-            headers.append('x-jwt-token', token);
-          }
-
-          var options = {
-            method: method,
-            headers: headers,
-            mode: 'cors'
-          };
-          if (data) {
-            options.body = JSON.stringify(data);
-          }
-
-          requestToken = headers.get('x-jwt-token');
-          resolve(fetch(url, options));
-        }).catch(function (err) {
-          err.message = 'Could not connect to API server (' + err.message + ')';
-          err.networkError = true;
-          throw err;
-        }).then(function (response) {
-          if (!response.ok) {
-            if (response.status === 440) {
-              Formio.setToken(null);
-              Formio.events.emit('formio.sessionExpired', response.body);
-            } else if (response.status === 401) {
-              Formio.events.emit('formio.unauthorized', response.body);
-            }
-            // Parse and return the error as a rejected promise to reject this promise
-            return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (error) {
-              throw error;
-            });
-          }
-
-          // Handle fetch results
-          var token = response.headers.get('x-jwt-token');
-
-          // In some strange cases, the fetch library will return an x-jwt-token without sending
-          // one to the server. This has even been debugged on the server to verify that no token
-          // was introduced with the request, but the response contains a token. This is an Invalid
-          // case where we do not send an x-jwt-token and get one in return for any GET request.
-          var tokenIntroduced = false;
-          if (method === 'GET' && !requestToken && token && url.indexOf('token=') === -1 && url.indexOf('x-jwt-token=' === -1)) {
-            console.warn('Token was introduced in request.');
-            tokenIntroduced = true;
-          }
-
-          if (response.status >= 200 && response.status < 300 && token && token !== '' && !tokenIntroduced) {
-            Formio.setToken(token);
-          }
-          // 204 is no content. Don't try to .json() it.
-          if (response.status === 204) {
-            return {};
-          }
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (result) {
-            // Add some content-range metadata to the result here
-            var range = response.headers.get('content-range');
-            if (range && (typeof result === 'undefined' ? 'undefined' : _typeof(result)) === 'object') {
-              range = range.split('/');
-              if (range[0] !== '*') {
-                var skipLimit = range[0].split('-');
-                result.skip = Number(skipLimit[0]);
-                result.limit = skipLimit[1] - skipLimit[0] + 1;
-              }
-              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
-            }
-
-            if (!opts.getHeaders) {
-              return result;
-            }
-
-            var headers = {};
-            response.headers.forEach(function (item, key) {
-              headers[key] = item;
-            });
-
-            return new Promise(function (resolve, reject) {
-              resolve({ result: result, headers: headers });
-            });
-          });
-        }).catch(function (err) {
-          if (err === 'Bad Token') {
-            Formio.setToken(null);
-            Formio.events.emit('formio.badToken', err);
-          }
-          if (Formio.cache.hasOwnProperty(cacheKey)) {
-            // Remove failed promises from cache
-            delete Formio.cache[cacheKey];
-          }
-          // Propagate error so client can handle accordingly
-          throw err;
-        }));
-      }).then(function (result) {
-        // Save the cache
-        if (method === 'GET') {
-          Formio.cache[cacheKey] = Promise.resolve(result);
-        }
-
-        // Shallow copy result so modifications don't end up in cache
-        if (Array.isArray(result)) {
-          var resultCopy = result.map(copy);
-          resultCopy.skip = result.skip;
-          resultCopy.limit = result.limit;
-          resultCopy.serverCount = result.serverCount;
-          return resultCopy;
-        }
-        return copy(result);
-      });
-    }
-  }, {
-    key: 'setToken',
-    value: function setToken(token) {
-      token = token || '';
-      if (token === this.token) {
-        return;
-      }
-      this.token = token;
-      if (!token) {
-        Formio.setUser(null);
-        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-        try {
-          return localStorage.removeItem('formioToken');
-        } catch (err) {
-          return;
-        }
-      }
-      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-      try {
-        localStorage.setItem('formioToken', token);
-      } catch (err) {
-        // Do nothing.
-      }
-      return Formio.currentUser(); // Run this so user is updated if null
-    }
-  }, {
-    key: 'getToken',
-    value: function getToken() {
-      if (this.token) {
-        return this.token;
-      }
-      try {
-        var token = localStorage.getItem('formioToken') || '';
-        this.token = token;
-        return token;
-      } catch (e) {
-        return '';
-      }
-    }
-  }, {
-    key: 'setUser',
-    value: function setUser(user) {
-      if (!user) {
-        this.setToken(null);
-        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-        try {
-          return localStorage.removeItem('formioUser');
-        } catch (err) {
-          return;
-        }
-      }
-      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-      try {
-        localStorage.setItem('formioUser', JSON.stringify(user));
-      } catch (err) {
-        // Do nothing.
-      }
-    }
-  }, {
-    key: 'getUser',
-    value: function getUser() {
-      try {
-        return JSON.parse(localStorage.getItem('formioUser') || null);
-      } catch (e) {
-        return;
-      }
-    }
-  }, {
-    key: 'setBaseUrl',
-    value: function setBaseUrl(url) {
-      Formio.baseUrl = url;
-      if (!Formio.projectUrlSet) {
-        Formio.projectUrl = url;
-      }
-    }
-  }, {
-    key: 'getBaseUrl',
-    value: function getBaseUrl() {
-      return Formio.baseUrl;
-    }
-  }, {
-    key: 'setApiUrl',
-    value: function setApiUrl(url) {
-      return Formio.setBaseUrl(url);
-    }
-  }, {
-    key: 'getApiUrl',
-    value: function getApiUrl() {
-      return Formio.getBaseUrl();
-    }
-  }, {
-    key: 'setAppUrl',
-    value: function setAppUrl(url) {
-      console.warn('Formio.setAppUrl() is deprecated. Use Formio.setProjectUrl instead.');
-      Formio.projectUrl = url;
-      Formio.projectUrlSet = true;
-    }
-  }, {
-    key: 'setProjectUrl',
-    value: function setProjectUrl(url) {
-      Formio.projectUrl = url;
-      Formio.projectUrlSet = true;
-    }
-  }, {
-    key: 'getAppUrl',
-    value: function getAppUrl() {
-      console.warn('Formio.getAppUrl() is deprecated. Use Formio.getProjectUrl instead.');
-      return Formio.projectUrl;
-    }
-  }, {
-    key: 'getProjectUrl',
-    value: function getProjectUrl() {
-      return Formio.projectUrl;
-    }
-  }, {
-    key: 'clearCache',
-    value: function clearCache() {
-      Formio.cache = {};
-    }
-  }, {
-    key: 'noop',
-    value: function noop() {}
-  }, {
-    key: 'identity',
-    value: function identity(value) {
-      return value;
-    }
-  }, {
-    key: 'deregisterPlugin',
-    value: function deregisterPlugin(plugin) {
-      var beforeLength = Formio.plugins.length;
-      Formio.plugins = Formio.plugins.filter(function (p) {
-        if (p !== plugin && p.__name !== plugin) return true;
-        (p.deregister || Formio.noop).call(p, Formio);
-        return false;
-      });
-      return beforeLength !== Formio.plugins.length;
-    }
-  }, {
-    key: 'registerPlugin',
-    value: function registerPlugin(plugin, name) {
-      Formio.plugins.push(plugin);
-      Formio.plugins.sort(function (a, b) {
-        return (b.priority || 0) - (a.priority || 0);
-      });
-      plugin.__name = name;
-      (plugin.init || Formio.noop).call(plugin, Formio);
-    }
-  }, {
-    key: 'getPlugin',
-    value: function getPlugin(name) {
-      return Formio.plugins.reduce(function (result, plugin) {
-        if (result) return result;
-        if (plugin.__name === name) return plugin;
-      }, null);
-    }
-  }, {
-    key: 'pluginWait',
-    value: function pluginWait(pluginFn) {
-      var args = [].slice.call(arguments, 1);
-      return Promise.all(Formio.plugins.map(function (plugin) {
-        return (plugin[pluginFn] || Formio.noop).apply(plugin, args);
-      }));
-    }
-  }, {
-    key: 'pluginGet',
-    value: function pluginGet(pluginFn) {
-      var args = [].slice.call(arguments, 0);
-      var callPlugin = function callPlugin(index, pluginFn) {
-        var plugin = Formio.plugins[index];
-        if (!plugin) return Promise.resolve(null);
-        return Promise.resolve((plugin && plugin[pluginFn] || Formio.noop).apply(plugin, [].slice.call(arguments, 2))).then(function (result) {
-          if (result !== null && result !== undefined) return result;
-          return callPlugin.apply(null, [index + 1].concat(args));
-        });
-      };
-      return callPlugin.apply(null, [0].concat(args));
-    }
-  }, {
-    key: 'pluginAlter',
-    value: function pluginAlter(pluginFn, value) {
-      var args = [].slice.call(arguments, 2);
-      return Formio.plugins.reduce(function (value, plugin) {
-        return (plugin[pluginFn] || Formio.identity).apply(plugin, [value].concat(args));
-      }, value);
-    }
-  }, {
-    key: 'currentUser',
-    value: function currentUser() {
-      var url = Formio.baseUrl + '/current';
-      var user = this.getUser();
-      if (user) {
-        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(user), {
-          url: url,
-          method: 'GET'
-        });
-      }
-      var token = this.getToken();
-      if (!token) {
-        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(null), {
-          url: url,
-          method: 'GET'
-        });
-      }
-      return Formio.makeStaticRequest(url).then(function (response) {
-        Formio.setUser(response);
-        return response;
-      });
-    }
-  }, {
-    key: 'logout',
-    value: function logout() {
-      Formio.setToken(null);
-      Formio.setUser(null);
-      Formio.clearCache();
-      return Formio.makeStaticRequest(Formio.baseUrl + '/logout');
-    }
-
-    /**
-     * Attach an HTML form to Form.io.
-     *
-     * @param form
-     */
-
-  }, {
-    key: 'form',
-    value: function form(_form, options, done) {
-      // Fix the parameters.
-      if (!done && typeof options === 'function') {
-        done = options;
-        options = {};
-      }
-
-      done = done || function () {
-        console.log(arguments);
-      };
-      options = options || {};
-
-      // IF they provide a jquery object, then select the element.
-      if (_form.jquery) {
-        _form = _form[0];
-      }
-      if (!_form) {
-        return done('Invalid Form');
-      }
-
-      var getAction = function getAction() {
-        return options.form || _form.getAttribute('action');
-      };
-
-      /**
-       * Returns the current submission object.
-       * @returns {{data: {}}}
-       */
-      var getSubmission = function getSubmission() {
-        var submission = { data: {} };
-        var setValue = function setValue(path, value) {
-          var isArray = path.substr(-2) === '[]';
-          if (isArray) {
-            path = path.replace('[]', '');
-          }
-          var paths = path.replace(/\[|\]\[/g, '.').replace(/\]$/g, '').split('.');
-          var current = submission;
-          while (path = paths.shift()) {
-            if (!paths.length) {
-              if (isArray) {
-                if (!current[path]) {
-                  current[path] = [];
-                }
-                current[path].push(value);
-              } else {
-                current[path] = value;
-              }
-            } else {
-              if (!current[path]) {
-                current[path] = {};
-              }
-              current = current[path];
-            }
-          }
-        };
-
-        // Get the form data from this form.
-        var formData = new FormData(_form);
-        var entries = formData.entries();
-        var entry = null;
-        while (entry = entries.next().value) {
-          setValue(entry[0], entry[1]);
-        }
-        return submission;
-      };
-
-      // Submits the form.
-      var submit = function submit(event) {
-        if (event) {
-          event.preventDefault();
-        }
-        var action = getAction();
-        if (!action) {
-          return;
-        }
-        new Formio(action).saveSubmission(getSubmission()).then(function (sub) {
-          done(null, sub);
-        }, done);
-      };
-
-      // Attach formio to the provided form.
-      if (_form.attachEvent) {
-        _form.attachEvent('submit', submit);
-      } else {
-        _form.addEventListener('submit', submit);
-      }
-
-      return {
-        submit: submit,
-        getAction: getAction,
-        getSubmission: getSubmission
-      };
-    }
-  }, {
-    key: 'fieldData',
-    value: function fieldData(data, component) {
-      if (!data) {
-        return '';
-      }
-      if (!component || !component.key) {
-        return data;
-      }
-      if (component.key.indexOf('.') !== -1) {
-        var value = data;
-        var parts = component.key.split('.');
-        var key = '';
-        for (var i = 0; i < parts.length; i++) {
-          key = parts[i];
-
-          // Handle nested resources
-          if (value.hasOwnProperty('_id')) {
-            value = value.data;
-          }
-
-          // Return if the key is not found on the value.
-          if (!value.hasOwnProperty(key)) {
-            return;
-          }
-
-          // Convert old single field data in submissions to multiple
-          if (key === parts[parts.length - 1] && component.multiple && !Array.isArray(value[key])) {
-            value[key] = [value[key]];
-          }
-
-          // Set the value of this key.
-          value = value[key];
-        }
-        return value;
-      } else {
-        // Convert old single field data in submissions to multiple
-        if (component.multiple && !Array.isArray(data[component.key])) {
-          data[component.key] = [data[component.key]];
-        }
-        return data[component.key];
-      }
-    }
-  }]);
-
-  return Formio;
-}();
-
-// Define all the static properties.
-
-
-exports.Formio = Formio;
-Formio.baseUrl = 'https://api.form.io';
-Formio.projectUrl = Formio.baseUrl;
-Formio.projectUrlSet = false;
-Formio.plugins = [];
-Formio.cache = {};
-Formio.providers = _dereq_('./providers');
-Formio.events = new EventEmitter({
-  wildcard: false,
-  maxListeners: 0
-});
-
-module.exports = global.Formio = Formio;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":293,"eventemitter2":291,"native-promise-only":458,"shallow-copy":461,"whatwg-fetch":464}],293:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = {
-  storage: _dereq_('./storage')
-};
-
-},{"./storage":295}],294:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_("native-promise-only");
-var dropbox = function dropbox(formio) {
-  return {
-    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
-      return new Promise(function (resolve, reject) {
-        // Send the file with data.
-        var xhr = new XMLHttpRequest();
-
-        if (typeof progressCallback === 'function') {
-          xhr.upload.onprogress = progressCallback;
-        }
-
-        var fd = new FormData();
-        fd.append('name', fileName);
-        fd.append('dir', dir);
-        fd.append('file', file);
-
-        // Fire on network error.
-        xhr.onerror = function (err) {
-          err.networkError = true;
-          reject(err);
-        };
-
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            var response = JSON.parse(xhr.response);
-            response.storage = 'dropbox';
-            response.size = file.size;
-            response.type = file.type;
-            response.url = response.path_lower;
-            resolve(response);
-          } else {
-            reject(xhr.response || 'Unable to upload file');
-          }
-        };
-
-        xhr.onabort = function (err) {
-          reject(err);
-        };
-
-        xhr.open('POST', formio.formUrl + '/storage/dropbox');
-        var token = false;
-        try {
-          token = localStorage.getItem('formioToken');
-        } catch (e) {
-          // Swallow error.
-        }
-        if (token) {
-          xhr.setRequestHeader('x-jwt-token', token);
-        }
-        xhr.send(fd);
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      var token = false;
-      try {
-        token = localStorage.getItem('formioToken');
-      } catch (e) {
-        // Swallow error.
-      }
-      file.url = formio.formUrl + '/storage/dropbox?path_lower=' + file.path_lower + (token ? '&x-jwt-token=' + token : '');
-      return Promise.resolve(file);
-    }
-  };
-};
-
-dropbox.title = 'Dropbox';
-module.exports = dropbox;
-
-},{"native-promise-only":458}],295:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = {
-  dropbox: _dereq_('./dropbox.js'),
-  s3: _dereq_('./s3.js'),
-  url: _dereq_('./url.js')
-};
-
-},{"./dropbox.js":294,"./s3.js":296,"./url.js":297}],296:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_("native-promise-only");
-var s3 = function s3(formio) {
-  return {
-    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
-      return new Promise(function (resolve, reject) {
-        // Send the pre response to sign the upload.
-        var pre = new XMLHttpRequest();
-
-        var prefd = new FormData();
-        prefd.append('name', fileName);
-        prefd.append('size', file.size);
-        prefd.append('type', file.type);
-
-        // This only fires on a network error.
-        pre.onerror = function (err) {
-          err.networkError = true;
-          reject(err);
-        };
-
-        pre.onabort = function (err) {
-          reject(err);
-        };
-
-        pre.onload = function () {
-          if (pre.status >= 200 && pre.status < 300) {
-            var response = JSON.parse(pre.response);
-
-            // Send the file with data.
-            var xhr = new XMLHttpRequest();
-
-            if (typeof progressCallback === 'function') {
-              xhr.upload.onprogress = progressCallback;
-            }
-
-            response.data.fileName = fileName;
-            response.data.key += dir + fileName;
-
-            var fd = new FormData();
-            for (var key in response.data) {
-              fd.append(key, response.data[key]);
-            }
-            fd.append('file', file);
-
-            // Fire on network error.
-            xhr.onerror = function (err) {
-              err.networkError = true;
-              reject(err);
-            };
-
-            xhr.onload = function () {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve({
-                  storage: 's3',
-                  name: fileName,
-                  bucket: response.bucket,
-                  key: response.data.key,
-                  url: response.url + response.data.key,
-                  acl: response.data.acl,
-                  size: file.size,
-                  type: file.type
-                });
-              } else {
-                reject(xhr.response || 'Unable to upload file');
-              }
-            };
-
-            xhr.onabort = function (err) {
-              reject(err);
-            };
-
-            xhr.open('POST', response.url);
-
-            xhr.send(fd);
-          } else {
-            reject(pre.response || 'Unable to sign file');
-          }
-        };
-
-        pre.open('POST', formio.formUrl + '/storage/s3');
-
-        pre.setRequestHeader('Accept', 'application/json');
-        pre.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-        var token = false;
-        try {
-          token = localStorage.getItem('formioToken');
-        } catch (e) {
-          // swallow error.
-        }
-        if (token) {
-          pre.setRequestHeader('x-jwt-token', token);
-        }
-
-        pre.send(JSON.stringify({
-          name: fileName,
-          size: file.size,
-          type: file.type
-        }));
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      if (file.acl !== 'public-read') {
-        return formio.makeRequest('file', formio.formUrl + '/storage/s3?bucket=' + file.bucket + '&key=' + file.key, 'GET');
-      } else {
-        return Promise.resolve(file);
-      }
-    }
-  };
-};
-
-s3.title = 'S3';
-module.exports = s3;
-
-},{"native-promise-only":458}],297:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_("native-promise-only");
-var url = function url(formio) {
-  return {
-    title: 'Url',
-    name: 'url',
-    uploadFile: function uploadFile(file, fileName, dir, progressCallback, url) {
-      return new Promise(function (resolve, reject) {
-        var data = {
-          dir: dir,
-          name: fileName,
-          file: file
-        };
-
-        // Send the file with data.
-        var xhr = new XMLHttpRequest();
-
-        if (typeof progressCallback === 'function') {
-          xhr.upload.onprogress = progressCallback;
-        }
-
-        var fd = new FormData();
-        for (var key in data) {
-          fd.append(key, data[key]);
-        }
-
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            // Need to test if xhr.response is decoded or not.
-            var respData = {};
-            try {
-              respData = typeof xhr.response === 'string' ? JSON.parse(xhr.response) : {};
-              respData = respData && respData.data ? respData.data : {};
-            } catch (err) {
-              respData = {};
-            }
-
-            resolve({
-              storage: 'url',
-              name: fileName,
-              url: xhr.responseURL + '/' + fileName,
-              size: file.size,
-              type: file.type,
-              data: respData
-            });
-          } else {
-            reject(xhr.response || 'Unable to upload file');
-          }
-        };
-
-        // Fire on network error.
-        xhr.onerror = function () {
-          reject(xhr);
-        };
-
-        xhr.onabort = function () {
-          reject(xhr);
-        };
-
-        xhr.open('POST', url);
-        var token = localStorage.getItem('formioToken');
-        if (token) {
-          xhr.setRequestHeader('x-jwt-token', token);
-        }
-        xhr.send(fd);
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      // Return the original as there is nothing to do.
-      return Promise.resolve(file);
-    }
-  };
-};
-
-url.title = 'Url';
-module.exports = url;
-
-},{"native-promise-only":458}],298:[function(_dereq_,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5,"lodash/get":435}],299:[function(_dereq_,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"./build/utils":298,"dup":6}],300:[function(_dereq_,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"./_getNative":379,"./_root":420,"dup":7}],301:[function(_dereq_,module,exports){
-arguments[4][8][0].apply(exports,arguments)
-},{"./_hashClear":387,"./_hashDelete":388,"./_hashGet":389,"./_hashHas":390,"./_hashSet":391,"dup":8}],302:[function(_dereq_,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"./_listCacheClear":401,"./_listCacheDelete":402,"./_listCacheGet":403,"./_listCacheHas":404,"./_listCacheSet":405,"dup":9}],303:[function(_dereq_,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"./_getNative":379,"./_root":420,"dup":10}],304:[function(_dereq_,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"./_mapCacheClear":406,"./_mapCacheDelete":407,"./_mapCacheGet":408,"./_mapCacheHas":409,"./_mapCacheSet":410,"dup":11}],305:[function(_dereq_,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"./_getNative":379,"./_root":420,"dup":12}],306:[function(_dereq_,module,exports){
-arguments[4][13][0].apply(exports,arguments)
-},{"./_getNative":379,"./_root":420,"dup":13}],307:[function(_dereq_,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"./_MapCache":304,"./_setCacheAdd":421,"./_setCacheHas":422,"dup":14}],308:[function(_dereq_,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"./_ListCache":302,"./_stackClear":424,"./_stackDelete":425,"./_stackGet":426,"./_stackHas":427,"./_stackSet":428,"dup":15}],309:[function(_dereq_,module,exports){
-arguments[4][16][0].apply(exports,arguments)
-},{"./_root":420,"dup":16}],310:[function(_dereq_,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"./_root":420,"dup":17}],311:[function(_dereq_,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"./_getNative":379,"./_root":420,"dup":18}],312:[function(_dereq_,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],313:[function(_dereq_,module,exports){
-arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],314:[function(_dereq_,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23}],315:[function(_dereq_,module,exports){
-arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],316:[function(_dereq_,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"./_baseTimes":350,"./_isIndex":395,"./isArguments":438,"./isArray":439,"./isBuffer":441,"./isTypedArray":448,"dup":25}],317:[function(_dereq_,module,exports){
-arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],318:[function(_dereq_,module,exports){
-arguments[4][27][0].apply(exports,arguments)
-},{"dup":27}],319:[function(_dereq_,module,exports){
-arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],320:[function(_dereq_,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],321:[function(_dereq_,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"./_baseAssignValue":325,"./eq":433,"dup":33}],322:[function(_dereq_,module,exports){
-arguments[4][34][0].apply(exports,arguments)
-},{"./eq":433,"dup":34}],323:[function(_dereq_,module,exports){
-arguments[4][36][0].apply(exports,arguments)
-},{"./_copyObject":364,"./keys":449,"dup":36}],324:[function(_dereq_,module,exports){
-arguments[4][37][0].apply(exports,arguments)
-},{"./_copyObject":364,"./keysIn":450,"dup":37}],325:[function(_dereq_,module,exports){
-arguments[4][38][0].apply(exports,arguments)
-},{"./_defineProperty":370,"dup":38}],326:[function(_dereq_,module,exports){
-arguments[4][39][0].apply(exports,arguments)
-},{"./_Stack":308,"./_arrayEach":314,"./_assignValue":321,"./_baseAssign":323,"./_baseAssignIn":324,"./_cloneBuffer":356,"./_copyArray":363,"./_copySymbols":365,"./_copySymbolsIn":366,"./_getAllKeys":375,"./_getAllKeysIn":376,"./_getTag":384,"./_initCloneArray":392,"./_initCloneByTag":393,"./_initCloneObject":394,"./isArray":439,"./isBuffer":441,"./isObject":445,"./keys":449,"dup":39}],327:[function(_dereq_,module,exports){
-arguments[4][40][0].apply(exports,arguments)
-},{"./isObject":445,"dup":40}],328:[function(_dereq_,module,exports){
-arguments[4][41][0].apply(exports,arguments)
-},{"./_baseForOwn":331,"./_createBaseEach":368,"dup":41}],329:[function(_dereq_,module,exports){
-arguments[4][42][0].apply(exports,arguments)
-},{"./_baseEach":328,"dup":42}],330:[function(_dereq_,module,exports){
-arguments[4][43][0].apply(exports,arguments)
-},{"./_createBaseFor":369,"dup":43}],331:[function(_dereq_,module,exports){
-arguments[4][44][0].apply(exports,arguments)
-},{"./_baseFor":330,"./keys":449,"dup":44}],332:[function(_dereq_,module,exports){
-arguments[4][45][0].apply(exports,arguments)
-},{"./_castPath":354,"./_toKey":430,"dup":45}],333:[function(_dereq_,module,exports){
-arguments[4][46][0].apply(exports,arguments)
-},{"./_arrayPush":318,"./isArray":439,"dup":46}],334:[function(_dereq_,module,exports){
-arguments[4][47][0].apply(exports,arguments)
-},{"./_Symbol":309,"./_getRawTag":381,"./_objectToString":418,"dup":47}],335:[function(_dereq_,module,exports){
-arguments[4][48][0].apply(exports,arguments)
-},{"dup":48}],336:[function(_dereq_,module,exports){
-arguments[4][49][0].apply(exports,arguments)
-},{"./_baseGetTag":334,"./isObjectLike":446,"dup":49}],337:[function(_dereq_,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"./_baseIsEqualDeep":338,"./isObjectLike":446,"dup":50}],338:[function(_dereq_,module,exports){
-arguments[4][51][0].apply(exports,arguments)
-},{"./_Stack":308,"./_equalArrays":371,"./_equalByTag":372,"./_equalObjects":373,"./_getTag":384,"./isArray":439,"./isBuffer":441,"./isTypedArray":448,"dup":51}],339:[function(_dereq_,module,exports){
-arguments[4][52][0].apply(exports,arguments)
-},{"./_Stack":308,"./_baseIsEqual":337,"dup":52}],340:[function(_dereq_,module,exports){
-arguments[4][53][0].apply(exports,arguments)
-},{"./_isMasked":398,"./_toSource":431,"./isFunction":443,"./isObject":445,"dup":53}],341:[function(_dereq_,module,exports){
-arguments[4][54][0].apply(exports,arguments)
-},{"./_baseGetTag":334,"./isLength":444,"./isObjectLike":446,"dup":54}],342:[function(_dereq_,module,exports){
-arguments[4][55][0].apply(exports,arguments)
-},{"./_baseMatches":345,"./_baseMatchesProperty":346,"./identity":437,"./isArray":439,"./property":452,"dup":55}],343:[function(_dereq_,module,exports){
-arguments[4][56][0].apply(exports,arguments)
-},{"./_isPrototype":399,"./_nativeKeys":415,"dup":56}],344:[function(_dereq_,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"./_isPrototype":399,"./_nativeKeysIn":416,"./isObject":445,"dup":57}],345:[function(_dereq_,module,exports){
-arguments[4][59][0].apply(exports,arguments)
-},{"./_baseIsMatch":339,"./_getMatchData":378,"./_matchesStrictComparable":412,"dup":59}],346:[function(_dereq_,module,exports){
-arguments[4][60][0].apply(exports,arguments)
-},{"./_baseIsEqual":337,"./_isKey":396,"./_isStrictComparable":400,"./_matchesStrictComparable":412,"./_toKey":430,"./get":435,"./hasIn":436,"dup":60}],347:[function(_dereq_,module,exports){
-arguments[4][64][0].apply(exports,arguments)
-},{"dup":64}],348:[function(_dereq_,module,exports){
-arguments[4][65][0].apply(exports,arguments)
-},{"./_baseGet":332,"dup":65}],349:[function(_dereq_,module,exports){
-arguments[4][68][0].apply(exports,arguments)
-},{"./_assignValue":321,"./_castPath":354,"./_isIndex":395,"./_toKey":430,"./isObject":445,"dup":68}],350:[function(_dereq_,module,exports){
+},{}],355:[function(_dereq_,module,exports){
 arguments[4][71][0].apply(exports,arguments)
-},{"dup":71}],351:[function(_dereq_,module,exports){
-arguments[4][72][0].apply(exports,arguments)
-},{"./_Symbol":309,"./_arrayMap":317,"./isArray":439,"./isSymbol":447,"dup":72}],352:[function(_dereq_,module,exports){
-arguments[4][73][0].apply(exports,arguments)
-},{"dup":73}],353:[function(_dereq_,module,exports){
-arguments[4][74][0].apply(exports,arguments)
-},{"dup":74}],354:[function(_dereq_,module,exports){
+},{"./_getNative":434,"./_root":475,"dup":71}],356:[function(_dereq_,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"./_hashClear":442,"./_hashDelete":443,"./_hashGet":444,"./_hashHas":445,"./_hashSet":446,"dup":9}],357:[function(_dereq_,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"./_listCacheClear":456,"./_listCacheDelete":457,"./_listCacheGet":458,"./_listCacheHas":459,"./_listCacheSet":460,"dup":10}],358:[function(_dereq_,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"./_getNative":434,"./_root":475,"dup":11}],359:[function(_dereq_,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"./_mapCacheClear":461,"./_mapCacheDelete":462,"./_mapCacheGet":463,"./_mapCacheHas":464,"./_mapCacheSet":465,"dup":12}],360:[function(_dereq_,module,exports){
 arguments[4][76][0].apply(exports,arguments)
-},{"./_isKey":396,"./_stringToPath":429,"./isArray":439,"./toString":456,"dup":76}],355:[function(_dereq_,module,exports){
+},{"./_getNative":434,"./_root":475,"dup":76}],361:[function(_dereq_,module,exports){
+arguments[4][77][0].apply(exports,arguments)
+},{"./_getNative":434,"./_root":475,"dup":77}],362:[function(_dereq_,module,exports){
 arguments[4][78][0].apply(exports,arguments)
-},{"./_Uint8Array":310,"dup":78}],356:[function(_dereq_,module,exports){
+},{"./_MapCache":359,"./_setCacheAdd":476,"./_setCacheHas":477,"dup":78}],363:[function(_dereq_,module,exports){
 arguments[4][79][0].apply(exports,arguments)
-},{"./_root":420,"dup":79}],357:[function(_dereq_,module,exports){
-arguments[4][80][0].apply(exports,arguments)
-},{"./_cloneArrayBuffer":355,"dup":80}],358:[function(_dereq_,module,exports){
+},{"./_ListCache":357,"./_stackClear":479,"./_stackDelete":480,"./_stackGet":481,"./_stackHas":482,"./_stackSet":483,"dup":79}],364:[function(_dereq_,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"./_root":475,"dup":13}],365:[function(_dereq_,module,exports){
 arguments[4][81][0].apply(exports,arguments)
-},{"./_addMapEntry":312,"./_arrayReduce":319,"./_mapToArray":411,"dup":81}],359:[function(_dereq_,module,exports){
+},{"./_root":475,"dup":81}],366:[function(_dereq_,module,exports){
 arguments[4][82][0].apply(exports,arguments)
-},{"dup":82}],360:[function(_dereq_,module,exports){
+},{"./_getNative":434,"./_root":475,"dup":82}],367:[function(_dereq_,module,exports){
 arguments[4][83][0].apply(exports,arguments)
-},{"./_addSetEntry":313,"./_arrayReduce":319,"./_setToArray":423,"dup":83}],361:[function(_dereq_,module,exports){
+},{"dup":83}],368:[function(_dereq_,module,exports){
 arguments[4][84][0].apply(exports,arguments)
-},{"./_Symbol":309,"dup":84}],362:[function(_dereq_,module,exports){
-arguments[4][85][0].apply(exports,arguments)
-},{"./_cloneArrayBuffer":355,"dup":85}],363:[function(_dereq_,module,exports){
-arguments[4][86][0].apply(exports,arguments)
-},{"dup":86}],364:[function(_dereq_,module,exports){
+},{"dup":84}],369:[function(_dereq_,module,exports){
 arguments[4][87][0].apply(exports,arguments)
-},{"./_assignValue":321,"./_baseAssignValue":325,"dup":87}],365:[function(_dereq_,module,exports){
+},{"dup":87}],370:[function(_dereq_,module,exports){
 arguments[4][88][0].apply(exports,arguments)
-},{"./_copyObject":364,"./_getSymbols":382,"dup":88}],366:[function(_dereq_,module,exports){
+},{"dup":88}],371:[function(_dereq_,module,exports){
 arguments[4][89][0].apply(exports,arguments)
-},{"./_copyObject":364,"./_getSymbolsIn":383,"dup":89}],367:[function(_dereq_,module,exports){
-arguments[4][90][0].apply(exports,arguments)
-},{"./_root":420,"dup":90}],368:[function(_dereq_,module,exports){
+},{"./_baseTimes":405,"./_isIndex":450,"./isArguments":493,"./isArray":494,"./isBuffer":496,"./isTypedArray":503,"dup":89}],372:[function(_dereq_,module,exports){
+arguments[4][14][0].apply(exports,arguments)
+},{"dup":14}],373:[function(_dereq_,module,exports){
+arguments[4][91][0].apply(exports,arguments)
+},{"dup":91}],374:[function(_dereq_,module,exports){
+arguments[4][92][0].apply(exports,arguments)
+},{"dup":92}],375:[function(_dereq_,module,exports){
 arguments[4][93][0].apply(exports,arguments)
-},{"./isArrayLike":440,"dup":93}],369:[function(_dereq_,module,exports){
-arguments[4][94][0].apply(exports,arguments)
-},{"dup":94}],370:[function(_dereq_,module,exports){
-arguments[4][98][0].apply(exports,arguments)
-},{"./_getNative":379,"dup":98}],371:[function(_dereq_,module,exports){
-arguments[4][99][0].apply(exports,arguments)
-},{"./_SetCache":307,"./_arraySome":320,"./_cacheHas":353,"dup":99}],372:[function(_dereq_,module,exports){
+},{"dup":93}],376:[function(_dereq_,module,exports){
+arguments[4][97][0].apply(exports,arguments)
+},{"./_baseAssignValue":380,"./eq":488,"dup":97}],377:[function(_dereq_,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"./eq":488,"dup":15}],378:[function(_dereq_,module,exports){
 arguments[4][100][0].apply(exports,arguments)
-},{"./_Symbol":309,"./_Uint8Array":310,"./_equalArrays":371,"./_mapToArray":411,"./_setToArray":423,"./eq":433,"dup":100}],373:[function(_dereq_,module,exports){
+},{"./_copyObject":419,"./keys":504,"dup":100}],379:[function(_dereq_,module,exports){
 arguments[4][101][0].apply(exports,arguments)
-},{"./_getAllKeys":375,"dup":101}],374:[function(_dereq_,module,exports){
+},{"./_copyObject":419,"./keysIn":505,"dup":101}],380:[function(_dereq_,module,exports){
 arguments[4][102][0].apply(exports,arguments)
-},{"dup":102}],375:[function(_dereq_,module,exports){
+},{"./_defineProperty":425,"dup":102}],381:[function(_dereq_,module,exports){
 arguments[4][103][0].apply(exports,arguments)
-},{"./_baseGetAllKeys":333,"./_getSymbols":382,"./keys":449,"dup":103}],376:[function(_dereq_,module,exports){
+},{"./_Stack":363,"./_arrayEach":369,"./_assignValue":376,"./_baseAssign":378,"./_baseAssignIn":379,"./_cloneBuffer":411,"./_copyArray":418,"./_copySymbols":420,"./_copySymbolsIn":421,"./_getAllKeys":430,"./_getAllKeysIn":431,"./_getTag":439,"./_initCloneArray":447,"./_initCloneByTag":448,"./_initCloneObject":449,"./isArray":494,"./isBuffer":496,"./isObject":500,"./keys":504,"dup":103}],382:[function(_dereq_,module,exports){
 arguments[4][104][0].apply(exports,arguments)
-},{"./_baseGetAllKeys":333,"./_getSymbolsIn":383,"./keysIn":450,"dup":104}],377:[function(_dereq_,module,exports){
+},{"./isObject":500,"dup":104}],383:[function(_dereq_,module,exports){
 arguments[4][105][0].apply(exports,arguments)
-},{"./_isKeyable":397,"dup":105}],378:[function(_dereq_,module,exports){
+},{"./_baseForOwn":386,"./_createBaseEach":423,"dup":105}],384:[function(_dereq_,module,exports){
 arguments[4][106][0].apply(exports,arguments)
-},{"./_isStrictComparable":400,"./keys":449,"dup":106}],379:[function(_dereq_,module,exports){
+},{"./_baseEach":383,"dup":106}],385:[function(_dereq_,module,exports){
 arguments[4][107][0].apply(exports,arguments)
-},{"./_baseIsNative":340,"./_getValue":385,"dup":107}],380:[function(_dereq_,module,exports){
+},{"./_createBaseFor":424,"dup":107}],386:[function(_dereq_,module,exports){
 arguments[4][108][0].apply(exports,arguments)
-},{"./_overArg":419,"dup":108}],381:[function(_dereq_,module,exports){
-arguments[4][109][0].apply(exports,arguments)
-},{"./_Symbol":309,"dup":109}],382:[function(_dereq_,module,exports){
+},{"./_baseFor":385,"./keys":504,"dup":108}],387:[function(_dereq_,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./_castPath":409,"./_toKey":485,"dup":16}],388:[function(_dereq_,module,exports){
 arguments[4][110][0].apply(exports,arguments)
-},{"./_arrayFilter":315,"./stubArray":454,"dup":110}],383:[function(_dereq_,module,exports){
-arguments[4][111][0].apply(exports,arguments)
-},{"./_arrayPush":318,"./_getPrototype":380,"./_getSymbols":382,"./stubArray":454,"dup":111}],384:[function(_dereq_,module,exports){
+},{"./_arrayPush":373,"./isArray":494,"dup":110}],389:[function(_dereq_,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"./_Symbol":364,"./_getRawTag":436,"./_objectToString":473,"dup":17}],390:[function(_dereq_,module,exports){
 arguments[4][112][0].apply(exports,arguments)
-},{"./_DataView":300,"./_Map":303,"./_Promise":305,"./_Set":306,"./_WeakMap":311,"./_baseGetTag":334,"./_toSource":431,"dup":112}],385:[function(_dereq_,module,exports){
+},{"dup":112}],391:[function(_dereq_,module,exports){
 arguments[4][113][0].apply(exports,arguments)
-},{"dup":113}],386:[function(_dereq_,module,exports){
+},{"./_baseGetTag":389,"./isObjectLike":501,"dup":113}],392:[function(_dereq_,module,exports){
 arguments[4][114][0].apply(exports,arguments)
-},{"./_castPath":354,"./_isIndex":395,"./_toKey":430,"./isArguments":438,"./isArray":439,"./isLength":444,"dup":114}],387:[function(_dereq_,module,exports){
-arguments[4][117][0].apply(exports,arguments)
-},{"./_nativeCreate":414,"dup":117}],388:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":393,"./isObjectLike":501,"dup":114}],393:[function(_dereq_,module,exports){
+arguments[4][115][0].apply(exports,arguments)
+},{"./_Stack":363,"./_equalArrays":426,"./_equalByTag":427,"./_equalObjects":428,"./_getTag":439,"./isArray":494,"./isBuffer":496,"./isTypedArray":503,"dup":115}],394:[function(_dereq_,module,exports){
+arguments[4][116][0].apply(exports,arguments)
+},{"./_Stack":363,"./_baseIsEqual":392,"dup":116}],395:[function(_dereq_,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"./_isMasked":453,"./_toSource":486,"./isFunction":498,"./isObject":500,"dup":18}],396:[function(_dereq_,module,exports){
 arguments[4][118][0].apply(exports,arguments)
-},{"dup":118}],389:[function(_dereq_,module,exports){
+},{"./_baseGetTag":389,"./isLength":499,"./isObjectLike":501,"dup":118}],397:[function(_dereq_,module,exports){
 arguments[4][119][0].apply(exports,arguments)
-},{"./_nativeCreate":414,"dup":119}],390:[function(_dereq_,module,exports){
+},{"./_baseMatches":400,"./_baseMatchesProperty":401,"./identity":492,"./isArray":494,"./property":507,"dup":119}],398:[function(_dereq_,module,exports){
 arguments[4][120][0].apply(exports,arguments)
-},{"./_nativeCreate":414,"dup":120}],391:[function(_dereq_,module,exports){
+},{"./_isPrototype":454,"./_nativeKeys":470,"dup":120}],399:[function(_dereq_,module,exports){
 arguments[4][121][0].apply(exports,arguments)
-},{"./_nativeCreate":414,"dup":121}],392:[function(_dereq_,module,exports){
-arguments[4][122][0].apply(exports,arguments)
-},{"dup":122}],393:[function(_dereq_,module,exports){
+},{"./_isPrototype":454,"./_nativeKeysIn":471,"./isObject":500,"dup":121}],400:[function(_dereq_,module,exports){
 arguments[4][123][0].apply(exports,arguments)
-},{"./_cloneArrayBuffer":355,"./_cloneDataView":357,"./_cloneMap":358,"./_cloneRegExp":359,"./_cloneSet":360,"./_cloneSymbol":361,"./_cloneTypedArray":362,"dup":123}],394:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":394,"./_getMatchData":433,"./_matchesStrictComparable":467,"dup":123}],401:[function(_dereq_,module,exports){
 arguments[4][124][0].apply(exports,arguments)
-},{"./_baseCreate":327,"./_getPrototype":380,"./_isPrototype":399,"dup":124}],395:[function(_dereq_,module,exports){
-arguments[4][125][0].apply(exports,arguments)
-},{"dup":125}],396:[function(_dereq_,module,exports){
-arguments[4][127][0].apply(exports,arguments)
-},{"./isArray":439,"./isSymbol":447,"dup":127}],397:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":392,"./_isKey":451,"./_isStrictComparable":455,"./_matchesStrictComparable":467,"./_toKey":485,"./get":490,"./hasIn":491,"dup":124}],402:[function(_dereq_,module,exports){
 arguments[4][128][0].apply(exports,arguments)
-},{"dup":128}],398:[function(_dereq_,module,exports){
+},{"dup":128}],403:[function(_dereq_,module,exports){
 arguments[4][129][0].apply(exports,arguments)
-},{"./_coreJsData":367,"dup":129}],399:[function(_dereq_,module,exports){
-arguments[4][130][0].apply(exports,arguments)
-},{"dup":130}],400:[function(_dereq_,module,exports){
-arguments[4][131][0].apply(exports,arguments)
-},{"./isObject":445,"dup":131}],401:[function(_dereq_,module,exports){
+},{"./_baseGet":387,"dup":129}],404:[function(_dereq_,module,exports){
 arguments[4][132][0].apply(exports,arguments)
-},{"dup":132}],402:[function(_dereq_,module,exports){
-arguments[4][133][0].apply(exports,arguments)
-},{"./_assocIndexOf":322,"dup":133}],403:[function(_dereq_,module,exports){
-arguments[4][134][0].apply(exports,arguments)
-},{"./_assocIndexOf":322,"dup":134}],404:[function(_dereq_,module,exports){
+},{"./_assignValue":376,"./_castPath":409,"./_isIndex":450,"./_toKey":485,"./isObject":500,"dup":132}],405:[function(_dereq_,module,exports){
 arguments[4][135][0].apply(exports,arguments)
-},{"./_assocIndexOf":322,"dup":135}],405:[function(_dereq_,module,exports){
-arguments[4][136][0].apply(exports,arguments)
-},{"./_assocIndexOf":322,"dup":136}],406:[function(_dereq_,module,exports){
+},{"dup":135}],406:[function(_dereq_,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"./_Symbol":364,"./_arrayMap":372,"./isArray":494,"./isSymbol":502,"dup":19}],407:[function(_dereq_,module,exports){
 arguments[4][137][0].apply(exports,arguments)
-},{"./_Hash":301,"./_ListCache":302,"./_Map":303,"dup":137}],407:[function(_dereq_,module,exports){
+},{"dup":137}],408:[function(_dereq_,module,exports){
 arguments[4][138][0].apply(exports,arguments)
-},{"./_getMapData":377,"dup":138}],408:[function(_dereq_,module,exports){
-arguments[4][139][0].apply(exports,arguments)
-},{"./_getMapData":377,"dup":139}],409:[function(_dereq_,module,exports){
-arguments[4][140][0].apply(exports,arguments)
-},{"./_getMapData":377,"dup":140}],410:[function(_dereq_,module,exports){
-arguments[4][141][0].apply(exports,arguments)
-},{"./_getMapData":377,"dup":141}],411:[function(_dereq_,module,exports){
+},{"dup":138}],409:[function(_dereq_,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"./_isKey":451,"./_stringToPath":484,"./isArray":494,"./toString":511,"dup":20}],410:[function(_dereq_,module,exports){
 arguments[4][142][0].apply(exports,arguments)
-},{"dup":142}],412:[function(_dereq_,module,exports){
+},{"./_Uint8Array":365,"dup":142}],411:[function(_dereq_,module,exports){
 arguments[4][143][0].apply(exports,arguments)
-},{"dup":143}],413:[function(_dereq_,module,exports){
+},{"./_root":475,"dup":143}],412:[function(_dereq_,module,exports){
 arguments[4][144][0].apply(exports,arguments)
-},{"./memoize":451,"dup":144}],414:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":410,"dup":144}],413:[function(_dereq_,module,exports){
 arguments[4][145][0].apply(exports,arguments)
-},{"./_getNative":379,"dup":145}],415:[function(_dereq_,module,exports){
+},{"./_addMapEntry":367,"./_arrayReduce":374,"./_mapToArray":466,"dup":145}],414:[function(_dereq_,module,exports){
 arguments[4][146][0].apply(exports,arguments)
-},{"./_overArg":419,"dup":146}],416:[function(_dereq_,module,exports){
+},{"dup":146}],415:[function(_dereq_,module,exports){
 arguments[4][147][0].apply(exports,arguments)
-},{"dup":147}],417:[function(_dereq_,module,exports){
+},{"./_addSetEntry":368,"./_arrayReduce":374,"./_setToArray":478,"dup":147}],416:[function(_dereq_,module,exports){
 arguments[4][148][0].apply(exports,arguments)
-},{"./_freeGlobal":374,"dup":148}],418:[function(_dereq_,module,exports){
+},{"./_Symbol":364,"dup":148}],417:[function(_dereq_,module,exports){
 arguments[4][149][0].apply(exports,arguments)
-},{"dup":149}],419:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":410,"dup":149}],418:[function(_dereq_,module,exports){
 arguments[4][150][0].apply(exports,arguments)
-},{"dup":150}],420:[function(_dereq_,module,exports){
+},{"dup":150}],419:[function(_dereq_,module,exports){
+arguments[4][151][0].apply(exports,arguments)
+},{"./_assignValue":376,"./_baseAssignValue":380,"dup":151}],420:[function(_dereq_,module,exports){
 arguments[4][152][0].apply(exports,arguments)
-},{"./_freeGlobal":374,"dup":152}],421:[function(_dereq_,module,exports){
+},{"./_copyObject":419,"./_getSymbols":437,"dup":152}],421:[function(_dereq_,module,exports){
 arguments[4][153][0].apply(exports,arguments)
-},{"dup":153}],422:[function(_dereq_,module,exports){
-arguments[4][154][0].apply(exports,arguments)
-},{"dup":154}],423:[function(_dereq_,module,exports){
-arguments[4][155][0].apply(exports,arguments)
-},{"dup":155}],424:[function(_dereq_,module,exports){
+},{"./_copyObject":419,"./_getSymbolsIn":438,"dup":153}],422:[function(_dereq_,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"./_root":475,"dup":21}],423:[function(_dereq_,module,exports){
+arguments[4][157][0].apply(exports,arguments)
+},{"./isArrayLike":495,"dup":157}],424:[function(_dereq_,module,exports){
 arguments[4][158][0].apply(exports,arguments)
-},{"./_ListCache":302,"dup":158}],425:[function(_dereq_,module,exports){
-arguments[4][159][0].apply(exports,arguments)
-},{"dup":159}],426:[function(_dereq_,module,exports){
-arguments[4][160][0].apply(exports,arguments)
-},{"dup":160}],427:[function(_dereq_,module,exports){
-arguments[4][161][0].apply(exports,arguments)
-},{"dup":161}],428:[function(_dereq_,module,exports){
+},{"dup":158}],425:[function(_dereq_,module,exports){
 arguments[4][162][0].apply(exports,arguments)
-},{"./_ListCache":302,"./_Map":303,"./_MapCache":304,"dup":162}],429:[function(_dereq_,module,exports){
+},{"./_getNative":434,"dup":162}],426:[function(_dereq_,module,exports){
+arguments[4][163][0].apply(exports,arguments)
+},{"./_SetCache":362,"./_arraySome":375,"./_cacheHas":408,"dup":163}],427:[function(_dereq_,module,exports){
 arguments[4][164][0].apply(exports,arguments)
-},{"./_memoizeCapped":413,"dup":164}],430:[function(_dereq_,module,exports){
+},{"./_Symbol":364,"./_Uint8Array":365,"./_equalArrays":426,"./_mapToArray":466,"./_setToArray":478,"./eq":488,"dup":164}],428:[function(_dereq_,module,exports){
 arguments[4][165][0].apply(exports,arguments)
-},{"./isSymbol":447,"dup":165}],431:[function(_dereq_,module,exports){
-arguments[4][166][0].apply(exports,arguments)
-},{"dup":166}],432:[function(_dereq_,module,exports){
-arguments[4][173][0].apply(exports,arguments)
-},{"./_baseClone":326,"dup":173}],433:[function(_dereq_,module,exports){
-arguments[4][177][0].apply(exports,arguments)
-},{"dup":177}],434:[function(_dereq_,module,exports){
+},{"./_getAllKeys":430,"dup":165}],429:[function(_dereq_,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"dup":22}],430:[function(_dereq_,module,exports){
+arguments[4][167][0].apply(exports,arguments)
+},{"./_baseGetAllKeys":388,"./_getSymbols":437,"./keys":504,"dup":167}],431:[function(_dereq_,module,exports){
+arguments[4][168][0].apply(exports,arguments)
+},{"./_baseGetAllKeys":388,"./_getSymbolsIn":438,"./keysIn":505,"dup":168}],432:[function(_dereq_,module,exports){
+arguments[4][23][0].apply(exports,arguments)
+},{"./_isKeyable":452,"dup":23}],433:[function(_dereq_,module,exports){
+arguments[4][170][0].apply(exports,arguments)
+},{"./_isStrictComparable":455,"./keys":504,"dup":170}],434:[function(_dereq_,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"./_baseIsNative":395,"./_getValue":440,"dup":24}],435:[function(_dereq_,module,exports){
+arguments[4][172][0].apply(exports,arguments)
+},{"./_overArg":474,"dup":172}],436:[function(_dereq_,module,exports){
+arguments[4][25][0].apply(exports,arguments)
+},{"./_Symbol":364,"dup":25}],437:[function(_dereq_,module,exports){
+arguments[4][174][0].apply(exports,arguments)
+},{"./_arrayFilter":370,"./stubArray":509,"dup":174}],438:[function(_dereq_,module,exports){
+arguments[4][175][0].apply(exports,arguments)
+},{"./_arrayPush":373,"./_getPrototype":435,"./_getSymbols":437,"./stubArray":509,"dup":175}],439:[function(_dereq_,module,exports){
+arguments[4][176][0].apply(exports,arguments)
+},{"./_DataView":355,"./_Map":358,"./_Promise":360,"./_Set":361,"./_WeakMap":366,"./_baseGetTag":389,"./_toSource":486,"dup":176}],440:[function(_dereq_,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26}],441:[function(_dereq_,module,exports){
+arguments[4][178][0].apply(exports,arguments)
+},{"./_castPath":409,"./_isIndex":450,"./_toKey":485,"./isArguments":493,"./isArray":494,"./isLength":499,"dup":178}],442:[function(_dereq_,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"./_nativeCreate":469,"dup":27}],443:[function(_dereq_,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],444:[function(_dereq_,module,exports){
+arguments[4][29][0].apply(exports,arguments)
+},{"./_nativeCreate":469,"dup":29}],445:[function(_dereq_,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"./_nativeCreate":469,"dup":30}],446:[function(_dereq_,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"./_nativeCreate":469,"dup":31}],447:[function(_dereq_,module,exports){
+arguments[4][186][0].apply(exports,arguments)
+},{"dup":186}],448:[function(_dereq_,module,exports){
+arguments[4][187][0].apply(exports,arguments)
+},{"./_cloneArrayBuffer":410,"./_cloneDataView":412,"./_cloneMap":413,"./_cloneRegExp":414,"./_cloneSet":415,"./_cloneSymbol":416,"./_cloneTypedArray":417,"dup":187}],449:[function(_dereq_,module,exports){
+arguments[4][188][0].apply(exports,arguments)
+},{"./_baseCreate":382,"./_getPrototype":435,"./_isPrototype":454,"dup":188}],450:[function(_dereq_,module,exports){
+arguments[4][189][0].apply(exports,arguments)
+},{"dup":189}],451:[function(_dereq_,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"./isArray":494,"./isSymbol":502,"dup":32}],452:[function(_dereq_,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33}],453:[function(_dereq_,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"./_coreJsData":422,"dup":34}],454:[function(_dereq_,module,exports){
+arguments[4][194][0].apply(exports,arguments)
+},{"dup":194}],455:[function(_dereq_,module,exports){
+arguments[4][195][0].apply(exports,arguments)
+},{"./isObject":500,"dup":195}],456:[function(_dereq_,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],457:[function(_dereq_,module,exports){
+arguments[4][36][0].apply(exports,arguments)
+},{"./_assocIndexOf":377,"dup":36}],458:[function(_dereq_,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"./_assocIndexOf":377,"dup":37}],459:[function(_dereq_,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"./_assocIndexOf":377,"dup":38}],460:[function(_dereq_,module,exports){
+arguments[4][39][0].apply(exports,arguments)
+},{"./_assocIndexOf":377,"dup":39}],461:[function(_dereq_,module,exports){
+arguments[4][40][0].apply(exports,arguments)
+},{"./_Hash":356,"./_ListCache":357,"./_Map":358,"dup":40}],462:[function(_dereq_,module,exports){
+arguments[4][41][0].apply(exports,arguments)
+},{"./_getMapData":432,"dup":41}],463:[function(_dereq_,module,exports){
+arguments[4][42][0].apply(exports,arguments)
+},{"./_getMapData":432,"dup":42}],464:[function(_dereq_,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"./_getMapData":432,"dup":43}],465:[function(_dereq_,module,exports){
+arguments[4][44][0].apply(exports,arguments)
+},{"./_getMapData":432,"dup":44}],466:[function(_dereq_,module,exports){
+arguments[4][206][0].apply(exports,arguments)
+},{"dup":206}],467:[function(_dereq_,module,exports){
+arguments[4][207][0].apply(exports,arguments)
+},{"dup":207}],468:[function(_dereq_,module,exports){
+arguments[4][45][0].apply(exports,arguments)
+},{"./memoize":506,"dup":45}],469:[function(_dereq_,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"./_getNative":434,"dup":46}],470:[function(_dereq_,module,exports){
+arguments[4][210][0].apply(exports,arguments)
+},{"./_overArg":474,"dup":210}],471:[function(_dereq_,module,exports){
+arguments[4][211][0].apply(exports,arguments)
+},{"dup":211}],472:[function(_dereq_,module,exports){
+arguments[4][212][0].apply(exports,arguments)
+},{"./_freeGlobal":429,"dup":212}],473:[function(_dereq_,module,exports){
+arguments[4][47][0].apply(exports,arguments)
+},{"dup":47}],474:[function(_dereq_,module,exports){
+arguments[4][214][0].apply(exports,arguments)
+},{"dup":214}],475:[function(_dereq_,module,exports){
+arguments[4][48][0].apply(exports,arguments)
+},{"./_freeGlobal":429,"dup":48}],476:[function(_dereq_,module,exports){
+arguments[4][217][0].apply(exports,arguments)
+},{"dup":217}],477:[function(_dereq_,module,exports){
+arguments[4][218][0].apply(exports,arguments)
+},{"dup":218}],478:[function(_dereq_,module,exports){
+arguments[4][219][0].apply(exports,arguments)
+},{"dup":219}],479:[function(_dereq_,module,exports){
+arguments[4][222][0].apply(exports,arguments)
+},{"./_ListCache":357,"dup":222}],480:[function(_dereq_,module,exports){
+arguments[4][223][0].apply(exports,arguments)
+},{"dup":223}],481:[function(_dereq_,module,exports){
+arguments[4][224][0].apply(exports,arguments)
+},{"dup":224}],482:[function(_dereq_,module,exports){
+arguments[4][225][0].apply(exports,arguments)
+},{"dup":225}],483:[function(_dereq_,module,exports){
+arguments[4][226][0].apply(exports,arguments)
+},{"./_ListCache":357,"./_Map":358,"./_MapCache":359,"dup":226}],484:[function(_dereq_,module,exports){
+arguments[4][49][0].apply(exports,arguments)
+},{"./_memoizeCapped":468,"dup":49}],485:[function(_dereq_,module,exports){
+arguments[4][50][0].apply(exports,arguments)
+},{"./isSymbol":502,"dup":50}],486:[function(_dereq_,module,exports){
+arguments[4][51][0].apply(exports,arguments)
+},{"dup":51}],487:[function(_dereq_,module,exports){
+arguments[4][237][0].apply(exports,arguments)
+},{"./_baseClone":381,"dup":237}],488:[function(_dereq_,module,exports){
+arguments[4][52][0].apply(exports,arguments)
+},{"dup":52}],489:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -95170,21 +96097,21 @@ function filter(collection, predicate) {
 
 module.exports = filter;
 
-},{"./_arrayFilter":315,"./_baseFilter":329,"./_baseIteratee":342,"./isArray":439}],435:[function(_dereq_,module,exports){
-arguments[4][179][0].apply(exports,arguments)
-},{"./_baseGet":332,"dup":179}],436:[function(_dereq_,module,exports){
-arguments[4][181][0].apply(exports,arguments)
-},{"./_baseHasIn":335,"./_hasPath":386,"dup":181}],437:[function(_dereq_,module,exports){
-arguments[4][182][0].apply(exports,arguments)
-},{"dup":182}],438:[function(_dereq_,module,exports){
-arguments[4][183][0].apply(exports,arguments)
-},{"./_baseIsArguments":336,"./isObjectLike":446,"dup":183}],439:[function(_dereq_,module,exports){
-arguments[4][184][0].apply(exports,arguments)
-},{"dup":184}],440:[function(_dereq_,module,exports){
-arguments[4][185][0].apply(exports,arguments)
-},{"./isFunction":443,"./isLength":444,"dup":185}],441:[function(_dereq_,module,exports){
-arguments[4][187][0].apply(exports,arguments)
-},{"./_root":420,"./stubFalse":455,"dup":187}],442:[function(_dereq_,module,exports){
+},{"./_arrayFilter":370,"./_baseFilter":384,"./_baseIteratee":397,"./isArray":494}],490:[function(_dereq_,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"./_baseGet":387,"dup":53}],491:[function(_dereq_,module,exports){
+arguments[4][245][0].apply(exports,arguments)
+},{"./_baseHasIn":390,"./_hasPath":441,"dup":245}],492:[function(_dereq_,module,exports){
+arguments[4][246][0].apply(exports,arguments)
+},{"dup":246}],493:[function(_dereq_,module,exports){
+arguments[4][247][0].apply(exports,arguments)
+},{"./_baseIsArguments":391,"./isObjectLike":501,"dup":247}],494:[function(_dereq_,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"dup":54}],495:[function(_dereq_,module,exports){
+arguments[4][249][0].apply(exports,arguments)
+},{"./isFunction":498,"./isLength":499,"dup":249}],496:[function(_dereq_,module,exports){
+arguments[4][251][0].apply(exports,arguments)
+},{"./_root":475,"./stubFalse":510,"dup":251}],497:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual');
 
 /**
@@ -95221,27 +96148,27 @@ function isEqual(value, other) {
 
 module.exports = isEqual;
 
-},{"./_baseIsEqual":337}],443:[function(_dereq_,module,exports){
-arguments[4][188][0].apply(exports,arguments)
-},{"./_baseGetTag":334,"./isObject":445,"dup":188}],444:[function(_dereq_,module,exports){
-arguments[4][189][0].apply(exports,arguments)
-},{"dup":189}],445:[function(_dereq_,module,exports){
-arguments[4][191][0].apply(exports,arguments)
-},{"dup":191}],446:[function(_dereq_,module,exports){
-arguments[4][192][0].apply(exports,arguments)
-},{"dup":192}],447:[function(_dereq_,module,exports){
-arguments[4][194][0].apply(exports,arguments)
-},{"./_baseGetTag":334,"./isObjectLike":446,"dup":194}],448:[function(_dereq_,module,exports){
-arguments[4][195][0].apply(exports,arguments)
-},{"./_baseIsTypedArray":341,"./_baseUnary":352,"./_nodeUtil":417,"dup":195}],449:[function(_dereq_,module,exports){
-arguments[4][196][0].apply(exports,arguments)
-},{"./_arrayLikeKeys":316,"./_baseKeys":343,"./isArrayLike":440,"dup":196}],450:[function(_dereq_,module,exports){
-arguments[4][197][0].apply(exports,arguments)
-},{"./_arrayLikeKeys":316,"./_baseKeysIn":344,"./isArrayLike":440,"dup":197}],451:[function(_dereq_,module,exports){
-arguments[4][199][0].apply(exports,arguments)
-},{"./_MapCache":304,"dup":199}],452:[function(_dereq_,module,exports){
-arguments[4][204][0].apply(exports,arguments)
-},{"./_baseProperty":347,"./_basePropertyDeep":348,"./_isKey":396,"./_toKey":430,"dup":204}],453:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":392}],498:[function(_dereq_,module,exports){
+arguments[4][55][0].apply(exports,arguments)
+},{"./_baseGetTag":389,"./isObject":500,"dup":55}],499:[function(_dereq_,module,exports){
+arguments[4][253][0].apply(exports,arguments)
+},{"dup":253}],500:[function(_dereq_,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],501:[function(_dereq_,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"dup":57}],502:[function(_dereq_,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"./_baseGetTag":389,"./isObjectLike":501,"dup":58}],503:[function(_dereq_,module,exports){
+arguments[4][259][0].apply(exports,arguments)
+},{"./_baseIsTypedArray":396,"./_baseUnary":407,"./_nodeUtil":472,"dup":259}],504:[function(_dereq_,module,exports){
+arguments[4][260][0].apply(exports,arguments)
+},{"./_arrayLikeKeys":371,"./_baseKeys":398,"./isArrayLike":495,"dup":260}],505:[function(_dereq_,module,exports){
+arguments[4][261][0].apply(exports,arguments)
+},{"./_arrayLikeKeys":371,"./_baseKeysIn":399,"./isArrayLike":495,"dup":261}],506:[function(_dereq_,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"./_MapCache":359,"dup":59}],507:[function(_dereq_,module,exports){
+arguments[4][268][0].apply(exports,arguments)
+},{"./_baseProperty":402,"./_basePropertyDeep":403,"./_isKey":451,"./_toKey":485,"dup":268}],508:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -95278,13 +96205,13 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":349}],454:[function(_dereq_,module,exports){
-arguments[4][206][0].apply(exports,arguments)
-},{"dup":206}],455:[function(_dereq_,module,exports){
-arguments[4][207][0].apply(exports,arguments)
-},{"dup":207}],456:[function(_dereq_,module,exports){
-arguments[4][209][0].apply(exports,arguments)
-},{"./_baseToString":351,"dup":209}],457:[function(_dereq_,module,exports){
+},{"./_baseSet":404}],509:[function(_dereq_,module,exports){
+arguments[4][270][0].apply(exports,arguments)
+},{"dup":270}],510:[function(_dereq_,module,exports){
+arguments[4][271][0].apply(exports,arguments)
+},{"dup":271}],511:[function(_dereq_,module,exports){
+arguments[4][60][0].apply(exports,arguments)
+},{"./_baseToString":406,"dup":60}],512:[function(_dereq_,module,exports){
 //! moment.js
 //! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -99749,384 +100676,7 @@ return hooks;
 
 })));
 
-},{}],458:[function(_dereq_,module,exports){
-(function (global){
-/*! Native Promise Only
-    v0.8.1 (c) Kyle Simpson
-    MIT License: http://getify.mit-license.org
-*/
-
-(function UMD(name,context,definition){
-	// special form of UMD for polyfilling across evironments
-	context[name] = context[name] || definition();
-	if (typeof module != "undefined" && module.exports) { module.exports = context[name]; }
-	else if (typeof define == "function" && define.amd) { define(function $AMD$(){ return context[name]; }); }
-})("Promise",typeof global != "undefined" ? global : this,function DEF(){
-	/*jshint validthis:true */
-	"use strict";
-
-	var builtInProp, cycle, scheduling_queue,
-		ToString = Object.prototype.toString,
-		timer = (typeof setImmediate != "undefined") ?
-			function timer(fn) { return setImmediate(fn); } :
-			setTimeout
-	;
-
-	// dammit, IE8.
-	try {
-		Object.defineProperty({},"x",{});
-		builtInProp = function builtInProp(obj,name,val,config) {
-			return Object.defineProperty(obj,name,{
-				value: val,
-				writable: true,
-				configurable: config !== false
-			});
-		};
-	}
-	catch (err) {
-		builtInProp = function builtInProp(obj,name,val) {
-			obj[name] = val;
-			return obj;
-		};
-	}
-
-	// Note: using a queue instead of array for efficiency
-	scheduling_queue = (function Queue() {
-		var first, last, item;
-
-		function Item(fn,self) {
-			this.fn = fn;
-			this.self = self;
-			this.next = void 0;
-		}
-
-		return {
-			add: function add(fn,self) {
-				item = new Item(fn,self);
-				if (last) {
-					last.next = item;
-				}
-				else {
-					first = item;
-				}
-				last = item;
-				item = void 0;
-			},
-			drain: function drain() {
-				var f = first;
-				first = last = cycle = void 0;
-
-				while (f) {
-					f.fn.call(f.self);
-					f = f.next;
-				}
-			}
-		};
-	})();
-
-	function schedule(fn,self) {
-		scheduling_queue.add(fn,self);
-		if (!cycle) {
-			cycle = timer(scheduling_queue.drain);
-		}
-	}
-
-	// promise duck typing
-	function isThenable(o) {
-		var _then, o_type = typeof o;
-
-		if (o != null &&
-			(
-				o_type == "object" || o_type == "function"
-			)
-		) {
-			_then = o.then;
-		}
-		return typeof _then == "function" ? _then : false;
-	}
-
-	function notify() {
-		for (var i=0; i<this.chain.length; i++) {
-			notifyIsolated(
-				this,
-				(this.state === 1) ? this.chain[i].success : this.chain[i].failure,
-				this.chain[i]
-			);
-		}
-		this.chain.length = 0;
-	}
-
-	// NOTE: This is a separate function to isolate
-	// the `try..catch` so that other code can be
-	// optimized better
-	function notifyIsolated(self,cb,chain) {
-		var ret, _then;
-		try {
-			if (cb === false) {
-				chain.reject(self.msg);
-			}
-			else {
-				if (cb === true) {
-					ret = self.msg;
-				}
-				else {
-					ret = cb.call(void 0,self.msg);
-				}
-
-				if (ret === chain.promise) {
-					chain.reject(TypeError("Promise-chain cycle"));
-				}
-				else if (_then = isThenable(ret)) {
-					_then.call(ret,chain.resolve,chain.reject);
-				}
-				else {
-					chain.resolve(ret);
-				}
-			}
-		}
-		catch (err) {
-			chain.reject(err);
-		}
-	}
-
-	function resolve(msg) {
-		var _then, self = this;
-
-		// already triggered?
-		if (self.triggered) { return; }
-
-		self.triggered = true;
-
-		// unwrap
-		if (self.def) {
-			self = self.def;
-		}
-
-		try {
-			if (_then = isThenable(msg)) {
-				schedule(function(){
-					var def_wrapper = new MakeDefWrapper(self);
-					try {
-						_then.call(msg,
-							function $resolve$(){ resolve.apply(def_wrapper,arguments); },
-							function $reject$(){ reject.apply(def_wrapper,arguments); }
-						);
-					}
-					catch (err) {
-						reject.call(def_wrapper,err);
-					}
-				})
-			}
-			else {
-				self.msg = msg;
-				self.state = 1;
-				if (self.chain.length > 0) {
-					schedule(notify,self);
-				}
-			}
-		}
-		catch (err) {
-			reject.call(new MakeDefWrapper(self),err);
-		}
-	}
-
-	function reject(msg) {
-		var self = this;
-
-		// already triggered?
-		if (self.triggered) { return; }
-
-		self.triggered = true;
-
-		// unwrap
-		if (self.def) {
-			self = self.def;
-		}
-
-		self.msg = msg;
-		self.state = 2;
-		if (self.chain.length > 0) {
-			schedule(notify,self);
-		}
-	}
-
-	function iteratePromises(Constructor,arr,resolver,rejecter) {
-		for (var idx=0; idx<arr.length; idx++) {
-			(function IIFE(idx){
-				Constructor.resolve(arr[idx])
-				.then(
-					function $resolver$(msg){
-						resolver(idx,msg);
-					},
-					rejecter
-				);
-			})(idx);
-		}
-	}
-
-	function MakeDefWrapper(self) {
-		this.def = self;
-		this.triggered = false;
-	}
-
-	function MakeDef(self) {
-		this.promise = self;
-		this.state = 0;
-		this.triggered = false;
-		this.chain = [];
-		this.msg = void 0;
-	}
-
-	function Promise(executor) {
-		if (typeof executor != "function") {
-			throw TypeError("Not a function");
-		}
-
-		if (this.__NPO__ !== 0) {
-			throw TypeError("Not a promise");
-		}
-
-		// instance shadowing the inherited "brand"
-		// to signal an already "initialized" promise
-		this.__NPO__ = 1;
-
-		var def = new MakeDef(this);
-
-		this["then"] = function then(success,failure) {
-			var o = {
-				success: typeof success == "function" ? success : true,
-				failure: typeof failure == "function" ? failure : false
-			};
-			// Note: `then(..)` itself can be borrowed to be used against
-			// a different promise constructor for making the chained promise,
-			// by substituting a different `this` binding.
-			o.promise = new this.constructor(function extractChain(resolve,reject) {
-				if (typeof resolve != "function" || typeof reject != "function") {
-					throw TypeError("Not a function");
-				}
-
-				o.resolve = resolve;
-				o.reject = reject;
-			});
-			def.chain.push(o);
-
-			if (def.state !== 0) {
-				schedule(notify,def);
-			}
-
-			return o.promise;
-		};
-		this["catch"] = function $catch$(failure) {
-			return this.then(void 0,failure);
-		};
-
-		try {
-			executor.call(
-				void 0,
-				function publicResolve(msg){
-					resolve.call(def,msg);
-				},
-				function publicReject(msg) {
-					reject.call(def,msg);
-				}
-			);
-		}
-		catch (err) {
-			reject.call(def,err);
-		}
-	}
-
-	var PromisePrototype = builtInProp({},"constructor",Promise,
-		/*configurable=*/false
-	);
-
-	// Note: Android 4 cannot use `Object.defineProperty(..)` here
-	Promise.prototype = PromisePrototype;
-
-	// built-in "brand" to signal an "uninitialized" promise
-	builtInProp(PromisePrototype,"__NPO__",0,
-		/*configurable=*/false
-	);
-
-	builtInProp(Promise,"resolve",function Promise$resolve(msg) {
-		var Constructor = this;
-
-		// spec mandated checks
-		// note: best "isPromise" check that's practical for now
-		if (msg && typeof msg == "object" && msg.__NPO__ === 1) {
-			return msg;
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			resolve(msg);
-		});
-	});
-
-	builtInProp(Promise,"reject",function Promise$reject(msg) {
-		return new this(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			reject(msg);
-		});
-	});
-
-	builtInProp(Promise,"all",function Promise$all(arr) {
-		var Constructor = this;
-
-		// spec mandated checks
-		if (ToString.call(arr) != "[object Array]") {
-			return Constructor.reject(TypeError("Not an array"));
-		}
-		if (arr.length === 0) {
-			return Constructor.resolve([]);
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			var len = arr.length, msgs = Array(len), count = 0;
-
-			iteratePromises(Constructor,arr,function resolver(idx,msg) {
-				msgs[idx] = msg;
-				if (++count === len) {
-					resolve(msgs);
-				}
-			},reject);
-		});
-	});
-
-	builtInProp(Promise,"race",function Promise$race(arr) {
-		var Constructor = this;
-
-		// spec mandated checks
-		if (ToString.call(arr) != "[object Array]") {
-			return Constructor.reject(TypeError("Not an array"));
-		}
-
-		return new Constructor(function executor(resolve,reject){
-			if (typeof resolve != "function" || typeof reject != "function") {
-				throw TypeError("Not a function");
-			}
-
-			iteratePromises(Constructor,arr,function resolver(idx,msg){
-				resolve(msg);
-			},reject);
-		});
-	});
-
-	return Promise;
-});
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],459:[function(_dereq_,module,exports){
+},{}],513:[function(_dereq_,module,exports){
 /**!
  * AngularJS file upload directives and services. Supports: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -103026,47 +103576,10 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],460:[function(_dereq_,module,exports){
+},{}],514:[function(_dereq_,module,exports){
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":459}],461:[function(_dereq_,module,exports){
-module.exports = function (obj) {
-    if (!obj || typeof obj !== 'object') return obj;
-    
-    var copy;
-    
-    if (isArray(obj)) {
-        var len = obj.length;
-        copy = Array(len);
-        for (var i = 0; i < len; i++) {
-            copy[i] = obj[i];
-        }
-    }
-    else {
-        var keys = objectKeys(obj);
-        copy = {};
-        
-        for (var i = 0, l = keys.length; i < l; i++) {
-            var key = keys[i];
-            copy[key] = obj[key];
-        }
-    }
-    return copy;
-};
-
-var objectKeys = Object.keys || function (obj) {
-    var keys = [];
-    for (var key in obj) {
-        if ({}.hasOwnProperty.call(obj, key)) keys.push(key);
-    }
-    return keys;
-};
-
-var isArray = Array.isArray || function (xs) {
-    return {}.toString.call(xs) === '[object Array]';
-};
-
-},{}],462:[function(_dereq_,module,exports){
+},{"./dist/ng-file-upload-all":513}],515:[function(_dereq_,module,exports){
 /*!
  * Signature Pad v1.6.0
  * https://github.com/szimek/signature_pad
@@ -103597,7 +104110,7 @@ return SignaturePad;
 
 })));
 
-},{}],463:[function(_dereq_,module,exports){
+},{}],516:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -105991,402 +106504,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],464:[function(_dereq_,module,exports){
-(function(self) {
-  'use strict';
-
-  if (self.fetch) {
-    return
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name)
-    }
-    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value)
-    }
-    return value
-  }
-
-  function Headers(headers) {
-    this.map = {}
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value)
-      }, this)
-
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name])
-      }, this)
-    }
-  }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name)
-    value = normalizeValue(value)
-    var list = this.map[name]
-    if (!list) {
-      list = []
-      this.map[name] = list
-    }
-    list.push(value)
-  }
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)]
-  }
-
-  Headers.prototype.get = function(name) {
-    var values = this.map[normalizeName(name)]
-    return values ? values[0] : null
-  }
-
-  Headers.prototype.getAll = function(name) {
-    return this.map[normalizeName(name)] || []
-  }
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  }
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = [normalizeValue(value)]
-  }
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    Object.getOwnPropertyNames(this.map).forEach(function(name) {
-      this.map[name].forEach(function(value) {
-        callback.call(thisArg, value, name, this)
-      }, this)
-    }, this)
-  }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
-    }
-    body.bodyUsed = true
-  }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result)
-      }
-      reader.onerror = function() {
-        reject(reader.error)
-      }
-    })
-  }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader()
-    reader.readAsArrayBuffer(blob)
-    return fileReaderReady(reader)
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader()
-    reader.readAsText(blob)
-    return fileReaderReady(reader)
-  }
-
-  var support = {
-    blob: 'FileReader' in self && 'Blob' in self && (function() {
-      try {
-        new Blob()
-        return true
-      } catch(e) {
-        return false
-      }
-    })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
-  }
-
-  function Body() {
-    this.bodyUsed = false
-
-
-    this._initBody = function(body) {
-      this._bodyInit = body
-      if (typeof body === 'string') {
-        this._bodyText = body
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body
-      } else if (!body) {
-        this._bodyText = ''
-      } else if (support.arrayBuffer && ArrayBuffer.prototype.isPrototypeOf(body)) {
-        // Only support ArrayBuffers for POST method.
-        // Receiving ArrayBuffers happens via Blobs, instead.
-      } else {
-        throw new Error('unsupported BodyInit type')
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8')
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type)
-        }
-      }
-    }
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this)
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      }
-
-      this.arrayBuffer = function() {
-        return this.blob().then(readBlobAsArrayBuffer)
-      }
-
-      this.text = function() {
-        var rejected = consumed(this)
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return readBlobAsText(this._bodyBlob)
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as text')
-        } else {
-          return Promise.resolve(this._bodyText)
-        }
-      }
-    } else {
-      this.text = function() {
-        var rejected = consumed(this)
-        return rejected ? rejected : Promise.resolve(this._bodyText)
-      }
-    }
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      }
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    }
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase()
-    return (methods.indexOf(upcased) > -1) ? upcased : method
-  }
-
-  function Request(input, options) {
-    options = options || {}
-    var body = options.body
-    if (Request.prototype.isPrototypeOf(input)) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url
-      this.credentials = input.credentials
-      if (!options.headers) {
-        this.headers = new Headers(input.headers)
-      }
-      this.method = input.method
-      this.mode = input.mode
-      if (!body) {
-        body = input._bodyInit
-        input.bodyUsed = true
-      }
-    } else {
-      this.url = input
-    }
-
-    this.credentials = options.credentials || this.credentials || 'omit'
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers)
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET')
-    this.mode = options.mode || this.mode || null
-    this.referrer = null
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body)
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this)
-  }
-
-  function decode(body) {
-    var form = new FormData()
-    body.trim().split('&').forEach(function(bytes) {
-      if (bytes) {
-        var split = bytes.split('=')
-        var name = split.shift().replace(/\+/g, ' ')
-        var value = split.join('=').replace(/\+/g, ' ')
-        form.append(decodeURIComponent(name), decodeURIComponent(value))
-      }
-    })
-    return form
-  }
-
-  function headers(xhr) {
-    var head = new Headers()
-    var pairs = (xhr.getAllResponseHeaders() || '').trim().split('\n')
-    pairs.forEach(function(header) {
-      var split = header.trim().split(':')
-      var key = split.shift().trim()
-      var value = split.join(':').trim()
-      head.append(key, value)
-    })
-    return head
-  }
-
-  Body.call(Request.prototype)
-
-  function Response(bodyInit, options) {
-    if (!options) {
-      options = {}
-    }
-
-    this.type = 'default'
-    this.status = options.status
-    this.ok = this.status >= 200 && this.status < 300
-    this.statusText = options.statusText
-    this.headers = options.headers instanceof Headers ? options.headers : new Headers(options.headers)
-    this.url = options.url || ''
-    this._initBody(bodyInit)
-  }
-
-  Body.call(Response.prototype)
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
-    })
-  }
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''})
-    response.type = 'error'
-    return response
-  }
-
-  var redirectStatuses = [301, 302, 303, 307, 308]
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  }
-
-  self.Headers = Headers
-  self.Request = Request
-  self.Response = Response
-
-  self.fetch = function(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request
-      if (Request.prototype.isPrototypeOf(input) && !init) {
-        request = input
-      } else {
-        request = new Request(input, init)
-      }
-
-      var xhr = new XMLHttpRequest()
-
-      function responseURL() {
-        if ('responseURL' in xhr) {
-          return xhr.responseURL
-        }
-
-        // Avoid security warnings on getResponseHeader when not allowed by CORS
-        if (/^X-Request-URL:/m.test(xhr.getAllResponseHeaders())) {
-          return xhr.getResponseHeader('X-Request-URL')
-        }
-
-        return
-      }
-
-      xhr.onload = function() {
-        var status = (xhr.status === 1223) ? 204 : xhr.status
-        if (status < 100 || status > 599) {
-          reject(new TypeError('Network request failed'))
-          return
-        }
-        var options = {
-          status: status,
-          statusText: xhr.statusText,
-          headers: headers(xhr),
-          url: responseURL()
-        }
-        var body = 'response' in xhr ? xhr.response : xhr.responseText
-        resolve(new Response(body, options))
-      }
-
-      xhr.onerror = function() {
-        reject(new TypeError('Network request failed'))
-      }
-
-      xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'))
-      }
-
-      xhr.open(request.method, request.url, true)
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true
-      }
-
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob'
-      }
-
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value)
-      })
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
-    })
-  }
-  self.fetch.polyfill = true
-})(typeof self !== 'undefined' ? self : this);
-
-},{}],465:[function(_dereq_,module,exports){
+},{}],517:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -106475,7 +106593,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],466:[function(_dereq_,module,exports){
+},{}],518:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -106653,7 +106771,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],467:[function(_dereq_,module,exports){
+},{}],519:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -106733,7 +106851,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],468:[function(_dereq_,module,exports){
+},{}],520:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -106767,7 +106885,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],469:[function(_dereq_,module,exports){
+},{}],521:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -106827,7 +106945,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],470:[function(_dereq_,module,exports){
+},{}],522:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -106908,7 +107026,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],471:[function(_dereq_,module,exports){
+},{}],523:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -106937,7 +107055,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],472:[function(_dereq_,module,exports){
+},{}],524:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -107048,7 +107166,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],473:[function(_dereq_,module,exports){
+},{}],525:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -107076,7 +107194,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":511}],474:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":563}],526:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -107195,7 +107313,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],475:[function(_dereq_,module,exports){
+},{}],527:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -107334,7 +107452,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],476:[function(_dereq_,module,exports){
+},{}],528:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -107535,7 +107653,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],477:[function(_dereq_,module,exports){
+},{}],529:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -107569,7 +107687,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],478:[function(_dereq_,module,exports){
+},{}],530:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -107605,7 +107723,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],479:[function(_dereq_,module,exports){
+},{}],531:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -107869,7 +107987,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],480:[function(_dereq_,module,exports){
+},{}],532:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -107905,7 +108023,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":511}],481:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":563}],533:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -107997,7 +108115,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],482:[function(_dereq_,module,exports){
+},{}],534:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -108039,7 +108157,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":465,"./button":466,"./checkbox":467,"./columns":468,"./components":469,"./container":470,"./content":471,"./currency":472,"./custom":473,"./datagrid":474,"./datetime":475,"./day":476,"./email":477,"./fieldset":478,"./file":479,"./hidden":480,"./htmlelement":481,"./number":483,"./page":484,"./panel":485,"./password":486,"./phonenumber":487,"./radio":488,"./resource":489,"./select":490,"./selectboxes":491,"./signature":492,"./survey":493,"./table":494,"./textarea":495,"./textfield":496,"./well":497}],483:[function(_dereq_,module,exports){
+},{"./address":517,"./button":518,"./checkbox":519,"./columns":520,"./components":521,"./container":522,"./content":523,"./currency":524,"./custom":525,"./datagrid":526,"./datetime":527,"./day":528,"./email":529,"./fieldset":530,"./file":531,"./hidden":532,"./htmlelement":533,"./number":535,"./page":536,"./panel":537,"./password":538,"./phonenumber":539,"./radio":540,"./resource":541,"./select":542,"./selectboxes":543,"./signature":544,"./survey":545,"./table":546,"./textarea":547,"./textfield":548,"./well":549}],535:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -108104,7 +108222,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],484:[function(_dereq_,module,exports){
+},{}],536:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -108131,7 +108249,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],485:[function(_dereq_,module,exports){
+},{}],537:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -108167,7 +108285,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],486:[function(_dereq_,module,exports){
+},{}],538:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -108198,7 +108316,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],487:[function(_dereq_,module,exports){
+},{}],539:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -108233,7 +108351,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],488:[function(_dereq_,module,exports){
+},{}],540:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -108284,7 +108402,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],489:[function(_dereq_,module,exports){
+},{}],541:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -108412,7 +108530,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],490:[function(_dereq_,module,exports){
+},{}],542:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -108979,7 +109097,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":432,"lodash/get":435,"lodash/isEqual":442,"lodash/set":453}],491:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":487,"lodash/get":490,"lodash/isEqual":497,"lodash/set":508}],543:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -109087,7 +109205,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],492:[function(_dereq_,module,exports){
+},{}],544:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -109228,7 +109346,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":462}],493:[function(_dereq_,module,exports){
+},{"signature_pad":515}],545:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -109305,7 +109423,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],494:[function(_dereq_,module,exports){
+},{}],546:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -109350,7 +109468,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],495:[function(_dereq_,module,exports){
+},{}],547:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -109434,7 +109552,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],496:[function(_dereq_,module,exports){
+},{}],548:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -109495,7 +109613,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],497:[function(_dereq_,module,exports){
+},{}],549:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -109528,7 +109646,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],498:[function(_dereq_,module,exports){
+},{}],550:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -109606,7 +109724,7 @@ module.exports = function() {
   };
 };
 
-},{}],499:[function(_dereq_,module,exports){
+},{}],551:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -109666,19 +109784,31 @@ module.exports = function() {
           return iframeSrc;
         };
 
+        $scope.downloadUrl = '';
         $scope.getPDFDownload = function(pdf) {
+          if (!$scope.formio) {
+            return;
+          }
           var download = '';
           if ($scope.formio && $scope.formio.submissionUrl) {
             download = $scope.formio.submissionUrl;
           }
-          else {
+          else if ($scope.submission._id) {
             download = Formio.baseUrl + '/project/' + $scope.form.project + '/';
             download += '/form/' + $scope.form._id;
             download += '/submission/' + $scope.submission._id;
           }
+          if (!download) {
+            return;
+          }
+
           download += '/download/' + pdf.id;
-          download += '?token=' + Formio.getToken();
-          return download;
+          var allowedPath = download.replace(Formio.baseUrl, '');
+          return $scope.formio.getTempToken(3600, 'GET:' + allowedPath).then(function(tempToken) {
+            download += '?token=' + tempToken;
+            $scope.downloadUrl = download;
+            return download;
+          });
         };
 
         // Add the live form parameter to the url.
@@ -109713,6 +109843,9 @@ module.exports = function() {
 
         var cancelFormLoadEvent = $scope.$on('formLoad', function(event, form) {
           cancelFormLoadEvent();
+          iframeReady.promise.then(function() {
+            $scope.getPDFDownload(form.settings.pdf);
+          });
           sendIframeMessage({name: 'form', data: form});
         });
 
@@ -109971,7 +110104,7 @@ module.exports = function() {
   };
 };
 
-},{}],500:[function(_dereq_,module,exports){
+},{}],552:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -109988,7 +110121,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],501:[function(_dereq_,module,exports){
+},{}],553:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _filter = _dereq_('lodash/filter');
@@ -110434,7 +110567,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/cloneDeep":432,"lodash/filter":434,"lodash/get":435}],502:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":487,"lodash/filter":489,"lodash/get":490}],554:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -110501,7 +110634,7 @@ module.exports = [
   }
 ];
 
-},{}],503:[function(_dereq_,module,exports){
+},{}],555:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -110584,7 +110717,7 @@ module.exports = function() {
   };
 };
 
-},{}],504:[function(_dereq_,module,exports){
+},{}],556:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -110603,7 +110736,7 @@ module.exports = [
   }
 ];
 
-},{}],505:[function(_dereq_,module,exports){
+},{}],557:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -110613,7 +110746,7 @@ module.exports = function() {
   };
 };
 
-},{}],506:[function(_dereq_,module,exports){
+},{}],558:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -110645,7 +110778,7 @@ module.exports = function() {
   };
 };
 
-},{}],507:[function(_dereq_,module,exports){
+},{}],559:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -110700,7 +110833,7 @@ module.exports = function() {
   };
 };
 
-},{}],508:[function(_dereq_,module,exports){
+},{}],560:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -111129,7 +111262,7 @@ module.exports = function() {
   };
 };
 
-},{}],509:[function(_dereq_,module,exports){
+},{}],561:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -111312,7 +111445,7 @@ module.exports = [
   }
 ];
 
-},{}],510:[function(_dereq_,module,exports){
+},{}],562:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 
@@ -111424,7 +111557,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":299}],511:[function(_dereq_,module,exports){
+},{"formiojs/utils":64}],563:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -111503,7 +111636,7 @@ module.exports = function() {
   };
 };
 
-},{}],512:[function(_dereq_,module,exports){
+},{}],564:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -111552,7 +111685,7 @@ module.exports = [
   }
 ];
 
-},{}],513:[function(_dereq_,module,exports){
+},{}],565:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -111586,7 +111719,7 @@ module.exports = [
   }
 ];
 
-},{}],514:[function(_dereq_,module,exports){
+},{}],566:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -111595,7 +111728,7 @@ module.exports = [
   }
 ];
 
-},{}],515:[function(_dereq_,module,exports){
+},{}],567:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -111608,7 +111741,7 @@ module.exports = [
   }
 ];
 
-},{}],516:[function(_dereq_,module,exports){
+},{}],568:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -111627,7 +111760,7 @@ module.exports = [
   }
 ];
 
-},{}],517:[function(_dereq_,module,exports){
+},{}],569:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -111640,7 +111773,7 @@ module.exports = [
   }
 ];
 
-},{}],518:[function(_dereq_,module,exports){
+},{}],570:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -111655,7 +111788,7 @@ module.exports = [
   }
 ];
 
-},{}],519:[function(_dereq_,module,exports){
+},{}],571:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -111704,7 +111837,7 @@ module.exports = [
   }
 ];
 
-},{}],520:[function(_dereq_,module,exports){
+},{}],572:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -111712,7 +111845,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],521:[function(_dereq_,module,exports){
+},{}],573:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -111725,7 +111858,7 @@ _dereq_('angular-ui-bootstrap');
 _dereq_('bootstrap-ui-datetime-picker/dist/datetime-picker');
 _dereq_('./formio');
 
-},{"./formio":522,"angular-file-saver":268,"angular-moment":269,"angular-sanitize":271,"angular-ui-bootstrap":273,"angular-ui-mask/dist/mask":274,"bootstrap":278,"bootstrap-ui-datetime-picker/dist/datetime-picker":277,"ng-file-upload":460,"ui-select/dist/select":463}],522:[function(_dereq_,module,exports){
+},{"./formio":574,"angular-file-saver":332,"angular-moment":333,"angular-sanitize":335,"angular-ui-bootstrap":337,"angular-ui-mask/dist/mask":338,"bootstrap":342,"bootstrap-ui-datetime-picker/dist/datetime-picker":341,"ng-file-upload":514,"ui-select/dist/select":516}],574:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -111835,7 +111968,7 @@ app.run([
 
     // The template for the formio forms.
     $templateCache.put('formio.html',
-      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" ng-class=\"{'formio-hidden': !formLoading}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" disable-components=\"disableComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <div ng-if=\"form.display === 'pdf' && form.settings.pdf\" style=\"position:relative;\">\n    <span style=\"position:absolute;right:10px;top:10px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomIn()\"><spann class=\"glyphicon glyphicon-zoom-in\"></spann></span>\n    <span style=\"position:absolute;right:10px;top:60px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomOut()\"><span class=\"glyphicon glyphicon-zoom-out\"></span></span>\n    <a ng-if=\"iframeReady\" style=\"position:absolute;right:10px;top:110px;cursor:pointer;\" class=\"btn btn-primary no-disable\" href=\"{{ getPDFDownload(form.settings.pdf) | trustAsResourceUrl }}\" target=\"_blank\"><span class=\"glyphicon glyphicon-cloud-download\"></span></a>\n    <iframe src=\"{{ getIframeSrc(form.settings.pdf) | trustAsResourceUrl }}\" seamless class=\"formio-iframe\"></iframe>\n    <button ng-if=\"!readOnly && !form.builder\" type=\"button\" class=\"btn btn-primary\" ng-click=\"submitIFrameForm()\">Submit</button>\n  </div>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\" ng-if=\"::!builder\">\n      {{ alert.message | formioTranslate:null:builder }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components track by $index\"\n      component=\"component\"\n      ng-if=\"builder ? '::true' : isVisible(component)\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      read-only=\"isDisabled(component, submission.data)\"\n      builder=\"builder\"\n    ></formio-component>\n  </form>\n</div>\n"
+      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" ng-class=\"{'formio-hidden': !formLoading}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" disable-components=\"disableComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <div ng-if=\"form.display === 'pdf' && form.settings.pdf\" style=\"position:relative;\">\n    <span style=\"position:absolute;right:10px;top:10px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomIn()\"><spann class=\"glyphicon glyphicon-zoom-in\"></spann></span>\n    <span style=\"position:absolute;right:10px;top:60px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomOut()\"><span class=\"glyphicon glyphicon-zoom-out\"></span></span>\n    <a ng-if=\"downloadUrl\" style=\"position:absolute;right:10px;top:110px;cursor:pointer;\" class=\"btn btn-primary no-disable\" href=\"{{ downloadUrl | trustAsResourceUrl }}\" target=\"_blank\"><span class=\"glyphicon glyphicon-cloud-download\"></span></a>\n    <iframe src=\"{{ getIframeSrc(form.settings.pdf) | trustAsResourceUrl }}\" seamless class=\"formio-iframe\"></iframe>\n    <button ng-if=\"!readOnly && !form.builder\" type=\"button\" class=\"btn btn-primary\" ng-click=\"submitIFrameForm()\">Submit</button>\n  </div>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\" ng-if=\"::!builder\">\n      {{ alert.message | formioTranslate:null:builder }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components track by $index\"\n      component=\"component\"\n      ng-if=\"builder ? '::true' : isVisible(component)\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      read-only=\"isDisabled(component, submission.data)\"\n      builder=\"builder\"\n    ></formio-component>\n  </form>\n</div>\n"
     );
 
     $templateCache.put('formio-wizard.html',
@@ -111875,7 +112008,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":482,"./directives/customValidator":498,"./directives/formio":499,"./directives/formioBindHtml.js":500,"./directives/formioComponent":501,"./directives/formioComponentView":502,"./directives/formioDelete":503,"./directives/formioElement":504,"./directives/formioErrors":505,"./directives/formioSubmission":506,"./directives/formioSubmissions":507,"./directives/formioWizard":508,"./factories/FormioScope":509,"./factories/FormioUtils":510,"./factories/formioInterceptor":512,"./factories/formioTableView":513,"./filters/flattenComponents":514,"./filters/safehtml":515,"./filters/tableComponents":516,"./filters/tableFieldView":517,"./filters/tableView":518,"./filters/translate":519,"./filters/trusturl":520,"./polyfills/polyfills":524,"./providers/Formio":525}],523:[function(_dereq_,module,exports){
+},{"./components":534,"./directives/customValidator":550,"./directives/formio":551,"./directives/formioBindHtml.js":552,"./directives/formioComponent":553,"./directives/formioComponentView":554,"./directives/formioDelete":555,"./directives/formioElement":556,"./directives/formioErrors":557,"./directives/formioSubmission":558,"./directives/formioSubmissions":559,"./directives/formioWizard":560,"./factories/FormioScope":561,"./factories/FormioUtils":562,"./factories/formioInterceptor":564,"./factories/formioTableView":565,"./filters/flattenComponents":566,"./filters/safehtml":567,"./filters/tableComponents":568,"./filters/tableFieldView":569,"./filters/tableView":570,"./filters/translate":571,"./filters/trusturl":572,"./polyfills/polyfills":576,"./providers/Formio":577}],575:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -111906,13 +112039,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],524:[function(_dereq_,module,exports){
+},{}],576:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":523}],525:[function(_dereq_,module,exports){
+},{"./Object.assign":575}],577:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -111980,5 +112113,5 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":292}]},{},[266])(266)
+},{"formiojs":1}]},{},[330])(330)
 });

@@ -8,13 +8,15 @@
 * those via attributes (except for tooltip, which you can specify with the title attribute).
 * The generated input will also carry over any other properties you specify on this directive.
 */
-module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
+module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter) {
   return {
     restrict: 'E',
     require: 'property',
     priority: 2,
     replace: true,
     template: function(el, attrs) {
+      var formioTranslate = $filter('formioTranslate');
+
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
       var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
@@ -27,7 +29,7 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
         name: property,
         type: type,
         'ng-model': 'component.' + property,
-        placeholder: placeholder
+        placeholder: formioTranslate(placeholder)
       };
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
@@ -48,15 +50,15 @@ module.exports = ['COMMON_OPTIONS', function(COMMON_OPTIONS) {
       // Checkboxes have a slightly different layout
       if (inputAttrs.type && inputAttrs.type.toLowerCase() === 'checkbox') {
         return '<div class="checkbox">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' +
                 input.prop('outerHTML') +
-                ' ' + label + '</label>' +
+                ' ' + formioTranslate(label) + '</label>' +
               '</div>';
       }
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="' + property + '" form-builder-tooltip="' + tooltip + '">' + label + '</label>' +
+                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label>' +
                 input.prop('outerHTML') +
               '</div>';
     }
