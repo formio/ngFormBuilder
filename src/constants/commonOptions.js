@@ -94,6 +94,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
   },
+  hidden: {
+    label: 'Hidden',
+    type: 'checkbox',
+    tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
   block: {
     label: 'Block',
     type: 'checkbox',
