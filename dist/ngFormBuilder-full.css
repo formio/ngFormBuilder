@@ -840,6 +840,10 @@ tags-input .autocomplete .suggestion-item em {
 
 /*# sourceMappingURL=ng-tags-input.css.map */
 
+.ngdialog.ngdialog-theme-default .ngdialog-content {
+  width: 65%;
+}
+
 .field-required:after {
   color:red;
   content:" *";
@@ -1054,6 +1058,7 @@ input[type="password"][draggable="true"] {
 .bs-wizard > .bs-wizard-step:last-child  > .progress {width: 50%;}
 .bs-wizard > .bs-wizard-step.disabled a.bs-wizard-dot{ pointer-events: none; }
 /*END Form Wizard*/
+
 .component-form-group {
   position: relative;
 }
