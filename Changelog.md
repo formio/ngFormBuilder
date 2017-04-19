@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 ### Fixed
+ - Fixed issue with layout components not getting unique keys when added via the builder
 
 ### Removed
 
