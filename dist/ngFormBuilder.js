@@ -10316,7 +10316,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
       }
-    });
+    }, true);
 
     return component;
   };
@@ -10362,7 +10362,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],261:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.15.0 | https://unpkg.com/ng-formio-builder@2.15.0/LICENSE.txt */
+/*! ng-formio-builder v2.15.1 | https://unpkg.com/ng-formio-builder@2.15.1/LICENSE.txt */
 /*global window: false, console: false */
 /*jshint browser: true */
 
