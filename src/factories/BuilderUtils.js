@@ -95,7 +95,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
       }
-    });
+    }, true);
 
     return component;
   };
