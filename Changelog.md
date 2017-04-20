@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+ - Added the layout components from resources to display in the Existing Resource Fields select list
 
 ### Changed
 
