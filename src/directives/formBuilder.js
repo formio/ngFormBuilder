@@ -221,7 +221,7 @@ module.exports = ['debounce', function(debounce) {
                     }
                   }
                 ));
-              });
+              }, true);
             });
           });
         }
