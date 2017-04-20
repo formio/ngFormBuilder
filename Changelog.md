@@ -16,9 +16,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 2.15.6
 ### Added
  - An event to fire when a new page is added to the wizard view.
+ - Select dropdown to the index.html test page.
 
 ### Changed
  - Upgraded ng-formio to 2.15.6
+ - Upgraded formiojs to 2.5.0
+ - Upgraded angular dependency to 1.6.4
+ - Upgraded ng-dialog to 1.0.1
 
 ### Fixed
  - Fixed issue with layout components not getting unique keys when added via the builder
