@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+ - Added warning to existing components api key page, to message the side effects of changing a components key.
 
 ### Changed
 
