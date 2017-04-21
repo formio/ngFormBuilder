@@ -117,7 +117,7 @@ module.exports = function(app) {
                 'is-open="minDateOpen" ' +
                 'datetime-picker="yyyy-MM-dd" ' +
                 'enable-time="false" ' +
-                'ng-model="component.minDate" />' +
+                'ng-model="component.datePicker.minDate" />' +
               '<span class="input-group-btn">' +
                 '<button type="button" class="btn btn-default" ng-click="minDateOpen = true"><i class="fa fa-calendar"></i></button>' +
               '</span>' +
@@ -132,7 +132,7 @@ module.exports = function(app) {
                 'is-open="maxDateOpen" ' +
                 'datetime-picker="yyyy-MM-dd" ' +
                 'enable-time="false" ' +
-                'ng-model="component.maxDate" />' +
+                'ng-model="component.datePicker.maxDate" />' +
               '<span class="input-group-btn">' +
                 '<button type="button" class="btn btn-default" ng-click="maxDateOpen = true"><i class="fa fa-calendar"></i></button>' +
               '</span>' +
