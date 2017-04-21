@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 ### Fixed
+ - Fixed min/max validation issues with the datetime component
 
 ### Removed
 
