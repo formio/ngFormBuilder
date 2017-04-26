@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 2.15.8
 ### Added
  - Added warning to existing components api key page, to message the side effects of changing a components key.
  - Added the layout components from resources to display in the Existing Resource Fields select list
@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
  - Removed the m/d/y selection modes for the date time component, because they are only supported in the angular 1
    renderer.
+
+## 2.15.7
+ - No release
 
 ## 2.15.6
 ### Added
