@@ -3,20 +3,24 @@ var _camelCase = require('lodash/camelCase');
 var _assign = require('lodash/assign');
 module.exports = [
   '$scope',
+  '$element',
   '$rootScope',
   'formioComponents',
+  'FormioUtils',
   'ngDialog',
   'dndDragIframeWorkaround',
+  '$timeout',
   'BuilderUtils',
-  'FormioUtils',
   function(
     $scope,
+    $element,
     $rootScope,
     formioComponents,
+    FormioUtils,
     ngDialog,
     dndDragIframeWorkaround,
-    BuilderUtils,
-    FormioUtils
+    $timeout,
+    BuilderUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -26,6 +30,9 @@ module.exports = [
     });
 
     $scope.formComponents = formioComponents.components;
+    if (!$scope.component) {
+      $scope.component = $scope.form;
+    }
 
     // Components depend on this existing
     $scope.data = {};
@@ -36,7 +43,35 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
+    $scope.$on('iframe-componentClick', function(event, data) {
+      angular.forEach($scope.component.components, function(component) {
+        if (component.id === data.id) {
+          $scope.editComponent(component);
+        }
+      });
+    });
+    $scope.$on('iframe-componentUpdate', function(event, data) {
+      angular.forEach($scope.component.components, function(component) {
+        if (component.id === data.id) {
+          component.overlay = data.overlay;
+        }
+      });
+    });
+
+    $scope.$on('fbDragDrop', function(event, component) {
+      component.settings.id = Math.random().toString(36).substring(7);
+      component.settings.overlay = {
+        page: '1',
+        top: component.fbDropY,
+        left: component.fbDropX
+      };
+      $scope.addComponent(component.settings);
+    });
+
     $scope.addComponent = function(component, index) {
+      if (index === 'undefined') {
+        index = -1;
+      }
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
@@ -58,6 +93,7 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
+      $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
 
       // If this is a root component and the display is a wizard, then we know
       // that they dropped the component outside of where it is supposed to go...
@@ -87,9 +123,8 @@ module.exports = [
       }
 
       // Add the component to the components array.
-      $scope.$apply(function() {
-        $scope.component.components.splice(index, 0, component);
-      });
+      $scope.component.components.splice(index, 0, component);
+      $timeout($scope.$apply.bind($scope));
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
       return true;
@@ -99,14 +134,22 @@ module.exports = [
     $scope.updateComponent = function(newComponent, oldComponent) {
       var list = $scope.component.components;
       list.splice(list.indexOf(oldComponent), 1, newComponent);
-      $scope.$emit('update', newComponent);
+      $scope.emit('update', newComponent);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
       if ($scope.component.components.indexOf(component) !== -1) {
         $scope.component.components.splice($scope.component.components.indexOf(component), 1);
         $scope.emit('remove', component);
+        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
       }
+    };
+
+    $scope.saveComponent = function(component) {
+      $scope.emit('update', component);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
+      ngDialog.closeAll(true);
     };
 
     $scope.removeComponent = function(component, shouldConfirm) {

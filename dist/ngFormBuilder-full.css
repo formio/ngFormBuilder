@@ -827,6 +827,10 @@ tags-input .autocomplete .suggestion-item em {
 
 /*# sourceMappingURL=ng-tags-input.css.map */
 
+.ngdialog.ngdialog-theme-default .ngdialog-content {
+  width: 65%;
+}
+
 .field-required:after {
   color:red;
   content:" *";
@@ -999,6 +1003,25 @@ input[type="password"][draggable="true"] {
   width: auto;
 }
 
+.center-loader {
+  font-size: 2em;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-top: -0.5em;
+  margin-left: -0.5em;
+}
+
+.formio-iframe {
+  border: none;
+  width: 100%;
+  height: 1000px;
+}
+
+.inline-form-button {
+  margin-right: 10px;
+}
+
 /*Form Wizard*/
 .bs-wizard {border-bottom: solid 1px #e0e0e0; padding: 0 0 10px 0;line-height: 1em;}
 .bs-wizard > .bs-wizard-step {padding: 0; position: relative;}
@@ -1022,6 +1045,7 @@ input[type="password"][draggable="true"] {
 .bs-wizard > .bs-wizard-step:last-child  > .progress {width: 50%;}
 .bs-wizard > .bs-wizard-step.disabled a.bs-wizard-dot{ pointer-events: none; }
 /*END Form Wizard*/
+
 .ngdialog-close {
   -webkit-appearance: none;
   background: none;
