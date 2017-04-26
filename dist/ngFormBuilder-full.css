@@ -1022,6 +1022,12 @@ input[type="password"][draggable="true"] {
 .bs-wizard > .bs-wizard-step:last-child  > .progress {width: 50%;}
 .bs-wizard > .bs-wizard-step.disabled a.bs-wizard-dot{ pointer-events: none; }
 /*END Form Wizard*/
+.ngdialog-close {
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+}
+
 .component-form-group {
   position: relative;
 }
