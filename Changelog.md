@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 ### Fixed
+ - Fixing yearRange option for angular 1 renderer which was switched to yearRows and yearColumns.
  - Fixed min/max validation issues with the datetime component
 
 ### Removed
