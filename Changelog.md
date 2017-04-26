@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 ### Removed
+ - Removed the m/d/y selection modes for the date time component, because they are only supported in the angular 1
+   renderer.
 
 ## 2.15.6
 ### Added
