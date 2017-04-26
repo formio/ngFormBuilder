@@ -6,13 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+ - Added the layout components from resources to display in the Existing Resource Fields select list
 
 ### Changed
 
 ### Fixed
  - Fixing yearRange option for angular 1 renderer which was switched to yearRows and yearColumns.
+ - Fixed min/max validation issues with the datetime component
 
 ### Removed
+ - Removed the m/d/y selection modes for the date time component, because they are only supported in the angular 1
+   renderer.
 
 ## 2.15.6
 ### Added
