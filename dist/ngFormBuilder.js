@@ -7293,10 +7293,6 @@ module.exports = function(app) {
             '</label>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="datepickerMode" form-builder-tooltip="The initial view to display when clicking on this field.">Initial Mode</label>' +
-            '<select class="form-control" id="datepickerMode" name="datepickerMode" ng-model="component.datepickerMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
-          '</div>' +
-          '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The minimum date that can be picked.">Minimum Date</label>' +
             '<div class="input-group">' +
               '<input type="text" class="form-control" ' +
@@ -7305,7 +7301,7 @@ module.exports = function(app) {
                 'is-open="minDateOpen" ' +
                 'datetime-picker="yyyy-MM-dd" ' +
                 'enable-time="false" ' +
-                'ng-model="component.minDate" />' +
+                'ng-model="component.datePicker.minDate" />' +
               '<span class="input-group-btn">' +
                 '<button type="button" class="btn btn-default" ng-click="minDateOpen = true"><i class="fa fa-calendar"></i></button>' +
               '</span>' +
@@ -7320,7 +7316,7 @@ module.exports = function(app) {
                 'is-open="maxDateOpen" ' +
                 'datetime-picker="yyyy-MM-dd" ' +
                 'enable-time="false" ' +
-                'ng-model="component.maxDate" />' +
+                'ng-model="component.datePicker.maxDate" />' +
               '<span class="input-group-btn">' +
                 '<button type="button" class="btn btn-default" ng-click="maxDateOpen = true"><i class="fa fa-calendar"></i></button>' +
               '</span>' +
@@ -7338,8 +7334,8 @@ module.exports = function(app) {
             '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">Maximum Mode</label>' +
             '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
           '</div>' +
-          '<form-builder-option property="datePicker.yearRange" label="Number of Years Displayed" placeholder="Year Range" title="The number of years to display in the years view."></form-builder-option>' +
-
+          '<form-builder-option property="datePicker.yearRows" label="Number of Years Displayed (Rows)" placeholder="Year Range (Rows)" title="The number of years to display in the years view (Rows)."></form-builder-option>' +
+          '<form-builder-option property="datePicker.yearColumns" label="Number of Years Displayed (Columns)" placeholder="Year Range (Columns)" title="The number of years to display in the years view (Columns)."></form-builder-option>' +
           '<form-builder-option property="datePicker.showWeeks" type="checkbox" label="Show Week Numbers" title="Displays the week numbers on the date picker."></form-builder-option>' +
         '</ng-form>'
       );
@@ -9451,6 +9447,10 @@ module.exports = ['debounce', function(debounce) {
             key: 'page' + pageNum
           };
           $scope.form.numPages++;
+          $scope.$emit('newPage', {
+            index: index,
+            component: component
+          });
           $scope.form.components.splice(index, 0, component);
         };
 
@@ -9534,7 +9534,7 @@ module.exports = ['debounce', function(debounce) {
                     }
                   }
                 ));
-              });
+              }, true);
             });
           });
         }
@@ -10132,6 +10132,9 @@ module.exports = function() {
     replace: true,
     template: function() {
       return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding()}">' +
+                '<div class="alert alert-warning" role="alert" ng-if="!component.isNew">' +
+                'Changing the API key will cause you to lose existing submission data associated with this component.' +
+                '</div>' +
                 '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
                 'ng-disabled="component.source" ng-blur="onBlur()">' +
@@ -10565,7 +10568,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
       }
-    });
+    }, true);
 
     return component;
   };

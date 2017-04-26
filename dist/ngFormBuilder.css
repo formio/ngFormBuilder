@@ -1,3 +1,9 @@
+.ngdialog-close {
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+}
+
 .component-form-group {
   position: relative;
 }
