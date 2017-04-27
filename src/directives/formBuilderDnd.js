@@ -244,6 +244,7 @@ module.exports = [
         FormioUtils.eachComponent([component], function(child) {
           delete child.isNew;
         }, true);
+        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
         $scope.emit('edit', component);
       });
     };

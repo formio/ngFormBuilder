@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.16.1
+### Changed
+ - Upgraded ng-formio to 2.16.1
+
+### Fixed
+ - The event that should be fired to iframe builder when a component is updated with modal.
+
+## 2.16.0
+### Added 
+ - Added the UI for the "Add Resource" functionality.
+ - Added support for iframe builders (like the PDF builder)
+ - Adding ability to set a Checkbox to be of type Radio.
+
+### Fixed
+ - The form to always have a display of form.
+
+### Changed
+ - Upgraded ng-formio to 2.16.0
+
+
 ## 2.15.8
 ### Added
  - Added warning to existing components api key page, to message the side effects of changing a components key.
