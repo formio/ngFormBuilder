@@ -78718,6 +78718,11 @@ module.exports = function() {
         };
 
         $scope.downloadUrl = '';
+
+        var base64EncodeUrl = function(str) {
+          return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/\=+$/, '');
+        };
+
         $scope.getPDFDownload = function(pdf) {
           if (!$scope.formio) {
             return;
@@ -78739,7 +78744,7 @@ module.exports = function() {
           var allowedPath = download.replace(Formio.baseUrl, '');
           allowedPath = allowedPath.replace(Formio.getProjectUrl(), '');
           return $scope.formio.getTempToken(3600, 'GET:' + allowedPath).then(function(tempToken) {
-            download += '?token=' + tempToken;
+            download += '/' + base64EncodeUrl(tempToken);
             $scope.downloadUrl = download;
             return download;
           });
@@ -88017,6 +88022,7 @@ module.exports = [
         FormioUtils.eachComponent([component], function(child) {
           delete child.isNew;
         }, true);
+        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
         $scope.emit('edit', component);
       });
     };
@@ -88687,7 +88693,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":369,"angular-drag-and-drop-lists":2,"ng-dialog":247,"ng-formio/src/formio-full.js":306}],369:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.16.0 | https://unpkg.com/ng-formio-builder@2.16.0/LICENSE.txt */
+/*! ng-formio-builder v2.16.1 | https://unpkg.com/ng-formio-builder@2.16.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
