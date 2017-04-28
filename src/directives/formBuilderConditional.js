@@ -30,6 +30,13 @@ module.exports = [
             '<p><strong>Note: Advanced Conditional logic will override the results of the Simple Conditional logic.</strong></p>' +
             '</small>' +
           '</div>' +
+          '<div uib-accordion-group heading="JSON" class="panel panel-default" is-open="status.json">' +
+            '<small>' +
+              '<p>Execute custom validation logic with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
+              '<p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+            '</small>' +
+            '<textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.jsonConditional" placeholder="{ ... }"></textarea>' +
+          '</div>' +
         '</uib-accordion>',
       controller: [
         '$scope',
