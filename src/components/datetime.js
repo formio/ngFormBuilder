@@ -15,14 +15,19 @@ module.exports = function(app) {
           });
 
           $scope.setFormat = function() {
-            if ($scope.component.enableDate && $scope.component.enableTime) {
-              $scope.component.format = 'yyyy-MM-dd HH:mm';
+            var stdFormatDateTime = 'yyyy-MM-dd HH:mm';
+            var stdFormatDate     = 'yyyy-MM-dd';
+            var stdFormatTime     = 'HH:mm';
+            var stdFormats        = [stdFormatDateTime, stdFormatDate, stdFormatTime];
+
+            if ($scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatDateTime;
             }
-            else if ($scope.component.enableDate && !$scope.component.enableTime) {
-              $scope.component.format = 'yyyy-MM-dd';
+            else if ($scope.component.enableDate && !$scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatDate;
             }
-            else if (!$scope.component.enableDate && $scope.component.enableTime) {
-              $scope.component.format = 'HH:mm';
+            else if (!$scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatTime;
             }
           };
           $scope.startingDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
