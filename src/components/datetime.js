@@ -21,7 +21,7 @@ module.exports = function(app) {
             if ($scope.component.timePicker.showMeridian) {
                 stdFormatDateTime = 'yyyy-MM-dd hh:mm';
                 stdFormatTime     = 'hh:mm';
-            };
+            }
             var stdFormats        = [stdFormatDateTime, stdFormatDate, stdFormatTime];
 
             if ($scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
