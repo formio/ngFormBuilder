@@ -29,7 +29,7 @@ module.exports = function() {
       '      <p>Execute custom validation logic with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
       '      <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
       '    </small>' +
-      '    <textarea class="form-control" rows="5" id="json" name="json" ng-model="component.validate.json" placeholder=\'{ ... }\'>{{ component.validate.json }}</textarea>' +
+      '    <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.validate.json" placeholder=\'{ ... }\'>{{ component.validate.json }}</textarea>' +
       '  </div>' +
       '</uib-accordion>' +
       '</div>'
