@@ -2,6 +2,9 @@
   -webkit-appearance: none;
   background: none;
   border: none;
+  width: 40px;
+  height: 30px;
+  z-index: 200;
 }
 
 .component-form-group {
