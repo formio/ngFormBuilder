@@ -4,7 +4,7 @@
     "dist/ngFormBuilder.js",
     "css/ngFormBuilder.css"
   ],
-  "version": "2.16.1",
+  "version": "2.16.2",
   "authors": [
     "Travis Tidwell <travis@form.io>"
   ],
@@ -21,7 +21,7 @@
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-bootstrap": "^2.5.0",
     "ng-dialog": "^1.1.0",
-    "ng-formio": "^2.16.1",
+    "ng-formio": "^2.16.2",
     "ng-tags-input": "^3.1.2",
     "angular-ckeditor": "^1.0.3"
   },
