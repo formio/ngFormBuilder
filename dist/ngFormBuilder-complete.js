@@ -68622,7 +68622,7 @@ module.exports = function() {
             if (method === 'put' && (action.indexOf(submissionData._id) === -1)) {
               action += '/' + submissionData._id;
             }
-            $http[method](action, submissionData).success(function(submission) {
+            $http[method](action, submissionData).then(function(submission) {
               Formio.clearCache();
               onSubmitDone(method, submission, form);
             }, FormioScope.onError($scope, $element))
@@ -78422,7 +78422,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":367,"angular-drag-and-drop-lists":2,"ng-dialog":245,"ng-formio/src/formio-complete.js":304}],367:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.16.2 | https://unpkg.com/ng-formio-builder@2.16.2/LICENSE.txt */
+/*! ng-formio-builder v2.16.3 | https://unpkg.com/ng-formio-builder@2.16.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
