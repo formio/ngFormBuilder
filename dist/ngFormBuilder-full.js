@@ -89371,7 +89371,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":372,"angular-drag-and-drop-lists":2,"ng-dialog":242,"ng-formio/src/formio-full.js":309}],372:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.16.3 | https://unpkg.com/ng-formio-builder@2.16.3/LICENSE.txt */
+/*! ng-formio-builder v2.16.6 | https://unpkg.com/ng-formio-builder@2.16.6/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
