@@ -21,7 +21,7 @@
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-bootstrap": "^2.5.0",
     "ng-dialog": "^1.1.0",
-    "ng-formio": "^2.16.3",
+    "ng-formio": "^2.16.6",
     "ng-tags-input": "^3.1.2",
     "angular-ckeditor": "^1.0.3"
   },
