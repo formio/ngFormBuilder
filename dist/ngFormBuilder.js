@@ -7098,14 +7098,23 @@ module.exports = function(app) {
           });
 
           $scope.setFormat = function() {
-            if ($scope.component.enableDate && $scope.component.enableTime) {
-              $scope.component.format = 'yyyy-MM-dd HH:mm';
+            var stdFormatDateTime = 'yyyy-MM-dd HH:mm';
+            var stdFormatDate     = 'yyyy-MM-dd';
+            var stdFormatTime     = 'HH:mm';
+            if ($scope.component.timePicker.showMeridian) {
+                stdFormatDateTime = 'yyyy-MM-dd hh:mm';
+                stdFormatTime     = 'hh:mm';
             }
-            else if ($scope.component.enableDate && !$scope.component.enableTime) {
-              $scope.component.format = 'yyyy-MM-dd';
+            var stdFormats        = [stdFormatDateTime, stdFormatDate, stdFormatTime];
+
+            if ($scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatDateTime;
             }
-            else if (!$scope.component.enableDate && $scope.component.enableTime) {
-              $scope.component.format = 'HH:mm';
+            else if ($scope.component.enableDate && !$scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatDate;
+            }
+            else if (!$scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatTime;
             }
           };
           $scope.startingDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -9547,6 +9556,14 @@ module.exports = [
             '<p><strong>Note: Advanced Conditional logic will override the results of the Simple Conditional logic.</strong></p>' +
             '</small>' +
           '</div>' +
+          '<div uib-accordion-group heading="JSON Conditional" class="panel panel-default" is-open="status.json">' +
+            '<small>' +
+              '<p>Execute custom validation logic with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
+              '<p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+              '<p><a href="http://formio.github.io/formio.js/app/examples/conditions.html" target="_blank">Click here for an example</a></p>' +
+            '</small>' +
+            '<textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.conditional.json" placeholder="{ ... }"></textarea>' +
+          '</div>' +
         '</uib-accordion>',
       controller: [
         '$scope',
@@ -9992,28 +10009,33 @@ module.exports = function() {
     restrict: 'E',
     replace: true,
     template: '' +
-      '<div class="panel panel-default" id="accordion">' +
-        '<div class="panel-heading" data-toggle="collapse" data-parent="#accordion" data-target="#validationSection">' +
-          '<span class="panel-title">Custom Validation</span>' +
-        '</div>' +
-        '<div id="validationSection" class="panel-collapse collapse in">' +
-          '<div class="panel-body">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small>' +
-              '<p>Enter custom validation code.</p>' +
-              '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-              '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
-            '</small>' +
-            '<div class="well">' +
-              '<div class="checkbox">' +
-                '<label>' +
-                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
-                '</label>' +
-              '</div>' +
-              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+      '<div>' +
+      '<uib-accordion>' +
+      '  <div uib-accordion-group heading="Custom Validation" class="panel panel-default">' +
+      '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
+      '    <small>' +
+      '      <p>Enter custom validation code.</p>' +
+      '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
+      '      <p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
+      '    </small>' +
+      '    <div class="well">' +
+      '      <div class="checkbox">' +
+      '        <label>' +
+      '          <input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
+      '        </label>' +
+      '      </div>' +
+      '      <p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
+      '    </div>' +
+      '  </div>' +
+      '  <div uib-accordion-group heading="JSON Validation" class="panel panel-default">' +
+      '    <small>' +
+      '      <p>Execute custom validation logic with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
+      '      <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+      '      <p><a href="http://formio.github.io/formio.js/app/examples/conditions.html" target="_blank">Click here for an example</a></p>' +
+      '    </small>' +
+      '    <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.validate.json" placeholder=\'{ ... }\'></textarea>' +
+      '  </div>' +
+      '</uib-accordion>' +
       '</div>'
   };
 };
@@ -10511,7 +10533,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],261:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.16.3 | https://unpkg.com/ng-formio-builder@2.16.3/LICENSE.txt */
+/*! ng-formio-builder v2.16.6 | https://unpkg.com/ng-formio-builder@2.16.6/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

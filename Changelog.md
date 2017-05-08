@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.16.6
+### Added
+ - UI for the JSON Logic capabilities.
+### Changed
+ - Upgraded ng-formio to 2.16.6.
+
+## 2.16.5
+## 2.16.4
+ - No release.
+
 ## 2.16.3
 ### Changed
  - Upgraded ng-formio to 2.16.3 - Fixes save to not throw error when calling "success" vs. "then".
