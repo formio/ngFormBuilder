@@ -47,15 +47,15 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">Column Properties</label>' +
+            '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">{{\'Column Properties\' | formioTranslate}}</label>' +
             '<table class="table table-condensed">' +
               '<thead>' +
                 '<tr>' +
-                  '<th class="col-xs-2">Column</th>' +
-                  '<th class="col-xs-2">Width</th>' +
-                  '<th class="col-xs-2">Offset</th>' +
-                  '<th class="col-xs-2">Push</th>' +
-                  '<th class="col-xs-2">Pull</th>' +
+                  '<th class="col-xs-2">{{\'Column\' | formioTranslate}}</th>' +
+                  '<th class="col-xs-2">{{\'Width\' | formioTranslate}}</th>' +
+                  '<th class="col-xs-2">{{\'Offset\' | formioTranslate}}</th>' +
+                  '<th class="col-xs-2">{{\'Push\' | formioTranslate}}</th>' +
+                  '<th class="col-xs-2">{{\'Pull\' | formioTranslate}}</th>' +
                   '<th class="col-xs-1"></th>' +
                 '</tr>' +
               '</thead>' +
@@ -70,7 +70,7 @@ module.exports = function(app) {
                 '</tr>' +
               '</tbody>' +
             '</table>' +
-            '<button type="button" class="btn" ng-click="addColumn()">Add Column</button>' +
+            '<button type="button" class="btn" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
           '</div>' +
         '</ng-form>'
       );
