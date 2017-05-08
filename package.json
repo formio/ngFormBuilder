@@ -1,6 +1,6 @@
 {
   "name": "ng-formio-builder",
-  "version": "2.15.0",
+  "version": "2.16.6",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
@@ -50,14 +50,14 @@
     ]
   },
   "dependencies": {
-    "angular": "^1.6.3",
+    "angular": "^1.6.4",
     "angular-ckeditor": "github:lemonde/angular-ckeditor#v1.0.3",
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-ui-bootstrap": "^2.5.0",
-    "formiojs": "^2.4.1",
+    "formiojs": "^2.5.0",
     "lodash": "^4.17.4",
-    "ng-dialog": "^0.6.6",
-    "ng-formio": "^2.15.1",
-    "ng-tags-input": "^3.1.1"
+    "ng-dialog": "^1.1.0",
+    "ng-formio": "^2.16.6",
+    "ng-tags-input": "^3.1.2"
   }
 }

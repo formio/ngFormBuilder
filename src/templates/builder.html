@@ -1,6 +1,6 @@
 <div class="row formbuilder">
-  <div class="col-xs-4 col-sm-3 col-md-2 formcomponents">
-    <uib-accordion close-others="true">
+  <div class="col-xs-4 col-sm-3 col-md-2 formcomponents" ng-if="form && form.display">
+    <uib-accordion close-others="true" ng-if="form.display !== 'pdf'">
       <div uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" class="panel panel-default form-builder-panel {{ group.panelClass }}">
         <uib-accordion close-others="true" ng-if="group.subgroups">
           <div uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" class="panel panel-default form-builder-panel subgroup-accordion">
@@ -28,14 +28,27 @@
         </div>
       </div>
     </uib-accordion>
+    <uib-accordion close-others="true" ng-if="form.display === 'pdf'">
+      <div uib-accordion-group heading="PDF Fields" is-open="true" class="panel panel-default form-builder-panel">
+        <div class="formcomponentcontainer" ng-repeat="pdftype in pdftypes">
+          <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{ pdftype.title }}" style="overflow: hidden; text-overflow: ellipsis;" form-builder-draggable="pdftype">
+            <i ng-if="pdftype.icon" class="{{ pdftype.icon }}"></i> {{ pdftype.title }}
+          </span>
+        </div>
+      </div>
+    </uib-accordion>
   </div>
-  <div class="col-xs-8 col-sm-9 col-md-10 formarea">
+  <div class="col-xs-8 col-sm-9 col-md-10 formarea" ng-if="form && form.display">
     <ol class="breadcrumb" ng-if="form.display === 'wizard'">
       <li ng-repeat="title in pages() track by $index"><a class="label" style="font-size:1em;" ng-class="{'label-info': ($index === form.page), 'label-primary': ($index !== form.page)}" ng-click="showPage($index)">{{ title }}</a></li>
       <li><a class="label label-success" style="font-size:1em;" ng-click="newPage()" data-toggle="tooltip" title="Create Page"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> page</a></li>
     </ol>
     <div class="dropzone">
-      <form-builder-list component="form" form="form" formio="::formio" hide-dnd-box-count="hideCount" root-list="true" class="rootlist" options="options"></form-builder-list>
+      <div ng-if="form.display === 'pdf'" ng-controller="formBuilderDnd">
+        <div form-builder-droppable style="width:100%;height:2000px;position:absolute;" id="fb-drop-zone"></div>
+        <formio form="form" ng-init="form.builder = true;"></formio>
+      </div>
+      <form-builder-list ng-if="form.display !== 'pdf'" component="form" form="form" formio="::formio" hide-dnd-box-count="hideCount" root-list="true" class="rootlist" options="options"></form-builder-list>
     </div>
   </div>
 </div>

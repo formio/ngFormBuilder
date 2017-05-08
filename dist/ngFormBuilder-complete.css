@@ -102,12 +102,6 @@
   animation: ngdialog-fadeout 0.5s;
 }
 
-.ngdialog-close {
-  -webkit-appearance: none;
-  background: none;
-  border: none;
-}
-
 .ngdialog-close:before {
   font-family: 'Helvetica', Arial, sans-serif;
   content: '\00D7';
@@ -118,7 +112,6 @@ html.ngdialog-open,
 body.ngdialog-open {
   overflow: hidden;
 }
-
 @-webkit-keyframes ngdialog-flyin {
   0% {
     opacity: 0;
@@ -313,7 +306,7 @@ body.ngdialog-open {
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
- * Version: 0.19.5 - 2016-10-24T23:13:59.551Z
+ * Version: 0.19.7 - 2017-04-15T14:28:36.790Z
  * License: MIT
  */
 
@@ -637,19 +630,12 @@ body > .ui-select-bootstrap.open {
 }
 
 /* Spinner */
-.ui-select-refreshing {
+.ui-select-refreshing.glyphicon {
     position: absolute;
     right: 0;
     padding: 8px 27px;
-    top: 1px;
-    display: inline-block;
-    font-family: 'Glyphicons Halflings';
-    font-style: normal;
-    font-weight: normal;
-    line-height: 1;
-    -webkit-font-smoothing:antialiased;
  }
- 
+
 @-webkit-keyframes ui-select-spin {
   0% {
     -webkit-transform: rotate(0deg);
@@ -678,7 +664,8 @@ body > .ui-select-bootstrap.open {
 
 .ui-select-refreshing.ng-animate {
   -webkit-animation: none 0s;
-} 
+}
+
 tags-input {
   display: block;
 }
@@ -839,6 +826,10 @@ tags-input .autocomplete .suggestion-item em {
 }
 
 /*# sourceMappingURL=ng-tags-input.css.map */
+
+.ngdialog.ngdialog-theme-default .ngdialog-content {
+  width: 65%;
+}
 
 .field-required:after {
   color:red;
@@ -1012,6 +1003,25 @@ input[type="password"][draggable="true"] {
   width: auto;
 }
 
+.center-loader {
+  font-size: 2em;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-top: -0.5em;
+  margin-left: -0.5em;
+}
+
+.formio-iframe {
+  border: none;
+  width: 100%;
+  height: 1000px;
+}
+
+.inline-form-button {
+  margin-right: 10px;
+}
+
 /*Form Wizard*/
 .bs-wizard {border-bottom: solid 1px #e0e0e0; padding: 0 0 10px 0;line-height: 1em;}
 .bs-wizard > .bs-wizard-step {padding: 0; position: relative;}
@@ -1035,6 +1045,16 @@ input[type="password"][draggable="true"] {
 .bs-wizard > .bs-wizard-step:last-child  > .progress {width: 50%;}
 .bs-wizard > .bs-wizard-step.disabled a.bs-wizard-dot{ pointer-events: none; }
 /*END Form Wizard*/
+
+.ngdialog-close {
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  width: 40px;
+  height: 30px;
+  z-index: 200;
+}
+
 .component-form-group {
   position: relative;
 }
