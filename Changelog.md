@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Added
+ - Added default value settings to the currency component.
+
 ## 2.16.6
 ### Added
  - UI for the JSON Logic capabilities.
