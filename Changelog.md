@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [UNRELEASED]
 ### Fixed
  - Custom component edits edit the right component.
+
+### Added
+ - Added default value settings to the currency component.
+
+### Removed
+ - Removing random validation field on the file component, which was not used.
 
 ## 2.16.6
 ### Added
