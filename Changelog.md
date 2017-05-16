@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
+### Added
+ - Added default value settings to the currency component.
+
 ### Removed
  - Removing random validation field on the file component, which was not used.
 
