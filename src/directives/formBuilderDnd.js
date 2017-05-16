@@ -159,7 +159,7 @@ module.exports = [
           template: 'formio/components/confirm-remove.html',
           showClose: false
         }).closePromise.then(function(e) {
-          var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+          var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document' || e.value === '$escape';
           if (!cancelled) {
             remove(component);
           }
@@ -230,7 +230,7 @@ module.exports = [
           });
         }]
       }).closePromise.then(function(e) {
-        var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document';
+        var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document' || e.value === '$escape';
         if (cancelled) {
           if (component.isNew) {
             return remove(component);
