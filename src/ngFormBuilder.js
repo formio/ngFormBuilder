@@ -1,5 +1,5 @@
 /*! ng-formio-builder v<%=version%> | https://unpkg.com/ng-formio-builder@<%=version%>/LICENSE.txt */
-/*global window: false, console: false */
+/*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 var fs = require('fs');
 
@@ -16,6 +16,51 @@ app.constant('FORM_OPTIONS', require('./constants/formOptions'));
 app.constant('COMMON_OPTIONS', require('./constants/commonOptions'));
 
 app.factory('debounce', require('./factories/debounce'));
+
+app.directive('formBuilderDraggable', function() {
+  return {
+    restrict: 'A',
+    scope: {
+      'formBuilderDraggable': '='
+    },
+    link: function(scope, element) {
+      var el = element[0];
+      el.draggable = true;
+      el.addEventListener('dragstart', function(event) {
+        var dragData = scope.formBuilderDraggable;
+        var dropZone = document.getElementById('fb-drop-zone');
+        if (dropZone) {
+          dropZone.style.zIndex = 10;
+        }
+        event.dataTransfer.setData('Text', JSON.stringify(dragData));
+        return false;
+      }, false);
+    }
+  };
+});
+
+app.directive('formBuilderDroppable', function() {
+  return {
+    restrict: 'A',
+    link: function(scope, element) {
+      var el = element[0];
+      el.addEventListener('dragover', function(event) {
+        event.preventDefault();
+        return false;
+      }, false);
+      el.addEventListener('drop', function(event) {
+        event.stopPropagation();
+        var dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+        var dropOffset = jQuery(el).offset();
+        el.style.zIndex = 0;
+        dragData.fbDropX = event.pageX - dropOffset.left;
+        dragData.fbDropY = event.pageY - dropOffset.top;
+        scope.$emit('fbDragDrop', dragData);
+        return false;
+      }, false);
+    }
+  };
+});
 
 app.factory('BuilderUtils', require('./factories/BuilderUtils'));
 
@@ -65,7 +110,11 @@ app.run([
   '$templateCache',
   '$rootScope',
   'ngDialog',
-  function($templateCache, $rootScope, ngDialog) {
+  function(
+    $templateCache,
+    $rootScope,
+    ngDialog
+  ) {
     // Close all open dialogs on state change.
     $rootScope.$on('$stateChangeStart', function() {
       ngDialog.closeAll(false);

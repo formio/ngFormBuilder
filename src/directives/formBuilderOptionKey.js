@@ -7,6 +7,9 @@ module.exports = function() {
     replace: true,
     template: function() {
       return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding()}">' +
+                '<div class="alert alert-warning" role="alert" ng-if="!component.isNew">' +
+                'Changing the API key will cause you to lose existing submission data associated with this component.' +
+                '</div>' +
                 '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
                 'ng-disabled="component.source" ng-blur="onBlur()">' +

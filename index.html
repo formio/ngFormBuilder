@@ -225,6 +225,55 @@ node server</pre>
             },
             type: 'textfield'
           }, {
+            type: 'select',
+            validate: {
+              required: false
+            },
+            clearOnHide: true,
+            persistent: true,
+            unique: false,
+            protected: false,
+            multiple: true,
+            template: '<span>{{ item.label }}</span>',
+            authenticate: false,
+            filter: '',
+            refreshOn: '',
+            defaultValue: '',
+            valueProperty: '',
+            dataSrc: 'values',
+            data: {
+              custom: '',
+              resource: '',
+              url: '',
+              json: '',
+              values: [
+                {
+                  label: 'Raindrops on roses',
+                  value: 'raindropsOnRoses'
+                },
+                {
+                  label: 'Whiskers on Kittens',
+                  value: 'whiskersOnKittens'
+                },
+                {
+                  label: 'Bright copper kettles',
+                  value: 'brightCopperKettles'
+                },
+                {
+                  label: 'Warm woolen Mittens',
+                  value: 'warmWoolenMittens'
+                },
+                [
+
+                ]
+              ]
+            },
+            placeholder: 'Select a few',
+            key: 'favoriteThings',
+            label: 'Favorite Things',
+            tableView: true,
+            input: true
+          }, {
             input: true,
             tableView: true,
             label: 'Message',

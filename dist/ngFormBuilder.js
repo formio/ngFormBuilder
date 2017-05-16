@@ -6411,6 +6411,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -6508,6 +6509,18 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('checkbox', {
         icon: 'fa fa-check-square',
+        onEdit: ['$scope', function($scope) {
+          $scope.inputTypes = [
+            {
+              name: 'checkbox',
+              title: 'Checkbox'
+            },
+            {
+              name: 'radio',
+              title: 'Radio'
+            }
+          ];
+        }],
         views: [
           {
             name: 'Display',
@@ -6545,12 +6558,25 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">Input Type</label>' +
+            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title for inputType in inputTypes" ng-model="component.inputType"></select>' +
+          '</div>' +
+          '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
+          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">Radio Key</label>' +
+          '  <input type="text" class="form-control" id="name" name="name" ng-model="component.name" placeholder="{{ component.key }}" />' +
+          '</div>' +
+          '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
+          '  <label for="value" form-builder-tooltip="The value used with this radio button.">Radio Value</label>' +
+          '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
+          '</div>' +
           '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -6701,6 +6727,30 @@ module.exports = function(app) {
           '<form-builder-option property="style[\'margin-right\']"></form-builder-option>' +
           '<form-builder-option property="style[\'margin-bottom\']"></form-builder-option>' +
           '<form-builder-option property="style[\'margin-left\']"></form-builder-option>' +
+          '<uib-accordion>' +
+          '  <div uib-accordion-group heading="Overlay" class="panel panel-default">' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-style">Style</label>' +
+          '      <input class="form-control" id="overlay-style" name="overlay-style" ng-model="component.overlay.style"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-left">Left</label>' +
+          '      <input class="form-control" id="overlay-left" name="overlay-left" ng-model="component.overlay.left"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-right">Top</label>' +
+          '      <input class="form-control" id="overlay-top" name="overlay-top" ng-model="component.overlay.top"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-width">Width</label>' +
+          '      <input class="form-control" id="overlay-width" name="overlay-width" ng-model="component.overlay.width"></input>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-height">Height</label>' +
+          '      <input class="form-control" id="overlay-height" name="overlay-height" ng-model="component.overlay.height"></input>' +
+          '    </div>' +
+          '  </div>' +
+          '</uib-accordion>' +
         '</ng-form>'
       );
 
@@ -6885,6 +6935,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -7011,6 +7062,7 @@ module.exports = function(app) {
         '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="hidden"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7046,14 +7098,23 @@ module.exports = function(app) {
           });
 
           $scope.setFormat = function() {
-            if ($scope.component.enableDate && $scope.component.enableTime) {
-              $scope.component.format = 'yyyy-MM-dd HH:mm';
+            var stdFormatDateTime = 'yyyy-MM-dd HH:mm';
+            var stdFormatDate     = 'yyyy-MM-dd';
+            var stdFormatTime     = 'HH:mm';
+            if ($scope.component.timePicker.showMeridian) {
+                stdFormatDateTime = 'yyyy-MM-dd hh:mm';
+                stdFormatTime     = 'hh:mm';
             }
-            else if ($scope.component.enableDate && !$scope.component.enableTime) {
-              $scope.component.format = 'yyyy-MM-dd';
+            var stdFormats        = [stdFormatDateTime, stdFormatDate, stdFormatTime];
+
+            if ($scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatDateTime;
             }
-            else if (!$scope.component.enableDate && $scope.component.enableTime) {
-              $scope.component.format = 'HH:mm';
+            else if ($scope.component.enableDate && !$scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatDate;
+            }
+            else if (!$scope.component.enableDate && $scope.component.enableTime && stdFormats.indexOf($scope.component.format) !== -1) {
+              $scope.component.format = stdFormatTime;
             }
           };
           $scope.startingDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -7123,6 +7184,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7136,10 +7198,6 @@ module.exports = function(app) {
             '</label>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="datepickerMode" form-builder-tooltip="The initial view to display when clicking on this field.">Initial Mode</label>' +
-            '<select class="form-control" id="datepickerMode" name="datepickerMode" ng-model="component.datepickerMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
-          '</div>' +
-          '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The minimum date that can be picked.">Minimum Date</label>' +
             '<div class="input-group">' +
               '<input type="text" class="form-control" ' +
@@ -7148,7 +7206,7 @@ module.exports = function(app) {
                 'is-open="minDateOpen" ' +
                 'datetime-picker="yyyy-MM-dd" ' +
                 'enable-time="false" ' +
-                'ng-model="component.minDate" />' +
+                'ng-model="component.datePicker.minDate" />' +
               '<span class="input-group-btn">' +
                 '<button type="button" class="btn btn-default" ng-click="minDateOpen = true"><i class="fa fa-calendar"></i></button>' +
               '</span>' +
@@ -7163,7 +7221,7 @@ module.exports = function(app) {
                 'is-open="maxDateOpen" ' +
                 'datetime-picker="yyyy-MM-dd" ' +
                 'enable-time="false" ' +
-                'ng-model="component.maxDate" />' +
+                'ng-model="component.datePicker.maxDate" />' +
               '<span class="input-group-btn">' +
                 '<button type="button" class="btn btn-default" ng-click="maxDateOpen = true"><i class="fa fa-calendar"></i></button>' +
               '</span>' +
@@ -7181,8 +7239,8 @@ module.exports = function(app) {
             '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">Maximum Mode</label>' +
             '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
           '</div>' +
-          '<form-builder-option property="datePicker.yearRange" label="Number of Years Displayed" placeholder="Year Range" title="The number of years to display in the years view."></form-builder-option>' +
-
+          '<form-builder-option property="datePicker.yearRows" label="Number of Years Displayed (Rows)" placeholder="Year Range (Rows)" title="The number of years to display in the years view (Rows)."></form-builder-option>' +
+          '<form-builder-option property="datePicker.yearColumns" label="Number of Years Displayed (Columns)" placeholder="Year Range (Columns)" title="The number of years to display in the years view (Columns)."></form-builder-option>' +
           '<form-builder-option property="datePicker.showWeeks" type="checkbox" label="Show Week Numbers" title="Displays the week numbers on the date picker."></form-builder-option>' +
         '</ng-form>'
       );
@@ -7268,6 +7326,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7460,6 +7519,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7693,6 +7753,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7860,6 +7921,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7924,6 +7986,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -7992,6 +8055,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8079,7 +8143,10 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="addResource"></form-builder-option>' +
+          '<form-builder-option property="addResourceLabel" ng-if="component.addResource"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -8251,6 +8318,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8376,6 +8444,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8447,6 +8516,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -8511,6 +8581,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8757,6 +8828,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8920,6 +8992,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
   },
+  hidden: {
+    label: 'Hidden',
+    type: 'checkbox',
+    tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
   block: {
     label: 'Block',
     type: 'checkbox',
@@ -9037,6 +9114,16 @@ module.exports = {
     label: 'Margin Left',
     placeholder: '0px',
     tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'addResource': {
+    label: 'Show Add Resource Button',
+    type: 'checkbox',
+    tooltip: 'Include a button for adding a new resource'
+  },
+  'addResourceLabel': {
+    label: 'Add Resource Text',
+    placeholder: 'Add Resource',
+    tooltip: 'Set the text of the Add Resource button.'
   }
 };
 
@@ -9157,6 +9244,9 @@ module.exports = ['debounce', function(debounce) {
         if (!$scope.form.components) {
           $scope.form.components = [];
         }
+        if (!$scope.form.display) {
+          $scope.form.display = 'form';
+        }
         if (!$scope.options.noSubmit && !$scope.form.components.length) {
           $scope.form.components.push(submitButton);
         }
@@ -9200,6 +9290,9 @@ module.exports = ['debounce', function(debounce) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
             $scope.form.page = 0;
+            if (!$scope.form.display) {
+              $scope.form.display = 'form';
+            }
             if (!$scope.options.noSubmit && $scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
@@ -9259,6 +9352,10 @@ module.exports = ['debounce', function(debounce) {
             key: 'page' + pageNum
           };
           $scope.form.numPages++;
+          $scope.$emit('newPage', {
+            index: index,
+            component: component
+          });
           $scope.form.components.splice(index, 0, component);
         };
 
@@ -9274,6 +9371,20 @@ module.exports = ['debounce', function(debounce) {
             delete $scope.formComponents[key];
           }
         });
+
+        $scope.pdftypes = [
+          $scope.formComponents.textfield,
+          $scope.formComponents.number,
+          $scope.formComponents.password,
+          $scope.formComponents.email,
+          $scope.formComponents.phoneNumber,
+          $scope.formComponents.currency,
+          $scope.formComponents.checkbox,
+          $scope.formComponents.signature,
+          $scope.formComponents.select,
+          $scope.formComponents.textarea,
+          $scope.formComponents.datetime
+        ];
 
         $scope.formComponentGroups = _cloneDeep(_omitBy(formioComponents.groups, 'disabled'));
         $scope.formComponentsByGroup = _groupBy($scope.formComponents, function(component) {
@@ -9328,7 +9439,7 @@ module.exports = ['debounce', function(debounce) {
                     }
                   }
                 ));
-              });
+              }, true);
             });
           });
         }
@@ -9445,6 +9556,14 @@ module.exports = [
             '<p><strong>Note: Advanced Conditional logic will override the results of the Simple Conditional logic.</strong></p>' +
             '</small>' +
           '</div>' +
+          '<div uib-accordion-group heading="JSON Conditional" class="panel panel-default" is-open="status.json">' +
+            '<small>' +
+              '<p>Execute custom validation logic with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
+              '<p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+              '<p><a href="http://formio.github.io/formio.js/app/examples/conditions.html" target="_blank">Click here for an example</a></p>' +
+            '</small>' +
+            '<textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.conditional.json" placeholder="{ ... }"></textarea>' +
+          '</div>' +
         '</uib-accordion>',
       controller: [
         '$scope',
@@ -9505,20 +9624,24 @@ var _camelCase = _dereq_('lodash/camelCase');
 var _assign = _dereq_('lodash/assign');
 module.exports = [
   '$scope',
+  '$element',
   '$rootScope',
   'formioComponents',
+  'FormioUtils',
   'ngDialog',
   'dndDragIframeWorkaround',
+  '$timeout',
   'BuilderUtils',
-  'FormioUtils',
   function(
     $scope,
+    $element,
     $rootScope,
     formioComponents,
+    FormioUtils,
     ngDialog,
     dndDragIframeWorkaround,
-    BuilderUtils,
-    FormioUtils
+    $timeout,
+    BuilderUtils
   ) {
     $scope.builder = true;
     $rootScope.builder = true;
@@ -9528,6 +9651,9 @@ module.exports = [
     });
 
     $scope.formComponents = formioComponents.components;
+    if (!$scope.component) {
+      $scope.component = $scope.form;
+    }
 
     // Components depend on this existing
     $scope.data = {};
@@ -9538,7 +9664,35 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
+    $scope.$on('iframe-componentClick', function(event, data) {
+      angular.forEach($scope.component.components, function(component) {
+        if (component.id === data.id) {
+          $scope.editComponent(component);
+        }
+      });
+    });
+    $scope.$on('iframe-componentUpdate', function(event, data) {
+      angular.forEach($scope.component.components, function(component) {
+        if (component.id === data.id) {
+          component.overlay = data.overlay;
+        }
+      });
+    });
+
+    $scope.$on('fbDragDrop', function(event, component) {
+      component.settings.id = Math.random().toString(36).substring(7);
+      component.settings.overlay = {
+        page: '1',
+        top: component.fbDropY,
+        left: component.fbDropX
+      };
+      $scope.addComponent(component.settings);
+    });
+
     $scope.addComponent = function(component, index) {
+      if (index === 'undefined') {
+        index = -1;
+      }
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component);
@@ -9560,6 +9714,7 @@ module.exports = [
 
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
+      $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
 
       // If this is a root component and the display is a wizard, then we know
       // that they dropped the component outside of where it is supposed to go...
@@ -9589,9 +9744,8 @@ module.exports = [
       }
 
       // Add the component to the components array.
-      $scope.$apply(function() {
-        $scope.component.components.splice(index, 0, component);
-      });
+      $scope.component.components.splice(index, 0, component);
+      $timeout($scope.$apply.bind($scope));
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
       return true;
@@ -9601,14 +9755,22 @@ module.exports = [
     $scope.updateComponent = function(newComponent, oldComponent) {
       var list = $scope.component.components;
       list.splice(list.indexOf(oldComponent), 1, newComponent);
-      $scope.$emit('update', newComponent);
+      $scope.emit('update', newComponent);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
       if ($scope.component.components.indexOf(component) !== -1) {
         $scope.component.components.splice($scope.component.components.indexOf(component), 1);
         $scope.emit('remove', component);
+        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
       }
+    };
+
+    $scope.saveComponent = function(component) {
+      $scope.emit('update', component);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
+      ngDialog.closeAll(true);
     };
 
     $scope.removeComponent = function(component, shouldConfirm) {
@@ -9703,6 +9865,7 @@ module.exports = [
         FormioUtils.eachComponent([component], function(child) {
           delete child.isNew;
         }, true);
+        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
         $scope.emit('edit', component);
       });
     };
@@ -9846,28 +10009,33 @@ module.exports = function() {
     restrict: 'E',
     replace: true,
     template: '' +
-      '<div class="panel panel-default" id="accordion">' +
-        '<div class="panel-heading" data-toggle="collapse" data-parent="#accordion" data-target="#validationSection">' +
-          '<span class="panel-title">Custom Validation</span>' +
-        '</div>' +
-        '<div id="validationSection" class="panel-collapse collapse in">' +
-          '<div class="panel-body">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
-            '<small>' +
-              '<p>Enter custom validation code.</p>' +
-              '<p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
-              '<p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
-            '</small>' +
-            '<div class="well">' +
-              '<div class="checkbox">' +
-                '<label>' +
-                  '<input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
-                '</label>' +
-              '</div>' +
-              '<p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+      '<div>' +
+      '<uib-accordion>' +
+      '  <div uib-accordion-group heading="Custom Validation" class="panel panel-default">' +
+      '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
+      '    <small>' +
+      '      <p>Enter custom validation code.</p>' +
+      '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
+      '      <p>The global variables <strong>input</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
+      '    </small>' +
+      '    <div class="well">' +
+      '      <div class="checkbox">' +
+      '        <label>' +
+      '          <input type="checkbox" id="private" name="private" ng-model="component.validate.customPrivate" ng-checked="component.validate.customPrivate"> <strong>Secret Validation</strong>' +
+      '        </label>' +
+      '      </div>' +
+      '      <p>Check this if you wish to perform the validation ONLY on the server side. This keeps your validation logic private and secret.</p>' +
+      '    </div>' +
+      '  </div>' +
+      '  <div uib-accordion-group heading="JSON Validation" class="panel panel-default">' +
+      '    <small>' +
+      '      <p>Execute custom validation logic with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
+      '      <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+      '      <p><a href="http://formio.github.io/formio.js/app/examples/conditions.html" target="_blank">Click here for an example</a></p>' +
+      '    </small>' +
+      '    <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.validate.json" placeholder=\'{ ... }\'></textarea>' +
+      '  </div>' +
+      '</uib-accordion>' +
       '</div>'
   };
 };
@@ -9883,6 +10051,9 @@ module.exports = function() {
     replace: true,
     template: function() {
       return '<div class="form-group" ng-class="{\'has-warning\': shouldWarnAboutEmbedding()}">' +
+                '<div class="alert alert-warning" role="alert" ng-if="!component.isNew">' +
+                'Changing the API key will cause you to lose existing submission data associated with this component.' +
+                '</div>' +
                 '<label for="key" class="control-label" form-builder-tooltip="The name of this field in the API endpoint.">Property Name</label>' +
                 '<input type="text" class="form-control" id="key" name="key" ng-model="component.key" valid-api-key value="{{ component.key }}" ' +
                 'ng-disabled="component.source" ng-blur="onBlur()">' +
@@ -10316,7 +10487,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
       }
-    });
+    }, true);
 
     return component;
   };
@@ -10362,8 +10533,8 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],261:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.15.0 | https://unpkg.com/ng-formio-builder@2.15.0/LICENSE.txt */
-/*global window: false, console: false */
+/*! ng-formio-builder v2.16.6 | https://unpkg.com/ng-formio-builder@2.16.6/LICENSE.txt */
+/*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
 
@@ -10380,6 +10551,51 @@ app.constant('FORM_OPTIONS', _dereq_('./constants/formOptions'));
 app.constant('COMMON_OPTIONS', _dereq_('./constants/commonOptions'));
 
 app.factory('debounce', _dereq_('./factories/debounce'));
+
+app.directive('formBuilderDraggable', function() {
+  return {
+    restrict: 'A',
+    scope: {
+      'formBuilderDraggable': '='
+    },
+    link: function(scope, element) {
+      var el = element[0];
+      el.draggable = true;
+      el.addEventListener('dragstart', function(event) {
+        var dragData = scope.formBuilderDraggable;
+        var dropZone = document.getElementById('fb-drop-zone');
+        if (dropZone) {
+          dropZone.style.zIndex = 10;
+        }
+        event.dataTransfer.setData('Text', JSON.stringify(dragData));
+        return false;
+      }, false);
+    }
+  };
+});
+
+app.directive('formBuilderDroppable', function() {
+  return {
+    restrict: 'A',
+    link: function(scope, element) {
+      var el = element[0];
+      el.addEventListener('dragover', function(event) {
+        event.preventDefault();
+        return false;
+      }, false);
+      el.addEventListener('drop', function(event) {
+        event.stopPropagation();
+        var dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+        var dropOffset = jQuery(el).offset();
+        el.style.zIndex = 0;
+        dragData.fbDropX = event.pageX - dropOffset.left;
+        dragData.fbDropY = event.pageY - dropOffset.top;
+        scope.$emit('fbDragDrop', dragData);
+        return false;
+      }, false);
+    }
+  };
+});
 
 app.factory('BuilderUtils', _dereq_('./factories/BuilderUtils'));
 
@@ -10429,7 +10645,11 @@ app.run([
   '$templateCache',
   '$rootScope',
   'ngDialog',
-  function($templateCache, $rootScope, ngDialog) {
+  function(
+    $templateCache,
+    $rootScope,
+    ngDialog
+  ) {
     // Close all open dialogs on state change.
     $rootScope.$on('$stateChangeStart', function() {
       ngDialog.closeAll(false);
@@ -10452,7 +10672,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
-      "<div class=\"row formbuilder\">\n  <div class=\"col-xs-4 col-sm-3 col-md-2 formcomponents\">\n    <uib-accordion close-others=\"true\">\n      <div uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <div uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n              </span>\n            </div>\n          </div>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n  </div>\n  <div class=\"col-xs-8 col-sm-9 col-md-10 formarea\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === form.page), 'label-primary': ($index !== form.page)}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <form-builder-list component=\"form\" form=\"form\" formio=\"::formio\" hide-dnd-box-count=\"hideCount\" root-list=\"true\" class=\"rootlist\" options=\"options\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
+      "<div class=\"row formbuilder\">\n  <div class=\"col-xs-4 col-sm-3 col-md-2 formcomponents\" ng-if=\"form && form.display\">\n    <uib-accordion close-others=\"true\" ng-if=\"form.display !== 'pdf'\">\n      <div uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <div uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n              </span>\n            </div>\n          </div>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n    <uib-accordion close-others=\"true\" ng-if=\"form.display === 'pdf'\">\n      <div uib-accordion-group heading=\"PDF Fields\" is-open=\"true\" class=\"panel panel-default form-builder-panel\">\n        <div class=\"formcomponentcontainer\" ng-repeat=\"pdftype in pdftypes\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ pdftype.title }}\" style=\"overflow: hidden; text-overflow: ellipsis;\" form-builder-draggable=\"pdftype\">\n            <i ng-if=\"pdftype.icon\" class=\"{{ pdftype.icon }}\"></i> {{ pdftype.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n  </div>\n  <div class=\"col-xs-8 col-sm-9 col-md-10 formarea\" ng-if=\"form && form.display\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === form.page), 'label-primary': ($index !== form.page)}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <div ng-if=\"form.display === 'pdf'\" ng-controller=\"formBuilderDnd\">\n        <div form-builder-droppable style=\"width:100%;height:2000px;position:absolute;\" id=\"fb-drop-zone\"></div>\n        <formio form=\"form\" ng-init=\"form.builder = true;\"></formio>\n      </div>\n      <form-builder-list ng-if=\"form.display !== 'pdf'\" component=\"form\" form=\"form\" formio=\"::formio\" hide-dnd-box-count=\"hideCount\" root-list=\"true\" class=\"rootlist\" options=\"options\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',

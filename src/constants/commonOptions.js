@@ -94,6 +94,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
   },
+  hidden: {
+    label: 'Hidden',
+    type: 'checkbox',
+    tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
   block: {
     label: 'Block',
     type: 'checkbox',
@@ -211,5 +216,15 @@ module.exports = {
     label: 'Margin Left',
     placeholder: '0px',
     tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'addResource': {
+    label: 'Show Add Resource Button',
+    type: 'checkbox',
+    tooltip: 'Include a button for adding a new resource'
+  },
+  'addResourceLabel': {
+    label: 'Add Resource Text',
+    placeholder: 'Add Resource',
+    tooltip: 'Set the text of the Add Resource button.'
   }
 };
