@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
+
+## 2.17.0
 ### Fixed
  - Custom component edits edit the right component.
 
@@ -14,6 +16,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
  - Removing random validation field on the file component, which was not used.
+ 
+### Changed
+ - Update ngFormio to 2.17.0
 
 ## 2.16.6
 ### Added
