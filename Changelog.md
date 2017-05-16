@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
  - Added default value settings to the currency component.
+ - Allow passing ng-* attributes when using the formBuilderOption directive.
 
 ### Removed
  - Removing random validation field on the file component, which was not used.
