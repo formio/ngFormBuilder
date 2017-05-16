@@ -33,7 +33,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
       };
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
-        inputAttrs[key] = attrs[key];
+        inputAttrs[key] = attrs[attrs.$normalize(key)];
         // Allow specifying tooltip via title attr
         if (key.toLowerCase() === 'title') {
           tooltip = attrs[key];
