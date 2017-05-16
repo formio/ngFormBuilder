@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - Added default value settings to the currency component.
 
+### Removed
+ - Removing random validation field on the file component, which was not used.
+
 ## 2.16.6
 ### Added
  - UI for the JSON Logic capabilities.

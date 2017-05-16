@@ -76,7 +76,6 @@ module.exports = function(app) {
       $templateCache.put('formio/components/file/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
-          '<form-builder-option property="filePattern"></form-builder-option>' +
         '</ng-form>'
       );
     }
