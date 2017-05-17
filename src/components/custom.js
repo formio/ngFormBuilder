@@ -27,7 +27,8 @@ module.exports = function(app) {
       formioComponents
     ) {
       // Because of the weirdnesses of prototype inheritence, components can't update themselves, only their properties.
-      $scope.$watch('component', function(newValue, oldValue) {
+      var originComponent = $scope.component;
+      $scope.$watch('component', function(newValue) {
         if (newValue) {
           // Don't allow a type of a real type.
           newValue.type = (formioComponents.components.hasOwnProperty(newValue.type) ? 'custom' : newValue.type);
@@ -35,7 +36,7 @@ module.exports = function(app) {
           newValue.key = newValue.key || newValue.type;
           newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
           newValue.persistent = (newValue.hasOwnProperty('persistent') ? newValue.persistent : true);
-          $scope.updateComponent(newValue, oldValue);
+          $scope.updateComponent(newValue, originComponent);
         }
       });
     }

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+
+## 2.17.0
+### Fixed
+ - Custom component edits edit the right component.
+
+### Added
+ - Added default value settings to the currency component.
+ - Allow passing ng-* attributes when using the formBuilderOption directive.
+
+### Removed
+ - Removing random validation field on the file component, which was not used.
+ 
+### Changed
+ - Update ngFormio to 2.17.0
+
 ## 2.16.6
 ### Added
  - UI for the JSON Logic capabilities.
