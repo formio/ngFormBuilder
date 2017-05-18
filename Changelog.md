@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
+
+## 2.18.0
 ### Fixed
  - Custom components still didn't edit properly.
  - Select url field missing due to passing ng-switch-when to field.
