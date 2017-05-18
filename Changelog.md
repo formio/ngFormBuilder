@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
+### Fixed
+ - Select url field missing due to passing ng-switch-when to field.
 
 ## 2.17.0
 ### Fixed
