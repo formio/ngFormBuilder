@@ -139,7 +139,7 @@ module.exports = [
         $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
       }
       else {
-        console.warn('not found', key);
+        //console.warn('not found', key);
       }
     };
 
