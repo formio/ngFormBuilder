@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
 ### Fixed
+ - Custom components still didn't edit properly.
  - Select url field missing due to passing ng-switch-when to field.
 
 ## 2.17.0
