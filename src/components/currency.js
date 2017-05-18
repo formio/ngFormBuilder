@@ -10,6 +10,10 @@ module.exports = function(app) {
             template: 'formio/components/currency/display.html'
           },
           {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
+          },
+          {
             name: 'Validation',
             template: 'formio/components/currency/validate.html'
           },
@@ -46,6 +50,7 @@ module.exports = function(app) {
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
