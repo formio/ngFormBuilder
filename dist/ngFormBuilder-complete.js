@@ -2150,7 +2150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":11,"moment":244}],5:[function(_dereq_,module,exports){
+},{"angular":11,"moment":238}],5:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -48653,1312 +48653,6 @@ _dereq_('../../js/affix.js')
 }();
 
 },{}],27:[function(_dereq_,module,exports){
-(function (global){
-'use strict';
-
-// Intentionally use native-promise-only here... Other promise libraries (es6-promise)
-// duck-punch the global Promise definition which messes up Angular 2 since it
-// also duck-punches the global Promise definition. For now, keep native-promise-only.
-
-var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
-  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
-};
-
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
-  };
-}();
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-var Promise = _dereq_("native-promise-only");
-_dereq_('whatwg-fetch');
-var EventEmitter = _dereq_('eventemitter2').EventEmitter2;
-var copy = _dereq_('shallow-copy');
-
-/**
- * The Formio interface class.
- *
- *   let formio = new Formio('https://examples.form.io/example');
- */
-
-var Formio = function () {
-  function Formio(path) {
-    var _this = this;
-
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-    _classCallCheck(this, Formio);
-
-    // Ensure we have an instance of Formio.
-    if (!(this instanceof Formio)) {
-      return new Formio(path);
-    }
-
-    // Initialize our variables.
-    this.base = '';
-    this.projectsUrl = '';
-    this.projectUrl = '';
-    this.projectId = '';
-    this.formUrl = '';
-    this.formsUrl = '';
-    this.formId = '';
-    this.submissionsUrl = '';
-    this.submissionUrl = '';
-    this.submissionId = '';
-    this.actionsUrl = '';
-    this.actionId = '';
-    this.actionUrl = '';
-    this.query = '';
-
-    if (options.hasOwnProperty('base')) {
-      this.base = options.base;
-    } else if (Formio.baseUrl) {
-      this.base = Formio.baseUrl;
-    } else {
-      this.base = window.location.href.match(/http[s]?:\/\/api./)[0];
-    }
-
-    if (!path) {
-      // Allow user to create new projects if this was instantiated without
-      // a url
-      this.projectUrl = this.base + '/project';
-      this.projectsUrl = this.base + '/project';
-      this.projectId = false;
-      this.query = '';
-      return;
-    }
-
-    if (options.hasOwnProperty('project')) {
-      this.projectUrl = options.project;
-    }
-
-    var project = this.projectUrl || Formio.projectUrl;
-
-    // The baseURL is the same as the projectUrl. This is almost certainly against
-    // the Open Source server.
-    if (project && this.base === project) {
-      this.noProject = true;
-      this.projectUrl = this.base;
-    }
-
-    // Normalize to an absolute path.
-    if (path.indexOf('http') !== 0 && path.indexOf('//') !== 0) {
-      path = this.base + path;
-    }
-
-    var hostparts = Formio.getUrlParts(path);
-    var parts = [];
-    var hostName = hostparts[1] + hostparts[2];
-    path = hostparts.length > 3 ? hostparts[3] : '';
-    var queryparts = path.split('?');
-    if (queryparts.length > 1) {
-      path = queryparts[0];
-      this.query = '?' + queryparts[1];
-    }
-
-    // Register a specific path.
-    var registerPath = function registerPath(name, base) {
-      _this[name + 'sUrl'] = base + '/' + name;
-      var regex = new RegExp('\/' + name + '\/([^/]+)');
-      if (path.search(regex) !== -1) {
-        parts = path.match(regex);
-        _this[name + 'Url'] = parts ? base + parts[0] : '';
-        _this[name + 'Id'] = parts.length > 1 ? parts[1] : '';
-        base += parts[0];
-      }
-      return base;
-    };
-
-    // Register an array of items.
-    var registerItems = function registerItems(items, base, staticBase) {
-      for (var i in items) {
-        if (items.hasOwnProperty(i)) {
-          var item = items[i];
-          if (item instanceof Array) {
-            registerItems(item, base, true);
-          } else {
-            var newBase = registerPath(item, base);
-            base = staticBase ? base : newBase;
-          }
-        }
-      }
-    };
-
-    if (!this.projectUrl || this.projectUrl === this.base) {
-      this.projectUrl = hostName;
-    }
-
-    if (!this.noProject) {
-      // Determine the projectUrl and projectId
-      if (path.search(/(^|\/)(project)($|\/)/) !== -1) {
-        // Get project id as project/:projectId.
-        registerItems(['project'], hostName);
-      } else if (hostName === this.base) {
-        // Get project id as first part of path (subdirectory).
-        if (hostparts.length > 3 && path.split('/').length > 1) {
-          var pathParts = path.split('/');
-          pathParts.shift(); // Throw away the first /.
-          this.projectId = pathParts.shift();
-          path = '/' + pathParts.join('/');
-          this.projectUrl = hostName + '/' + this.projectId;
-        }
-      } else {
-        // Get project id from subdomain.
-        if (hostparts.length > 2 && (hostparts[2].split('.').length > 2 || hostName.indexOf('localhost') !== -1)) {
-          this.projectUrl = hostName;
-          this.projectId = hostparts[2].split('.')[0];
-        }
-      }
-      this.projectsUrl = this.projectsUrl || this.base + '/project';
-    }
-
-    // Configure Form urls and form ids.
-    if (path.search(/(^|\/)(project|form)($|\/)/) !== -1) {
-      registerItems(['form', ['submission', 'action']], this.projectUrl);
-    } else {
-      var subRegEx = new RegExp('\/(submission|action)($|\/.*)');
-      var subs = path.match(subRegEx);
-      this.pathType = subs && subs.length > 1 ? subs[1] : '';
-      path = path.replace(subRegEx, '');
-      path = path.replace(/\/$/, '');
-      this.formsUrl = this.projectUrl + '/form';
-      this.formUrl = this.projectUrl + path;
-      this.formId = path.replace(/^\/+|\/+$/g, '');
-      var items = ['submission', 'action'];
-      for (var i in items) {
-        if (items.hasOwnProperty(i)) {
-          var item = items[i];
-          this[item + 'sUrl'] = this.projectUrl + path + '/' + item;
-          if (this.pathType === item && subs.length > 2 && subs[2]) {
-            this[item + 'Id'] = subs[2].replace(/^\/+|\/+$/g, '');
-            this[item + 'Url'] = this.projectUrl + path + subs[0];
-          }
-        }
-      }
-    }
-
-    // Set the app url if it is not set.
-    if (!Formio.projectUrlSet) {
-      Formio.projectUrl = this.projectUrl;
-    }
-  }
-
-  _createClass(Formio, [{
-    key: 'delete',
-    value: function _delete(type, opts) {
-      var _id = type + 'Id';
-      var _url = type + 'Url';
-      if (!this[_id]) {
-        Promise.reject('Nothing to delete');
-      }
-      Formio.cache = {};
-      return this.makeRequest(type, this[_url], 'delete', null, opts);
-    }
-  }, {
-    key: 'index',
-    value: function index(type, query, opts) {
-      var _url = type + 'Url';
-      query = query || '';
-      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
-        query = '?' + Formio.serialize(query.params);
-      }
-      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
-    }
-  }, {
-    key: 'save',
-    value: function save(type, data, opts) {
-      var _id = type + 'Id';
-      var _url = type + 'Url';
-      var method = this[_id] || data._id ? 'put' : 'post';
-      var reqUrl = this[_id] ? this[_url] : this[type + 'sUrl'];
-      if (!this[_id] && data._id && method === 'put' && reqUrl.indexOf(data._id) === -1) {
-        reqUrl += '/' + data._id;
-      }
-      Formio.cache = {};
-      return this.makeRequest(type, reqUrl + this.query, method, data, opts);
-    }
-  }, {
-    key: 'load',
-    value: function load(type, query, opts) {
-      var _id = type + 'Id';
-      var _url = type + 'Url';
-      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
-        query = Formio.serialize(query.params);
-      }
-      if (query) {
-        query = this.query ? this.query + '&' + query : '?' + query;
-      } else {
-        query = this.query;
-      }
-      if (!this[_id]) {
-        return Promise.reject('Missing ' + _id);
-      }
-      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
-    }
-  }, {
-    key: 'makeRequest',
-    value: function makeRequest(type, url, method, data, opts) {
-      method = (method || 'GET').toUpperCase();
-      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
-        opts = {};
-      }
-
-      var requestArgs = {
-        formio: this,
-        type: type,
-        url: url,
-        method: method,
-        data: data,
-        opts: opts
-      };
-
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('request', requestArgs).then(function (result) {
-          if (result === null || result === undefined) {
-            return Formio.request(url, method, data, opts.header, opts);
-          }
-          return result;
-        });
-      });
-
-      return Formio.pluginAlter('wrapRequestPromise', request, requestArgs);
-    }
-  }, {
-    key: 'loadProject',
-    value: function loadProject(query, opts) {
-      return this.load('project', query, opts);
-    }
-  }, {
-    key: 'saveProject',
-    value: function saveProject(data, opts) {
-      return this.save('project', data, opts);
-    }
-  }, {
-    key: 'deleteProject',
-    value: function deleteProject(opts) {
-      return this.delete('project', opts);
-    }
-  }, {
-    key: 'loadForm',
-    value: function loadForm(query, opts) {
-      return this.load('form', query, opts);
-    }
-  }, {
-    key: 'saveForm',
-    value: function saveForm(data, opts) {
-      return this.save('form', data, opts);
-    }
-  }, {
-    key: 'deleteForm',
-    value: function deleteForm(opts) {
-      return this.delete('form', opts);
-    }
-  }, {
-    key: 'loadForms',
-    value: function loadForms(query, opts) {
-      return this.index('forms', query, opts);
-    }
-  }, {
-    key: 'loadSubmission',
-    value: function loadSubmission(query, opts) {
-      return this.load('submission', query, opts);
-    }
-  }, {
-    key: 'saveSubmission',
-    value: function saveSubmission(data, opts) {
-      return this.save('submission', data, opts);
-    }
-  }, {
-    key: 'deleteSubmission',
-    value: function deleteSubmission(opts) {
-      return this.delete('submission', opts);
-    }
-  }, {
-    key: 'loadSubmissions',
-    value: function loadSubmissions(query, opts) {
-      return this.index('submissions', query, opts);
-    }
-  }, {
-    key: 'loadAction',
-    value: function loadAction(query, opts) {
-      return this.load('action', query, opts);
-    }
-  }, {
-    key: 'saveAction',
-    value: function saveAction(data, opts) {
-      return this.save('action', data, opts);
-    }
-  }, {
-    key: 'deleteAction',
-    value: function deleteAction(opts) {
-      return this.delete('action', opts);
-    }
-  }, {
-    key: 'loadActions',
-    value: function loadActions(query, opts) {
-      return this.index('actions', query, opts);
-    }
-  }, {
-    key: 'availableActions',
-    value: function availableActions() {
-      return this.makeRequest('availableActions', this.formUrl + '/actions');
-    }
-  }, {
-    key: 'actionInfo',
-    value: function actionInfo(name) {
-      return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name);
-    }
-
-    /**
-     * Returns a temporary authentication token for single purpose token generation.
-     */
-
-  }, {
-    key: 'getTempToken',
-    value: function getTempToken(expire, allowed) {
-      var token = Formio.getToken();
-      if (!token) {
-        return Promise.reject('You must be authenticated to generate a temporary auth token.');
-      }
-      return this.makeRequest('tempToken', this.projectUrl + '/token', 'GET', null, {
-        header: new Headers({
-          'x-expire': expire,
-          'x-allow': allowed
-        })
-      });
-    }
-  }, {
-    key: 'uploadFile',
-    value: function uploadFile(storage, file, fileName, dir, progressCallback, url) {
-      var requestArgs = {
-        provider: storage,
-        method: 'upload',
-        file: file,
-        fileName: fileName,
-        dir: dir
-      };
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
-          if (storage && (result === null || result === undefined)) {
-            if (Formio.providers.storage.hasOwnProperty(storage)) {
-              var provider = new Formio.providers.storage[storage](this);
-              return provider.uploadFile(file, fileName, dir, progressCallback, url);
-            } else {
-              throw 'Storage provider not found';
-            }
-          }
-          return result || { url: '' };
-        }.bind(this));
-      }.bind(this));
-
-      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
-    }
-  }, {
-    key: 'downloadFile',
-    value: function downloadFile(file) {
-      var requestArgs = {
-        method: 'download',
-        file: file
-      };
-
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
-          if (file.storage && (result === null || result === undefined)) {
-            if (Formio.providers.storage.hasOwnProperty(file.storage)) {
-              var provider = new Formio.providers.storage[file.storage](this);
-              return provider.downloadFile(file);
-            } else {
-              throw 'Storage provider not found';
-            }
-          }
-          return result || { url: '' };
-        }.bind(this));
-      }.bind(this));
-
-      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
-    }
-  }], [{
-    key: 'loadProjects',
-    value: function loadProjects(query, opts) {
-      query = query || '';
-      if ((typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
-        query = '?' + serialize(query.params);
-      }
-      return Formio.makeStaticRequest(Formio.baseUrl + '/project' + query);
-    }
-  }, {
-    key: 'getUrlParts',
-    value: function getUrlParts(url) {
-      var regex = '^(http[s]?:\\/\\/)';
-      if (this.base && url.indexOf(this.base) === 0) {
-        regex += '(' + this.base.replace(/^http[s]?:\/\//, '') + ')';
-      } else {
-        regex += '([^/]+)';
-      }
-      regex += '($|\\/.*)';
-      return url.match(new RegExp(regex));
-    }
-  }, {
-    key: 'serialize',
-    value: function serialize(obj) {
-      var str = [];
-      for (var p in obj) {
-        if (obj.hasOwnProperty(p)) {
-          str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-        }
-      }return str.join("&");
-    }
-  }, {
-    key: 'makeStaticRequest',
-    value: function makeStaticRequest(url, method, data, opts) {
-      method = (method || 'GET').toUpperCase();
-      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
-        opts = {};
-      }
-      var requestArgs = {
-        url: url,
-        method: method,
-        data: data
-      };
-
-      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
-        return Formio.pluginGet('staticRequest', requestArgs).then(function (result) {
-          if (result === null || result === undefined) {
-            return Formio.request(url, method, data, opts.header, opts);
-          }
-          return result;
-        });
-      });
-
-      return Formio.pluginAlter('wrapStaticRequestPromise', request, requestArgs);
-    }
-  }, {
-    key: 'request',
-    value: function request(url, method, data, header, opts) {
-      if (!url) {
-        return Promise.reject('No url provided');
-      }
-      method = (method || 'GET').toUpperCase();
-
-      // For reverse compatibility, if they provided the ignoreCache parameter,
-      // then change it back to the options format where that is a parameter.
-      if (typeof opts === 'boolean') {
-        opts = { ignoreCache: opts };
-      }
-      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
-        opts = {};
-      }
-
-      var cacheKey = btoa(url);
-
-      return new Promise(function (resolve, reject) {
-        // Get the cached promise to save multiple loads.
-        if (!opts.ignoreCache && method === 'GET' && Formio.cache.hasOwnProperty(cacheKey)) {
-          return resolve(Formio.cache[cacheKey]);
-        }
-
-        var requestToken = '';
-        resolve(new Promise(function (resolve, reject) {
-          // Set up and fetch request
-          var headers = header || new Headers({
-            'Accept': 'application/json',
-            'Content-type': 'application/json; charset=UTF-8'
-          });
-          var token = Formio.getToken();
-          if (token && !opts.noToken) {
-            headers.append('x-jwt-token', token);
-          }
-
-          var options = {
-            method: method,
-            headers: headers,
-            mode: 'cors'
-          };
-          if (data) {
-            options.body = JSON.stringify(data);
-          }
-
-          requestToken = headers.get('x-jwt-token');
-          resolve(fetch(url, options));
-        }).catch(function (err) {
-          err.message = 'Could not connect to API server (' + err.message + ')';
-          err.networkError = true;
-          throw err;
-        }).then(function (response) {
-          if (!response.ok) {
-            if (response.status === 440) {
-              Formio.setToken(null);
-              Formio.events.emit('formio.sessionExpired', response.body);
-            } else if (response.status === 401) {
-              Formio.events.emit('formio.unauthorized', response.body);
-            }
-            // Parse and return the error as a rejected promise to reject this promise
-            return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (error) {
-              throw error;
-            });
-          }
-
-          // Handle fetch results
-          var token = response.headers.get('x-jwt-token');
-
-          // In some strange cases, the fetch library will return an x-jwt-token without sending
-          // one to the server. This has even been debugged on the server to verify that no token
-          // was introduced with the request, but the response contains a token. This is an Invalid
-          // case where we do not send an x-jwt-token and get one in return for any GET request.
-          var tokenIntroduced = false;
-          if (method === 'GET' && !requestToken && token && url.indexOf('token=') === -1 && url.indexOf('x-jwt-token=' === -1)) {
-            console.warn('Token was introduced in request.');
-            tokenIntroduced = true;
-          }
-
-          if (response.status >= 200 && response.status < 300 && token && token !== '' && !tokenIntroduced) {
-            Formio.setToken(token);
-          }
-          // 204 is no content. Don't try to .json() it.
-          if (response.status === 204) {
-            return {};
-          }
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (result) {
-            // Add some content-range metadata to the result here
-            var range = response.headers.get('content-range');
-            if (range && (typeof result === 'undefined' ? 'undefined' : _typeof(result)) === 'object') {
-              range = range.split('/');
-              if (range[0] !== '*') {
-                var skipLimit = range[0].split('-');
-                result.skip = Number(skipLimit[0]);
-                result.limit = skipLimit[1] - skipLimit[0] + 1;
-              }
-              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
-            }
-
-            if (!opts.getHeaders) {
-              return result;
-            }
-
-            var headers = {};
-            response.headers.forEach(function (item, key) {
-              headers[key] = item;
-            });
-
-            return new Promise(function (resolve, reject) {
-              resolve({ result: result, headers: headers });
-            });
-          });
-        }).catch(function (err) {
-          if (err === 'Bad Token') {
-            Formio.setToken(null);
-            Formio.events.emit('formio.badToken', err);
-          }
-          if (Formio.cache.hasOwnProperty(cacheKey)) {
-            // Remove failed promises from cache
-            delete Formio.cache[cacheKey];
-          }
-          // Propagate error so client can handle accordingly
-          throw err;
-        }));
-      }).then(function (result) {
-        // Save the cache
-        if (method === 'GET') {
-          Formio.cache[cacheKey] = Promise.resolve(result);
-        }
-
-        // Shallow copy result so modifications don't end up in cache
-        if (Array.isArray(result)) {
-          var resultCopy = result.map(copy);
-          resultCopy.skip = result.skip;
-          resultCopy.limit = result.limit;
-          resultCopy.serverCount = result.serverCount;
-          return resultCopy;
-        }
-        return copy(result);
-      });
-    }
-  }, {
-    key: 'setToken',
-    value: function setToken(token) {
-      token = token || '';
-      if (token === this.token) {
-        return;
-      }
-      this.token = token;
-      if (!token) {
-        Formio.setUser(null);
-        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-        try {
-          return localStorage.removeItem('formioToken');
-        } catch (err) {
-          return;
-        }
-      }
-      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-      try {
-        localStorage.setItem('formioToken', token);
-      } catch (err) {
-        // Do nothing.
-      }
-      return Formio.currentUser(); // Run this so user is updated if null
-    }
-  }, {
-    key: 'getToken',
-    value: function getToken() {
-      if (this.token) {
-        return this.token;
-      }
-      try {
-        var token = localStorage.getItem('formioToken') || '';
-        this.token = token;
-        return token;
-      } catch (e) {
-        return '';
-      }
-    }
-  }, {
-    key: 'setUser',
-    value: function setUser(user) {
-      if (!user) {
-        this.setToken(null);
-        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-        try {
-          return localStorage.removeItem('formioUser');
-        } catch (err) {
-          return;
-        }
-      }
-      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
-      try {
-        localStorage.setItem('formioUser', JSON.stringify(user));
-      } catch (err) {
-        // Do nothing.
-      }
-    }
-  }, {
-    key: 'getUser',
-    value: function getUser() {
-      try {
-        return JSON.parse(localStorage.getItem('formioUser') || null);
-      } catch (e) {
-        return;
-      }
-    }
-  }, {
-    key: 'setBaseUrl',
-    value: function setBaseUrl(url) {
-      Formio.baseUrl = url;
-      if (!Formio.projectUrlSet) {
-        Formio.projectUrl = url;
-      }
-    }
-  }, {
-    key: 'getBaseUrl',
-    value: function getBaseUrl() {
-      return Formio.baseUrl;
-    }
-  }, {
-    key: 'setApiUrl',
-    value: function setApiUrl(url) {
-      return Formio.setBaseUrl(url);
-    }
-  }, {
-    key: 'getApiUrl',
-    value: function getApiUrl() {
-      return Formio.getBaseUrl();
-    }
-  }, {
-    key: 'setAppUrl',
-    value: function setAppUrl(url) {
-      console.warn('Formio.setAppUrl() is deprecated. Use Formio.setProjectUrl instead.');
-      Formio.projectUrl = url;
-      Formio.projectUrlSet = true;
-    }
-  }, {
-    key: 'setProjectUrl',
-    value: function setProjectUrl(url) {
-      Formio.projectUrl = url;
-      Formio.projectUrlSet = true;
-    }
-  }, {
-    key: 'getAppUrl',
-    value: function getAppUrl() {
-      console.warn('Formio.getAppUrl() is deprecated. Use Formio.getProjectUrl instead.');
-      return Formio.projectUrl;
-    }
-  }, {
-    key: 'getProjectUrl',
-    value: function getProjectUrl() {
-      return Formio.projectUrl;
-    }
-  }, {
-    key: 'clearCache',
-    value: function clearCache() {
-      Formio.cache = {};
-    }
-  }, {
-    key: 'noop',
-    value: function noop() {}
-  }, {
-    key: 'identity',
-    value: function identity(value) {
-      return value;
-    }
-  }, {
-    key: 'deregisterPlugin',
-    value: function deregisterPlugin(plugin) {
-      var beforeLength = Formio.plugins.length;
-      Formio.plugins = Formio.plugins.filter(function (p) {
-        if (p !== plugin && p.__name !== plugin) return true;
-        (p.deregister || Formio.noop).call(p, Formio);
-        return false;
-      });
-      return beforeLength !== Formio.plugins.length;
-    }
-  }, {
-    key: 'registerPlugin',
-    value: function registerPlugin(plugin, name) {
-      Formio.plugins.push(plugin);
-      Formio.plugins.sort(function (a, b) {
-        return (b.priority || 0) - (a.priority || 0);
-      });
-      plugin.__name = name;
-      (plugin.init || Formio.noop).call(plugin, Formio);
-    }
-  }, {
-    key: 'getPlugin',
-    value: function getPlugin(name) {
-      return Formio.plugins.reduce(function (result, plugin) {
-        if (result) return result;
-        if (plugin.__name === name) return plugin;
-      }, null);
-    }
-  }, {
-    key: 'pluginWait',
-    value: function pluginWait(pluginFn) {
-      var args = [].slice.call(arguments, 1);
-      return Promise.all(Formio.plugins.map(function (plugin) {
-        return (plugin[pluginFn] || Formio.noop).apply(plugin, args);
-      }));
-    }
-  }, {
-    key: 'pluginGet',
-    value: function pluginGet(pluginFn) {
-      var args = [].slice.call(arguments, 0);
-      var callPlugin = function callPlugin(index, pluginFn) {
-        var plugin = Formio.plugins[index];
-        if (!plugin) return Promise.resolve(null);
-        return Promise.resolve((plugin && plugin[pluginFn] || Formio.noop).apply(plugin, [].slice.call(arguments, 2))).then(function (result) {
-          if (result !== null && result !== undefined) return result;
-          return callPlugin.apply(null, [index + 1].concat(args));
-        });
-      };
-      return callPlugin.apply(null, [0].concat(args));
-    }
-  }, {
-    key: 'pluginAlter',
-    value: function pluginAlter(pluginFn, value) {
-      var args = [].slice.call(arguments, 2);
-      return Formio.plugins.reduce(function (value, plugin) {
-        return (plugin[pluginFn] || Formio.identity).apply(plugin, [value].concat(args));
-      }, value);
-    }
-  }, {
-    key: 'currentUser',
-    value: function currentUser() {
-      var url = Formio.baseUrl + '/current';
-      var user = this.getUser();
-      if (user) {
-        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(user), {
-          url: url,
-          method: 'GET'
-        });
-      }
-      var token = this.getToken();
-      if (!token) {
-        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(null), {
-          url: url,
-          method: 'GET'
-        });
-      }
-      return Formio.makeStaticRequest(url).then(function (response) {
-        Formio.setUser(response);
-        return response;
-      });
-    }
-  }, {
-    key: 'logout',
-    value: function logout() {
-      Formio.setToken(null);
-      Formio.setUser(null);
-      Formio.clearCache();
-      return Formio.makeStaticRequest(Formio.baseUrl + '/logout');
-    }
-
-    /**
-     * Attach an HTML form to Form.io.
-     *
-     * @param form
-     */
-
-  }, {
-    key: 'form',
-    value: function form(_form, options, done) {
-      // Fix the parameters.
-      if (!done && typeof options === 'function') {
-        done = options;
-        options = {};
-      }
-
-      done = done || function () {
-        console.log(arguments);
-      };
-      options = options || {};
-
-      // IF they provide a jquery object, then select the element.
-      if (_form.jquery) {
-        _form = _form[0];
-      }
-      if (!_form) {
-        return done('Invalid Form');
-      }
-
-      var getAction = function getAction() {
-        return options.form || _form.getAttribute('action');
-      };
-
-      /**
-       * Returns the current submission object.
-       * @returns {{data: {}}}
-       */
-      var getSubmission = function getSubmission() {
-        var submission = { data: {} };
-        var setValue = function setValue(path, value) {
-          var isArray = path.substr(-2) === '[]';
-          if (isArray) {
-            path = path.replace('[]', '');
-          }
-          var paths = path.replace(/\[|\]\[/g, '.').replace(/\]$/g, '').split('.');
-          var current = submission;
-          while (path = paths.shift()) {
-            if (!paths.length) {
-              if (isArray) {
-                if (!current[path]) {
-                  current[path] = [];
-                }
-                current[path].push(value);
-              } else {
-                current[path] = value;
-              }
-            } else {
-              if (!current[path]) {
-                current[path] = {};
-              }
-              current = current[path];
-            }
-          }
-        };
-
-        // Get the form data from this form.
-        var formData = new FormData(_form);
-        var entries = formData.entries();
-        var entry = null;
-        while (entry = entries.next().value) {
-          setValue(entry[0], entry[1]);
-        }
-        return submission;
-      };
-
-      // Submits the form.
-      var submit = function submit(event) {
-        if (event) {
-          event.preventDefault();
-        }
-        var action = getAction();
-        if (!action) {
-          return;
-        }
-        new Formio(action).saveSubmission(getSubmission()).then(function (sub) {
-          done(null, sub);
-        }, done);
-      };
-
-      // Attach formio to the provided form.
-      if (_form.attachEvent) {
-        _form.attachEvent('submit', submit);
-      } else {
-        _form.addEventListener('submit', submit);
-      }
-
-      return {
-        submit: submit,
-        getAction: getAction,
-        getSubmission: getSubmission
-      };
-    }
-  }, {
-    key: 'fieldData',
-    value: function fieldData(data, component) {
-      if (!data) {
-        return '';
-      }
-      if (!component || !component.key) {
-        return data;
-      }
-      if (component.key.indexOf('.') !== -1) {
-        var value = data;
-        var parts = component.key.split('.');
-        var key = '';
-        for (var i = 0; i < parts.length; i++) {
-          key = parts[i];
-
-          // Handle nested resources
-          if (value.hasOwnProperty('_id')) {
-            value = value.data;
-          }
-
-          // Return if the key is not found on the value.
-          if (!value.hasOwnProperty(key)) {
-            return;
-          }
-
-          // Convert old single field data in submissions to multiple
-          if (key === parts[parts.length - 1] && component.multiple && !Array.isArray(value[key])) {
-            value[key] = [value[key]];
-          }
-
-          // Set the value of this key.
-          value = value[key];
-        }
-        return value;
-      } else {
-        // Convert old single field data in submissions to multiple
-        if (component.multiple && !Array.isArray(data[component.key])) {
-          data[component.key] = [data[component.key]];
-        }
-        return data[component.key];
-      }
-    }
-  }]);
-
-  return Formio;
-}();
-
-// Define all the static properties.
-
-
-exports.Formio = Formio;
-Formio.baseUrl = 'https://api.form.io';
-Formio.projectUrl = Formio.baseUrl;
-Formio.projectUrlSet = false;
-Formio.plugins = [];
-Formio.cache = {};
-Formio.providers = _dereq_('./providers');
-Formio.events = new EventEmitter({
-  wildcard: false,
-  maxListeners: 0
-});
-
-module.exports = global.Formio = Formio;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":28,"eventemitter2":26,"native-promise-only":245,"shallow-copy":310,"whatwg-fetch":313}],28:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = {
-  storage: _dereq_('./storage')
-};
-
-},{"./storage":30}],29:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_("native-promise-only");
-var dropbox = function dropbox(formio) {
-  return {
-    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
-      return new Promise(function (resolve, reject) {
-        // Send the file with data.
-        var xhr = new XMLHttpRequest();
-
-        if (typeof progressCallback === 'function') {
-          xhr.upload.onprogress = progressCallback;
-        }
-
-        var fd = new FormData();
-        fd.append('name', fileName);
-        fd.append('dir', dir);
-        fd.append('file', file);
-
-        // Fire on network error.
-        xhr.onerror = function (err) {
-          err.networkError = true;
-          reject(err);
-        };
-
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            var response = JSON.parse(xhr.response);
-            response.storage = 'dropbox';
-            response.size = file.size;
-            response.type = file.type;
-            response.url = response.path_lower;
-            resolve(response);
-          } else {
-            reject(xhr.response || 'Unable to upload file');
-          }
-        };
-
-        xhr.onabort = function (err) {
-          reject(err);
-        };
-
-        xhr.open('POST', formio.formUrl + '/storage/dropbox');
-        var token = false;
-        try {
-          token = localStorage.getItem('formioToken');
-        } catch (e) {
-          // Swallow error.
-        }
-        if (token) {
-          xhr.setRequestHeader('x-jwt-token', token);
-        }
-        xhr.send(fd);
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      var token = false;
-      try {
-        token = localStorage.getItem('formioToken');
-      } catch (e) {
-        // Swallow error.
-      }
-      file.url = formio.formUrl + '/storage/dropbox?path_lower=' + file.path_lower + (token ? '&x-jwt-token=' + token : '');
-      return Promise.resolve(file);
-    }
-  };
-};
-
-dropbox.title = 'Dropbox';
-module.exports = dropbox;
-
-},{"native-promise-only":245}],30:[function(_dereq_,module,exports){
-'use strict';
-
-module.exports = {
-  dropbox: _dereq_('./dropbox.js'),
-  s3: _dereq_('./s3.js'),
-  url: _dereq_('./url.js')
-};
-
-},{"./dropbox.js":29,"./s3.js":31,"./url.js":32}],31:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_("native-promise-only");
-var s3 = function s3(formio) {
-  return {
-    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
-      return new Promise(function (resolve, reject) {
-        // Send the pre response to sign the upload.
-        var pre = new XMLHttpRequest();
-
-        var prefd = new FormData();
-        prefd.append('name', fileName);
-        prefd.append('size', file.size);
-        prefd.append('type', file.type);
-
-        // This only fires on a network error.
-        pre.onerror = function (err) {
-          err.networkError = true;
-          reject(err);
-        };
-
-        pre.onabort = function (err) {
-          reject(err);
-        };
-
-        pre.onload = function () {
-          if (pre.status >= 200 && pre.status < 300) {
-            var response = JSON.parse(pre.response);
-
-            // Send the file with data.
-            var xhr = new XMLHttpRequest();
-
-            if (typeof progressCallback === 'function') {
-              xhr.upload.onprogress = progressCallback;
-            }
-
-            response.data.fileName = fileName;
-            response.data.key += dir + fileName;
-
-            var fd = new FormData();
-            for (var key in response.data) {
-              fd.append(key, response.data[key]);
-            }
-            fd.append('file', file);
-
-            // Fire on network error.
-            xhr.onerror = function (err) {
-              err.networkError = true;
-              reject(err);
-            };
-
-            xhr.onload = function () {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve({
-                  storage: 's3',
-                  name: fileName,
-                  bucket: response.bucket,
-                  key: response.data.key,
-                  url: response.url + response.data.key,
-                  acl: response.data.acl,
-                  size: file.size,
-                  type: file.type
-                });
-              } else {
-                reject(xhr.response || 'Unable to upload file');
-              }
-            };
-
-            xhr.onabort = function (err) {
-              reject(err);
-            };
-
-            xhr.open('POST', response.url);
-
-            xhr.send(fd);
-          } else {
-            reject(pre.response || 'Unable to sign file');
-          }
-        };
-
-        pre.open('POST', formio.formUrl + '/storage/s3');
-
-        pre.setRequestHeader('Accept', 'application/json');
-        pre.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-        var token = false;
-        try {
-          token = localStorage.getItem('formioToken');
-        } catch (e) {
-          // swallow error.
-        }
-        if (token) {
-          pre.setRequestHeader('x-jwt-token', token);
-        }
-
-        pre.send(JSON.stringify({
-          name: fileName,
-          size: file.size,
-          type: file.type
-        }));
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      if (file.acl !== 'public-read') {
-        return formio.makeRequest('file', formio.formUrl + '/storage/s3?bucket=' + file.bucket + '&key=' + file.key, 'GET');
-      } else {
-        return Promise.resolve(file);
-      }
-    }
-  };
-};
-
-s3.title = 'S3';
-module.exports = s3;
-
-},{"native-promise-only":245}],32:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_("native-promise-only");
-var url = function url(formio) {
-  return {
-    title: 'Url',
-    name: 'url',
-    uploadFile: function uploadFile(file, fileName, dir, progressCallback, url) {
-      return new Promise(function (resolve, reject) {
-        var data = {
-          dir: dir,
-          name: fileName,
-          file: file
-        };
-
-        // Send the file with data.
-        var xhr = new XMLHttpRequest();
-
-        if (typeof progressCallback === 'function') {
-          xhr.upload.onprogress = progressCallback;
-        }
-
-        var fd = new FormData();
-        for (var key in data) {
-          fd.append(key, data[key]);
-        }
-
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            // Need to test if xhr.response is decoded or not.
-            var respData = {};
-            try {
-              respData = typeof xhr.response === 'string' ? JSON.parse(xhr.response) : {};
-              respData = respData && respData.data ? respData.data : {};
-            } catch (err) {
-              respData = {};
-            }
-
-            resolve({
-              storage: 'url',
-              name: fileName,
-              url: xhr.responseURL + '/' + fileName,
-              size: file.size,
-              type: file.type,
-              data: respData
-            });
-          } else {
-            reject(xhr.response || 'Unable to upload file');
-          }
-        };
-
-        // Fire on network error.
-        xhr.onerror = function () {
-          reject(xhr);
-        };
-
-        xhr.onabort = function () {
-          reject(xhr);
-        };
-
-        xhr.open('POST', url);
-        var token = localStorage.getItem('formioToken');
-        if (token) {
-          xhr.setRequestHeader('x-jwt-token', token);
-        }
-        xhr.send(fd);
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      // Return the original as there is nothing to do.
-      return Promise.resolve(file);
-    }
-  };
-};
-
-url.title = 'Url';
-module.exports = url;
-
-},{"native-promise-only":245}],33:[function(_dereq_,module,exports){
 'use strict';
 
 var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -49968,17 +48662,8 @@ var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "sym
 } : function (obj) {
   return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
 };
-
-var _jsonLogicJs = _dereq_('json-logic-js');
-
-var _jsonLogicJs2 = _interopRequireDefault(_jsonLogicJs);
-
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : { default: obj };
-}
 
 var _get = _dereq_('lodash/get');
-
 module.exports = {
   /**
    * Determine if a component is a layout component or not.
@@ -50129,11 +48814,6 @@ module.exports = {
       }
 
       return value.toString() === cond.eq.toString() === (cond.show.toString() === 'true');
-    } else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.json) {
-      return _jsonLogicJs2.default.apply(component.conditional.json, {
-        data: data,
-        row: row
-      });
     }
 
     // Default to show.
@@ -50194,12 +48874,12 @@ module.exports = {
   }
 };
 
-},{"json-logic-js":35,"lodash/get":209}],34:[function(_dereq_,module,exports){
+},{"lodash/get":203}],28:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./build/utils');
 
-},{"./build/utils":33}],35:[function(_dereq_,module,exports){
+},{"./build/utils":27}],29:[function(_dereq_,module,exports){
 /* globals define,module */
 /*
 Using a Universal Module Loader that should be browser, require, and AMD friendly
@@ -50458,9 +49138,6 @@ http://ricostacruz.com/cheatsheets/umdjs.html
     });
 
 
-    // The operation is called with "data" bound to its "this" and "values" passed as arguments.
-    // Structured commands like % or > can name formal arguments while flexible commands (like missing or merge) can operate on the pseudo-array arguments
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
     if(typeof operations[op] === "function") {
       return operations[op].apply(data, values);
     }else if(op.indexOf(".") > 0) { // Contains a dot, and not in the 0th position
@@ -50476,9 +49153,14 @@ http://ricostacruz.com/cheatsheets/umdjs.html
       }
 
       return operation.apply(data, values);
+    }else{
+      throw new Error("Unrecognized operation " + op );
     }
 
-    throw new Error("Unrecognized operation " + op );
+    // The operation is called with "data" bound to its "this" and "values" passed as arguments.
+    // Structured commands like % or > can name formal arguments while flexible commands (like missing or merge) can operate on the pseudo-array arguments
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments
+    return operations[op].apply(data, values);
   };
 
   jsonLogic.uses_data = function(logic) {
@@ -50565,7 +49247,7 @@ http://ricostacruz.com/cheatsheets/umdjs.html
   return jsonLogic;
 }));
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -50574,7 +49256,7 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":136,"./_root":181}],37:[function(_dereq_,module,exports){
+},{"./_getNative":130,"./_root":175}],31:[function(_dereq_,module,exports){
 var hashClear = _dereq_('./_hashClear'),
     hashDelete = _dereq_('./_hashDelete'),
     hashGet = _dereq_('./_hashGet'),
@@ -50608,7 +49290,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":146,"./_hashDelete":147,"./_hashGet":148,"./_hashHas":149,"./_hashSet":150}],38:[function(_dereq_,module,exports){
+},{"./_hashClear":140,"./_hashDelete":141,"./_hashGet":142,"./_hashHas":143,"./_hashSet":144}],32:[function(_dereq_,module,exports){
 var listCacheClear = _dereq_('./_listCacheClear'),
     listCacheDelete = _dereq_('./_listCacheDelete'),
     listCacheGet = _dereq_('./_listCacheGet'),
@@ -50642,7 +49324,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":161,"./_listCacheDelete":162,"./_listCacheGet":163,"./_listCacheHas":164,"./_listCacheSet":165}],39:[function(_dereq_,module,exports){
+},{"./_listCacheClear":155,"./_listCacheDelete":156,"./_listCacheGet":157,"./_listCacheHas":158,"./_listCacheSet":159}],33:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -50651,7 +49333,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":136,"./_root":181}],40:[function(_dereq_,module,exports){
+},{"./_getNative":130,"./_root":175}],34:[function(_dereq_,module,exports){
 var mapCacheClear = _dereq_('./_mapCacheClear'),
     mapCacheDelete = _dereq_('./_mapCacheDelete'),
     mapCacheGet = _dereq_('./_mapCacheGet'),
@@ -50685,7 +49367,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":166,"./_mapCacheDelete":167,"./_mapCacheGet":168,"./_mapCacheHas":169,"./_mapCacheSet":170}],41:[function(_dereq_,module,exports){
+},{"./_mapCacheClear":160,"./_mapCacheDelete":161,"./_mapCacheGet":162,"./_mapCacheHas":163,"./_mapCacheSet":164}],35:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -50694,7 +49376,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":136,"./_root":181}],42:[function(_dereq_,module,exports){
+},{"./_getNative":130,"./_root":175}],36:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -50703,7 +49385,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":136,"./_root":181}],43:[function(_dereq_,module,exports){
+},{"./_getNative":130,"./_root":175}],37:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -50732,7 +49414,7 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":40,"./_setCacheAdd":182,"./_setCacheHas":183}],44:[function(_dereq_,module,exports){
+},{"./_MapCache":34,"./_setCacheAdd":176,"./_setCacheHas":177}],38:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     stackClear = _dereq_('./_stackClear'),
     stackDelete = _dereq_('./_stackDelete'),
@@ -50761,7 +49443,7 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":38,"./_stackClear":187,"./_stackDelete":188,"./_stackGet":189,"./_stackHas":190,"./_stackSet":191}],45:[function(_dereq_,module,exports){
+},{"./_ListCache":32,"./_stackClear":181,"./_stackDelete":182,"./_stackGet":183,"./_stackHas":184,"./_stackSet":185}],39:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -50769,7 +49451,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":181}],46:[function(_dereq_,module,exports){
+},{"./_root":175}],40:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -50777,7 +49459,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":181}],47:[function(_dereq_,module,exports){
+},{"./_root":175}],41:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -50786,7 +49468,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":136,"./_root":181}],48:[function(_dereq_,module,exports){
+},{"./_getNative":130,"./_root":175}],42:[function(_dereq_,module,exports){
 /**
  * Adds the key-value `pair` to `map`.
  *
@@ -50803,7 +49485,7 @@ function addMapEntry(map, pair) {
 
 module.exports = addMapEntry;
 
-},{}],49:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 /**
  * Adds `value` to `set`.
  *
@@ -50820,7 +49502,7 @@ function addSetEntry(set, value) {
 
 module.exports = addSetEntry;
 
-},{}],50:[function(_dereq_,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -50843,7 +49525,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],51:[function(_dereq_,module,exports){
+},{}],45:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseAggregator` for arrays.
  *
@@ -50867,7 +49549,7 @@ function arrayAggregator(array, setter, iteratee, accumulator) {
 
 module.exports = arrayAggregator;
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],46:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for
  * iteratee shorthands.
@@ -50891,7 +49573,7 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],53:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for
  * iteratee shorthands.
@@ -50918,7 +49600,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],54:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 var baseTimes = _dereq_('./_baseTimes'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -50969,7 +49651,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":100,"./_isIndex":154,"./isArguments":213,"./isArray":214,"./isBuffer":217,"./isTypedArray":226}],55:[function(_dereq_,module,exports){
+},{"./_baseTimes":94,"./_isIndex":148,"./isArguments":207,"./isArray":208,"./isBuffer":211,"./isTypedArray":220}],49:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -50992,7 +49674,7 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],56:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -51014,7 +49696,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],57:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for
  * iteratee shorthands.
@@ -51042,7 +49724,7 @@ function arrayReduce(array, iteratee, accumulator, initAccum) {
 
 module.exports = arrayReduce;
 
-},{}],58:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for iteratee
  * shorthands.
@@ -51067,7 +49749,7 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],59:[function(_dereq_,module,exports){
+},{}],53:[function(_dereq_,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -51081,7 +49763,7 @@ function asciiToArray(string) {
 
 module.exports = asciiToArray;
 
-},{}],60:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 /** Used to match words composed of alphanumeric characters. */
 var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
 
@@ -51098,7 +49780,7 @@ function asciiWords(string) {
 
 module.exports = asciiWords;
 
-},{}],61:[function(_dereq_,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -51120,7 +49802,7 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":67,"./eq":206}],62:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":61,"./eq":200}],56:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -51150,7 +49832,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":67,"./eq":206}],63:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":61,"./eq":200}],57:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /**
@@ -51173,7 +49855,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":206}],64:[function(_dereq_,module,exports){
+},{"./eq":200}],58:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -51196,7 +49878,7 @@ function baseAggregator(collection, setter, iteratee, accumulator) {
 
 module.exports = baseAggregator;
 
-},{"./_baseEach":70}],65:[function(_dereq_,module,exports){
+},{"./_baseEach":64}],59:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keys = _dereq_('./keys');
 
@@ -51215,7 +49897,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":116,"./keys":227}],66:[function(_dereq_,module,exports){
+},{"./_copyObject":110,"./keys":221}],60:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -51234,7 +49916,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":116,"./keysIn":228}],67:[function(_dereq_,module,exports){
+},{"./_copyObject":110,"./keysIn":222}],61:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -51261,7 +49943,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":127}],68:[function(_dereq_,module,exports){
+},{"./_defineProperty":121}],62:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     arrayEach = _dereq_('./_arrayEach'),
     assignValue = _dereq_('./_assignValue'),
@@ -51416,7 +50098,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":44,"./_arrayEach":52,"./_assignValue":62,"./_baseAssign":65,"./_baseAssignIn":66,"./_cloneBuffer":108,"./_copyArray":115,"./_copySymbols":117,"./_copySymbolsIn":118,"./_getAllKeys":132,"./_getAllKeysIn":133,"./_getTag":141,"./_initCloneArray":151,"./_initCloneByTag":152,"./_initCloneObject":153,"./isArray":214,"./isBuffer":217,"./isObject":222,"./keys":227}],69:[function(_dereq_,module,exports){
+},{"./_Stack":38,"./_arrayEach":46,"./_assignValue":56,"./_baseAssign":59,"./_baseAssignIn":60,"./_cloneBuffer":102,"./_copyArray":109,"./_copySymbols":111,"./_copySymbolsIn":112,"./_getAllKeys":126,"./_getAllKeysIn":127,"./_getTag":135,"./_initCloneArray":145,"./_initCloneByTag":146,"./_initCloneObject":147,"./isArray":208,"./isBuffer":211,"./isObject":216,"./keys":221}],63:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -51448,7 +50130,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":222}],70:[function(_dereq_,module,exports){
+},{"./isObject":216}],64:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -51464,7 +50146,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":73,"./_createBaseEach":122}],71:[function(_dereq_,module,exports){
+},{"./_baseForOwn":67,"./_createBaseEach":116}],65:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -51487,7 +50169,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./_baseEach":70}],72:[function(_dereq_,module,exports){
+},{"./_baseEach":64}],66:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -51505,7 +50187,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":123}],73:[function(_dereq_,module,exports){
+},{"./_createBaseFor":117}],67:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -51523,7 +50205,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":72,"./keys":227}],74:[function(_dereq_,module,exports){
+},{"./_baseFor":66,"./keys":221}],68:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     toKey = _dereq_('./_toKey');
 
@@ -51549,7 +50231,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":105,"./_toKey":194}],75:[function(_dereq_,module,exports){
+},{"./_castPath":99,"./_toKey":188}],69:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isArray = _dereq_('./isArray');
 
@@ -51571,7 +50253,7 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":56,"./isArray":214}],76:[function(_dereq_,module,exports){
+},{"./_arrayPush":50,"./isArray":208}],70:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     getRawTag = _dereq_('./_getRawTag'),
     objectToString = _dereq_('./_objectToString');
@@ -51601,7 +50283,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":45,"./_getRawTag":138,"./_objectToString":178}],77:[function(_dereq_,module,exports){
+},{"./_Symbol":39,"./_getRawTag":132,"./_objectToString":172}],71:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -51616,7 +50298,7 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],78:[function(_dereq_,module,exports){
+},{}],72:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -51636,7 +50318,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":76,"./isObjectLike":223}],79:[function(_dereq_,module,exports){
+},{"./_baseGetTag":70,"./isObjectLike":217}],73:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -51666,7 +50348,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":80,"./isObjectLike":223}],80:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":74,"./isObjectLike":217}],74:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -51751,7 +50433,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":44,"./_equalArrays":128,"./_equalByTag":129,"./_equalObjects":130,"./_getTag":141,"./isArray":214,"./isBuffer":217,"./isTypedArray":226}],81:[function(_dereq_,module,exports){
+},{"./_Stack":38,"./_equalArrays":122,"./_equalByTag":123,"./_equalObjects":124,"./_getTag":135,"./isArray":208,"./isBuffer":211,"./isTypedArray":220}],75:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -51815,7 +50497,7 @@ function baseIsMatch(object, source, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./_Stack":44,"./_baseIsEqual":79}],82:[function(_dereq_,module,exports){
+},{"./_Stack":38,"./_baseIsEqual":73}],76:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isMasked = _dereq_('./_isMasked'),
     isObject = _dereq_('./isObject'),
@@ -51864,7 +50546,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":158,"./_toSource":195,"./isFunction":219,"./isObject":222}],83:[function(_dereq_,module,exports){
+},{"./_isMasked":152,"./_toSource":189,"./isFunction":213,"./isObject":216}],77:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -51926,7 +50608,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":76,"./isLength":220,"./isObjectLike":223}],84:[function(_dereq_,module,exports){
+},{"./_baseGetTag":70,"./isLength":214,"./isObjectLike":217}],78:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -51959,7 +50641,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":88,"./_baseMatchesProperty":89,"./identity":212,"./isArray":214,"./property":235}],85:[function(_dereq_,module,exports){
+},{"./_baseMatches":82,"./_baseMatchesProperty":83,"./identity":206,"./isArray":208,"./property":229}],79:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -51991,7 +50673,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":159,"./_nativeKeys":175}],86:[function(_dereq_,module,exports){
+},{"./_isPrototype":153,"./_nativeKeys":169}],80:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isPrototype = _dereq_('./_isPrototype'),
     nativeKeysIn = _dereq_('./_nativeKeysIn');
@@ -52026,7 +50708,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":159,"./_nativeKeysIn":176,"./isObject":222}],87:[function(_dereq_,module,exports){
+},{"./_isPrototype":153,"./_nativeKeysIn":170,"./isObject":216}],81:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -52050,7 +50732,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":70,"./isArrayLike":215}],88:[function(_dereq_,module,exports){
+},{"./_baseEach":64,"./isArrayLike":209}],82:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -52074,7 +50756,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":81,"./_getMatchData":135,"./_matchesStrictComparable":172}],89:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":75,"./_getMatchData":129,"./_matchesStrictComparable":166}],83:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -52109,7 +50791,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":79,"./_isKey":156,"./_isStrictComparable":160,"./_matchesStrictComparable":172,"./_toKey":194,"./get":209,"./hasIn":211}],90:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":73,"./_isKey":150,"./_isStrictComparable":154,"./_matchesStrictComparable":166,"./_toKey":188,"./get":203,"./hasIn":205}],84:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -52152,7 +50834,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":44,"./_assignMergeValue":61,"./_baseFor":72,"./_baseMergeDeep":91,"./isObject":222,"./keysIn":228}],91:[function(_dereq_,module,exports){
+},{"./_Stack":38,"./_assignMergeValue":55,"./_baseFor":66,"./_baseMergeDeep":85,"./isObject":216,"./keysIn":222}],85:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -52247,7 +50929,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":61,"./_cloneBuffer":108,"./_cloneTypedArray":114,"./_copyArray":115,"./_initCloneObject":153,"./isArguments":213,"./isArray":214,"./isArrayLikeObject":216,"./isBuffer":217,"./isFunction":219,"./isObject":222,"./isPlainObject":224,"./isTypedArray":226,"./toPlainObject":240}],92:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":55,"./_cloneBuffer":102,"./_cloneTypedArray":108,"./_copyArray":109,"./_initCloneObject":147,"./isArguments":207,"./isArray":208,"./isArrayLikeObject":210,"./isBuffer":211,"./isFunction":213,"./isObject":216,"./isPlainObject":218,"./isTypedArray":220,"./toPlainObject":234}],86:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -52279,7 +50961,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":74,"./_baseSet":97,"./_castPath":105}],93:[function(_dereq_,module,exports){
+},{"./_baseGet":68,"./_baseSet":91,"./_castPath":99}],87:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -52295,7 +50977,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],94:[function(_dereq_,module,exports){
+},{}],88:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -52313,7 +50995,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":74}],95:[function(_dereq_,module,exports){
+},{"./_baseGet":68}],89:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.propertyOf` without support for deep paths.
  *
@@ -52329,7 +51011,7 @@ function basePropertyOf(object) {
 
 module.exports = basePropertyOf;
 
-},{}],96:[function(_dereq_,module,exports){
+},{}],90:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity'),
     overRest = _dereq_('./_overRest'),
     setToString = _dereq_('./_setToString');
@@ -52348,7 +51030,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":180,"./_setToString":185,"./identity":212}],97:[function(_dereq_,module,exports){
+},{"./_overRest":174,"./_setToString":179,"./identity":206}],91:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -52397,7 +51079,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":62,"./_castPath":105,"./_isIndex":154,"./_toKey":194,"./isObject":222}],98:[function(_dereq_,module,exports){
+},{"./_assignValue":56,"./_castPath":99,"./_isIndex":148,"./_toKey":188,"./isObject":216}],92:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -52421,7 +51103,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":127,"./constant":203,"./identity":212}],99:[function(_dereq_,module,exports){
+},{"./_defineProperty":121,"./constant":197,"./identity":206}],93:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -52454,7 +51136,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],100:[function(_dereq_,module,exports){
+},{}],94:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -52476,7 +51158,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],101:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     arrayMap = _dereq_('./_arrayMap'),
     isArray = _dereq_('./isArray'),
@@ -52515,7 +51197,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":45,"./_arrayMap":55,"./isArray":214,"./isSymbol":225}],102:[function(_dereq_,module,exports){
+},{"./_Symbol":39,"./_arrayMap":49,"./isArray":208,"./isSymbol":219}],96:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -52531,7 +51213,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],103:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -52546,7 +51228,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],104:[function(_dereq_,module,exports){
+},{}],98:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -52562,7 +51244,7 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":212}],105:[function(_dereq_,module,exports){
+},{"./identity":206}],99:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isKey = _dereq_('./_isKey'),
     stringToPath = _dereq_('./_stringToPath'),
@@ -52585,7 +51267,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":156,"./_stringToPath":193,"./isArray":214,"./toString":241}],106:[function(_dereq_,module,exports){
+},{"./_isKey":150,"./_stringToPath":187,"./isArray":208,"./toString":235}],100:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -52605,7 +51287,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":99}],107:[function(_dereq_,module,exports){
+},{"./_baseSlice":93}],101:[function(_dereq_,module,exports){
 var Uint8Array = _dereq_('./_Uint8Array');
 
 /**
@@ -52623,7 +51305,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":46}],108:[function(_dereq_,module,exports){
+},{"./_Uint8Array":40}],102:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Detect free variable `exports`. */
@@ -52660,7 +51342,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":181}],109:[function(_dereq_,module,exports){
+},{"./_root":175}],103:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -52678,7 +51360,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":107}],110:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":101}],104:[function(_dereq_,module,exports){
 var addMapEntry = _dereq_('./_addMapEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     mapToArray = _dereq_('./_mapToArray');
@@ -52702,7 +51384,7 @@ function cloneMap(map, isDeep, cloneFunc) {
 
 module.exports = cloneMap;
 
-},{"./_addMapEntry":48,"./_arrayReduce":57,"./_mapToArray":171}],111:[function(_dereq_,module,exports){
+},{"./_addMapEntry":42,"./_arrayReduce":51,"./_mapToArray":165}],105:[function(_dereq_,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -52721,7 +51403,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],112:[function(_dereq_,module,exports){
+},{}],106:[function(_dereq_,module,exports){
 var addSetEntry = _dereq_('./_addSetEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     setToArray = _dereq_('./_setToArray');
@@ -52745,7 +51427,7 @@ function cloneSet(set, isDeep, cloneFunc) {
 
 module.exports = cloneSet;
 
-},{"./_addSetEntry":49,"./_arrayReduce":57,"./_setToArray":184}],113:[function(_dereq_,module,exports){
+},{"./_addSetEntry":43,"./_arrayReduce":51,"./_setToArray":178}],107:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -52765,7 +51447,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":45}],114:[function(_dereq_,module,exports){
+},{"./_Symbol":39}],108:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -52783,7 +51465,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":107}],115:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":101}],109:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -52805,7 +51487,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],116:[function(_dereq_,module,exports){
+},{}],110:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     baseAssignValue = _dereq_('./_baseAssignValue');
 
@@ -52847,7 +51529,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":62,"./_baseAssignValue":67}],117:[function(_dereq_,module,exports){
+},{"./_assignValue":56,"./_baseAssignValue":61}],111:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbols = _dereq_('./_getSymbols');
 
@@ -52865,7 +51547,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":116,"./_getSymbols":139}],118:[function(_dereq_,module,exports){
+},{"./_copyObject":110,"./_getSymbols":133}],112:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbolsIn = _dereq_('./_getSymbolsIn');
 
@@ -52883,7 +51565,7 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":116,"./_getSymbolsIn":140}],119:[function(_dereq_,module,exports){
+},{"./_copyObject":110,"./_getSymbolsIn":134}],113:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -52891,7 +51573,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":181}],120:[function(_dereq_,module,exports){
+},{"./_root":175}],114:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -52916,7 +51598,7 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":51,"./_baseAggregator":64,"./_baseIteratee":84,"./isArray":214}],121:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":45,"./_baseAggregator":58,"./_baseIteratee":78,"./isArray":208}],115:[function(_dereq_,module,exports){
 var baseRest = _dereq_('./_baseRest'),
     isIterateeCall = _dereq_('./_isIterateeCall');
 
@@ -52955,7 +51637,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":96,"./_isIterateeCall":155}],122:[function(_dereq_,module,exports){
+},{"./_baseRest":90,"./_isIterateeCall":149}],116:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -52989,7 +51671,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":215}],123:[function(_dereq_,module,exports){
+},{"./isArrayLike":209}],117:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -53016,7 +51698,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],124:[function(_dereq_,module,exports){
+},{}],118:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -53051,7 +51733,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":106,"./_hasUnicode":144,"./_stringToArray":192,"./toString":241}],125:[function(_dereq_,module,exports){
+},{"./_castSlice":100,"./_hasUnicode":138,"./_stringToArray":186,"./toString":235}],119:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -53077,7 +51759,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":57,"./deburr":204,"./words":243}],126:[function(_dereq_,module,exports){
+},{"./_arrayReduce":51,"./deburr":198,"./words":237}],120:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -53150,7 +51832,7 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":95}],127:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":89}],121:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 var defineProperty = (function() {
@@ -53163,7 +51845,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":136}],128:[function(_dereq_,module,exports){
+},{"./_getNative":130}],122:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -53248,7 +51930,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":43,"./_arraySome":58,"./_cacheHas":103}],129:[function(_dereq_,module,exports){
+},{"./_SetCache":37,"./_arraySome":52,"./_cacheHas":97}],123:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -53362,7 +52044,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":45,"./_Uint8Array":46,"./_equalArrays":128,"./_mapToArray":171,"./_setToArray":184,"./eq":206}],130:[function(_dereq_,module,exports){
+},{"./_Symbol":39,"./_Uint8Array":40,"./_equalArrays":122,"./_mapToArray":165,"./_setToArray":178,"./eq":200}],124:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -53453,7 +52135,7 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":132}],131:[function(_dereq_,module,exports){
+},{"./_getAllKeys":126}],125:[function(_dereq_,module,exports){
 (function (global){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -53461,7 +52143,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],132:[function(_dereq_,module,exports){
+},{}],126:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbols = _dereq_('./_getSymbols'),
     keys = _dereq_('./keys');
@@ -53479,7 +52161,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":75,"./_getSymbols":139,"./keys":227}],133:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":69,"./_getSymbols":133,"./keys":221}],127:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -53498,7 +52180,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":75,"./_getSymbolsIn":140,"./keysIn":228}],134:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":69,"./_getSymbolsIn":134,"./keysIn":222}],128:[function(_dereq_,module,exports){
 var isKeyable = _dereq_('./_isKeyable');
 
 /**
@@ -53518,7 +52200,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":157}],135:[function(_dereq_,module,exports){
+},{"./_isKeyable":151}],129:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -53544,7 +52226,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":160,"./keys":227}],136:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":154,"./keys":221}],130:[function(_dereq_,module,exports){
 var baseIsNative = _dereq_('./_baseIsNative'),
     getValue = _dereq_('./_getValue');
 
@@ -53563,7 +52245,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":82,"./_getValue":142}],137:[function(_dereq_,module,exports){
+},{"./_baseIsNative":76,"./_getValue":136}],131:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /** Built-in value references. */
@@ -53571,7 +52253,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":179}],138:[function(_dereq_,module,exports){
+},{"./_overArg":173}],132:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used for built-in method references. */
@@ -53619,7 +52301,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":45}],139:[function(_dereq_,module,exports){
+},{"./_Symbol":39}],133:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     stubArray = _dereq_('./stubArray');
 
@@ -53651,7 +52333,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":53,"./stubArray":238}],140:[function(_dereq_,module,exports){
+},{"./_arrayFilter":47,"./stubArray":232}],134:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -53678,7 +52360,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":56,"./_getPrototype":137,"./_getSymbols":139,"./stubArray":238}],141:[function(_dereq_,module,exports){
+},{"./_arrayPush":50,"./_getPrototype":131,"./_getSymbols":133,"./stubArray":232}],135:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -53738,7 +52420,7 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":36,"./_Map":39,"./_Promise":41,"./_Set":42,"./_WeakMap":47,"./_baseGetTag":76,"./_toSource":195}],142:[function(_dereq_,module,exports){
+},{"./_DataView":30,"./_Map":33,"./_Promise":35,"./_Set":36,"./_WeakMap":41,"./_baseGetTag":70,"./_toSource":189}],136:[function(_dereq_,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -53753,7 +52435,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],143:[function(_dereq_,module,exports){
+},{}],137:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -53794,7 +52476,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":105,"./_isIndex":154,"./_toKey":194,"./isArguments":213,"./isArray":214,"./isLength":220}],144:[function(_dereq_,module,exports){
+},{"./_castPath":99,"./_isIndex":148,"./_toKey":188,"./isArguments":207,"./isArray":208,"./isLength":214}],138:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -53822,7 +52504,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],145:[function(_dereq_,module,exports){
+},{}],139:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -53839,7 +52521,7 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],146:[function(_dereq_,module,exports){
+},{}],140:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /**
@@ -53856,7 +52538,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":174}],147:[function(_dereq_,module,exports){
+},{"./_nativeCreate":168}],141:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -53875,7 +52557,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],148:[function(_dereq_,module,exports){
+},{}],142:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -53907,7 +52589,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":174}],149:[function(_dereq_,module,exports){
+},{"./_nativeCreate":168}],143:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -53932,7 +52614,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":174}],150:[function(_dereq_,module,exports){
+},{"./_nativeCreate":168}],144:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -53957,7 +52639,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":174}],151:[function(_dereq_,module,exports){
+},{"./_nativeCreate":168}],145:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -53985,7 +52667,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],152:[function(_dereq_,module,exports){
+},{}],146:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
     cloneDataView = _dereq_('./_cloneDataView'),
     cloneMap = _dereq_('./_cloneMap'),
@@ -54067,7 +52749,7 @@ function initCloneByTag(object, tag, cloneFunc, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":107,"./_cloneDataView":109,"./_cloneMap":110,"./_cloneRegExp":111,"./_cloneSet":112,"./_cloneSymbol":113,"./_cloneTypedArray":114}],153:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":101,"./_cloneDataView":103,"./_cloneMap":104,"./_cloneRegExp":105,"./_cloneSet":106,"./_cloneSymbol":107,"./_cloneTypedArray":108}],147:[function(_dereq_,module,exports){
 var baseCreate = _dereq_('./_baseCreate'),
     getPrototype = _dereq_('./_getPrototype'),
     isPrototype = _dereq_('./_isPrototype');
@@ -54087,7 +52769,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":69,"./_getPrototype":137,"./_isPrototype":159}],154:[function(_dereq_,module,exports){
+},{"./_baseCreate":63,"./_getPrototype":131,"./_isPrototype":153}],148:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -54111,7 +52793,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],155:[function(_dereq_,module,exports){
+},{}],149:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq'),
     isArrayLike = _dereq_('./isArrayLike'),
     isIndex = _dereq_('./_isIndex'),
@@ -54143,7 +52825,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":154,"./eq":206,"./isArrayLike":215,"./isObject":222}],156:[function(_dereq_,module,exports){
+},{"./_isIndex":148,"./eq":200,"./isArrayLike":209,"./isObject":216}],150:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -54174,7 +52856,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":214,"./isSymbol":225}],157:[function(_dereq_,module,exports){
+},{"./isArray":208,"./isSymbol":219}],151:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -54191,7 +52873,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],158:[function(_dereq_,module,exports){
+},{}],152:[function(_dereq_,module,exports){
 var coreJsData = _dereq_('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -54213,7 +52895,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":119}],159:[function(_dereq_,module,exports){
+},{"./_coreJsData":113}],153:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -54233,7 +52915,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],160:[function(_dereq_,module,exports){
+},{}],154:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -54250,7 +52932,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":222}],161:[function(_dereq_,module,exports){
+},{"./isObject":216}],155:[function(_dereq_,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -54265,7 +52947,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],162:[function(_dereq_,module,exports){
+},{}],156:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -54302,7 +52984,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":63}],163:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":57}],157:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -54323,7 +53005,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":63}],164:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":57}],158:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -54341,7 +53023,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":63}],165:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":57}],159:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -54369,7 +53051,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":63}],166:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":57}],160:[function(_dereq_,module,exports){
 var Hash = _dereq_('./_Hash'),
     ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map');
@@ -54392,7 +53074,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":37,"./_ListCache":38,"./_Map":39}],167:[function(_dereq_,module,exports){
+},{"./_Hash":31,"./_ListCache":32,"./_Map":33}],161:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -54412,7 +53094,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":134}],168:[function(_dereq_,module,exports){
+},{"./_getMapData":128}],162:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -54430,7 +53112,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":134}],169:[function(_dereq_,module,exports){
+},{"./_getMapData":128}],163:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -54448,7 +53130,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":134}],170:[function(_dereq_,module,exports){
+},{"./_getMapData":128}],164:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -54472,7 +53154,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":134}],171:[function(_dereq_,module,exports){
+},{"./_getMapData":128}],165:[function(_dereq_,module,exports){
 /**
  * Converts `map` to its key-value pairs.
  *
@@ -54492,7 +53174,7 @@ function mapToArray(map) {
 
 module.exports = mapToArray;
 
-},{}],172:[function(_dereq_,module,exports){
+},{}],166:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -54514,7 +53196,7 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],173:[function(_dereq_,module,exports){
+},{}],167:[function(_dereq_,module,exports){
 var memoize = _dereq_('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -54542,7 +53224,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":230}],174:[function(_dereq_,module,exports){
+},{"./memoize":224}],168:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -54550,7 +53232,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":136}],175:[function(_dereq_,module,exports){
+},{"./_getNative":130}],169:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -54558,7 +53240,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":179}],176:[function(_dereq_,module,exports){
+},{"./_overArg":173}],170:[function(_dereq_,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -54580,7 +53262,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],177:[function(_dereq_,module,exports){
+},{}],171:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -54604,7 +53286,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":131}],178:[function(_dereq_,module,exports){
+},{"./_freeGlobal":125}],172:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -54628,7 +53310,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],179:[function(_dereq_,module,exports){
+},{}],173:[function(_dereq_,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -54645,7 +53327,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],180:[function(_dereq_,module,exports){
+},{}],174:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -54683,7 +53365,7 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":50}],181:[function(_dereq_,module,exports){
+},{"./_apply":44}],175:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -54694,7 +53376,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":131}],182:[function(_dereq_,module,exports){
+},{"./_freeGlobal":125}],176:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -54715,7 +53397,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],183:[function(_dereq_,module,exports){
+},{}],177:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -54731,7 +53413,7 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],184:[function(_dereq_,module,exports){
+},{}],178:[function(_dereq_,module,exports){
 /**
  * Converts `set` to an array of its values.
  *
@@ -54751,7 +53433,7 @@ function setToArray(set) {
 
 module.exports = setToArray;
 
-},{}],185:[function(_dereq_,module,exports){
+},{}],179:[function(_dereq_,module,exports){
 var baseSetToString = _dereq_('./_baseSetToString'),
     shortOut = _dereq_('./_shortOut');
 
@@ -54767,7 +53449,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":98,"./_shortOut":186}],186:[function(_dereq_,module,exports){
+},{"./_baseSetToString":92,"./_shortOut":180}],180:[function(_dereq_,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -54806,7 +53488,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],187:[function(_dereq_,module,exports){
+},{}],181:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache');
 
 /**
@@ -54823,7 +53505,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":38}],188:[function(_dereq_,module,exports){
+},{"./_ListCache":32}],182:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -54843,7 +53525,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],189:[function(_dereq_,module,exports){
+},{}],183:[function(_dereq_,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -54859,7 +53541,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],190:[function(_dereq_,module,exports){
+},{}],184:[function(_dereq_,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -54875,7 +53557,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],191:[function(_dereq_,module,exports){
+},{}],185:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map'),
     MapCache = _dereq_('./_MapCache');
@@ -54911,7 +53593,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":38,"./_Map":39,"./_MapCache":40}],192:[function(_dereq_,module,exports){
+},{"./_ListCache":32,"./_Map":33,"./_MapCache":34}],186:[function(_dereq_,module,exports){
 var asciiToArray = _dereq_('./_asciiToArray'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeToArray = _dereq_('./_unicodeToArray');
@@ -54931,7 +53613,7 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":59,"./_hasUnicode":144,"./_unicodeToArray":196}],193:[function(_dereq_,module,exports){
+},{"./_asciiToArray":53,"./_hasUnicode":138,"./_unicodeToArray":190}],187:[function(_dereq_,module,exports){
 var memoizeCapped = _dereq_('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -54961,7 +53643,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":173}],194:[function(_dereq_,module,exports){
+},{"./_memoizeCapped":167}],188:[function(_dereq_,module,exports){
 var isSymbol = _dereq_('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -54984,7 +53666,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":225}],195:[function(_dereq_,module,exports){
+},{"./isSymbol":219}],189:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -55012,7 +53694,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],196:[function(_dereq_,module,exports){
+},{}],190:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -55054,7 +53736,7 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],197:[function(_dereq_,module,exports){
+},{}],191:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -55125,7 +53807,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],198:[function(_dereq_,module,exports){
+},{}],192:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -55185,7 +53867,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":62,"./_copyObject":116,"./_createAssigner":121,"./_isPrototype":159,"./isArrayLike":215,"./keys":227}],199:[function(_dereq_,module,exports){
+},{"./_assignValue":56,"./_copyObject":110,"./_createAssigner":115,"./_isPrototype":153,"./isArrayLike":209,"./keys":221}],193:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -55216,7 +53898,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":125,"./capitalize":200}],200:[function(_dereq_,module,exports){
+},{"./_createCompounder":119,"./capitalize":194}],194:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -55241,7 +53923,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":241,"./upperFirst":242}],201:[function(_dereq_,module,exports){
+},{"./toString":235,"./upperFirst":236}],195:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -55279,7 +53961,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"./_baseClone":68}],202:[function(_dereq_,module,exports){
+},{"./_baseClone":62}],196:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -55310,7 +53992,7 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":68}],203:[function(_dereq_,module,exports){
+},{"./_baseClone":62}],197:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -55338,7 +54020,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],204:[function(_dereq_,module,exports){
+},{}],198:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -55385,10 +54067,10 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":126,"./toString":241}],205:[function(_dereq_,module,exports){
+},{"./_deburrLetter":120,"./toString":235}],199:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":208}],206:[function(_dereq_,module,exports){
+},{"./forEach":202}],200:[function(_dereq_,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -55427,7 +54109,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],207:[function(_dereq_,module,exports){
+},{}],201:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -55477,7 +54159,7 @@ function filter(collection, predicate) {
 
 module.exports = filter;
 
-},{"./_arrayFilter":53,"./_baseFilter":71,"./_baseIteratee":84,"./isArray":214}],208:[function(_dereq_,module,exports){
+},{"./_arrayFilter":47,"./_baseFilter":65,"./_baseIteratee":78,"./isArray":208}],202:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -55520,7 +54202,7 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":52,"./_baseEach":70,"./_castFunction":104,"./isArray":214}],209:[function(_dereq_,module,exports){
+},{"./_arrayEach":46,"./_baseEach":64,"./_castFunction":98,"./isArray":208}],203:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -55555,7 +54237,7 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-},{"./_baseGet":74}],210:[function(_dereq_,module,exports){
+},{"./_baseGet":68}],204:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -55598,7 +54280,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":67,"./_createAggregator":120}],211:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":61,"./_createAggregator":114}],205:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -55634,7 +54316,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":77,"./_hasPath":143}],212:[function(_dereq_,module,exports){
+},{"./_baseHasIn":71,"./_hasPath":137}],206:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -55657,7 +54339,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],213:[function(_dereq_,module,exports){
+},{}],207:[function(_dereq_,module,exports){
 var baseIsArguments = _dereq_('./_baseIsArguments'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -55695,7 +54377,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":78,"./isObjectLike":223}],214:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":72,"./isObjectLike":217}],208:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -55723,7 +54405,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],215:[function(_dereq_,module,exports){
+},{}],209:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isLength = _dereq_('./isLength');
 
@@ -55758,7 +54440,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":219,"./isLength":220}],216:[function(_dereq_,module,exports){
+},{"./isFunction":213,"./isLength":214}],210:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -55793,7 +54475,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":215,"./isObjectLike":223}],217:[function(_dereq_,module,exports){
+},{"./isArrayLike":209,"./isObjectLike":217}],211:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -55833,7 +54515,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":181,"./stubFalse":239}],218:[function(_dereq_,module,exports){
+},{"./_root":175,"./stubFalse":233}],212:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual');
 
 /**
@@ -55870,7 +54552,7 @@ function isEqual(value, other) {
 
 module.exports = isEqual;
 
-},{"./_baseIsEqual":79}],219:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":73}],213:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObject = _dereq_('./isObject');
 
@@ -55909,7 +54591,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":76,"./isObject":222}],220:[function(_dereq_,module,exports){
+},{"./_baseGetTag":70,"./isObject":216}],214:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -55946,7 +54628,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],221:[function(_dereq_,module,exports){
+},{}],215:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -55986,7 +54668,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":76,"./isObjectLike":223}],222:[function(_dereq_,module,exports){
+},{"./_baseGetTag":70,"./isObjectLike":217}],216:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -56019,7 +54701,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],223:[function(_dereq_,module,exports){
+},{}],217:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -56050,7 +54732,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],224:[function(_dereq_,module,exports){
+},{}],218:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -56114,7 +54796,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":76,"./_getPrototype":137,"./isObjectLike":223}],225:[function(_dereq_,module,exports){
+},{"./_baseGetTag":70,"./_getPrototype":131,"./isObjectLike":217}],219:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -56145,7 +54827,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":76,"./isObjectLike":223}],226:[function(_dereq_,module,exports){
+},{"./_baseGetTag":70,"./isObjectLike":217}],220:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -56174,7 +54856,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":83,"./_baseUnary":102,"./_nodeUtil":177}],227:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":77,"./_baseUnary":96,"./_nodeUtil":171}],221:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -56213,7 +54895,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":54,"./_baseKeys":85,"./isArrayLike":215}],228:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":48,"./_baseKeys":79,"./isArrayLike":209}],222:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -56247,7 +54929,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":54,"./_baseKeysIn":86,"./isArrayLike":215}],229:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":48,"./_baseKeysIn":80,"./isArrayLike":209}],223:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -56302,7 +54984,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":55,"./_baseIteratee":84,"./_baseMap":87,"./isArray":214}],230:[function(_dereq_,module,exports){
+},{"./_arrayMap":49,"./_baseIteratee":78,"./_baseMap":81,"./isArray":208}],224:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache');
 
 /** Error message constants. */
@@ -56377,7 +55059,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":40}],231:[function(_dereq_,module,exports){
+},{"./_MapCache":34}],225:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -56418,7 +55100,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":90,"./_createAssigner":121}],232:[function(_dereq_,module,exports){
+},{"./_baseMerge":84,"./_createAssigner":115}],226:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -56460,7 +55142,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],233:[function(_dereq_,module,exports){
+},{}],227:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -56491,7 +55173,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":84,"./negate":232,"./pickBy":234}],234:[function(_dereq_,module,exports){
+},{"./_baseIteratee":78,"./negate":226,"./pickBy":228}],228:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -56530,7 +55212,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":55,"./_baseIteratee":84,"./_basePickBy":92,"./_getAllKeysIn":133}],235:[function(_dereq_,module,exports){
+},{"./_arrayMap":49,"./_baseIteratee":78,"./_basePickBy":86,"./_getAllKeysIn":127}],229:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -56564,7 +55246,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":93,"./_basePropertyDeep":94,"./_isKey":156,"./_toKey":194}],236:[function(_dereq_,module,exports){
+},{"./_baseProperty":87,"./_basePropertyDeep":88,"./_isKey":150,"./_toKey":188}],230:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -56612,7 +55294,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":53,"./_baseFilter":71,"./_baseIteratee":84,"./isArray":214,"./negate":232}],237:[function(_dereq_,module,exports){
+},{"./_arrayFilter":47,"./_baseFilter":65,"./_baseIteratee":78,"./isArray":208,"./negate":226}],231:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -56649,7 +55331,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":97}],238:[function(_dereq_,module,exports){
+},{"./_baseSet":91}],232:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -56674,7 +55356,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],239:[function(_dereq_,module,exports){
+},{}],233:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -56694,7 +55376,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],240:[function(_dereq_,module,exports){
+},{}],234:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -56728,7 +55410,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":116,"./keysIn":228}],241:[function(_dereq_,module,exports){
+},{"./_copyObject":110,"./keysIn":222}],235:[function(_dereq_,module,exports){
 var baseToString = _dereq_('./_baseToString');
 
 /**
@@ -56758,7 +55440,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":101}],242:[function(_dereq_,module,exports){
+},{"./_baseToString":95}],236:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -56782,7 +55464,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":124}],243:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":118}],237:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -56819,7 +55501,7 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":60,"./_hasUnicodeWord":145,"./_unicodeWords":197,"./toString":241}],244:[function(_dereq_,module,exports){
+},{"./_asciiWords":54,"./_hasUnicodeWord":139,"./_unicodeWords":191,"./toString":235}],238:[function(_dereq_,module,exports){
 //! moment.js
 //! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -61284,7 +59966,7 @@ return hooks;
 
 })));
 
-},{}],245:[function(_dereq_,module,exports){
+},{}],239:[function(_dereq_,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -61661,7 +60343,7 @@ return hooks;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],246:[function(_dereq_,module,exports){
+},{}],240:[function(_dereq_,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -62578,7 +61260,7 @@ return hooks;
     return m;
 }));
 
-},{"angular":11}],247:[function(_dereq_,module,exports){
+},{"angular":11}],241:[function(_dereq_,module,exports){
 /**!
  * AngularJS file upload directives and services. Supports: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -65478,10 +64160,1554 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],248:[function(_dereq_,module,exports){
+},{}],242:[function(_dereq_,module,exports){
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":247}],249:[function(_dereq_,module,exports){
+},{"./dist/ng-file-upload-all":241}],243:[function(_dereq_,module,exports){
+(function (global){
+'use strict';
+
+// Intentionally use native-promise-only here... Other promise libraries (es6-promise)
+// duck-punch the global Promise definition which messes up Angular 2 since it
+// also duck-punches the global Promise definition. For now, keep native-promise-only.
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
+  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+};
+
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}();
+
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+
+var Promise = _dereq_("native-promise-only");
+_dereq_('whatwg-fetch');
+var EventEmitter = _dereq_('eventemitter2').EventEmitter2;
+var copy = _dereq_('shallow-copy');
+
+/**
+ * The Formio interface class.
+ *
+ *   let formio = new Formio('https://examples.form.io/example');
+ */
+
+var Formio = function () {
+  function Formio(path) {
+    var _this = this;
+
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    _classCallCheck(this, Formio);
+
+    // Ensure we have an instance of Formio.
+    if (!(this instanceof Formio)) {
+      return new Formio(path);
+    }
+
+    // Initialize our variables.
+    this.base = '';
+    this.projectsUrl = '';
+    this.projectUrl = '';
+    this.projectId = '';
+    this.formUrl = '';
+    this.formsUrl = '';
+    this.formId = '';
+    this.submissionsUrl = '';
+    this.submissionUrl = '';
+    this.submissionId = '';
+    this.actionsUrl = '';
+    this.actionId = '';
+    this.actionUrl = '';
+    this.query = '';
+
+    if (options.hasOwnProperty('base')) {
+      this.base = options.base;
+    } else if (Formio.baseUrl) {
+      this.base = Formio.baseUrl;
+    } else {
+      this.base = window.location.href.match(/http[s]?:\/\/api./)[0];
+    }
+
+    if (!path) {
+      // Allow user to create new projects if this was instantiated without
+      // a url
+      this.projectUrl = this.base + '/project';
+      this.projectsUrl = this.base + '/project';
+      this.projectId = false;
+      this.query = '';
+      return;
+    }
+
+    if (options.hasOwnProperty('project')) {
+      this.projectUrl = options.project;
+    }
+
+    var project = this.projectUrl || Formio.projectUrl;
+
+    // The baseURL is the same as the projectUrl. This is almost certainly against
+    // the Open Source server.
+    if (project && this.base === project) {
+      this.noProject = true;
+      this.projectUrl = this.base;
+    }
+
+    // Normalize to an absolute path.
+    if (path.indexOf('http') !== 0 && path.indexOf('//') !== 0) {
+      path = this.base + path;
+    }
+
+    var hostparts = Formio.getUrlParts(path);
+    var parts = [];
+    var hostName = hostparts[1] + hostparts[2];
+    path = hostparts.length > 3 ? hostparts[3] : '';
+    var queryparts = path.split('?');
+    if (queryparts.length > 1) {
+      path = queryparts[0];
+      this.query = '?' + queryparts[1];
+    }
+
+    // Register a specific path.
+    var registerPath = function registerPath(name, base) {
+      _this[name + 'sUrl'] = base + '/' + name;
+      var regex = new RegExp('\/' + name + '\/([^/]+)');
+      if (path.search(regex) !== -1) {
+        parts = path.match(regex);
+        _this[name + 'Url'] = parts ? base + parts[0] : '';
+        _this[name + 'Id'] = parts.length > 1 ? parts[1] : '';
+        base += parts[0];
+      }
+      return base;
+    };
+
+    // Register an array of items.
+    var registerItems = function registerItems(items, base, staticBase) {
+      for (var i in items) {
+        if (items.hasOwnProperty(i)) {
+          var item = items[i];
+          if (item instanceof Array) {
+            registerItems(item, base, true);
+          } else {
+            var newBase = registerPath(item, base);
+            base = staticBase ? base : newBase;
+          }
+        }
+      }
+    };
+
+    if (!this.projectUrl || this.projectUrl === this.base) {
+      this.projectUrl = hostName;
+    }
+
+    if (!this.noProject) {
+      // Determine the projectUrl and projectId
+      if (path.search(/(^|\/)(project)($|\/)/) !== -1) {
+        // Get project id as project/:projectId.
+        registerItems(['project'], hostName);
+      } else if (hostName === this.base) {
+        // Get project id as first part of path (subdirectory).
+        if (hostparts.length > 3 && path.split('/').length > 1) {
+          var pathParts = path.split('/');
+          pathParts.shift(); // Throw away the first /.
+          this.projectId = pathParts.shift();
+          path = '/' + pathParts.join('/');
+          this.projectUrl = hostName + '/' + this.projectId;
+        }
+      } else {
+        // Get project id from subdomain.
+        if (hostparts.length > 2 && (hostparts[2].split('.').length > 2 || hostName.indexOf('localhost') !== -1)) {
+          this.projectUrl = hostName;
+          this.projectId = hostparts[2].split('.')[0];
+        }
+      }
+      this.projectsUrl = this.projectsUrl || this.base + '/project';
+    }
+
+    // Configure Form urls and form ids.
+    if (path.search(/(^|\/)(project|form)($|\/)/) !== -1) {
+      registerItems(['form', ['submission', 'action']], this.projectUrl);
+    } else {
+      var subRegEx = new RegExp('\/(submission|action)($|\/.*)');
+      var subs = path.match(subRegEx);
+      this.pathType = subs && subs.length > 1 ? subs[1] : '';
+      path = path.replace(subRegEx, '');
+      path = path.replace(/\/$/, '');
+      this.formsUrl = this.projectUrl + '/form';
+      this.formUrl = this.projectUrl + path;
+      this.formId = path.replace(/^\/+|\/+$/g, '');
+      var items = ['submission', 'action'];
+      for (var i in items) {
+        if (items.hasOwnProperty(i)) {
+          var item = items[i];
+          this[item + 'sUrl'] = this.projectUrl + path + '/' + item;
+          if (this.pathType === item && subs.length > 2 && subs[2]) {
+            this[item + 'Id'] = subs[2].replace(/^\/+|\/+$/g, '');
+            this[item + 'Url'] = this.projectUrl + path + subs[0];
+          }
+        }
+      }
+    }
+
+    // Set the app url if it is not set.
+    if (!Formio.projectUrlSet) {
+      Formio.projectUrl = this.projectUrl;
+    }
+  }
+
+  _createClass(Formio, [{
+    key: 'delete',
+    value: function _delete(type, opts) {
+      var _id = type + 'Id';
+      var _url = type + 'Url';
+      if (!this[_id]) {
+        Promise.reject('Nothing to delete');
+      }
+      Formio.cache = {};
+      return this.makeRequest(type, this[_url], 'delete', null, opts);
+    }
+  }, {
+    key: 'index',
+    value: function index(type, query, opts) {
+      var _url = type + 'Url';
+      query = query || '';
+      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
+        query = '?' + Formio.serialize(query.params);
+      }
+      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
+    }
+  }, {
+    key: 'save',
+    value: function save(type, data, opts) {
+      var _id = type + 'Id';
+      var _url = type + 'Url';
+      var method = this[_id] || data._id ? 'put' : 'post';
+      var reqUrl = this[_id] ? this[_url] : this[type + 'sUrl'];
+      if (!this[_id] && data._id && method === 'put' && reqUrl.indexOf(data._id) === -1) {
+        reqUrl += '/' + data._id;
+      }
+      Formio.cache = {};
+      return this.makeRequest(type, reqUrl + this.query, method, data, opts);
+    }
+  }, {
+    key: 'load',
+    value: function load(type, query, opts) {
+      var _id = type + 'Id';
+      var _url = type + 'Url';
+      if (query && (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
+        query = Formio.serialize(query.params);
+      }
+      if (query) {
+        query = this.query ? this.query + '&' + query : '?' + query;
+      } else {
+        query = this.query;
+      }
+      if (!this[_id]) {
+        return Promise.reject('Missing ' + _id);
+      }
+      return this.makeRequest(type, this[_url] + query, 'get', null, opts);
+    }
+  }, {
+    key: 'makeRequest',
+    value: function makeRequest(type, url, method, data, opts) {
+      method = (method || 'GET').toUpperCase();
+      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
+        opts = {};
+      }
+
+      var requestArgs = {
+        formio: this,
+        type: type,
+        url: url,
+        method: method,
+        data: data,
+        opts: opts
+      };
+
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('request', requestArgs).then(function (result) {
+          if (result === null || result === undefined) {
+            return Formio.request(url, method, data, opts.header, opts);
+          }
+          return result;
+        });
+      });
+
+      return Formio.pluginAlter('wrapRequestPromise', request, requestArgs);
+    }
+  }, {
+    key: 'loadProject',
+    value: function loadProject(query, opts) {
+      return this.load('project', query, opts);
+    }
+  }, {
+    key: 'saveProject',
+    value: function saveProject(data, opts) {
+      return this.save('project', data, opts);
+    }
+  }, {
+    key: 'deleteProject',
+    value: function deleteProject(opts) {
+      return this.delete('project', opts);
+    }
+  }, {
+    key: 'loadForm',
+    value: function loadForm(query, opts) {
+      return this.load('form', query, opts);
+    }
+  }, {
+    key: 'saveForm',
+    value: function saveForm(data, opts) {
+      return this.save('form', data, opts);
+    }
+  }, {
+    key: 'deleteForm',
+    value: function deleteForm(opts) {
+      return this.delete('form', opts);
+    }
+  }, {
+    key: 'loadForms',
+    value: function loadForms(query, opts) {
+      return this.index('forms', query, opts);
+    }
+  }, {
+    key: 'loadSubmission',
+    value: function loadSubmission(query, opts) {
+      return this.load('submission', query, opts);
+    }
+  }, {
+    key: 'saveSubmission',
+    value: function saveSubmission(data, opts) {
+      return this.save('submission', data, opts);
+    }
+  }, {
+    key: 'deleteSubmission',
+    value: function deleteSubmission(opts) {
+      return this.delete('submission', opts);
+    }
+  }, {
+    key: 'loadSubmissions',
+    value: function loadSubmissions(query, opts) {
+      return this.index('submissions', query, opts);
+    }
+  }, {
+    key: 'loadAction',
+    value: function loadAction(query, opts) {
+      return this.load('action', query, opts);
+    }
+  }, {
+    key: 'saveAction',
+    value: function saveAction(data, opts) {
+      return this.save('action', data, opts);
+    }
+  }, {
+    key: 'deleteAction',
+    value: function deleteAction(opts) {
+      return this.delete('action', opts);
+    }
+  }, {
+    key: 'loadActions',
+    value: function loadActions(query, opts) {
+      return this.index('actions', query, opts);
+    }
+  }, {
+    key: 'availableActions',
+    value: function availableActions() {
+      return this.makeRequest('availableActions', this.formUrl + '/actions');
+    }
+  }, {
+    key: 'actionInfo',
+    value: function actionInfo(name) {
+      return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name);
+    }
+
+    /**
+     * Returns a temporary authentication token for single purpose token generation.
+     */
+
+  }, {
+    key: 'getTempToken',
+    value: function getTempToken(expire, allowed) {
+      var token = Formio.getToken();
+      if (!token) {
+        return Promise.reject('You must be authenticated to generate a temporary auth token.');
+      }
+      return this.makeRequest('tempToken', this.projectUrl + '/token', 'GET', null, {
+        header: new Headers({
+          'x-expire': expire,
+          'x-allow': allowed
+        })
+      });
+    }
+  }, {
+    key: 'uploadFile',
+    value: function uploadFile(storage, file, fileName, dir, progressCallback, url) {
+      var requestArgs = {
+        provider: storage,
+        method: 'upload',
+        file: file,
+        fileName: fileName,
+        dir: dir
+      };
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
+          if (storage && (result === null || result === undefined)) {
+            if (Formio.providers.storage.hasOwnProperty(storage)) {
+              var provider = new Formio.providers.storage[storage](this);
+              return provider.uploadFile(file, fileName, dir, progressCallback, url);
+            } else {
+              throw 'Storage provider not found';
+            }
+          }
+          return result || { url: '' };
+        }.bind(this));
+      }.bind(this));
+
+      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
+    }
+  }, {
+    key: 'downloadFile',
+    value: function downloadFile(file) {
+      var requestArgs = {
+        method: 'download',
+        file: file
+      };
+
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('fileRequest', requestArgs).then(function (result) {
+          if (file.storage && (result === null || result === undefined)) {
+            if (Formio.providers.storage.hasOwnProperty(file.storage)) {
+              var provider = new Formio.providers.storage[file.storage](this);
+              return provider.downloadFile(file);
+            } else {
+              throw 'Storage provider not found';
+            }
+          }
+          return result || { url: '' };
+        }.bind(this));
+      }.bind(this));
+
+      return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
+    }
+  }], [{
+    key: 'loadProjects',
+    value: function loadProjects(query, opts) {
+      query = query || '';
+      if ((typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object') {
+        query = '?' + serialize(query.params);
+      }
+      return Formio.makeStaticRequest(Formio.baseUrl + '/project' + query);
+    }
+  }, {
+    key: 'getUrlParts',
+    value: function getUrlParts(url) {
+      var regex = '^(http[s]?:\\/\\/)';
+      if (this.base && url.indexOf(this.base) === 0) {
+        regex += '(' + this.base.replace(/^http[s]?:\/\//, '') + ')';
+      } else {
+        regex += '([^/]+)';
+      }
+      regex += '($|\\/.*)';
+      return url.match(new RegExp(regex));
+    }
+  }, {
+    key: 'serialize',
+    value: function serialize(obj) {
+      var str = [];
+      for (var p in obj) {
+        if (obj.hasOwnProperty(p)) {
+          str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+        }
+      }return str.join("&");
+    }
+  }, {
+    key: 'makeStaticRequest',
+    value: function makeStaticRequest(url, method, data, opts) {
+      method = (method || 'GET').toUpperCase();
+      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
+        opts = {};
+      }
+      var requestArgs = {
+        url: url,
+        method: method,
+        data: data
+      };
+
+      var request = Formio.pluginWait('preRequest', requestArgs).then(function () {
+        return Formio.pluginGet('staticRequest', requestArgs).then(function (result) {
+          if (result === null || result === undefined) {
+            return Formio.request(url, method, data, opts.header, opts);
+          }
+          return result;
+        });
+      });
+
+      return Formio.pluginAlter('wrapStaticRequestPromise', request, requestArgs);
+    }
+  }, {
+    key: 'request',
+    value: function request(url, method, data, header, opts) {
+      if (!url) {
+        return Promise.reject('No url provided');
+      }
+      method = (method || 'GET').toUpperCase();
+
+      // For reverse compatibility, if they provided the ignoreCache parameter,
+      // then change it back to the options format where that is a parameter.
+      if (typeof opts === 'boolean') {
+        opts = { ignoreCache: opts };
+      }
+      if (!opts || (typeof opts === 'undefined' ? 'undefined' : _typeof(opts)) !== 'object') {
+        opts = {};
+      }
+
+      var cacheKey = btoa(url);
+
+      return new Promise(function (resolve, reject) {
+        // Get the cached promise to save multiple loads.
+        if (!opts.ignoreCache && method === 'GET' && Formio.cache.hasOwnProperty(cacheKey)) {
+          return resolve(Formio.cache[cacheKey]);
+        }
+
+        var requestToken = '';
+        resolve(new Promise(function (resolve, reject) {
+          // Set up and fetch request
+          var headers = header || new Headers({
+            'Accept': 'application/json',
+            'Content-type': 'application/json; charset=UTF-8'
+          });
+          var token = Formio.getToken();
+          if (token && !opts.noToken) {
+            headers.append('x-jwt-token', token);
+          }
+
+          var options = {
+            method: method,
+            headers: headers,
+            mode: 'cors'
+          };
+          if (data) {
+            options.body = JSON.stringify(data);
+          }
+
+          requestToken = headers.get('x-jwt-token');
+          resolve(fetch(url, options));
+        }).catch(function (err) {
+          err.message = 'Could not connect to API server (' + err.message + ')';
+          err.networkError = true;
+          throw err;
+        }).then(function (response) {
+          if (!response.ok) {
+            if (response.status === 440) {
+              Formio.setToken(null);
+              Formio.events.emit('formio.sessionExpired', response.body);
+            } else if (response.status === 401) {
+              Formio.events.emit('formio.unauthorized', response.body);
+            }
+            // Parse and return the error as a rejected promise to reject this promise
+            return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (error) {
+              throw error;
+            });
+          }
+
+          // Handle fetch results
+          var token = response.headers.get('x-jwt-token');
+
+          // In some strange cases, the fetch library will return an x-jwt-token without sending
+          // one to the server. This has even been debugged on the server to verify that no token
+          // was introduced with the request, but the response contains a token. This is an Invalid
+          // case where we do not send an x-jwt-token and get one in return for any GET request.
+          var tokenIntroduced = false;
+          if (method === 'GET' && !requestToken && token && url.indexOf('token=') === -1 && url.indexOf('x-jwt-token=' === -1)) {
+            console.warn('Token was introduced in request.');
+            tokenIntroduced = true;
+          }
+
+          if (response.status >= 200 && response.status < 300 && token && token !== '' && !tokenIntroduced) {
+            Formio.setToken(token);
+          }
+          // 204 is no content. Don't try to .json() it.
+          if (response.status === 204) {
+            return {};
+          }
+          return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (result) {
+            // Add some content-range metadata to the result here
+            var range = response.headers.get('content-range');
+            if (range && (typeof result === 'undefined' ? 'undefined' : _typeof(result)) === 'object') {
+              range = range.split('/');
+              if (range[0] !== '*') {
+                var skipLimit = range[0].split('-');
+                result.skip = Number(skipLimit[0]);
+                result.limit = skipLimit[1] - skipLimit[0] + 1;
+              }
+              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
+            }
+
+            if (!opts.getHeaders) {
+              return result;
+            }
+
+            var headers = {};
+            response.headers.forEach(function (item, key) {
+              headers[key] = item;
+            });
+
+            return new Promise(function (resolve, reject) {
+              resolve({ result: result, headers: headers });
+            });
+          });
+        }).catch(function (err) {
+          if (err === 'Bad Token') {
+            Formio.setToken(null);
+            Formio.events.emit('formio.badToken', err);
+          }
+          if (Formio.cache.hasOwnProperty(cacheKey)) {
+            // Remove failed promises from cache
+            delete Formio.cache[cacheKey];
+          }
+          // Propagate error so client can handle accordingly
+          throw err;
+        }));
+      }).then(function (result) {
+        // Save the cache
+        if (method === 'GET') {
+          Formio.cache[cacheKey] = Promise.resolve(result);
+        }
+
+        // Shallow copy result so modifications don't end up in cache
+        if (Array.isArray(result)) {
+          var resultCopy = result.map(copy);
+          resultCopy.skip = result.skip;
+          resultCopy.limit = result.limit;
+          resultCopy.serverCount = result.serverCount;
+          return resultCopy;
+        }
+        return copy(result);
+      });
+    }
+  }, {
+    key: 'setToken',
+    value: function setToken(token) {
+      token = token || '';
+      if (token === this.token) {
+        return;
+      }
+      this.token = token;
+      if (!token) {
+        Formio.setUser(null);
+        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+        try {
+          return localStorage.removeItem('formioToken');
+        } catch (err) {
+          return;
+        }
+      }
+      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+      try {
+        localStorage.setItem('formioToken', token);
+      } catch (err) {
+        // Do nothing.
+      }
+      return Formio.currentUser(); // Run this so user is updated if null
+    }
+  }, {
+    key: 'getToken',
+    value: function getToken() {
+      if (this.token) {
+        return this.token;
+      }
+      try {
+        var token = localStorage.getItem('formioToken') || '';
+        this.token = token;
+        return token;
+      } catch (e) {
+        return '';
+      }
+    }
+  }, {
+    key: 'setUser',
+    value: function setUser(user) {
+      if (!user) {
+        this.setToken(null);
+        // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+        try {
+          return localStorage.removeItem('formioUser');
+        } catch (err) {
+          return;
+        }
+      }
+      // iOS in private browse mode will throw an error but we can't detect ahead of time that we are in private mode.
+      try {
+        localStorage.setItem('formioUser', JSON.stringify(user));
+      } catch (err) {
+        // Do nothing.
+      }
+    }
+  }, {
+    key: 'getUser',
+    value: function getUser() {
+      try {
+        return JSON.parse(localStorage.getItem('formioUser') || null);
+      } catch (e) {
+        return;
+      }
+    }
+  }, {
+    key: 'setBaseUrl',
+    value: function setBaseUrl(url) {
+      Formio.baseUrl = url;
+      if (!Formio.projectUrlSet) {
+        Formio.projectUrl = url;
+      }
+    }
+  }, {
+    key: 'getBaseUrl',
+    value: function getBaseUrl() {
+      return Formio.baseUrl;
+    }
+  }, {
+    key: 'setApiUrl',
+    value: function setApiUrl(url) {
+      return Formio.setBaseUrl(url);
+    }
+  }, {
+    key: 'getApiUrl',
+    value: function getApiUrl() {
+      return Formio.getBaseUrl();
+    }
+  }, {
+    key: 'setAppUrl',
+    value: function setAppUrl(url) {
+      console.warn('Formio.setAppUrl() is deprecated. Use Formio.setProjectUrl instead.');
+      Formio.projectUrl = url;
+      Formio.projectUrlSet = true;
+    }
+  }, {
+    key: 'setProjectUrl',
+    value: function setProjectUrl(url) {
+      Formio.projectUrl = url;
+      Formio.projectUrlSet = true;
+    }
+  }, {
+    key: 'getAppUrl',
+    value: function getAppUrl() {
+      console.warn('Formio.getAppUrl() is deprecated. Use Formio.getProjectUrl instead.');
+      return Formio.projectUrl;
+    }
+  }, {
+    key: 'getProjectUrl',
+    value: function getProjectUrl() {
+      return Formio.projectUrl;
+    }
+  }, {
+    key: 'clearCache',
+    value: function clearCache() {
+      Formio.cache = {};
+    }
+  }, {
+    key: 'noop',
+    value: function noop() {}
+  }, {
+    key: 'identity',
+    value: function identity(value) {
+      return value;
+    }
+  }, {
+    key: 'deregisterPlugin',
+    value: function deregisterPlugin(plugin) {
+      var beforeLength = Formio.plugins.length;
+      Formio.plugins = Formio.plugins.filter(function (p) {
+        if (p !== plugin && p.__name !== plugin) return true;
+        (p.deregister || Formio.noop).call(p, Formio);
+        return false;
+      });
+      return beforeLength !== Formio.plugins.length;
+    }
+  }, {
+    key: 'registerPlugin',
+    value: function registerPlugin(plugin, name) {
+      Formio.plugins.push(plugin);
+      Formio.plugins.sort(function (a, b) {
+        return (b.priority || 0) - (a.priority || 0);
+      });
+      plugin.__name = name;
+      (plugin.init || Formio.noop).call(plugin, Formio);
+    }
+  }, {
+    key: 'getPlugin',
+    value: function getPlugin(name) {
+      return Formio.plugins.reduce(function (result, plugin) {
+        if (result) return result;
+        if (plugin.__name === name) return plugin;
+      }, null);
+    }
+  }, {
+    key: 'pluginWait',
+    value: function pluginWait(pluginFn) {
+      var args = [].slice.call(arguments, 1);
+      return Promise.all(Formio.plugins.map(function (plugin) {
+        return (plugin[pluginFn] || Formio.noop).apply(plugin, args);
+      }));
+    }
+  }, {
+    key: 'pluginGet',
+    value: function pluginGet(pluginFn) {
+      var args = [].slice.call(arguments, 0);
+      var callPlugin = function callPlugin(index, pluginFn) {
+        var plugin = Formio.plugins[index];
+        if (!plugin) return Promise.resolve(null);
+        return Promise.resolve((plugin && plugin[pluginFn] || Formio.noop).apply(plugin, [].slice.call(arguments, 2))).then(function (result) {
+          if (result !== null && result !== undefined) return result;
+          return callPlugin.apply(null, [index + 1].concat(args));
+        });
+      };
+      return callPlugin.apply(null, [0].concat(args));
+    }
+  }, {
+    key: 'pluginAlter',
+    value: function pluginAlter(pluginFn, value) {
+      var args = [].slice.call(arguments, 2);
+      return Formio.plugins.reduce(function (value, plugin) {
+        return (plugin[pluginFn] || Formio.identity).apply(plugin, [value].concat(args));
+      }, value);
+    }
+  }, {
+    key: 'currentUser',
+    value: function currentUser() {
+      var url = Formio.baseUrl + '/current';
+      var user = this.getUser();
+      if (user) {
+        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(user), {
+          url: url,
+          method: 'GET'
+        });
+      }
+      var token = this.getToken();
+      if (!token) {
+        return Formio.pluginAlter('wrapStaticRequestPromise', Promise.resolve(null), {
+          url: url,
+          method: 'GET'
+        });
+      }
+      return Formio.makeStaticRequest(url).then(function (response) {
+        Formio.setUser(response);
+        return response;
+      });
+    }
+  }, {
+    key: 'logout',
+    value: function logout() {
+      Formio.setToken(null);
+      Formio.setUser(null);
+      Formio.clearCache();
+      return Formio.makeStaticRequest(Formio.baseUrl + '/logout');
+    }
+
+    /**
+     * Attach an HTML form to Form.io.
+     *
+     * @param form
+     */
+
+  }, {
+    key: 'form',
+    value: function form(_form, options, done) {
+      // Fix the parameters.
+      if (!done && typeof options === 'function') {
+        done = options;
+        options = {};
+      }
+
+      done = done || function () {
+        console.log(arguments);
+      };
+      options = options || {};
+
+      // IF they provide a jquery object, then select the element.
+      if (_form.jquery) {
+        _form = _form[0];
+      }
+      if (!_form) {
+        return done('Invalid Form');
+      }
+
+      var getAction = function getAction() {
+        return options.form || _form.getAttribute('action');
+      };
+
+      /**
+       * Returns the current submission object.
+       * @returns {{data: {}}}
+       */
+      var getSubmission = function getSubmission() {
+        var submission = { data: {} };
+        var setValue = function setValue(path, value) {
+          var isArray = path.substr(-2) === '[]';
+          if (isArray) {
+            path = path.replace('[]', '');
+          }
+          var paths = path.replace(/\[|\]\[/g, '.').replace(/\]$/g, '').split('.');
+          var current = submission;
+          while (path = paths.shift()) {
+            if (!paths.length) {
+              if (isArray) {
+                if (!current[path]) {
+                  current[path] = [];
+                }
+                current[path].push(value);
+              } else {
+                current[path] = value;
+              }
+            } else {
+              if (!current[path]) {
+                current[path] = {};
+              }
+              current = current[path];
+            }
+          }
+        };
+
+        // Get the form data from this form.
+        var formData = new FormData(_form);
+        var entries = formData.entries();
+        var entry = null;
+        while (entry = entries.next().value) {
+          setValue(entry[0], entry[1]);
+        }
+        return submission;
+      };
+
+      // Submits the form.
+      var submit = function submit(event) {
+        if (event) {
+          event.preventDefault();
+        }
+        var action = getAction();
+        if (!action) {
+          return;
+        }
+        new Formio(action).saveSubmission(getSubmission()).then(function (sub) {
+          done(null, sub);
+        }, done);
+      };
+
+      // Attach formio to the provided form.
+      if (_form.attachEvent) {
+        _form.attachEvent('submit', submit);
+      } else {
+        _form.addEventListener('submit', submit);
+      }
+
+      return {
+        submit: submit,
+        getAction: getAction,
+        getSubmission: getSubmission
+      };
+    }
+  }, {
+    key: 'fieldData',
+    value: function fieldData(data, component) {
+      if (!data) {
+        return '';
+      }
+      if (!component || !component.key) {
+        return data;
+      }
+      if (component.key.indexOf('.') !== -1) {
+        var value = data;
+        var parts = component.key.split('.');
+        var key = '';
+        for (var i = 0; i < parts.length; i++) {
+          key = parts[i];
+
+          // Handle nested resources
+          if (value.hasOwnProperty('_id')) {
+            value = value.data;
+          }
+
+          // Return if the key is not found on the value.
+          if (!value.hasOwnProperty(key)) {
+            return;
+          }
+
+          // Convert old single field data in submissions to multiple
+          if (key === parts[parts.length - 1] && component.multiple && !Array.isArray(value[key])) {
+            value[key] = [value[key]];
+          }
+
+          // Set the value of this key.
+          value = value[key];
+        }
+        return value;
+      } else {
+        // Convert old single field data in submissions to multiple
+        if (component.multiple && !Array.isArray(data[component.key])) {
+          data[component.key] = [data[component.key]];
+        }
+        return data[component.key];
+      }
+    }
+  }]);
+
+  return Formio;
+}();
+
+// Define all the static properties.
+
+
+exports.Formio = Formio;
+Formio.baseUrl = 'https://api.form.io';
+Formio.projectUrl = Formio.baseUrl;
+Formio.projectUrlSet = false;
+Formio.plugins = [];
+Formio.cache = {};
+Formio.providers = _dereq_('./providers');
+Formio.events = new EventEmitter({
+  wildcard: false,
+  maxListeners: 0
+});
+
+module.exports = global.Formio = Formio;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./providers":244,"eventemitter2":26,"native-promise-only":239,"shallow-copy":312,"whatwg-fetch":315}],244:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  storage: _dereq_('./storage')
+};
+
+},{"./storage":246}],245:[function(_dereq_,module,exports){
+'use strict';
+
+var Promise = _dereq_("native-promise-only");
+var dropbox = function dropbox(formio) {
+  return {
+    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
+      return new Promise(function (resolve, reject) {
+        // Send the file with data.
+        var xhr = new XMLHttpRequest();
+
+        if (typeof progressCallback === 'function') {
+          xhr.upload.onprogress = progressCallback;
+        }
+
+        var fd = new FormData();
+        fd.append('name', fileName);
+        fd.append('dir', dir);
+        fd.append('file', file);
+
+        // Fire on network error.
+        xhr.onerror = function (err) {
+          err.networkError = true;
+          reject(err);
+        };
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            var response = JSON.parse(xhr.response);
+            response.storage = 'dropbox';
+            response.size = file.size;
+            response.type = file.type;
+            response.url = response.path_lower;
+            resolve(response);
+          } else {
+            reject(xhr.response || 'Unable to upload file');
+          }
+        };
+
+        xhr.onabort = function (err) {
+          reject(err);
+        };
+
+        xhr.open('POST', formio.formUrl + '/storage/dropbox');
+        var token = false;
+        try {
+          token = localStorage.getItem('formioToken');
+        } catch (e) {
+          // Swallow error.
+        }
+        if (token) {
+          xhr.setRequestHeader('x-jwt-token', token);
+        }
+        xhr.send(fd);
+      });
+    },
+    downloadFile: function downloadFile(file) {
+      var token = false;
+      try {
+        token = localStorage.getItem('formioToken');
+      } catch (e) {
+        // Swallow error.
+      }
+      file.url = formio.formUrl + '/storage/dropbox?path_lower=' + file.path_lower + (token ? '&x-jwt-token=' + token : '');
+      return Promise.resolve(file);
+    }
+  };
+};
+
+dropbox.title = 'Dropbox';
+module.exports = dropbox;
+
+},{"native-promise-only":239}],246:[function(_dereq_,module,exports){
+'use strict';
+
+module.exports = {
+  dropbox: _dereq_('./dropbox.js'),
+  s3: _dereq_('./s3.js'),
+  url: _dereq_('./url.js')
+};
+
+},{"./dropbox.js":245,"./s3.js":247,"./url.js":248}],247:[function(_dereq_,module,exports){
+'use strict';
+
+var Promise = _dereq_("native-promise-only");
+var s3 = function s3(formio) {
+  return {
+    uploadFile: function uploadFile(file, fileName, dir, progressCallback) {
+      return new Promise(function (resolve, reject) {
+        // Send the pre response to sign the upload.
+        var pre = new XMLHttpRequest();
+
+        var prefd = new FormData();
+        prefd.append('name', fileName);
+        prefd.append('size', file.size);
+        prefd.append('type', file.type);
+
+        // This only fires on a network error.
+        pre.onerror = function (err) {
+          err.networkError = true;
+          reject(err);
+        };
+
+        pre.onabort = function (err) {
+          reject(err);
+        };
+
+        pre.onload = function () {
+          if (pre.status >= 200 && pre.status < 300) {
+            var response = JSON.parse(pre.response);
+
+            // Send the file with data.
+            var xhr = new XMLHttpRequest();
+
+            if (typeof progressCallback === 'function') {
+              xhr.upload.onprogress = progressCallback;
+            }
+
+            response.data.fileName = fileName;
+            response.data.key += dir + fileName;
+
+            var fd = new FormData();
+            for (var key in response.data) {
+              fd.append(key, response.data[key]);
+            }
+            fd.append('file', file);
+
+            // Fire on network error.
+            xhr.onerror = function (err) {
+              err.networkError = true;
+              reject(err);
+            };
+
+            xhr.onload = function () {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve({
+                  storage: 's3',
+                  name: fileName,
+                  bucket: response.bucket,
+                  key: response.data.key,
+                  url: response.url + response.data.key,
+                  acl: response.data.acl,
+                  size: file.size,
+                  type: file.type
+                });
+              } else {
+                reject(xhr.response || 'Unable to upload file');
+              }
+            };
+
+            xhr.onabort = function (err) {
+              reject(err);
+            };
+
+            xhr.open('POST', response.url);
+
+            xhr.send(fd);
+          } else {
+            reject(pre.response || 'Unable to sign file');
+          }
+        };
+
+        pre.open('POST', formio.formUrl + '/storage/s3');
+
+        pre.setRequestHeader('Accept', 'application/json');
+        pre.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        var token = false;
+        try {
+          token = localStorage.getItem('formioToken');
+        } catch (e) {
+          // swallow error.
+        }
+        if (token) {
+          pre.setRequestHeader('x-jwt-token', token);
+        }
+
+        pre.send(JSON.stringify({
+          name: fileName,
+          size: file.size,
+          type: file.type
+        }));
+      });
+    },
+    downloadFile: function downloadFile(file) {
+      if (file.acl !== 'public-read') {
+        return formio.makeRequest('file', formio.formUrl + '/storage/s3?bucket=' + file.bucket + '&key=' + file.key, 'GET');
+      } else {
+        return Promise.resolve(file);
+      }
+    }
+  };
+};
+
+s3.title = 'S3';
+module.exports = s3;
+
+},{"native-promise-only":239}],248:[function(_dereq_,module,exports){
+'use strict';
+
+var Promise = _dereq_("native-promise-only");
+var url = function url(formio) {
+  return {
+    title: 'Url',
+    name: 'url',
+    uploadFile: function uploadFile(file, fileName, dir, progressCallback, url) {
+      return new Promise(function (resolve, reject) {
+        var data = {
+          dir: dir,
+          name: fileName,
+          file: file
+        };
+
+        // Send the file with data.
+        var xhr = new XMLHttpRequest();
+
+        if (typeof progressCallback === 'function') {
+          xhr.upload.onprogress = progressCallback;
+        }
+
+        var fd = new FormData();
+        for (var key in data) {
+          fd.append(key, data[key]);
+        }
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Need to test if xhr.response is decoded or not.
+            var respData = {};
+            try {
+              respData = typeof xhr.response === 'string' ? JSON.parse(xhr.response) : {};
+              respData = respData && respData.data ? respData.data : {};
+            } catch (err) {
+              respData = {};
+            }
+
+            resolve({
+              storage: 'url',
+              name: fileName,
+              url: xhr.responseURL + '/' + fileName,
+              size: file.size,
+              type: file.type,
+              data: respData
+            });
+          } else {
+            reject(xhr.response || 'Unable to upload file');
+          }
+        };
+
+        // Fire on network error.
+        xhr.onerror = function () {
+          reject(xhr);
+        };
+
+        xhr.onabort = function () {
+          reject(xhr);
+        };
+
+        xhr.open('POST', url);
+        var token = localStorage.getItem('formioToken');
+        if (token) {
+          xhr.setRequestHeader('x-jwt-token', token);
+        }
+        xhr.send(fd);
+      });
+    },
+    downloadFile: function downloadFile(file) {
+      // Return the original as there is nothing to do.
+      return Promise.resolve(file);
+    }
+  };
+};
+
+url.title = 'Url';
+module.exports = url;
+
+},{"native-promise-only":239}],249:[function(_dereq_,module,exports){
+'use strict';
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
+  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+};
+
+var _jsonLogicJs = _dereq_('json-logic-js');
+
+var _jsonLogicJs2 = _interopRequireDefault(_jsonLogicJs);
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : { default: obj };
+}
+
+var _get = _dereq_('lodash/get');
+
+module.exports = {
+  /**
+   * Determine if a component is a layout component or not.
+   *
+   * @param {Object} component
+   *   The component to check.
+   *
+   * @returns {Boolean}
+   *   Whether or not the component is a layout component.
+   */
+  isLayoutComponent: function isLayoutComponent(component) {
+    return component.columns && Array.isArray(component.columns) || component.rows && Array.isArray(component.rows) || component.components && Array.isArray(component.components) ? true : false;
+  },
+
+  /**
+   * Iterate through each component within a form.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Function} fn
+   *   The iteration function to invoke for each component.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   * @param {String} path
+   *   The current data path of the element. Example: data.user.firstName
+   */
+  eachComponent: function eachComponent(components, fn, includeAll, path) {
+    if (!components) return;
+    path = path || '';
+    components.forEach(function (component) {
+      var hasColumns = component.columns && Array.isArray(component.columns);
+      var hasRows = component.rows && Array.isArray(component.rows);
+      var hasComps = component.components && Array.isArray(component.components);
+      var noRecurse = false;
+      var newPath = component.key ? path ? path + '.' + component.key : component.key : '';
+
+      if (includeAll || component.tree || !hasColumns && !hasRows && !hasComps) {
+        noRecurse = fn(component, newPath);
+      }
+
+      var subPath = function subPath() {
+        if (component.key && (component.type === 'datagrid' || component.type === 'container')) {
+          return newPath;
+        }
+        return path;
+      };
+
+      if (!noRecurse) {
+        if (hasColumns) {
+          component.columns.forEach(function (column) {
+            eachComponent(column.components, fn, includeAll, subPath());
+          });
+        } else if (hasRows) {
+          [].concat.apply([], component.rows).forEach(function (row) {
+            eachComponent(row.components, fn, includeAll, subPath());
+          });
+        } else if (hasComps) {
+          eachComponent(component.components, fn, includeAll, subPath());
+        }
+      }
+    });
+  },
+
+  /**
+   * Get a component by its key
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {String} key
+   *   The key of the component to get.
+   *
+   * @returns {Object}
+   *   The component that matches the given key, or undefined if not found.
+   */
+  getComponent: function getComponent(components, key) {
+    var result;
+    module.exports.eachComponent(components, function (component) {
+      if (component.key === key) {
+        result = component;
+      }
+    });
+    return result;
+  },
+
+  /**
+   * Flatten the form components for data manipulation.
+   *
+   * @param {Object} components
+   *   The components to iterate.
+   * @param {Boolean} includeAll
+   *   Whether or not to include layout components.
+   *
+   * @returns {Object}
+   *   The flattened components map.
+   */
+  flattenComponents: function flattenComponents(components, includeAll) {
+    var flattened = {};
+    module.exports.eachComponent(components, function (component, path) {
+      flattened[path] = component;
+    }, includeAll);
+    return flattened;
+  },
+
+  /**
+   * Checks the conditions for a provided component and data.
+   *
+   * @param component
+   *   The component to check for the condition.
+   * @param row
+   *   The data within a row
+   * @param data
+   *   The full submission data.
+   *
+   * @returns {boolean}
+   */
+  checkCondition: function checkCondition(component, row, data) {
+    if (component.hasOwnProperty('customConditional') && component.customConditional) {
+      try {
+        var script = '(function() { var show = true;';
+        script += component.customConditional.toString();
+        script += '; return show; })()';
+        var result = eval(script);
+        return result.toString() === 'true';
+      } catch (e) {
+        console.warn('An error occurred in a custom conditional statement for component ' + component.key, e);
+        return true;
+      }
+    } else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.when) {
+      var cond = component.conditional;
+      var value = null;
+      if (row) {
+        value = this.getValue({ data: row }, cond.when);
+      }
+      if (data && (value === null || typeof value === 'undefined')) {
+        value = this.getValue({ data: data }, cond.when);
+      }
+      // FOR-400 - Fix issue where falsey values were being evaluated as show=true
+      if (value === null || typeof value === 'undefined') {
+        return false;
+      }
+      // Special check for selectboxes component.
+      if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value.hasOwnProperty(cond.eq)) {
+        return value[cond.eq].toString() === cond.show.toString();
+      }
+      // FOR-179 - Check for multiple values.
+      if (value instanceof Array && value.indexOf(cond.eq) !== -1) {
+        return cond.show.toString() === 'true';
+      }
+
+      return value.toString() === cond.eq.toString() === (cond.show.toString() === 'true');
+    } else if (component.hasOwnProperty('conditional') && component.conditional && component.conditional.json) {
+      return _jsonLogicJs2.default.apply(component.conditional.json, {
+        data: data,
+        row: row
+      });
+    }
+
+    // Default to show.
+    return true;
+  },
+
+  /**
+   * Get the value for a component key, in the given submission.
+   *
+   * @param {Object} submission
+   *   A submission object to search.
+   * @param {String} key
+   *   A for components API key to search for.
+   */
+  getValue: function getValue(submission, key) {
+    var data = submission.data || {};
+
+    var search = function search(data) {
+      var i;
+      var value;
+
+      if (!data) {
+        return null;
+      }
+
+      if ((typeof data === 'undefined' ? 'undefined' : _typeof(data)) === 'object' && !(data instanceof Array)) {
+        if (data.hasOwnProperty(key)) {
+          return data[key];
+        }
+
+        var keys = Object.keys(data);
+        for (i = 0; i < keys.length; i++) {
+          if (_typeof(data[keys[i]]) === 'object') {
+            value = search(data[keys[i]]);
+          }
+
+          if (value) {
+            return value;
+          }
+        }
+      }
+    };
+
+    return search(data);
+  },
+
+  /**
+   * Interpolate a string and add data replacements.
+   *
+   * @param string
+   * @param data
+   * @returns {XML|string|*|void}
+   */
+  interpolate: function interpolate(string, data) {
+    return string.replace(/\{\{\s*([^\s]*)\s*\}\}/g, function (match, token) {
+      return _get(data, token);
+    });
+  }
+};
+
+},{"json-logic-js":29,"lodash/get":203}],250:[function(_dereq_,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"./build/utils":249,"dup":28}],251:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -65570,7 +65796,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],250:[function(_dereq_,module,exports){
+},{}],252:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -65748,7 +65974,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],251:[function(_dereq_,module,exports){
+},{}],253:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -65828,10 +66054,8 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],252:[function(_dereq_,module,exports){
+},{}],254:[function(_dereq_,module,exports){
 "use strict";
-
-var GridUtils = _dereq_('../factories/GridUtils')();
 
 module.exports = function(app) {
   app.config([
@@ -65843,59 +66067,10 @@ module.exports = function(app) {
         group: 'layout',
         settings: {
           input: false,
-          tableView: true,
           key: 'columns',
-          columns: [{components: [], width: 6, offset: 0, push: 0, pull: 0},
-                    {components: [], width: 6, offset: 0, push: 0, pull: 0}]
+          columns: [{components: []}, {components: []}]
         },
-        controller: ['$scope', function($scope) {
-          // Adjust column component setting from before width, offset...
-          if ($scope.component.columns.length   === 2
-          &&  $scope.component.columns[0].width === undefined
-          &&  $scope.component.columns[1].width === undefined) {
-              $scope.component.columns[0].width   = 6;
-              $scope.component.columns[0].offset  = 0;
-              $scope.component.columns[0].push    = 0;
-              $scope.component.columns[0].pull    = 0;
-              $scope.component.columns[1].width   = 6;
-              $scope.component.columns[1].offset  = 0;
-              $scope.component.columns[1].push    = 0;
-              $scope.component.columns[1].pull    = 0;
-          }
-        }],
-        viewTemplate: 'formio/componentsView/columns.html',
-        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
-          var view = '<table class="table table-striped table-bordered table-child">';
-          if (!tableChild) {
-            view += '<thead><tr>';
-          }
-
-          var maxRows = 0;
-          angular.forEach(component.columns, function(column, index) {
-            // Get the maximum number of rows based on the number of components.
-            maxRows = Math.max(maxRows, (column.components.length || 0));
-
-            if (!tableChild) {
-              // Add a header for each column.
-              view += '<th>Column ' + (index + 1) + ' (' + component.key + ')</th>';
-            }
-          });
-
-          if (!tableChild) {
-            view += '</tr></thead>';
-          }
-
-          view += '<tbody>';
-          for (var index = 0; index < maxRows; index++) {
-            view += '<tr>';
-            for (var col = 0; col < component.columns.length; col++) {
-              view += GridUtils.columnForComponent(data, component.columns[col].components[index] || undefined, $interpolate, componentInfo, true);
-            }
-            view += '</tr>';
-          }
-          view += '</tbody></table>';
-          return view;
-        }
+        viewTemplate: 'formio/componentsView/columns.html'
       });
     }
   ]);
@@ -65903,17 +66078,17 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/columns.html',
-        "<div class=\"row\">\n  <div ng-show=\"column.width\" ng-class=\"'col-sm-' + column.width + ' col-sm-offset-' + column.offset + ' col-sm-push-' + column.push + ' col-sm-pull-' + column.pull\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      builder=\"builder\"\n    ></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      builder=\"builder\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/columns.html',
-        "<div class=\"row\">\n  <div ng-show=\"column.width\" ng-class=\"'col-sm-' + column.width + ' col-sm-offset-' + column.offset + ' col-sm-push-' + column.push + ' col-sm-pull-' + column.pull\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      form=\"form\"\n      submission=\"submission\"\n      ignore=\"ignore\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      builder=\"builder\"\n    ></formio-component-view>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-6\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component-view\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      form=\"form\"\n      submission=\"submission\"\n      ignore=\"ignore\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      builder=\"builder\"\n    ></formio-component-view>\n  </div>\n</div>\n"
       );
     }
   ]);
 };
 
-},{"../factories/GridUtils":295}],253:[function(_dereq_,module,exports){
+},{}],255:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -65973,10 +66148,9 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],254:[function(_dereq_,module,exports){
+},{}],256:[function(_dereq_,module,exports){
 "use strict";
 
-var GridUtils = _dereq_('../factories/GridUtils')();
 
 module.exports = function(app) {
   app.config([
@@ -65988,22 +66162,38 @@ module.exports = function(app) {
         viewTemplate: 'formio/componentsView/container.html',
         group: 'advanced',
         icon: 'fa fa-folder-open',
-        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
-          var view = '<table class="table table-striped table-bordered table-child">';
-
-          if (!tableChild) {
-            view += '<thead><tr>';
-            view += '<th>' + (component.label || '') + ' (' + component.key + ')</th>';
-            view += '</tr></thead>';
-          }
-
-          view += '<tbody>';
-
-          // Render a value for each column item.
+        tableView: function(data, component, $interpolate, componentInfo) {
+          var view = '<table class="table table-striped table-bordered"><thead><tr>';
           angular.forEach(component.components, function(component) {
-            view += '<tr>' + GridUtils.columnForComponent(data, component, $interpolate, componentInfo, true) + '</tr>';
+            view += '<th>' + component.label + '</th>';
           });
+          view += '</tr></thead>';
+          view += '<tbody>';
+          view += '<tr>';
+          angular.forEach(component.components, function(component) {
+            var info = componentInfo.components.hasOwnProperty(component.type) ? componentInfo.components[component.type] : {};
+            if (info.tableView) {
+              view += '<td>' +
+                info.tableView(
+                  data && component.key && data.hasOwnProperty(component.key) ? data[component.key] : '',
+                  component,
+                  $interpolate,
+                  componentInfo
+                ) + '</td>';
+              return;
+            }
 
+            view += '<td>';
+            if (component.prefix) {
+              view += component.prefix;
+            }
+            view += data && component.key && data.hasOwnProperty(component.key) ? data[component.key] : '';
+            if (component.suffix) {
+              view += ' ' + component.suffix;
+            }
+            view += '</td>';
+          });
+          view += '</tr>';
           view += '</tbody></table>';
           return view;
         },
@@ -66039,7 +66229,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],255:[function(_dereq_,module,exports){
+},{}],257:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66068,7 +66258,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],256:[function(_dereq_,module,exports){
+},{}],258:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -66179,7 +66369,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],257:[function(_dereq_,module,exports){
+},{}],259:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66207,10 +66397,8 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],258:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":297}],260:[function(_dereq_,module,exports){
 "use strict";
-
-var formioUtils = _dereq_('formiojs/utils');
 
 module.exports = function(app) {
   app.config([
@@ -66220,31 +66408,19 @@ module.exports = function(app) {
         title: 'Data Grid',
         template: 'formio/components/datagrid.html',
         group: 'advanced',
-        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
-          var view = '<table class="table table-striped table-bordered table-child">';
-
-          if (!tableChild) {
-            view += '<thead><tr>';
-            angular.forEach(component.components, function(component) {
-              view += '<th>' + (component.label || '') + ' (' + component.key + ')</th>';
-            });
-            view += '</tr></thead>';
-          }
-
+        tableView: function(data, component, $interpolate, componentInfo) {
+          var view = '<table class="table table-striped table-bordered"><thead><tr>';
+          angular.forEach(component.components, function(component) {
+            view += '<th>' + component.label + '</th>';
+          });
+          view += '</tr></thead>';
           view += '<tbody>';
           angular.forEach(data, function(row) {
             view += '<tr>';
-            formioUtils.eachComponent(component.components, function(component) {
-              // Don't render disabled fields, or fields with undefined data.
-              if (!component.tableView || row[component.key] === undefined) {
-                return;
-              }
-
-              // If the component has a defined tableView, use that, otherwise try and use the raw data as a string.
+            angular.forEach(component.components, function(component) {
               var info = componentInfo.components.hasOwnProperty(component.type) ? componentInfo.components[component.type] : {};
               if (info.tableView) {
-                // Reset the tableChild value for datagrids, so that components have headers.
-                view += '<td>' + info.tableView(row[component.key] || '', component, $interpolate, componentInfo, false) + '</td>';
+                view += '<td>' + info.tableView(row[component.key] || '', component, $interpolate, componentInfo) + '</td>';
               }
               else {
                 view += '<td>';
@@ -66340,7 +66516,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":34}],259:[function(_dereq_,module,exports){
+},{}],261:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66502,7 +66678,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],260:[function(_dereq_,module,exports){
+},{}],262:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66703,7 +66879,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],261:[function(_dereq_,module,exports){
+},{}],263:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -66737,10 +66913,8 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],262:[function(_dereq_,module,exports){
+},{}],264:[function(_dereq_,module,exports){
 "use strict";
-
-var GridUtils = _dereq_('../factories/GridUtils')();
 
 module.exports = function(app) {
   app.config([
@@ -66757,23 +66931,7 @@ module.exports = function(app) {
           legend: '',
           components: []
         },
-        viewTemplate: 'formio/componentsView/fieldset.html',
-        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
-          var view = '<table class="table table-striped table-bordered table-child">';
-
-          if (!tableChild) {
-            view += '<thead><tr>';
-            view += '<th>Field Set (' + component.key + ')</th>';
-            view += '</tr></thead>';
-          }
-          view += '<tbody>';
-          angular.forEach(component.components, function(component) {
-            view += '<tr>' + GridUtils.columnForComponent(data, component, $interpolate, componentInfo, true) + '</tr>';
-          });
-
-          view += '</tbody></table>';
-          return view;
-        }
+        viewTemplate: 'formio/componentsView/fieldset.html'
       });
     }
   ]);
@@ -66791,7 +66949,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],263:[function(_dereq_,module,exports){
+},{}],265:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67055,7 +67213,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],264:[function(_dereq_,module,exports){
+},{}],266:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -67091,7 +67249,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],265:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":297}],267:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67183,7 +67341,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],266:[function(_dereq_,module,exports){
+},{}],268:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -67225,7 +67383,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":249,"./button":250,"./checkbox":251,"./columns":252,"./components":253,"./container":254,"./content":255,"./currency":256,"./custom":257,"./datagrid":258,"./datetime":259,"./day":260,"./email":261,"./fieldset":262,"./file":263,"./hidden":264,"./htmlelement":265,"./number":267,"./page":268,"./panel":269,"./password":270,"./phonenumber":271,"./radio":272,"./resource":273,"./select":274,"./selectboxes":275,"./signature":276,"./survey":277,"./table":278,"./textarea":279,"./textfield":280,"./well":281}],267:[function(_dereq_,module,exports){
+},{"./address":251,"./button":252,"./checkbox":253,"./columns":254,"./components":255,"./container":256,"./content":257,"./currency":258,"./custom":259,"./datagrid":260,"./datetime":261,"./day":262,"./email":263,"./fieldset":264,"./file":265,"./hidden":266,"./htmlelement":267,"./number":269,"./page":270,"./panel":271,"./password":272,"./phonenumber":273,"./radio":274,"./resource":275,"./select":276,"./selectboxes":277,"./signature":278,"./survey":279,"./table":280,"./textarea":281,"./textfield":282,"./well":283}],269:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67290,7 +67448,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],268:[function(_dereq_,module,exports){
+},{}],270:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67317,7 +67475,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],269:[function(_dereq_,module,exports){
+},{}],271:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67353,7 +67511,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],270:[function(_dereq_,module,exports){
+},{}],272:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -67384,7 +67542,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],271:[function(_dereq_,module,exports){
+},{}],273:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -67419,7 +67577,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],272:[function(_dereq_,module,exports){
+},{}],274:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67470,7 +67628,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],273:[function(_dereq_,module,exports){
+},{}],275:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67657,7 +67815,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],274:[function(_dereq_,module,exports){
+},{}],276:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -67874,7 +68032,7 @@ module.exports = function(app) {
             // Ensures that the value is within the select items.
             var ensureValue = function() {
               var value = $scope.data[settings.key];
-              if (!value || (Array.isArray(value) && value.length === 0)) {
+              if (!value) {
                 return;
               }
               // Iterate through the list of items and see if our value exists...
@@ -67935,7 +68093,6 @@ module.exports = function(app) {
               });
             }
 
-            var lastInput;
             switch (settings.dataSrc) {
               case 'values':
                 $scope.selectItems = settings.data.values;
@@ -67999,6 +68156,7 @@ module.exports = function(app) {
                   skip: 0
                 };
 
+                var lastInput;
                 $scope.refreshItems = function(input, url, append) {
                   // If they typed in a search, reset skip.
                   if (lastInput !== input) {
@@ -68085,11 +68243,10 @@ module.exports = function(app) {
                 if (url) {
                   $scope.hasNextPage = true;
                   $scope.refreshItems = function(input, newUrl, append) {
-                    if (input === lastInput) {
+                    if (!input) {
                       return;
                     }
 
-                    lastInput = input;
                     newUrl = newUrl || url;
                     newUrl = $interpolate(newUrl)({
                       data: $scope.data,
@@ -68225,7 +68382,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":202,"lodash/get":209,"lodash/isEqual":218,"lodash/set":237}],275:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":196,"lodash/get":203,"lodash/isEqual":212,"lodash/set":231}],277:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68333,7 +68490,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],276:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -68464,7 +68621,7 @@ module.exports = function(app) {
     function($templateCache,
               FormioUtils) {
       $templateCache.put('formio/components/signature.html', FormioUtils.fieldWrap(
-        "<div ng-if=\"readOnly\">\n  <div ng-if=\"data[component.key] === 'YES'\">\n    [ Signature is hidden ]\n  </div>\n  <div ng-if=\"data[component.key] !== 'YES'\">\n    <img class=\"signature\" ng-attr-src=\"{{data[component.key]}}\" src=\"\" />\n  </div>\n</div>\n<div ng-if=\"!readOnly\" style=\"width: {{ component.width }}; height: 100%\">\n  <a class=\"btn btn-xs btn-default\" style=\"position:absolute; left: 0; top: 0; z-index: 1000\" ng-click=\"component.clearSignature()\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n  </a>\n  <canvas signature component=\"component\" name=\"{{ componentId }}\" ng-model=\"data[component.key]\" ng-required=\"isRequired(component)\"></canvas>\n  <div class=\"formio-signature-footer\" style=\"text-align: center;color:#C3C3C3;\" ng-class=\"{'field-required': isRequired(component)}\">{{ component.footer | formioTranslate:null:builder }}</div>\n</div>\n"
+        "<div ng-if=\"readOnly\">\n  <div ng-if=\"data[component.key] === 'YES'\">\n    [ Signature is hidden ]\n  </div>\n  <div ng-if=\"data[component.key] !== 'YES'\">\n    <img class=\"signature\" ng-attr-src=\"{{data[component.key]}}\" src=\"\" />\n  </div>\n</div>\n<div ng-if=\"!readOnly\" style=\"width: {{ component.width }}; height: {{ component.height }};\">\n  <a class=\"btn btn-xs btn-default\" style=\"position:absolute; left: 0; top: 0; z-index: 1000\" ng-click=\"component.clearSignature()\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n  </a>\n  <canvas signature component=\"component\" name=\"{{ componentId }}\" ng-model=\"data[component.key]\" ng-required=\"isRequired(component)\"></canvas>\n  <div class=\"formio-signature-footer\" style=\"text-align: center;color:#C3C3C3;\" ng-class=\"{'field-required': isRequired(component)}\">{{ component.footer | formioTranslate:null:builder }}</div>\n</div>\n"
       ));
 
       $templateCache.put('formio/componentsView/signature.html', FormioUtils.fieldWrap(
@@ -68474,7 +68631,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":311}],277:[function(_dereq_,module,exports){
+},{"signature_pad":313}],279:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68533,10 +68690,8 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],278:[function(_dereq_,module,exports){
+},{}],280:[function(_dereq_,module,exports){
 "use strict";
-
-var GridUtils = _dereq_('../factories/GridUtils')();
 
 module.exports = function(app) {
   app.config([
@@ -68557,39 +68712,7 @@ module.exports = function(app) {
           striped: false,
           bordered: false,
           hover: false,
-          condensed: false,
-          tableView: true
-        },
-        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
-          var view = '<table class="table table-striped table-bordered table-child">';
-
-          if (!tableChild) {
-            view += '<thead>';
-            view += '<tr><th>Table (' + component.key + ')</th></tr>';
-            view += '</thead>';
-          }
-
-          view += '<tbody>';
-
-          for (var row = 0; row < this.settings.numRows; row++) {
-            view += '<tr>';
-            for (var col = 0; col < this.settings.numCols; col++) {
-              view += '<td>';
-              // Each column is its own table.
-              view += '<table class="table table-striped table-bordered table-child">';
-              view += '<tbody>';
-              angular.forEach(component.rows[row][col].components, function(component) {
-                view += '<tr>' + GridUtils.columnForComponent(data, component, $interpolate, componentInfo) + '</tr>';
-              });
-
-              view += '</tbody></table>';
-              view += '</td>';
-            }
-            view += '</tr>';
-          }
-
-          view += '</tbody></table>';
-          return view;
+          condensed: false
         }
       });
     }
@@ -68612,7 +68735,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],279:[function(_dereq_,module,exports){
+},{}],281:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68696,7 +68819,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],280:[function(_dereq_,module,exports){
+},{}],282:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68757,10 +68880,8 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],281:[function(_dereq_,module,exports){
+},{}],283:[function(_dereq_,module,exports){
 "use strict";
-
-var GridUtils = _dereq_('../factories/GridUtils')();
 
 module.exports = function(app) {
   app.config([
@@ -68773,26 +68894,9 @@ module.exports = function(app) {
         settings: {
           key: 'well',
           input: false,
-          components: [],
-          tableView: true
+          components: []
         },
-        viewTemplate: 'formio/componentsView/well.html',
-        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
-          var view = '<table class="table table-striped table-bordered table-child">';
-
-          if (!tableChild) {
-            view += '<thead><tr>';
-            view += '<th>Well (' + component.key + ')</th>';
-            view += '</tr></thead>';
-          }
-          view += '<tbody>';
-          angular.forEach(component.components, function(component) {
-            view += '<tr>' + GridUtils.columnForComponent(data, component, $interpolate, componentInfo, true) + '</tr>';
-          });
-
-          view += '</tbody></table>';
-          return view;
-        }
+        viewTemplate: 'formio/componentsView/well.html'
       });
     }
   ]);
@@ -68809,7 +68913,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],282:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -68887,7 +68991,7 @@ module.exports = function() {
   };
 };
 
-},{}],283:[function(_dereq_,module,exports){
+},{}],285:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -68929,13 +69033,6 @@ module.exports = function() {
         $scope.iframeReady = false;
         // Shows the given alerts (single or array), and dismisses old alerts
         this.showAlerts = $scope.showAlerts = function(alerts) {
-          /* eslint-disable no-empty */
-          try {
-            alerts.message = (JSON.parse(alerts.message)).data;
-          }
-          catch (e) {}
-          /* eslint-enable no-empty */
-
           $scope.formioAlerts = [].concat(alerts);
         };
 
@@ -69122,9 +69219,9 @@ module.exports = function() {
             if (method === 'put' && (action.indexOf(submissionData._id) === -1)) {
               action += '/' + submissionData._id;
             }
-            $http[method](action, submissionData).then(function(response) {
+            $http[method](action, submissionData).then(function(submission) {
               Formio.clearCache();
-              onSubmitDone(method, response.data, form);
+              onSubmitDone(method, submission, form);
             }, FormioScope.onError($scope, $element))
               .finally(function() {
                 if (form) {
@@ -69276,7 +69373,7 @@ module.exports = function() {
   };
 };
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -69293,7 +69390,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],287:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _filter = _dereq_('lodash/filter');
@@ -69815,7 +69912,7 @@ module.exports = [
   }
 ];
 
-},{"json-logic-js":35,"lodash/cloneDeep":202,"lodash/filter":207,"lodash/get":209}],286:[function(_dereq_,module,exports){
+},{"json-logic-js":29,"lodash/cloneDeep":196,"lodash/filter":201,"lodash/get":203}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -69882,7 +69979,7 @@ module.exports = [
   }
 ];
 
-},{}],287:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69965,7 +70062,7 @@ module.exports = function() {
   };
 };
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],290:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -69984,7 +70081,7 @@ module.exports = [
   }
 ];
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69994,7 +70091,7 @@ module.exports = function() {
   };
 };
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],292:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70026,7 +70123,7 @@ module.exports = function() {
   };
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],293:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70081,7 +70178,7 @@ module.exports = function() {
   };
 };
 
-},{}],292:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70090,7 +70187,6 @@ module.exports = function() {
     templateUrl: 'formio-wizard.html',
     scope: {
       src: '=?',
-      url: '=?',
       formAction: '=?',
       form: '=?',
       submission: '=?',
@@ -70155,7 +70251,6 @@ module.exports = function() {
         }
 
         $scope.formio = null;
-        $scope.url = $scope.url || $scope.src;
         $scope.page = {};
         $scope.pages = [];
         $scope.hasTitles = false;
@@ -70512,7 +70607,7 @@ module.exports = function() {
   };
 };
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],295:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -70695,7 +70790,7 @@ module.exports = [
   }
 ];
 
-},{}],294:[function(_dereq_,module,exports){
+},{}],296:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 
@@ -70807,7 +70902,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":34}],295:[function(_dereq_,module,exports){
+},{"formiojs/utils":250}],297:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -70881,59 +70976,12 @@ module.exports = function() {
     return view;
   };
 
-  // Generate a column for the component.
-  var columnForComponent = function(data, component, $interpolate, componentInfo, tableChild) {
-    // If no component is given, generate an empty cell.
-    if (!component) {
-      return '<td></td>';
-    }
-
-    // Generate a table for each component with one column to display the key/value for each component.
-    var view = '<td>';
-    view += '<table class="table table-striped table-bordered' + (tableChild ? ' table-child' : '') + '">';
-    view += '<thead><tr>';
-    view += '<th>' + (component.label || '') + ' (' + component.key + ')</th>';
-    view += '</tr></thead>';
-    view += '<tbody>';
-
-    // If the component has a defined tableView, use that, otherwise try and use the raw data as a string.
-    var info = componentInfo.components.hasOwnProperty(component.type)
-      ? componentInfo.components[component.type]
-      : {};
-    if (info.tableView) {
-      view += '<td>' +
-        info.tableView(
-          data && component.key && (data.hasOwnProperty(component.key) ? data[component.key] : data),
-          component,
-          $interpolate,
-          componentInfo,
-          tableChild
-        ) + '</td>';
-    }
-    else {
-      view += '<td>';
-      if (component.prefix) {
-        view += component.prefix;
-      }
-      view += data && component.key && (data.hasOwnProperty(component.key) ? data[component.key] : '');
-      if (component.suffix) {
-        view += ' ' + component.suffix;
-      }
-      view += '</td>';
-    }
-
-    view += '</tbody></table>';
-    view += '</td>';
-    return view;
-  };
-
   return {
-    generic: generic,
-    columnForComponent: columnForComponent
+    generic: generic
   };
 };
 
-},{}],296:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -70982,7 +71030,7 @@ module.exports = [
   }
 ];
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71016,7 +71064,7 @@ module.exports = [
   }
 ];
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],300:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -71025,7 +71073,7 @@ module.exports = [
   }
 ];
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],301:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -71038,7 +71086,7 @@ module.exports = [
   }
 ];
 
-},{}],300:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -71057,7 +71105,7 @@ module.exports = [
   }
 ];
 
-},{}],301:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -71070,7 +71118,7 @@ module.exports = [
   }
 ];
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71085,7 +71133,7 @@ module.exports = [
   }
 ];
 
-},{}],303:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -71134,7 +71182,7 @@ module.exports = [
   }
 ];
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -71142,7 +71190,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -71156,7 +71204,7 @@ _dereq_('bootstrap-ui-datetime-picker/dist/datetime-picker');
 _dereq_('ng-dialog');
 _dereq_('./formio');
 
-},{"./formio":306,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":246,"ng-file-upload":248,"ui-select/dist/select":312}],306:[function(_dereq_,module,exports){
+},{"./formio":308,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":240,"ng-file-upload":242,"ui-select/dist/select":314}],308:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -71168,7 +71216,6 @@ var app = angular.module('formio', [
   'ui.select',
   'ui.mask',
   'angularMoment',
-  'ngDialog',
   'ngFileUpload',
   'ngFileSaver'
 ]);
@@ -71271,7 +71318,7 @@ app.run([
     );
 
     $templateCache.put('formio-wizard.html',
-      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate:null:builder }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      url=\"url\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
+      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate:null:builder }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
     );
 
     $templateCache.put('formio-delete.html',
@@ -71307,7 +71354,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":266,"./directives/customValidator":282,"./directives/formio":283,"./directives/formioBindHtml.js":284,"./directives/formioComponent":285,"./directives/formioComponentView":286,"./directives/formioDelete":287,"./directives/formioElement":288,"./directives/formioErrors":289,"./directives/formioSubmission":290,"./directives/formioSubmissions":291,"./directives/formioWizard":292,"./factories/FormioScope":293,"./factories/FormioUtils":294,"./factories/formioInterceptor":296,"./factories/formioTableView":297,"./filters/flattenComponents":298,"./filters/safehtml":299,"./filters/tableComponents":300,"./filters/tableFieldView":301,"./filters/tableView":302,"./filters/translate":303,"./filters/trusturl":304,"./polyfills/polyfills":308,"./providers/Formio":309}],307:[function(_dereq_,module,exports){
+},{"./components":268,"./directives/customValidator":284,"./directives/formio":285,"./directives/formioBindHtml.js":286,"./directives/formioComponent":287,"./directives/formioComponentView":288,"./directives/formioDelete":289,"./directives/formioElement":290,"./directives/formioErrors":291,"./directives/formioSubmission":292,"./directives/formioSubmissions":293,"./directives/formioWizard":294,"./factories/FormioScope":295,"./factories/FormioUtils":296,"./factories/formioInterceptor":298,"./factories/formioTableView":299,"./filters/flattenComponents":300,"./filters/safehtml":301,"./filters/tableComponents":302,"./filters/tableFieldView":303,"./filters/tableView":304,"./filters/translate":305,"./filters/trusturl":306,"./polyfills/polyfills":310,"./providers/Formio":311}],309:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -71338,13 +71385,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":307}],309:[function(_dereq_,module,exports){
+},{"./Object.assign":309}],311:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -71412,7 +71459,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":27}],310:[function(_dereq_,module,exports){
+},{"formiojs":243}],312:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -71449,7 +71496,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],311:[function(_dereq_,module,exports){
+},{}],313:[function(_dereq_,module,exports){
 /*!
  * Signature Pad v1.6.0
  * https://github.com/szimek/signature_pad
@@ -71980,7 +72027,7 @@ return SignaturePad;
 
 })));
 
-},{}],312:[function(_dereq_,module,exports){
+},{}],314:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -74408,7 +74455,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],313:[function(_dereq_,module,exports){
+},{}],315:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -74871,7 +74918,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],316:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -74943,7 +74990,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],315:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75017,7 +75064,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75108,7 +75155,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],319:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75190,7 +75237,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],318:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -75312,7 +75359,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],319:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75364,7 +75411,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],320:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75435,7 +75482,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75505,7 +75552,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],324:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75570,7 +75617,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75636,7 +75683,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],324:[function(_dereq_,module,exports){
+},{}],326:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75826,7 +75873,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],325:[function(_dereq_,module,exports){
+},{}],327:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75901,7 +75948,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],328:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -75950,7 +75997,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":202,"lodash/each":205}],327:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":196,"lodash/each":199}],329:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76005,7 +76052,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],328:[function(_dereq_,module,exports){
+},{}],330:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -76091,7 +76138,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":229}],329:[function(_dereq_,module,exports){
+},{"lodash/map":223}],331:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76151,7 +76198,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],330:[function(_dereq_,module,exports){
+},{}],332:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76211,7 +76258,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],331:[function(_dereq_,module,exports){
+},{}],333:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -76253,7 +76300,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":314,"./button":315,"./checkbox":316,"./columns":317,"./components":318,"./container":319,"./content":320,"./currency":321,"./custom":322,"./datagrid":323,"./datetime":324,"./day":325,"./email":326,"./fieldset":327,"./file":328,"./hidden":329,"./htmlelement":330,"./number":332,"./page":333,"./panel":334,"./password":335,"./phonenumber":336,"./radio":337,"./resource":338,"./select":339,"./selectboxes":340,"./signature":341,"./survey":342,"./table":343,"./textarea":344,"./textfield":345,"./well":346}],332:[function(_dereq_,module,exports){
+},{"./address":316,"./button":317,"./checkbox":318,"./columns":319,"./components":320,"./container":321,"./content":322,"./currency":323,"./custom":324,"./datagrid":325,"./datetime":326,"./day":327,"./email":328,"./fieldset":329,"./file":330,"./hidden":331,"./htmlelement":332,"./number":334,"./page":335,"./panel":336,"./password":337,"./phonenumber":338,"./radio":339,"./resource":340,"./select":341,"./selectboxes":342,"./signature":343,"./survey":344,"./table":345,"./textarea":346,"./textfield":347,"./well":348}],334:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76328,7 +76375,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],333:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76349,7 +76396,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],334:[function(_dereq_,module,exports){
+},{}],336:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76416,7 +76463,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76486,7 +76533,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],338:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76559,7 +76606,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76627,7 +76674,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76699,6 +76746,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="reference"></form-builder-option>' +
           '<form-builder-option property="addResource"></form-builder-option>' +
           '<form-builder-option property="addResourceLabel" ng-if="component.addResource"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
@@ -76717,7 +76765,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],341:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -76937,6 +76985,7 @@ module.exports = function(app) {
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'resource\'" property="reference"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
           '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
@@ -76954,7 +77003,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":201}],340:[function(_dereq_,module,exports){
+},{"lodash/clone":195}],342:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77026,7 +77075,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],341:[function(_dereq_,module,exports){
+},{}],343:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77089,7 +77138,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77155,7 +77204,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],345:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77226,7 +77275,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],344:[function(_dereq_,module,exports){
+},{}],346:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77331,7 +77380,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],345:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77406,7 +77455,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],346:[function(_dereq_,module,exports){
+},{}],348:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77452,7 +77501,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],347:[function(_dereq_,module,exports){
+},{}],349:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -77554,6 +77603,11 @@ module.exports = {
     label: 'Hidden',
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
+  reference: {
+    label: 'Save as reference',
+    type: 'checkbox',
+    tooltip: 'Using this option will save this field as a reference and link its value to the value of the origin record.'
   },
   block: {
     label: 'Block',
@@ -77685,7 +77739,7 @@ module.exports = {
   }
 };
 
-},{}],348:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -77752,7 +77806,7 @@ module.exports = {
   ]
 };
 
-},{}],349:[function(_dereq_,module,exports){
+},{}],351:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -78064,7 +78118,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":200,"lodash/cloneDeep":202,"lodash/each":205,"lodash/groupBy":210,"lodash/merge":231,"lodash/omitBy":233,"lodash/upperFirst":242}],350:[function(_dereq_,module,exports){
+},{"lodash/capitalize":194,"lodash/cloneDeep":196,"lodash/each":199,"lodash/groupBy":204,"lodash/merge":225,"lodash/omitBy":227,"lodash/upperFirst":236}],352:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -78080,7 +78134,7 @@ module.exports = [
   }
 ];
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],353:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -78175,7 +78229,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":34,"lodash/get":209,"lodash/reject":236}],352:[function(_dereq_,module,exports){
+},{"formiojs/utils":28,"lodash/get":203,"lodash/reject":230}],354:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -78445,7 +78499,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":198,"lodash/camelCase":199,"lodash/isNumber":221}],353:[function(_dereq_,module,exports){
+},{"lodash/assign":192,"lodash/camelCase":193,"lodash/isNumber":215}],355:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -78470,7 +78524,7 @@ module.exports = [
   }
 ];
 
-},{}],354:[function(_dereq_,module,exports){
+},{}],356:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -78493,7 +78547,7 @@ module.exports = [
   }
 ];
 
-},{}],355:[function(_dereq_,module,exports){
+},{}],357:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -78562,7 +78616,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],356:[function(_dereq_,module,exports){
+},{}],358:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -78603,7 +78657,7 @@ module.exports = function() {
   };
 };
 
-},{}],357:[function(_dereq_,module,exports){
+},{}],359:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -78649,7 +78703,7 @@ module.exports = function() {
   };
 };
 
-},{}],358:[function(_dereq_,module,exports){
+},{}],360:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -78693,7 +78747,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":229}],359:[function(_dereq_,module,exports){
+},{"lodash/map":223}],361:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -78715,7 +78769,7 @@ module.exports = [
   }
 ];
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],362:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -78769,7 +78823,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":231}],361:[function(_dereq_,module,exports){
+},{"lodash/merge":225}],363:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -78810,7 +78864,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],362:[function(_dereq_,module,exports){
+},{}],364:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -78847,7 +78901,7 @@ module.exports = function() {
   };
 };
 
-},{}],363:[function(_dereq_,module,exports){
+},{}],365:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -78870,7 +78924,7 @@ module.exports = function() {
   };
 };
 
-},{}],364:[function(_dereq_,module,exports){
+},{}],366:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -78951,7 +79005,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":199,"lodash/map":229}],365:[function(_dereq_,module,exports){
+},{"lodash/camelCase":193,"lodash/map":223}],367:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -79060,7 +79114,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -79094,7 +79148,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],367:[function(_dereq_,module,exports){
+},{}],369:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
@@ -79102,9 +79156,9 @@ _dereq_('../bower_components/angular-ckeditor/angular-ckeditor');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":368,"angular-drag-and-drop-lists":2,"ng-dialog":246,"ng-formio/src/formio-complete.js":305}],368:[function(_dereq_,module,exports){
+},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":370,"angular-drag-and-drop-lists":2,"ng-dialog":240,"ng-formio/src/formio-complete.js":307}],370:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.17.0 | https://unpkg.com/ng-formio-builder@2.17.0/LICENSE.txt */
+/*! ng-formio-builder v2.18.0 | https://unpkg.com/ng-formio-builder@2.18.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -79258,5 +79312,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":331,"./constants/commonOptions":347,"./constants/formOptions":348,"./directives/formBuilder":349,"./directives/formBuilderComponent":350,"./directives/formBuilderConditional":351,"./directives/formBuilderDnd":352,"./directives/formBuilderElement":353,"./directives/formBuilderList":354,"./directives/formBuilderOption":355,"./directives/formBuilderOptionCustomValidation":356,"./directives/formBuilderOptionKey":357,"./directives/formBuilderOptionTags":358,"./directives/formBuilderRow":359,"./directives/formBuilderTable":360,"./directives/formBuilderTooltip":361,"./directives/jsonInput":362,"./directives/validApiKey":363,"./directives/valueBuilder":364,"./factories/BuilderUtils":365,"./factories/debounce":366}]},{},[367])(367)
+},{"./components":333,"./constants/commonOptions":349,"./constants/formOptions":350,"./directives/formBuilder":351,"./directives/formBuilderComponent":352,"./directives/formBuilderConditional":353,"./directives/formBuilderDnd":354,"./directives/formBuilderElement":355,"./directives/formBuilderList":356,"./directives/formBuilderOption":357,"./directives/formBuilderOptionCustomValidation":358,"./directives/formBuilderOptionKey":359,"./directives/formBuilderOptionTags":360,"./directives/formBuilderRow":361,"./directives/formBuilderTable":362,"./directives/formBuilderTooltip":363,"./directives/jsonInput":364,"./directives/validApiKey":365,"./directives/valueBuilder":366,"./factories/BuilderUtils":367,"./factories/debounce":368}]},{},[369])(369)
 });
