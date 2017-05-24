@@ -216,6 +216,7 @@ module.exports = function(app) {
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'resource\'" property="reference"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
           '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'

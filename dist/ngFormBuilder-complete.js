@@ -49676,7 +49676,7 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":28,"eventemitter2":26,"native-promise-only":245,"shallow-copy":310,"whatwg-fetch":313}],28:[function(_dereq_,module,exports){
+},{"./providers":28,"eventemitter2":26,"native-promise-only":245,"shallow-copy":311,"whatwg-fetch":313}],28:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -50080,6 +50080,17 @@ module.exports = {
       flattened[path] = component;
     }, includeAll);
     return flattened;
+  },
+
+  /**
+   * Returns if this component has a conditional statement.
+   *
+   * @param component - The component JSON schema.
+   *
+   * @returns {boolean} - TRUE - This component has a conditional, FALSE - No conditional provided.
+   */
+  hasCondition: function hasCondition(component) {
+    return component.hasOwnProperty('customConditional') && component.customConditional || component.hasOwnProperty('conditional') && component.conditional && component.conditional.when || component.hasOwnProperty('conditional') && component.conditional && component.conditional.json;
   },
 
   /**
@@ -61699,9 +61710,13 @@ return hooks;
     var forceElementsReload = { html: false, body: false };
     var scopes = {};
     var openIdStack = [];
+    var activeBodyClasses = [];
     var keydownIsBound = false;
     var openOnePerName = false;
+    var closeByNavigationDialogStack = [];
 
+    var UI_ROUTER_VERSION_LEGACY = 'legacy';
+    var UI_ROUTER_VERSION_ONE_PLUS = '1.0.0+';
 
     m.provider('ngDialog', function () {
         var defaults = this.defaults = {
@@ -61871,11 +61886,17 @@ return hooks;
                     closeDialogElement: function($dialog, value) {
                         var options = $dialog.data('$ngDialogOptions');
                         $dialog.remove();
-                        if (dialogsCount === 0) {
+
+                        activeBodyClasses.splice(activeBodyClasses.indexOf(options.bodyClassName), 1);
+                        if (activeBodyClasses.indexOf(options.bodyClassName) === -1) {
                             $elements.html.removeClass(options.bodyClassName);
                             $elements.body.removeClass(options.bodyClassName);
+                        }
+
+                        if (dialogsCount === 0) {
                             privateMethods.resetBodyPadding();
                         }
+
                         $rootScope.$broadcast('ngDialog.closed', $dialog, value);
                     },
 
@@ -62107,17 +62128,23 @@ return hooks;
                     },
 
                     detectUIRouter: function() {
-                        //Detect if ui-router module is installed if not return false
-                        try {
-                            angular.module('ui.router');
-                            return true;
-                        } catch(err) {
-                            return false;
+                        // Detect if ui-router module is installed
+                        // Returns ui-router version string if installed
+                        // Otherwise false
+
+                        if ($injector.has('$transitions')) {
+                            // Only 1.0.0+ ui.router allows us to inject $transitions
+                            return UI_ROUTER_VERSION_ONE_PLUS;
                         }
+                        else if ($injector.has('$state')) {
+                            // The legacy ui.router allows us to inject $state
+                            return UI_ROUTER_VERSION_LEGACY;
+                        }
+                        return false;
                     },
 
                     getRouterLocationEventName: function() {
-                        if(privateMethods.detectUIRouter()) {
+                        if (privateMethods.detectUIRouter()) {
                             return '$stateChangeStart';
                         }
                         return '$locationChangeStart';
@@ -62319,6 +62346,7 @@ return hooks;
                                 var widthDiffs = $window.innerWidth - $elements.body.prop('clientWidth');
                                 $elements.html.addClass(options.bodyClassName);
                                 $elements.body.addClass(options.bodyClassName);
+                                activeBodyClasses.push(options.bodyClassName);
                                 var scrollBarWidth = widthDiffs - ($window.innerWidth - $elements.body.prop('clientWidth'));
                                 if (scrollBarWidth > 0) {
                                     privateMethods.setBodyPadding(scrollBarWidth);
@@ -62349,11 +62377,7 @@ return hooks;
                             }
 
                             if (options.closeByNavigation) {
-                                var eventName = privateMethods.getRouterLocationEventName();
-                                $rootScope.$on(eventName, function ($event) {
-                                    if (privateMethods.closeDialog($dialog) === false)
-                                        $event.preventDefault();
-                                });
+                                closeByNavigationDialogStack.push($dialog);
                             }
 
                             if (options.preserveFocus) {
@@ -62532,6 +62556,31 @@ return hooks;
                         }
                     }
                 );
+
+                // Listen to navigation events to close dialog
+                var uiRouterVersion = privateMethods.detectUIRouter();
+                if (uiRouterVersion === UI_ROUTER_VERSION_ONE_PLUS) {
+                    var $transitions = $injector.get('$transitions');
+                    $transitions.onStart({}, function (trans) {
+                        while (closeByNavigationDialogStack.length > 0) {
+                            var toCloseDialog = closeByNavigationDialogStack.pop();
+                            if (privateMethods.closeDialog(toCloseDialog) === false) {
+                                return false;
+                            }
+                        }
+                    });
+                }
+                else {
+                    var eventName = uiRouterVersion === UI_ROUTER_VERSION_LEGACY ? '$stateChangeStart' : '$locationChangeStart';
+                    $rootScope.$on(eventName, function ($event) {
+                        while (closeByNavigationDialogStack.length > 0) {
+                            var toCloseDialog = closeByNavigationDialogStack.pop();
+                            if (privateMethods.closeDialog(toCloseDialog) === false) {
+                                $event.preventDefault();
+                            }
+                        }
+                    });
+                }
 
                 return publicMethods;
             }];
@@ -65482,6 +65531,537 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
 },{"./dist/ng-file-upload-all":247}],249:[function(_dereq_,module,exports){
+/*!
+ * Signature Pad v1.6.0
+ * https://github.com/szimek/signature_pad
+ *
+ * Copyright 2017 Szymon Nowak
+ * Released under the MIT license
+ *
+ * The main idea and some parts of the code (e.g. drawing variable width Bézier curve) are taken from:
+ * http://corner.squareup.com/2012/07/smoother-signatures.html
+ *
+ * Implementation of interpolation using cubic Bézier curves is taken from:
+ * http://benknowscode.wordpress.com/2012/09/14/path-interpolation-using-cubic-bezier-and-control-point-estimation-in-javascript
+ *
+ * Algorithm for approximated length of a Bézier curve is taken from:
+ * http://www.lemoda.net/maths/bezier-length/index.html
+ *
+ */
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.SignaturePad = factory());
+}(this, (function () { 'use strict';
+
+function Point(x, y, time) {
+  this.x = x;
+  this.y = y;
+  this.time = time || new Date().getTime();
+}
+
+Point.prototype.velocityFrom = function (start) {
+  return this.time !== start.time ? this.distanceTo(start) / (this.time - start.time) : 1;
+};
+
+Point.prototype.distanceTo = function (start) {
+  return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
+};
+
+function Bezier(startPoint, control1, control2, endPoint) {
+  this.startPoint = startPoint;
+  this.control1 = control1;
+  this.control2 = control2;
+  this.endPoint = endPoint;
+}
+
+// Returns approximated length.
+Bezier.prototype.length = function () {
+  var steps = 10;
+  var length = 0;
+  var px = void 0;
+  var py = void 0;
+
+  for (var i = 0; i <= steps; i += 1) {
+    var t = i / steps;
+    var cx = this._point(t, this.startPoint.x, this.control1.x, this.control2.x, this.endPoint.x);
+    var cy = this._point(t, this.startPoint.y, this.control1.y, this.control2.y, this.endPoint.y);
+    if (i > 0) {
+      var xdiff = cx - px;
+      var ydiff = cy - py;
+      length += Math.sqrt(xdiff * xdiff + ydiff * ydiff);
+    }
+    px = cx;
+    py = cy;
+  }
+
+  return length;
+};
+
+/* eslint-disable no-multi-spaces, space-in-parens */
+Bezier.prototype._point = function (t, start, c1, c2, end) {
+  return start * (1.0 - t) * (1.0 - t) * (1.0 - t) + 3.0 * c1 * (1.0 - t) * (1.0 - t) * t + 3.0 * c2 * (1.0 - t) * t * t + end * t * t * t;
+};
+
+function SignaturePad(canvas, options) {
+  var self = this;
+  var opts = options || {};
+
+  this.velocityFilterWeight = opts.velocityFilterWeight || 0.7;
+  this.minWidth = opts.minWidth || 0.5;
+  this.maxWidth = opts.maxWidth || 2.5;
+  this.dotSize = opts.dotSize || function () {
+    return (this.minWidth + this.maxWidth) / 2;
+  };
+  this.penColor = opts.penColor || 'black';
+  this.backgroundColor = opts.backgroundColor || 'rgba(0,0,0,0)';
+  this.onBegin = opts.onBegin;
+  this.onEnd = opts.onEnd;
+
+  this._canvas = canvas;
+  this._ctx = canvas.getContext('2d');
+  this.clear();
+
+  // We need add these inline so they are available to unbind while still having
+  // access to 'self' we could use _.bind but it's not worth adding a dependency.
+  this._handleMouseDown = function (event) {
+    if (event.which === 1) {
+      self._mouseButtonDown = true;
+      self._strokeBegin(event);
+    }
+  };
+
+  this._handleMouseMove = function (event) {
+    if (self._mouseButtonDown) {
+      self._strokeUpdate(event);
+    }
+  };
+
+  this._handleMouseUp = function (event) {
+    if (event.which === 1 && self._mouseButtonDown) {
+      self._mouseButtonDown = false;
+      self._strokeEnd(event);
+    }
+  };
+
+  this._handleTouchStart = function (event) {
+    if (event.targetTouches.length === 1) {
+      var touch = event.changedTouches[0];
+      self._strokeBegin(touch);
+    }
+  };
+
+  this._handleTouchMove = function (event) {
+    // Prevent scrolling.
+    event.preventDefault();
+
+    var touch = event.targetTouches[0];
+    self._strokeUpdate(touch);
+  };
+
+  this._handleTouchEnd = function (event) {
+    var wasCanvasTouched = event.target === self._canvas;
+    if (wasCanvasTouched) {
+      event.preventDefault();
+      self._strokeEnd(event);
+    }
+  };
+
+  // Enable mouse and touch event handlers
+  this.on();
+}
+
+// Public methods
+SignaturePad.prototype.clear = function () {
+  var ctx = this._ctx;
+  var canvas = this._canvas;
+
+  ctx.fillStyle = this.backgroundColor;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  this._data = [];
+  this._reset();
+  this._isEmpty = true;
+};
+
+SignaturePad.prototype.fromDataURL = function (dataUrl) {
+  var _this = this;
+
+  var image = new Image();
+  var ratio = window.devicePixelRatio || 1;
+  var width = this._canvas.width / ratio;
+  var height = this._canvas.height / ratio;
+
+  this._reset();
+  image.src = dataUrl;
+  image.onload = function () {
+    _this._ctx.drawImage(image, 0, 0, width, height);
+  };
+  this._isEmpty = false;
+};
+
+SignaturePad.prototype.toDataURL = function (type) {
+  var _canvas;
+
+  switch (type) {
+    case 'image/svg+xml':
+      return this._toSVG();
+    default:
+      for (var _len = arguments.length, options = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        options[_key - 1] = arguments[_key];
+      }
+
+      return (_canvas = this._canvas).toDataURL.apply(_canvas, [type].concat(options));
+  }
+};
+
+SignaturePad.prototype.on = function () {
+  this._handleMouseEvents();
+  this._handleTouchEvents();
+};
+
+SignaturePad.prototype.off = function () {
+  this._canvas.removeEventListener('mousedown', this._handleMouseDown);
+  this._canvas.removeEventListener('mousemove', this._handleMouseMove);
+  document.removeEventListener('mouseup', this._handleMouseUp);
+
+  this._canvas.removeEventListener('touchstart', this._handleTouchStart);
+  this._canvas.removeEventListener('touchmove', this._handleTouchMove);
+  this._canvas.removeEventListener('touchend', this._handleTouchEnd);
+};
+
+SignaturePad.prototype.isEmpty = function () {
+  return this._isEmpty;
+};
+
+// Private methods
+SignaturePad.prototype._strokeBegin = function (event) {
+  this._data.push([]);
+  this._reset();
+  this._strokeUpdate(event);
+
+  if (typeof this.onBegin === 'function') {
+    this.onBegin(event);
+  }
+};
+
+SignaturePad.prototype._strokeUpdate = function (event) {
+  var x = event.clientX;
+  var y = event.clientY;
+
+  var point = this._createPoint(x, y);
+
+  var _addPoint = this._addPoint(point),
+      curve = _addPoint.curve,
+      widths = _addPoint.widths;
+
+  if (curve && widths) {
+    this._drawCurve(curve, widths.start, widths.end);
+  }
+
+  this._data[this._data.length - 1].push({
+    x: point.x,
+    y: point.y,
+    time: point.time
+  });
+};
+
+SignaturePad.prototype._strokeEnd = function (event) {
+  var canDrawCurve = this.points.length > 2;
+  var point = this.points[0];
+
+  if (!canDrawCurve && point) {
+    this._drawDot(point);
+  }
+
+  if (typeof this.onEnd === 'function') {
+    this.onEnd(event);
+  }
+};
+
+SignaturePad.prototype._handleMouseEvents = function () {
+  this._mouseButtonDown = false;
+
+  this._canvas.addEventListener('mousedown', this._handleMouseDown);
+  this._canvas.addEventListener('mousemove', this._handleMouseMove);
+  document.addEventListener('mouseup', this._handleMouseUp);
+};
+
+SignaturePad.prototype._handleTouchEvents = function () {
+  // Pass touch events to canvas element on mobile IE11 and Edge.
+  this._canvas.style.msTouchAction = 'none';
+  this._canvas.style.touchAction = 'none';
+
+  this._canvas.addEventListener('touchstart', this._handleTouchStart);
+  this._canvas.addEventListener('touchmove', this._handleTouchMove);
+  this._canvas.addEventListener('touchend', this._handleTouchEnd);
+};
+
+SignaturePad.prototype._reset = function () {
+  this.points = [];
+  this._lastVelocity = 0;
+  this._lastWidth = (this.minWidth + this.maxWidth) / 2;
+  this._ctx.fillStyle = this.penColor;
+};
+
+SignaturePad.prototype._createPoint = function (x, y, time) {
+  var rect = this._canvas.getBoundingClientRect();
+
+  return new Point(x - rect.left, y - rect.top, time || new Date().getTime());
+};
+
+SignaturePad.prototype._addPoint = function (point) {
+  var points = this.points;
+  var tmp = void 0;
+
+  points.push(point);
+
+  if (points.length > 2) {
+    // To reduce the initial lag make it work with 3 points
+    // by copying the first point to the beginning.
+    if (points.length === 3) points.unshift(points[0]);
+
+    tmp = this._calculateCurveControlPoints(points[0], points[1], points[2]);
+    var c2 = tmp.c2;
+    tmp = this._calculateCurveControlPoints(points[1], points[2], points[3]);
+    var c3 = tmp.c1;
+    var curve = new Bezier(points[1], c2, c3, points[2]);
+    var widths = this._calculateCurveWidths(curve);
+
+    // Remove the first element from the list,
+    // so that we always have no more than 4 points in points array.
+    points.shift();
+
+    return { curve: curve, widths: widths };
+  }
+
+  return {};
+};
+
+SignaturePad.prototype._calculateCurveControlPoints = function (s1, s2, s3) {
+  var dx1 = s1.x - s2.x;
+  var dy1 = s1.y - s2.y;
+  var dx2 = s2.x - s3.x;
+  var dy2 = s2.y - s3.y;
+
+  var m1 = { x: (s1.x + s2.x) / 2.0, y: (s1.y + s2.y) / 2.0 };
+  var m2 = { x: (s2.x + s3.x) / 2.0, y: (s2.y + s3.y) / 2.0 };
+
+  var l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+  var l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+  var dxm = m1.x - m2.x;
+  var dym = m1.y - m2.y;
+
+  var k = l2 / (l1 + l2);
+  var cm = { x: m2.x + dxm * k, y: m2.y + dym * k };
+
+  var tx = s2.x - cm.x;
+  var ty = s2.y - cm.y;
+
+  return {
+    c1: new Point(m1.x + tx, m1.y + ty),
+    c2: new Point(m2.x + tx, m2.y + ty)
+  };
+};
+
+SignaturePad.prototype._calculateCurveWidths = function (curve) {
+  var startPoint = curve.startPoint;
+  var endPoint = curve.endPoint;
+  var widths = { start: null, end: null };
+
+  var velocity = this.velocityFilterWeight * endPoint.velocityFrom(startPoint) + (1 - this.velocityFilterWeight) * this._lastVelocity;
+
+  var newWidth = this._strokeWidth(velocity);
+
+  widths.start = this._lastWidth;
+  widths.end = newWidth;
+
+  this._lastVelocity = velocity;
+  this._lastWidth = newWidth;
+
+  return widths;
+};
+
+SignaturePad.prototype._strokeWidth = function (velocity) {
+  return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
+};
+
+SignaturePad.prototype._drawPoint = function (x, y, size) {
+  var ctx = this._ctx;
+
+  ctx.moveTo(x, y);
+  ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+  this._isEmpty = false;
+};
+
+SignaturePad.prototype._drawCurve = function (curve, startWidth, endWidth) {
+  var ctx = this._ctx;
+  var widthDelta = endWidth - startWidth;
+  var drawSteps = Math.floor(curve.length());
+
+  ctx.beginPath();
+
+  for (var i = 0; i < drawSteps; i += 1) {
+    // Calculate the Bezier (x, y) coordinate for this step.
+    var t = i / drawSteps;
+    var tt = t * t;
+    var ttt = tt * t;
+    var u = 1 - t;
+    var uu = u * u;
+    var uuu = uu * u;
+
+    var x = uuu * curve.startPoint.x;
+    x += 3 * uu * t * curve.control1.x;
+    x += 3 * u * tt * curve.control2.x;
+    x += ttt * curve.endPoint.x;
+
+    var y = uuu * curve.startPoint.y;
+    y += 3 * uu * t * curve.control1.y;
+    y += 3 * u * tt * curve.control2.y;
+    y += ttt * curve.endPoint.y;
+
+    var width = startWidth + ttt * widthDelta;
+    this._drawPoint(x, y, width);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+};
+
+SignaturePad.prototype._drawDot = function (point) {
+  var ctx = this._ctx;
+  var width = typeof this.dotSize === 'function' ? this.dotSize() : this.dotSize;
+
+  ctx.beginPath();
+  this._drawPoint(point.x, point.y, width);
+  ctx.closePath();
+  ctx.fill();
+};
+
+SignaturePad.prototype._fromData = function (pointGroups, drawCurve, drawDot) {
+  for (var i = 0; i < pointGroups.length; i += 1) {
+    var group = pointGroups[i];
+
+    if (group.length > 1) {
+      for (var j = 0; j < group.length; j += 1) {
+        var rawPoint = group[j];
+        var point = new Point(rawPoint.x, rawPoint.y, rawPoint.time);
+
+        if (j === 0) {
+          // First point in a group. Nothing to draw yet.
+          this._reset();
+          this._addPoint(point);
+        } else if (j !== group.length - 1) {
+          // Middle point in a group.
+          var _addPoint2 = this._addPoint(point),
+              curve = _addPoint2.curve,
+              widths = _addPoint2.widths;
+
+          if (curve && widths) {
+            drawCurve(curve, widths);
+          }
+        } else {
+          // Last point in a group. Do nothing.
+        }
+      }
+    } else {
+      this._reset();
+      var _rawPoint = group[0];
+      drawDot(_rawPoint);
+    }
+  }
+};
+
+SignaturePad.prototype._toSVG = function () {
+  var _this2 = this;
+
+  var pointGroups = this._data;
+  var canvas = this._canvas;
+  var ratio = Math.max(window.devicePixelRatio || 1, 1);
+  var minX = 0;
+  var minY = 0;
+  var maxX = canvas.width / ratio;
+  var maxY = canvas.height / ratio;
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+  svg.setAttributeNS(null, 'width', canvas.width);
+  svg.setAttributeNS(null, 'height', canvas.height);
+
+  this._fromData(pointGroups, function (curve, widths) {
+    var path = document.createElement('path');
+
+    // Need to check curve for NaN values, these pop up when drawing
+    // lines on the canvas that are not continuous. E.g. Sharp corners
+    // or stopping mid-stroke and than continuing without lifting mouse.
+    if (!isNaN(curve.control1.x) && !isNaN(curve.control1.y) && !isNaN(curve.control2.x) && !isNaN(curve.control2.y)) {
+      var attr = 'M ' + curve.startPoint.x.toFixed(3) + ',' + curve.startPoint.y.toFixed(3) + ' ' + ('C ' + curve.control1.x.toFixed(3) + ',' + curve.control1.y.toFixed(3) + ' ') + (curve.control2.x.toFixed(3) + ',' + curve.control2.y.toFixed(3) + ' ') + (curve.endPoint.x.toFixed(3) + ',' + curve.endPoint.y.toFixed(3));
+
+      path.setAttribute('d', attr);
+      path.setAttribute('stroke-width', (widths.end * 2.25).toFixed(3));
+      path.setAttribute('stroke', _this2.penColor);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+
+      svg.appendChild(path);
+    }
+  }, function (rawPoint) {
+    var circle = document.createElement('circle');
+    var dotSize = typeof _this2.dotSize === 'function' ? _this2.dotSize() : _this2.dotSize;
+    circle.setAttribute('r', dotSize);
+    circle.setAttribute('cx', rawPoint.x);
+    circle.setAttribute('cy', rawPoint.y);
+    circle.setAttribute('fill', _this2.penColor);
+
+    svg.appendChild(circle);
+  });
+
+  var prefix = 'data:image/svg+xml;base64,';
+  var header = '<svg' + ' xmlns="http://www.w3.org/2000/svg"' + ' xmlns:xlink="http://www.w3.org/1999/xlink"' + (' viewBox="' + minX + ' ' + minY + ' ' + maxX + ' ' + maxY + '"') + (' width="' + maxX + '"') + (' height="' + maxY + '"') + '>';
+  var body = svg.innerHTML;
+
+  // IE hack for missing innerHTML property on SVGElement
+  if (body === undefined) {
+    var dummy = document.createElement('dummy');
+    var nodes = svg.childNodes;
+    dummy.innerHTML = '';
+
+    for (var i = 0; i < nodes.length; i += 1) {
+      dummy.appendChild(nodes[i].cloneNode(true));
+    }
+
+    body = dummy.innerHTML;
+  }
+
+  var footer = '</svg>';
+  var data = header + body + footer;
+
+  return prefix + btoa(data);
+};
+
+SignaturePad.prototype.fromData = function (pointGroups) {
+  var _this3 = this;
+
+  this.clear();
+
+  this._fromData(pointGroups, function (curve, widths) {
+    return _this3._drawCurve(curve, widths.start, widths.end);
+  }, function (rawPoint) {
+    return _this3._drawDot(rawPoint);
+  });
+};
+
+SignaturePad.prototype.toData = function () {
+  return this._data;
+};
+
+return SignaturePad;
+
+})));
+
+},{}],250:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -65570,7 +66150,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],250:[function(_dereq_,module,exports){
+},{}],251:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -65748,7 +66328,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],251:[function(_dereq_,module,exports){
+},{}],252:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -65828,7 +66408,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],252:[function(_dereq_,module,exports){
+},{}],253:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -65913,7 +66493,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],253:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],254:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -65973,7 +66553,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],254:[function(_dereq_,module,exports){
+},{}],255:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66039,7 +66619,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],255:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],256:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66068,7 +66648,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],256:[function(_dereq_,module,exports){
+},{}],257:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -66179,7 +66759,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],257:[function(_dereq_,module,exports){
+},{}],258:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66207,7 +66787,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],258:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],259:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -66340,7 +66920,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":34}],259:[function(_dereq_,module,exports){
+},{"formiojs/utils":34}],260:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66502,7 +67082,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],260:[function(_dereq_,module,exports){
+},{}],261:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66703,7 +67283,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],261:[function(_dereq_,module,exports){
+},{}],262:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -66737,7 +67317,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],262:[function(_dereq_,module,exports){
+},{}],263:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66791,7 +67371,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],263:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],264:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67055,7 +67635,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],264:[function(_dereq_,module,exports){
+},{}],265:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -67091,7 +67671,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],265:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],266:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67183,7 +67763,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],266:[function(_dereq_,module,exports){
+},{}],267:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -67225,7 +67805,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":249,"./button":250,"./checkbox":251,"./columns":252,"./components":253,"./container":254,"./content":255,"./currency":256,"./custom":257,"./datagrid":258,"./datetime":259,"./day":260,"./email":261,"./fieldset":262,"./file":263,"./hidden":264,"./htmlelement":265,"./number":267,"./page":268,"./panel":269,"./password":270,"./phonenumber":271,"./radio":272,"./resource":273,"./select":274,"./selectboxes":275,"./signature":276,"./survey":277,"./table":278,"./textarea":279,"./textfield":280,"./well":281}],267:[function(_dereq_,module,exports){
+},{"./address":250,"./button":251,"./checkbox":252,"./columns":253,"./components":254,"./container":255,"./content":256,"./currency":257,"./custom":258,"./datagrid":259,"./datetime":260,"./day":261,"./email":262,"./fieldset":263,"./file":264,"./hidden":265,"./htmlelement":266,"./number":268,"./page":269,"./panel":270,"./password":271,"./phonenumber":272,"./radio":273,"./resource":274,"./select":275,"./selectboxes":276,"./signature":277,"./survey":278,"./table":279,"./textarea":280,"./textfield":281,"./well":282}],268:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67290,7 +67870,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],268:[function(_dereq_,module,exports){
+},{}],269:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67317,7 +67897,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],269:[function(_dereq_,module,exports){
+},{}],270:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67353,7 +67933,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],270:[function(_dereq_,module,exports){
+},{}],271:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -67384,7 +67964,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],271:[function(_dereq_,module,exports){
+},{}],272:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -67419,7 +67999,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],272:[function(_dereq_,module,exports){
+},{}],273:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67470,7 +68050,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],273:[function(_dereq_,module,exports){
+},{}],274:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67657,7 +68237,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],274:[function(_dereq_,module,exports){
+},{}],275:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -68225,7 +68805,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":202,"lodash/get":209,"lodash/isEqual":218,"lodash/set":237}],275:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":202,"lodash/get":209,"lodash/isEqual":218,"lodash/set":237}],276:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68333,7 +68913,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],276:[function(_dereq_,module,exports){
+},{}],277:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -68474,7 +69054,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":311}],277:[function(_dereq_,module,exports){
+},{"signature_pad":249}],278:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68533,7 +69113,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],278:[function(_dereq_,module,exports){
+},{}],279:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68612,7 +69192,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],279:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],280:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68696,7 +69276,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],280:[function(_dereq_,module,exports){
+},{}],281:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68757,7 +69337,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],281:[function(_dereq_,module,exports){
+},{}],282:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68809,7 +69389,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":295}],282:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":296}],283:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -68887,7 +69467,7 @@ module.exports = function() {
   };
 };
 
-},{}],283:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69276,7 +69856,7 @@ module.exports = function() {
   };
 };
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],285:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -69293,7 +69873,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _filter = _dereq_('lodash/filter');
@@ -69815,7 +70395,7 @@ module.exports = [
   }
 ];
 
-},{"json-logic-js":35,"lodash/cloneDeep":202,"lodash/filter":207,"lodash/get":209}],286:[function(_dereq_,module,exports){
+},{"json-logic-js":35,"lodash/cloneDeep":202,"lodash/filter":207,"lodash/get":209}],287:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -69882,7 +70462,7 @@ module.exports = [
   }
 ];
 
-},{}],287:[function(_dereq_,module,exports){
+},{}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69965,7 +70545,7 @@ module.exports = function() {
   };
 };
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -69984,7 +70564,7 @@ module.exports = [
   }
 ];
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],290:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69994,7 +70574,7 @@ module.exports = function() {
   };
 };
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70026,7 +70606,7 @@ module.exports = function() {
   };
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],292:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70081,7 +70661,7 @@ module.exports = function() {
   };
 };
 
-},{}],292:[function(_dereq_,module,exports){
+},{}],293:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70165,6 +70745,7 @@ module.exports = function() {
         }
         $scope.currentPage = session ? session.page : 0;
         $scope.formioAlerts = [];
+        $scope.formioOptions = $scope.formioOptions || {};
 
         var getForm = function() {
           var element = $element.find('#formio-wizard-form');
@@ -70176,6 +70757,12 @@ module.exports = function() {
 
         // Show the current page.
         var showPage = function(scroll) {
+          // When allowing navigate on invsalid
+          // prev page alert can be visible.
+          // Let's clear it
+          $scope.showAlerts(null);
+          $scope.pageWasVisited[$scope.currentPage] = true;
+
           $scope.wizardLoaded = false;
           $scope.page.components = [];
           $scope.page.components.length = 0;
@@ -70211,6 +70798,18 @@ module.exports = function() {
             }
           });
         }
+
+        // We can be comming back with the 'prev' button.
+        // Wait for the form to be loaded.
+        // Then timeout to wait the loaded form to be rendered
+        // before checking for errors.
+        $scope.$on('formLoad', function() {
+          if ($scope.pageHasErrors[$scope.currentPage]) {
+            $timeout(function() {
+              $scope.checkErrors();
+            });
+          }
+        });
 
         // Shows the given alerts (single or array), and dismisses old alerts
         this.showAlerts = $scope.showAlerts = function(alerts) {
@@ -70249,6 +70848,22 @@ module.exports = function() {
         $scope.submit = function() {
           if ($scope.checkErrors()) {
             return;
+          }
+
+          // We want to submit, but free navigation is enabled.
+          // Lets check if previous pages where not visited or has errors.
+          // If find one, stop searching, go to that page and do not continue with the submission.
+          if ($scope.formioOptions.wizardFreeNavigation) {
+            var backToPage = null;
+            for (var i = 0; i < $scope.pages.length; i++) {
+              if ($scope.pageHasErrors[i] || !$scope.pageWasVisited[i]) {
+                backToPage = i;
+                break;
+              }
+            }
+            if (backToPage !== null) {
+              return $scope.goto(backToPage);
+            }
           }
 
           // Create a sanitized submission object.
@@ -70369,10 +70984,20 @@ module.exports = function() {
           $scope.$emit('cancel');
         };
 
+        $scope.pageHasErrors = {};
+        $scope.pageWasVisited = {};
+
         // Move onto the next page.
         $scope.next = function() {
-          if ($scope.checkErrors()) {
-            return;
+          var errors = $scope.checkErrors();
+          if (errors) {
+            $scope.pageHasErrors[$scope.currentPage] = true;
+            if (!$scope.formioOptions.wizardFreeNavigation) {
+              return;
+            }
+          }
+          else {
+            $scope.pageHasErrors[$scope.currentPage] = false;
           }
           if ($scope.currentPage >= ($scope.pages.length - 1)) {
             return;
@@ -70399,6 +71024,8 @@ module.exports = function() {
           if (page >= $scope.pages.length) {
             return;
           }
+          var errors = $scope.checkErrors();
+          $scope.pageHasErrors[$scope.currentPage] = errors;
           $scope.currentPage = page;
           showPage(true);
         };
@@ -70512,7 +71139,7 @@ module.exports = function() {
   };
 };
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -70695,7 +71322,7 @@ module.exports = [
   }
 ];
 
-},{}],294:[function(_dereq_,module,exports){
+},{}],295:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 
@@ -70807,7 +71434,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":34}],295:[function(_dereq_,module,exports){
+},{"formiojs/utils":34}],296:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -70933,7 +71560,7 @@ module.exports = function() {
   };
 };
 
-},{}],296:[function(_dereq_,module,exports){
+},{}],297:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -70982,7 +71609,7 @@ module.exports = [
   }
 ];
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71016,7 +71643,7 @@ module.exports = [
   }
 ];
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -71025,7 +71652,7 @@ module.exports = [
   }
 ];
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],300:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -71038,7 +71665,7 @@ module.exports = [
   }
 ];
 
-},{}],300:[function(_dereq_,module,exports){
+},{}],301:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -71057,7 +71684,7 @@ module.exports = [
   }
 ];
 
-},{}],301:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -71070,7 +71697,7 @@ module.exports = [
   }
 ];
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71085,7 +71712,7 @@ module.exports = [
   }
 ];
 
-},{}],303:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -71134,7 +71761,7 @@ module.exports = [
   }
 ];
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -71142,7 +71769,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -71156,7 +71783,7 @@ _dereq_('bootstrap-ui-datetime-picker/dist/datetime-picker');
 _dereq_('ng-dialog');
 _dereq_('./formio');
 
-},{"./formio":306,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":246,"ng-file-upload":248,"ui-select/dist/select":312}],306:[function(_dereq_,module,exports){
+},{"./formio":307,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":246,"ng-file-upload":248,"ui-select/dist/select":312}],307:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -71271,7 +71898,7 @@ app.run([
     );
 
     $templateCache.put('formio-wizard.html',
-      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage), active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner bg-success\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate:null:builder }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      url=\"url\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
+      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage) && !formioOptions.wizardFreeNavigation, active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner\"\n        ng-class=\"{\n          'bg-success': !pageHasErrors[$index],\n          'bg-danger': pageHasErrors[$index],\n          'bg-warning': !pageWasVisited[$index] && currentPage > $index\n        }\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate:null:builder }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      url=\"url\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
     );
 
     $templateCache.put('formio-delete.html',
@@ -71307,7 +71934,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":266,"./directives/customValidator":282,"./directives/formio":283,"./directives/formioBindHtml.js":284,"./directives/formioComponent":285,"./directives/formioComponentView":286,"./directives/formioDelete":287,"./directives/formioElement":288,"./directives/formioErrors":289,"./directives/formioSubmission":290,"./directives/formioSubmissions":291,"./directives/formioWizard":292,"./factories/FormioScope":293,"./factories/FormioUtils":294,"./factories/formioInterceptor":296,"./factories/formioTableView":297,"./filters/flattenComponents":298,"./filters/safehtml":299,"./filters/tableComponents":300,"./filters/tableFieldView":301,"./filters/tableView":302,"./filters/translate":303,"./filters/trusturl":304,"./polyfills/polyfills":308,"./providers/Formio":309}],307:[function(_dereq_,module,exports){
+},{"./components":267,"./directives/customValidator":283,"./directives/formio":284,"./directives/formioBindHtml.js":285,"./directives/formioComponent":286,"./directives/formioComponentView":287,"./directives/formioDelete":288,"./directives/formioElement":289,"./directives/formioErrors":290,"./directives/formioSubmission":291,"./directives/formioSubmissions":292,"./directives/formioWizard":293,"./factories/FormioScope":294,"./factories/FormioUtils":295,"./factories/formioInterceptor":297,"./factories/formioTableView":298,"./filters/flattenComponents":299,"./filters/safehtml":300,"./filters/tableComponents":301,"./filters/tableFieldView":302,"./filters/tableView":303,"./filters/translate":304,"./filters/trusturl":305,"./polyfills/polyfills":309,"./providers/Formio":310}],308:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -71338,13 +71965,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":307}],309:[function(_dereq_,module,exports){
+},{"./Object.assign":308}],310:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -71359,7 +71986,9 @@ module.exports = function() {
     setApiUrl: Formio.setBaseUrl,
     getApiUrl: Formio.getBaseUrl,
     setAppUrl: Formio.setAppUrl,
+    setProjectUrl: Formio.setProjectUrl,
     getAppUrl: Formio.getAppUrl,
+    getProjectUrl: Formio.getProjectUrl,
     registerPlugin: Formio.registerPlugin,
     getPlugin: Formio.getPlugin,
     providers: Formio.providers,
@@ -71412,7 +72041,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":27}],310:[function(_dereq_,module,exports){
+},{"formiojs":27}],311:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -71448,537 +72077,6 @@ var objectKeys = Object.keys || function (obj) {
 var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
-
-},{}],311:[function(_dereq_,module,exports){
-/*!
- * Signature Pad v1.6.0
- * https://github.com/szimek/signature_pad
- *
- * Copyright 2017 Szymon Nowak
- * Released under the MIT license
- *
- * The main idea and some parts of the code (e.g. drawing variable width Bézier curve) are taken from:
- * http://corner.squareup.com/2012/07/smoother-signatures.html
- *
- * Implementation of interpolation using cubic Bézier curves is taken from:
- * http://benknowscode.wordpress.com/2012/09/14/path-interpolation-using-cubic-bezier-and-control-point-estimation-in-javascript
- *
- * Algorithm for approximated length of a Bézier curve is taken from:
- * http://www.lemoda.net/maths/bezier-length/index.html
- *
- */
-
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(global.SignaturePad = factory());
-}(this, (function () { 'use strict';
-
-function Point(x, y, time) {
-  this.x = x;
-  this.y = y;
-  this.time = time || new Date().getTime();
-}
-
-Point.prototype.velocityFrom = function (start) {
-  return this.time !== start.time ? this.distanceTo(start) / (this.time - start.time) : 1;
-};
-
-Point.prototype.distanceTo = function (start) {
-  return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
-};
-
-function Bezier(startPoint, control1, control2, endPoint) {
-  this.startPoint = startPoint;
-  this.control1 = control1;
-  this.control2 = control2;
-  this.endPoint = endPoint;
-}
-
-// Returns approximated length.
-Bezier.prototype.length = function () {
-  var steps = 10;
-  var length = 0;
-  var px = void 0;
-  var py = void 0;
-
-  for (var i = 0; i <= steps; i += 1) {
-    var t = i / steps;
-    var cx = this._point(t, this.startPoint.x, this.control1.x, this.control2.x, this.endPoint.x);
-    var cy = this._point(t, this.startPoint.y, this.control1.y, this.control2.y, this.endPoint.y);
-    if (i > 0) {
-      var xdiff = cx - px;
-      var ydiff = cy - py;
-      length += Math.sqrt(xdiff * xdiff + ydiff * ydiff);
-    }
-    px = cx;
-    py = cy;
-  }
-
-  return length;
-};
-
-/* eslint-disable no-multi-spaces, space-in-parens */
-Bezier.prototype._point = function (t, start, c1, c2, end) {
-  return start * (1.0 - t) * (1.0 - t) * (1.0 - t) + 3.0 * c1 * (1.0 - t) * (1.0 - t) * t + 3.0 * c2 * (1.0 - t) * t * t + end * t * t * t;
-};
-
-function SignaturePad(canvas, options) {
-  var self = this;
-  var opts = options || {};
-
-  this.velocityFilterWeight = opts.velocityFilterWeight || 0.7;
-  this.minWidth = opts.minWidth || 0.5;
-  this.maxWidth = opts.maxWidth || 2.5;
-  this.dotSize = opts.dotSize || function () {
-    return (this.minWidth + this.maxWidth) / 2;
-  };
-  this.penColor = opts.penColor || 'black';
-  this.backgroundColor = opts.backgroundColor || 'rgba(0,0,0,0)';
-  this.onBegin = opts.onBegin;
-  this.onEnd = opts.onEnd;
-
-  this._canvas = canvas;
-  this._ctx = canvas.getContext('2d');
-  this.clear();
-
-  // We need add these inline so they are available to unbind while still having
-  // access to 'self' we could use _.bind but it's not worth adding a dependency.
-  this._handleMouseDown = function (event) {
-    if (event.which === 1) {
-      self._mouseButtonDown = true;
-      self._strokeBegin(event);
-    }
-  };
-
-  this._handleMouseMove = function (event) {
-    if (self._mouseButtonDown) {
-      self._strokeUpdate(event);
-    }
-  };
-
-  this._handleMouseUp = function (event) {
-    if (event.which === 1 && self._mouseButtonDown) {
-      self._mouseButtonDown = false;
-      self._strokeEnd(event);
-    }
-  };
-
-  this._handleTouchStart = function (event) {
-    if (event.targetTouches.length === 1) {
-      var touch = event.changedTouches[0];
-      self._strokeBegin(touch);
-    }
-  };
-
-  this._handleTouchMove = function (event) {
-    // Prevent scrolling.
-    event.preventDefault();
-
-    var touch = event.targetTouches[0];
-    self._strokeUpdate(touch);
-  };
-
-  this._handleTouchEnd = function (event) {
-    var wasCanvasTouched = event.target === self._canvas;
-    if (wasCanvasTouched) {
-      event.preventDefault();
-      self._strokeEnd(event);
-    }
-  };
-
-  // Enable mouse and touch event handlers
-  this.on();
-}
-
-// Public methods
-SignaturePad.prototype.clear = function () {
-  var ctx = this._ctx;
-  var canvas = this._canvas;
-
-  ctx.fillStyle = this.backgroundColor;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  this._data = [];
-  this._reset();
-  this._isEmpty = true;
-};
-
-SignaturePad.prototype.fromDataURL = function (dataUrl) {
-  var _this = this;
-
-  var image = new Image();
-  var ratio = window.devicePixelRatio || 1;
-  var width = this._canvas.width / ratio;
-  var height = this._canvas.height / ratio;
-
-  this._reset();
-  image.src = dataUrl;
-  image.onload = function () {
-    _this._ctx.drawImage(image, 0, 0, width, height);
-  };
-  this._isEmpty = false;
-};
-
-SignaturePad.prototype.toDataURL = function (type) {
-  var _canvas;
-
-  switch (type) {
-    case 'image/svg+xml':
-      return this._toSVG();
-    default:
-      for (var _len = arguments.length, options = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        options[_key - 1] = arguments[_key];
-      }
-
-      return (_canvas = this._canvas).toDataURL.apply(_canvas, [type].concat(options));
-  }
-};
-
-SignaturePad.prototype.on = function () {
-  this._handleMouseEvents();
-  this._handleTouchEvents();
-};
-
-SignaturePad.prototype.off = function () {
-  this._canvas.removeEventListener('mousedown', this._handleMouseDown);
-  this._canvas.removeEventListener('mousemove', this._handleMouseMove);
-  document.removeEventListener('mouseup', this._handleMouseUp);
-
-  this._canvas.removeEventListener('touchstart', this._handleTouchStart);
-  this._canvas.removeEventListener('touchmove', this._handleTouchMove);
-  this._canvas.removeEventListener('touchend', this._handleTouchEnd);
-};
-
-SignaturePad.prototype.isEmpty = function () {
-  return this._isEmpty;
-};
-
-// Private methods
-SignaturePad.prototype._strokeBegin = function (event) {
-  this._data.push([]);
-  this._reset();
-  this._strokeUpdate(event);
-
-  if (typeof this.onBegin === 'function') {
-    this.onBegin(event);
-  }
-};
-
-SignaturePad.prototype._strokeUpdate = function (event) {
-  var x = event.clientX;
-  var y = event.clientY;
-
-  var point = this._createPoint(x, y);
-
-  var _addPoint = this._addPoint(point),
-      curve = _addPoint.curve,
-      widths = _addPoint.widths;
-
-  if (curve && widths) {
-    this._drawCurve(curve, widths.start, widths.end);
-  }
-
-  this._data[this._data.length - 1].push({
-    x: point.x,
-    y: point.y,
-    time: point.time
-  });
-};
-
-SignaturePad.prototype._strokeEnd = function (event) {
-  var canDrawCurve = this.points.length > 2;
-  var point = this.points[0];
-
-  if (!canDrawCurve && point) {
-    this._drawDot(point);
-  }
-
-  if (typeof this.onEnd === 'function') {
-    this.onEnd(event);
-  }
-};
-
-SignaturePad.prototype._handleMouseEvents = function () {
-  this._mouseButtonDown = false;
-
-  this._canvas.addEventListener('mousedown', this._handleMouseDown);
-  this._canvas.addEventListener('mousemove', this._handleMouseMove);
-  document.addEventListener('mouseup', this._handleMouseUp);
-};
-
-SignaturePad.prototype._handleTouchEvents = function () {
-  // Pass touch events to canvas element on mobile IE11 and Edge.
-  this._canvas.style.msTouchAction = 'none';
-  this._canvas.style.touchAction = 'none';
-
-  this._canvas.addEventListener('touchstart', this._handleTouchStart);
-  this._canvas.addEventListener('touchmove', this._handleTouchMove);
-  this._canvas.addEventListener('touchend', this._handleTouchEnd);
-};
-
-SignaturePad.prototype._reset = function () {
-  this.points = [];
-  this._lastVelocity = 0;
-  this._lastWidth = (this.minWidth + this.maxWidth) / 2;
-  this._ctx.fillStyle = this.penColor;
-};
-
-SignaturePad.prototype._createPoint = function (x, y, time) {
-  var rect = this._canvas.getBoundingClientRect();
-
-  return new Point(x - rect.left, y - rect.top, time || new Date().getTime());
-};
-
-SignaturePad.prototype._addPoint = function (point) {
-  var points = this.points;
-  var tmp = void 0;
-
-  points.push(point);
-
-  if (points.length > 2) {
-    // To reduce the initial lag make it work with 3 points
-    // by copying the first point to the beginning.
-    if (points.length === 3) points.unshift(points[0]);
-
-    tmp = this._calculateCurveControlPoints(points[0], points[1], points[2]);
-    var c2 = tmp.c2;
-    tmp = this._calculateCurveControlPoints(points[1], points[2], points[3]);
-    var c3 = tmp.c1;
-    var curve = new Bezier(points[1], c2, c3, points[2]);
-    var widths = this._calculateCurveWidths(curve);
-
-    // Remove the first element from the list,
-    // so that we always have no more than 4 points in points array.
-    points.shift();
-
-    return { curve: curve, widths: widths };
-  }
-
-  return {};
-};
-
-SignaturePad.prototype._calculateCurveControlPoints = function (s1, s2, s3) {
-  var dx1 = s1.x - s2.x;
-  var dy1 = s1.y - s2.y;
-  var dx2 = s2.x - s3.x;
-  var dy2 = s2.y - s3.y;
-
-  var m1 = { x: (s1.x + s2.x) / 2.0, y: (s1.y + s2.y) / 2.0 };
-  var m2 = { x: (s2.x + s3.x) / 2.0, y: (s2.y + s3.y) / 2.0 };
-
-  var l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-  var l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-  var dxm = m1.x - m2.x;
-  var dym = m1.y - m2.y;
-
-  var k = l2 / (l1 + l2);
-  var cm = { x: m2.x + dxm * k, y: m2.y + dym * k };
-
-  var tx = s2.x - cm.x;
-  var ty = s2.y - cm.y;
-
-  return {
-    c1: new Point(m1.x + tx, m1.y + ty),
-    c2: new Point(m2.x + tx, m2.y + ty)
-  };
-};
-
-SignaturePad.prototype._calculateCurveWidths = function (curve) {
-  var startPoint = curve.startPoint;
-  var endPoint = curve.endPoint;
-  var widths = { start: null, end: null };
-
-  var velocity = this.velocityFilterWeight * endPoint.velocityFrom(startPoint) + (1 - this.velocityFilterWeight) * this._lastVelocity;
-
-  var newWidth = this._strokeWidth(velocity);
-
-  widths.start = this._lastWidth;
-  widths.end = newWidth;
-
-  this._lastVelocity = velocity;
-  this._lastWidth = newWidth;
-
-  return widths;
-};
-
-SignaturePad.prototype._strokeWidth = function (velocity) {
-  return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
-};
-
-SignaturePad.prototype._drawPoint = function (x, y, size) {
-  var ctx = this._ctx;
-
-  ctx.moveTo(x, y);
-  ctx.arc(x, y, size, 0, 2 * Math.PI, false);
-  this._isEmpty = false;
-};
-
-SignaturePad.prototype._drawCurve = function (curve, startWidth, endWidth) {
-  var ctx = this._ctx;
-  var widthDelta = endWidth - startWidth;
-  var drawSteps = Math.floor(curve.length());
-
-  ctx.beginPath();
-
-  for (var i = 0; i < drawSteps; i += 1) {
-    // Calculate the Bezier (x, y) coordinate for this step.
-    var t = i / drawSteps;
-    var tt = t * t;
-    var ttt = tt * t;
-    var u = 1 - t;
-    var uu = u * u;
-    var uuu = uu * u;
-
-    var x = uuu * curve.startPoint.x;
-    x += 3 * uu * t * curve.control1.x;
-    x += 3 * u * tt * curve.control2.x;
-    x += ttt * curve.endPoint.x;
-
-    var y = uuu * curve.startPoint.y;
-    y += 3 * uu * t * curve.control1.y;
-    y += 3 * u * tt * curve.control2.y;
-    y += ttt * curve.endPoint.y;
-
-    var width = startWidth + ttt * widthDelta;
-    this._drawPoint(x, y, width);
-  }
-
-  ctx.closePath();
-  ctx.fill();
-};
-
-SignaturePad.prototype._drawDot = function (point) {
-  var ctx = this._ctx;
-  var width = typeof this.dotSize === 'function' ? this.dotSize() : this.dotSize;
-
-  ctx.beginPath();
-  this._drawPoint(point.x, point.y, width);
-  ctx.closePath();
-  ctx.fill();
-};
-
-SignaturePad.prototype._fromData = function (pointGroups, drawCurve, drawDot) {
-  for (var i = 0; i < pointGroups.length; i += 1) {
-    var group = pointGroups[i];
-
-    if (group.length > 1) {
-      for (var j = 0; j < group.length; j += 1) {
-        var rawPoint = group[j];
-        var point = new Point(rawPoint.x, rawPoint.y, rawPoint.time);
-
-        if (j === 0) {
-          // First point in a group. Nothing to draw yet.
-          this._reset();
-          this._addPoint(point);
-        } else if (j !== group.length - 1) {
-          // Middle point in a group.
-          var _addPoint2 = this._addPoint(point),
-              curve = _addPoint2.curve,
-              widths = _addPoint2.widths;
-
-          if (curve && widths) {
-            drawCurve(curve, widths);
-          }
-        } else {
-          // Last point in a group. Do nothing.
-        }
-      }
-    } else {
-      this._reset();
-      var _rawPoint = group[0];
-      drawDot(_rawPoint);
-    }
-  }
-};
-
-SignaturePad.prototype._toSVG = function () {
-  var _this2 = this;
-
-  var pointGroups = this._data;
-  var canvas = this._canvas;
-  var ratio = Math.max(window.devicePixelRatio || 1, 1);
-  var minX = 0;
-  var minY = 0;
-  var maxX = canvas.width / ratio;
-  var maxY = canvas.height / ratio;
-  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-
-  svg.setAttributeNS(null, 'width', canvas.width);
-  svg.setAttributeNS(null, 'height', canvas.height);
-
-  this._fromData(pointGroups, function (curve, widths) {
-    var path = document.createElement('path');
-
-    // Need to check curve for NaN values, these pop up when drawing
-    // lines on the canvas that are not continuous. E.g. Sharp corners
-    // or stopping mid-stroke and than continuing without lifting mouse.
-    if (!isNaN(curve.control1.x) && !isNaN(curve.control1.y) && !isNaN(curve.control2.x) && !isNaN(curve.control2.y)) {
-      var attr = 'M ' + curve.startPoint.x.toFixed(3) + ',' + curve.startPoint.y.toFixed(3) + ' ' + ('C ' + curve.control1.x.toFixed(3) + ',' + curve.control1.y.toFixed(3) + ' ') + (curve.control2.x.toFixed(3) + ',' + curve.control2.y.toFixed(3) + ' ') + (curve.endPoint.x.toFixed(3) + ',' + curve.endPoint.y.toFixed(3));
-
-      path.setAttribute('d', attr);
-      path.setAttribute('stroke-width', (widths.end * 2.25).toFixed(3));
-      path.setAttribute('stroke', _this2.penColor);
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke-linecap', 'round');
-
-      svg.appendChild(path);
-    }
-  }, function (rawPoint) {
-    var circle = document.createElement('circle');
-    var dotSize = typeof _this2.dotSize === 'function' ? _this2.dotSize() : _this2.dotSize;
-    circle.setAttribute('r', dotSize);
-    circle.setAttribute('cx', rawPoint.x);
-    circle.setAttribute('cy', rawPoint.y);
-    circle.setAttribute('fill', _this2.penColor);
-
-    svg.appendChild(circle);
-  });
-
-  var prefix = 'data:image/svg+xml;base64,';
-  var header = '<svg' + ' xmlns="http://www.w3.org/2000/svg"' + ' xmlns:xlink="http://www.w3.org/1999/xlink"' + (' viewBox="' + minX + ' ' + minY + ' ' + maxX + ' ' + maxY + '"') + (' width="' + maxX + '"') + (' height="' + maxY + '"') + '>';
-  var body = svg.innerHTML;
-
-  // IE hack for missing innerHTML property on SVGElement
-  if (body === undefined) {
-    var dummy = document.createElement('dummy');
-    var nodes = svg.childNodes;
-    dummy.innerHTML = '';
-
-    for (var i = 0; i < nodes.length; i += 1) {
-      dummy.appendChild(nodes[i].cloneNode(true));
-    }
-
-    body = dummy.innerHTML;
-  }
-
-  var footer = '</svg>';
-  var data = header + body + footer;
-
-  return prefix + btoa(data);
-};
-
-SignaturePad.prototype.fromData = function (pointGroups) {
-  var _this3 = this;
-
-  this.clear();
-
-  this._fromData(pointGroups, function (curve, widths) {
-    return _this3._drawCurve(curve, widths.start, widths.end);
-  }, function (rawPoint) {
-    return _this3._drawDot(rawPoint);
-  });
-};
-
-SignaturePad.prototype.toData = function () {
-  return this._data;
-};
-
-return SignaturePad;
-
-})));
 
 },{}],312:[function(_dereq_,module,exports){
 /*!
@@ -76699,6 +76797,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="reference"></form-builder-option>' +
           '<form-builder-option property="addResource"></form-builder-option>' +
           '<form-builder-option property="addResourceLabel" ng-if="component.addResource"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
@@ -76937,6 +77036,7 @@ module.exports = function(app) {
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'resource\'" property="reference"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
           '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
@@ -77554,6 +77654,11 @@ module.exports = {
     label: 'Hidden',
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
+  reference: {
+    label: 'Save as reference',
+    type: 'checkbox',
+    tooltip: 'Using this option will save this field as a reference and link its value to the value of the origin record.'
   },
   block: {
     label: 'Block',
@@ -79102,9 +79207,9 @@ _dereq_('../bower_components/angular-ckeditor/angular-ckeditor');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":368,"angular-drag-and-drop-lists":2,"ng-dialog":246,"ng-formio/src/formio-complete.js":305}],368:[function(_dereq_,module,exports){
+},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":368,"angular-drag-and-drop-lists":2,"ng-dialog":246,"ng-formio/src/formio-complete.js":306}],368:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.17.0 | https://unpkg.com/ng-formio-builder@2.17.0/LICENSE.txt */
+/*! ng-formio-builder v2.18.1 | https://unpkg.com/ng-formio-builder@2.18.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

@@ -99,6 +99,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
   },
+  reference: {
+    label: 'Save as reference',
+    type: 'checkbox',
+    tooltip: 'Using this option will save this field as a reference and link its value to the value of the origin record.'
+  },
   block: {
     label: 'Block',
     type: 'checkbox',

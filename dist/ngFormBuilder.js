@@ -123,6 +123,17 @@ module.exports = {
   },
 
   /**
+   * Returns if this component has a conditional statement.
+   *
+   * @param component - The component JSON schema.
+   *
+   * @returns {boolean} - TRUE - This component has a conditional, FALSE - No conditional provided.
+   */
+  hasCondition: function hasCondition(component) {
+    return component.hasOwnProperty('customConditional') && component.customConditional || component.hasOwnProperty('conditional') && component.conditional && component.conditional.when || component.hasOwnProperty('conditional') && component.conditional && component.conditional.json;
+  },
+
+  /**
    * Checks the conditions for a provided component and data.
    *
    * @param component
@@ -8563,6 +8574,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple" label="Allow Multiple Resources"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="reference"></form-builder-option>' +
           '<form-builder-option property="addResource"></form-builder-option>' +
           '<form-builder-option property="addResourceLabel" ng-if="component.addResource"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
@@ -8801,6 +8813,7 @@ module.exports = function(app) {
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'resource\'" property="reference"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
           '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
@@ -9418,6 +9431,11 @@ module.exports = {
     label: 'Hidden',
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
+  reference: {
+    label: 'Save as reference',
+    type: 'checkbox',
+    tooltip: 'Using this option will save this field as a reference and link its value to the value of the origin record.'
   },
   block: {
     label: 'Block',
@@ -10960,7 +10978,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],262:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.17.0 | https://unpkg.com/ng-formio-builder@2.17.0/LICENSE.txt */
+/*! ng-formio-builder v2.18.1 | https://unpkg.com/ng-formio-builder@2.18.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
