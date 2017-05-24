@@ -89,6 +89,11 @@ module.exports = {
     placeholder: '100',
     tooltip: 'The image size for previewing images.'
   },
+  slides: {
+    label: 'Slider gallery',
+    type: 'checkbox',
+    tooltip: 'Will open a slider gallery when a thumbnail is clicked.'
+  },
   persistent: {
     label: 'Persistent',
     type: 'checkbox',
