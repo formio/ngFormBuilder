@@ -7948,6 +7948,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="slides" ng-if="component.image"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
@@ -9421,6 +9422,11 @@ module.exports = {
     label: 'Image Size',
     placeholder: '100',
     tooltip: 'The image size for previewing images.'
+  },
+  slides: {
+    label: 'Slider gallery',
+    type: 'checkbox',
+    tooltip: 'Will open a slider gallery when a thumbnail is clicked.'
   },
   persistent: {
     label: 'Persistent',
