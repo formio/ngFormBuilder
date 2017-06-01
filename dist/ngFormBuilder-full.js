@@ -77800,9 +77800,11 @@ module.exports = function(app) {
 
   app.controller('formioFileUpload', [
     '$scope',
+    '$interpolate',
     'FormioUtils',
     function(
       $scope,
+      $interpolate,
       FormioUtils
     ) {
       if ($scope.builder) return;
@@ -77834,6 +77836,7 @@ module.exports = function(app) {
               message: 'Starting upload'
             };
             var dir = $scope.component.dir || '';
+            dir = $interpolate(dir)({data: $scope.data, row: $scope.row});
             var formio = null;
             if ($scope.formio) {
               formio = $scope.formio;
@@ -78506,6 +78509,7 @@ module.exports = function(app) {
 
 var _get = _dereq_('lodash/get');
 var _isEqual = _dereq_('lodash/isEqual');
+var _assign = _dereq_('lodash/assign');
 var _set = _dereq_('lodash/set');
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 module.exports = function(app) {
@@ -78928,8 +78932,15 @@ module.exports = function(app) {
                 if (url) {
                   $scope.hasNextPage = true;
                   $scope.refreshItems = function(input, newUrl, append) {
-                    if (input === lastInput) {
-                      return;
+                    if (typeof input === 'string') {
+                      if (input === lastInput) {
+                        return;
+                      }
+                      else {
+                        // Since the search has changed, reset the limit and skip.
+                        options.params.limit = $scope.component.limit || 100;
+                        options.params.skip = 0;
+                      }
                     }
 
                     lastInput = input;
@@ -78948,16 +78959,17 @@ module.exports = function(app) {
                       (typeof input === 'string') &&
                       input
                     ) {
-                      newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') +
-                        encodeURIComponent(settings.searchField) +
-                        '=' +
-                        encodeURIComponent(input);
+                      options.params[encodeURIComponent(settings.searchField)] = encodeURIComponent(input);
+                    }
+                    else {
+                      delete options.params[encodeURIComponent(settings.searchField)];
                     }
 
                     // Add the other filter.
                     if (settings.filter) {
                       var filter = $interpolate(settings.filter)({data: $scope.data});
-                      newUrl += ((newUrl.indexOf('?') === -1) ? '?' : '&') + filter;
+                      // This changes 'a=b&c=d' into an object and assigns to params.
+                      _assign(options.params, JSON.parse('{"' + decodeURI(filter).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}'));
                     }
 
                     // If they wish to return only some fields.
@@ -78975,6 +78987,9 @@ module.exports = function(app) {
                       if (data.length < options.params.limit) {
                         $scope.hasNextPage = false;
                       }
+                      else {
+                        $scope.hasNextPage = true;
+                      }
                       if (append) {
                         $scope.selectItems = $scope.selectItems.concat(data);
                       }
@@ -78986,8 +79001,26 @@ module.exports = function(app) {
                       ensureValue();
                     };
 
-                    return $http.get(newUrl, options).then(function(result) {
-                      var data = result.data;
+                    var promise;
+                    if (settings.dataSrc === 'resource') {
+                      promise = (new Formio(newUrl)).loadSubmissions(options);
+                    }
+                    else {
+                      // Add in headers if specified
+                      if ($scope.component.data.hasOwnProperty('headers') && $scope.component.data.headers.length > 0) {
+                        options.headers = _assign(options.headers, $scope.component.data.headers.reduce(function(headers, current) {
+                          if (current.key) {
+                            headers[current.key] = current.value;
+                          }
+                          return headers;
+                        }, {}));
+                      }
+                      promise = $http.get(newUrl, options).then(function(result) {
+                        return result.data;
+                      });
+                    }
+
+                    return promise.then(function(data) {
                       if (data) {
                         // If the selectValue prop is defined, use it.
                         if (selectValues) {
@@ -79068,7 +79101,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":204,"lodash/get":211,"lodash/isEqual":220,"lodash/set":239}],278:[function(_dereq_,module,exports){
+},{"lodash/assign":200,"lodash/cloneDeep":204,"lodash/get":211,"lodash/isEqual":220,"lodash/set":239}],278:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -79370,7 +79403,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/survey.html', FormioUtils.fieldWrap(
-        "<table class=\"table table-striped table-bordered\">\n  <thead>\n    <tr>\n      <td></td>\n      <th ng-repeat=\"v in component.values track by $index\" style=\"text-align: center;\">{{ v.label }}</th>\n    </tr>\n  </thead>\n  <tr ng-repeat=\"question in component.questions\">\n    <td>{{ question.label }}</td>\n    <td ng-repeat=\"v in component.values track by $index\" style=\"text-align: center;\">\n      <input\n        type=\"radio\"\n        id=\"{{ componentId }}-{{ question.value }}-{{ v.value }}\" name=\"{{ componentId }}-{{ question.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-value=\"v.value\"\n        ng-model=\"data[component.key][question.value]\"\n        ng-required=\"isRequired(component)\"\n        ng-disabled=\"readOnly\"\n        custom-validator=\"component.validate.custom\"\n      >\n    </td>\n  </tr>\n</table>\n"
+        "<table class=\"table table-striped table-bordered\">\n  <thead>\n    <tr>\n      <td></td>\n      <th ng-repeat=\"v in component.values track by $index\" style=\"text-align: center;\">{{ v.label }}</th>\n    </tr>\n  </thead>\n  <tr ng-repeat=\"question in component.questions\"\n    ng-init=\"inputName = componentId + '-' + question.value\"\n    ng-class=\"{\n      'text-danger': !formioForm[inputName].$pristine && formioForm[inputName].$invalid\n    }\">\n    <td>{{ question.label }}</td>\n    <td ng-repeat=\"v in component.values track by $index\" style=\"text-align: center;\">\n      <input\n        type=\"radio\"\n        id=\"{{ componentId }}-{{ question.value }}-{{ v.value }}\" name=\"{{ componentId }}-{{ question.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-value=\"v.value\"\n        ng-model=\"data[component.key][question.value]\"\n        ng-required=\"isRequired(component)\"\n        ng-disabled=\"readOnly\"\n        custom-validator=\"component.validate.custom\"\n      >\n    </td>\n  </tr>\n</table>\n"
       ));
     }
   ]);
@@ -79911,10 +79944,11 @@ module.exports = function() {
           if (form.submitting) {
             return true;
           }
-          form.$pristine = false;
+          form.$setDirty(true);
           for (var key in form) {
-            if (form[key] && form[key].hasOwnProperty('$pristine')) {
-              form[key].$pristine = false;
+            if (form[key] && form[key].$validate) {
+              form[key].$setDirty(true);
+              form[key].$validate();
             }
           }
           return !form.$valid;
@@ -80237,6 +80271,33 @@ module.exports = [
 
           $scope.isRequired = function(component) {
             return FormioUtils.isRequired(component);
+          };
+
+          // Survey components haves questions.
+          // We want to make the survey component label marked with error if any
+          // of the questions is in invalid state.
+          // So, first check if conponent has questions, then iterate over them.
+          // Break in the first invalid question. Is enough to set the has-error
+          // class to the survey component.
+          // Note: Chek that this method is used in the template.
+          $scope.invalidQuestions = function(formioForm) {
+            var errorInQuestions = false;
+            if (!$scope.component.questions) {
+              errorInQuestions = false;
+            }
+            else {
+              var i;
+              for (i = 0; i < $scope.component.questions.length; i++) {
+                var question = $scope.component.questions[i];
+                var questionInputName = [$scope.component.key, question.value].join('-');
+                var formInput = formioForm[questionInputName];
+                if (formInput && !formInput.$pristine && formInput.$invalid) {
+                  errorInQuestions = true;
+                  break;
+                }
+              }
+            }
+            return errorInQuestions;
           };
 
           // Pass through checkConditional since this is an isolate scope.
@@ -81091,7 +81152,7 @@ module.exports = function() {
         $scope.checkErrors = function() {
           if (!$scope.isValid()) {
             // Change all of the fields to not be pristine.
-            angular.forEach($element.find('[name="formioForm"]').children(), function(element) {
+            angular.forEach($element.find('[name="formioForm"]').find('*'), function(element) {
               var elementScope = angular.element(element).scope();
               var fieldForm = elementScope.formioForm;
               if (fieldForm[elementScope.component.key]) {
@@ -81884,7 +81945,7 @@ module.exports = [
     $interpolate
   ) {
     return function(value, component) {
-      if (!value && value !== 0) {
+      if (!value && value !== 0 && value !== false) {
         return '';
       }
       if (!component || !component.input|| !component.type) {
@@ -82182,7 +82243,7 @@ app.run([
 
     // A formio component template.
     $templateCache.put('formio/component.html',
-      "<div class=\"form-group form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\"\n     ng-class=\"{'has-feedback ': (component.hideLabel === true || component.label === '' || !component.label) && component.validate.required,\n             'has-error': formioForm[componentId].$invalid && !formioForm[componentId].$pristine }\"\n     ng-style=\"component.style\"\n     ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n\n"
+      "<div class=\"form-group form-field-type-{{ component.type }} formio-component-{{ component.key }} {{component.customClass}}\" id=\"form-group-{{ componentId }}\"\n     ng-class=\"{'has-feedback ': (component.hideLabel === true || component.label === '' || !component.label) && component.validate.required,\n             'has-error': (formioForm[componentId].$invalid || invalidQuestions(formioForm)) && !formioForm[componentId].$pristine }\"\n     ng-style=\"component.style\"\n     ng-hide=\"component.hidden\">\n  <formio-element></formio-element>\n</div>\n\n"
     );
 
     $templateCache.put('formio/component-view.html',
@@ -87258,8 +87319,9 @@ module.exports = function(app) {
               '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" json-input rows="3">{{ component.data.json }}</textarea>' +
             '</div>' +
             '<div ng-switch-when="url">' +
-            '<form-builder-option property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
+            '  <form-builder-option property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
             '</div>' +
+            '<value-builder ng-switch-when="url" data=component.data.headers label="Request Headers" tooltip-text="Set any headers that should be sent along with the request to the url. This is useful for authentication." label-label="Key" label-property="key" />' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
             '<div class="form-group" ng-switch-when="resource">' +
             '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
@@ -89287,6 +89349,7 @@ module.exports = function() {
       $scope.labelProperty = $scope.labelProperty || 'label';
       $scope.valueLabel = $scope.valueLabel || 'Value';
       $scope.labelLabel = $scope.labelLabel || 'Label';
+      $scope.data = $scope.data || [];
 
       $scope.addValue = function() {
         var obj = {};
