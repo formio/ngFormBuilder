@@ -41,6 +41,7 @@ module.exports = function() {
       $scope.labelProperty = $scope.labelProperty || 'label';
       $scope.valueLabel = $scope.valueLabel || 'Value';
       $scope.labelLabel = $scope.labelLabel || 'Label';
+      $scope.data = $scope.data || [];
 
       $scope.addValue = function() {
         var obj = {};
