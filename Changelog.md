@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+## 2.18.2
+### Added
+ - Add headers option to Select Urls.
+ 
+### Changed
+ - Upgrade ngFormio to 2.18.5
+
+### Changed
+ - Select resource components use Formio provider instead of $http.get to allow offline compatibility.
+
 ## 2.18.1
 ### Added
  - A configuration for the resource references.
