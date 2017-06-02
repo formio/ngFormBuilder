@@ -27,6 +27,7 @@ module.exports = ['debounce', function(debounce) {
       'FormioUtils',
       'dndDragIframeWorkaround',
       '$interval',
+      '$timeout',
       function(
         $scope,
         formioComponents,
@@ -34,7 +35,8 @@ module.exports = ['debounce', function(debounce) {
         Formio,
         FormioUtils,
         dndDragIframeWorkaround,
-        $interval
+        $interval,
+        $timeout
       ) {
         $scope.options = $scope.options || {};
 
@@ -105,11 +107,25 @@ module.exports = ['debounce', function(debounce) {
           $scope.hideCount = (display === 'wizard') ? 1 : 2;
         });
 
+        // Ensure that they don't remove components by canceling the edit modal.
+        $scope.$watch('form._id', function(_id) {
+          if (!_id) {
+            return;
+          }
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            delete component.isNew;
+          }, true);
+        });
+
         // Make sure they can switch back and forth between wizard and pages.
         $scope.$on('formDisplay', function(event, display) {
           $scope.form.display = display;
           $scope.form.page = 0;
           setNumPages();
+          $timeout(function() {
+            $scope.showPage(0);
+            $scope.$apply();
+          });
         });
 
         // Return the form pages.
