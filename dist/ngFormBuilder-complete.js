@@ -2150,7 +2150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":11,"moment":244}],5:[function(_dereq_,module,exports){
+},{"angular":11,"moment":246}],5:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.4
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -49676,7 +49676,7 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":28,"eventemitter2":26,"native-promise-only":245,"shallow-copy":311,"whatwg-fetch":313}],28:[function(_dereq_,module,exports){
+},{"./providers":28,"eventemitter2":26,"native-promise-only":247,"shallow-copy":314,"whatwg-fetch":316}],28:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -49755,7 +49755,7 @@ var dropbox = function dropbox(formio) {
 dropbox.title = 'Dropbox';
 module.exports = dropbox;
 
-},{"native-promise-only":245}],30:[function(_dereq_,module,exports){
+},{"native-promise-only":247}],30:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -49879,7 +49879,7 @@ var s3 = function s3(formio) {
 s3.title = 'S3';
 module.exports = s3;
 
-},{"native-promise-only":245}],32:[function(_dereq_,module,exports){
+},{"native-promise-only":247}],32:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -49958,7 +49958,7 @@ var url = function url(formio) {
 url.title = 'Url';
 module.exports = url;
 
-},{"native-promise-only":245}],33:[function(_dereq_,module,exports){
+},{"native-promise-only":247}],33:[function(_dereq_,module,exports){
 'use strict';
 
 var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -50980,7 +50980,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":100,"./_isIndex":154,"./isArguments":213,"./isArray":214,"./isBuffer":217,"./isTypedArray":226}],55:[function(_dereq_,module,exports){
+},{"./_baseTimes":100,"./_isIndex":154,"./isArguments":213,"./isArray":214,"./isBuffer":217,"./isTypedArray":228}],55:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -51226,7 +51226,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":116,"./keys":227}],66:[function(_dereq_,module,exports){
+},{"./_copyObject":116,"./keys":229}],66:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -51245,7 +51245,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":116,"./keysIn":228}],67:[function(_dereq_,module,exports){
+},{"./_copyObject":116,"./keysIn":230}],67:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -51427,7 +51427,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":44,"./_arrayEach":52,"./_assignValue":62,"./_baseAssign":65,"./_baseAssignIn":66,"./_cloneBuffer":108,"./_copyArray":115,"./_copySymbols":117,"./_copySymbolsIn":118,"./_getAllKeys":132,"./_getAllKeysIn":133,"./_getTag":141,"./_initCloneArray":151,"./_initCloneByTag":152,"./_initCloneObject":153,"./isArray":214,"./isBuffer":217,"./isObject":222,"./keys":227}],69:[function(_dereq_,module,exports){
+},{"./_Stack":44,"./_arrayEach":52,"./_assignValue":62,"./_baseAssign":65,"./_baseAssignIn":66,"./_cloneBuffer":108,"./_copyArray":115,"./_copySymbols":117,"./_copySymbolsIn":118,"./_getAllKeys":132,"./_getAllKeysIn":133,"./_getTag":141,"./_initCloneArray":151,"./_initCloneByTag":152,"./_initCloneObject":153,"./isArray":214,"./isBuffer":217,"./isObject":224,"./keys":229}],69:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -51459,7 +51459,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":222}],70:[function(_dereq_,module,exports){
+},{"./isObject":224}],70:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -51534,7 +51534,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":72,"./keys":227}],74:[function(_dereq_,module,exports){
+},{"./_baseFor":72,"./keys":229}],74:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     toKey = _dereq_('./_toKey');
 
@@ -51647,7 +51647,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":76,"./isObjectLike":223}],79:[function(_dereq_,module,exports){
+},{"./_baseGetTag":76,"./isObjectLike":225}],79:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -51677,7 +51677,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":80,"./isObjectLike":223}],80:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":80,"./isObjectLike":225}],80:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -51762,7 +51762,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":44,"./_equalArrays":128,"./_equalByTag":129,"./_equalObjects":130,"./_getTag":141,"./isArray":214,"./isBuffer":217,"./isTypedArray":226}],81:[function(_dereq_,module,exports){
+},{"./_Stack":44,"./_equalArrays":128,"./_equalByTag":129,"./_equalObjects":130,"./_getTag":141,"./isArray":214,"./isBuffer":217,"./isTypedArray":228}],81:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -51875,7 +51875,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":158,"./_toSource":195,"./isFunction":219,"./isObject":222}],83:[function(_dereq_,module,exports){
+},{"./_isMasked":158,"./_toSource":195,"./isFunction":220,"./isObject":224}],83:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -51937,7 +51937,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":76,"./isLength":220,"./isObjectLike":223}],84:[function(_dereq_,module,exports){
+},{"./_baseGetTag":76,"./isLength":221,"./isObjectLike":225}],84:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -51970,7 +51970,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":88,"./_baseMatchesProperty":89,"./identity":212,"./isArray":214,"./property":235}],85:[function(_dereq_,module,exports){
+},{"./_baseMatches":88,"./_baseMatchesProperty":89,"./identity":212,"./isArray":214,"./property":237}],85:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -52037,7 +52037,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":159,"./_nativeKeysIn":176,"./isObject":222}],87:[function(_dereq_,module,exports){
+},{"./_isPrototype":159,"./_nativeKeysIn":176,"./isObject":224}],87:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -52163,7 +52163,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":44,"./_assignMergeValue":61,"./_baseFor":72,"./_baseMergeDeep":91,"./isObject":222,"./keysIn":228}],91:[function(_dereq_,module,exports){
+},{"./_Stack":44,"./_assignMergeValue":61,"./_baseFor":72,"./_baseMergeDeep":91,"./isObject":224,"./keysIn":230}],91:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -52258,7 +52258,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":61,"./_cloneBuffer":108,"./_cloneTypedArray":114,"./_copyArray":115,"./_initCloneObject":153,"./isArguments":213,"./isArray":214,"./isArrayLikeObject":216,"./isBuffer":217,"./isFunction":219,"./isObject":222,"./isPlainObject":224,"./isTypedArray":226,"./toPlainObject":240}],92:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":61,"./_cloneBuffer":108,"./_cloneTypedArray":114,"./_copyArray":115,"./_initCloneObject":153,"./isArguments":213,"./isArray":214,"./isArrayLikeObject":216,"./isBuffer":217,"./isFunction":220,"./isObject":224,"./isPlainObject":226,"./isTypedArray":228,"./toPlainObject":242}],92:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -52408,7 +52408,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":62,"./_castPath":105,"./_isIndex":154,"./_toKey":194,"./isObject":222}],98:[function(_dereq_,module,exports){
+},{"./_assignValue":62,"./_castPath":105,"./_isIndex":154,"./_toKey":194,"./isObject":224}],98:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -52526,7 +52526,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":45,"./_arrayMap":55,"./isArray":214,"./isSymbol":225}],102:[function(_dereq_,module,exports){
+},{"./_Symbol":45,"./_arrayMap":55,"./isArray":214,"./isSymbol":227}],102:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -52596,7 +52596,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":156,"./_stringToPath":193,"./isArray":214,"./toString":241}],106:[function(_dereq_,module,exports){
+},{"./_isKey":156,"./_stringToPath":193,"./isArray":214,"./toString":243}],106:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -53062,7 +53062,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":106,"./_hasUnicode":144,"./_stringToArray":192,"./toString":241}],125:[function(_dereq_,module,exports){
+},{"./_castSlice":106,"./_hasUnicode":144,"./_stringToArray":192,"./toString":243}],125:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -53088,7 +53088,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":57,"./deburr":204,"./words":243}],126:[function(_dereq_,module,exports){
+},{"./_arrayReduce":57,"./deburr":204,"./words":245}],126:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -53490,7 +53490,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":75,"./_getSymbols":139,"./keys":227}],133:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":75,"./_getSymbols":139,"./keys":229}],133:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -53509,7 +53509,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":75,"./_getSymbolsIn":140,"./keysIn":228}],134:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":75,"./_getSymbolsIn":140,"./keysIn":230}],134:[function(_dereq_,module,exports){
 var isKeyable = _dereq_('./_isKeyable');
 
 /**
@@ -53555,7 +53555,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":160,"./keys":227}],136:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":160,"./keys":229}],136:[function(_dereq_,module,exports){
 var baseIsNative = _dereq_('./_baseIsNative'),
     getValue = _dereq_('./_getValue');
 
@@ -53662,7 +53662,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":53,"./stubArray":238}],140:[function(_dereq_,module,exports){
+},{"./_arrayFilter":53,"./stubArray":240}],140:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -53689,7 +53689,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":56,"./_getPrototype":137,"./_getSymbols":139,"./stubArray":238}],141:[function(_dereq_,module,exports){
+},{"./_arrayPush":56,"./_getPrototype":137,"./_getSymbols":139,"./stubArray":240}],141:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -53805,7 +53805,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":105,"./_isIndex":154,"./_toKey":194,"./isArguments":213,"./isArray":214,"./isLength":220}],144:[function(_dereq_,module,exports){
+},{"./_castPath":105,"./_isIndex":154,"./_toKey":194,"./isArguments":213,"./isArray":214,"./isLength":221}],144:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -54154,7 +54154,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":154,"./eq":206,"./isArrayLike":215,"./isObject":222}],156:[function(_dereq_,module,exports){
+},{"./_isIndex":154,"./eq":206,"./isArrayLike":215,"./isObject":224}],156:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -54185,7 +54185,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":214,"./isSymbol":225}],157:[function(_dereq_,module,exports){
+},{"./isArray":214,"./isSymbol":227}],157:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -54261,7 +54261,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":222}],161:[function(_dereq_,module,exports){
+},{"./isObject":224}],161:[function(_dereq_,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -54553,7 +54553,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":230}],174:[function(_dereq_,module,exports){
+},{"./memoize":232}],174:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -54995,7 +54995,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":225}],195:[function(_dereq_,module,exports){
+},{"./isSymbol":227}],195:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -55196,7 +55196,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":62,"./_copyObject":116,"./_createAssigner":121,"./_isPrototype":159,"./isArrayLike":215,"./keys":227}],199:[function(_dereq_,module,exports){
+},{"./_assignValue":62,"./_copyObject":116,"./_createAssigner":121,"./_isPrototype":159,"./isArrayLike":215,"./keys":229}],199:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -55252,7 +55252,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":241,"./upperFirst":242}],201:[function(_dereq_,module,exports){
+},{"./toString":243,"./upperFirst":244}],201:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -55396,7 +55396,7 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":126,"./toString":241}],205:[function(_dereq_,module,exports){
+},{"./_deburrLetter":126,"./toString":243}],205:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
 },{"./forEach":208}],206:[function(_dereq_,module,exports){
@@ -55706,7 +55706,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":78,"./isObjectLike":223}],214:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":78,"./isObjectLike":225}],214:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -55769,7 +55769,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":219,"./isLength":220}],216:[function(_dereq_,module,exports){
+},{"./isFunction":220,"./isLength":221}],216:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -55804,7 +55804,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":215,"./isObjectLike":223}],217:[function(_dereq_,module,exports){
+},{"./isArrayLike":215,"./isObjectLike":225}],217:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -55844,7 +55844,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":181,"./stubFalse":239}],218:[function(_dereq_,module,exports){
+},{"./_root":181,"./stubFalse":241}],218:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual');
 
 /**
@@ -55882,6 +55882,44 @@ function isEqual(value, other) {
 module.exports = isEqual;
 
 },{"./_baseIsEqual":79}],219:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeIsFinite = root.isFinite;
+
+/**
+ * Checks if `value` is a finite primitive number.
+ *
+ * **Note:** This method is based on
+ * [`Number.isFinite`](https://mdn.io/Number/isFinite).
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a finite number, else `false`.
+ * @example
+ *
+ * _.isFinite(3);
+ * // => true
+ *
+ * _.isFinite(Number.MIN_VALUE);
+ * // => true
+ *
+ * _.isFinite(Infinity);
+ * // => false
+ *
+ * _.isFinite('3');
+ * // => false
+ */
+function isFinite(value) {
+  return typeof value == 'number' && nativeIsFinite(value);
+}
+
+module.exports = isFinite;
+
+},{"./_root":181}],220:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObject = _dereq_('./isObject');
 
@@ -55920,7 +55958,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":76,"./isObject":222}],220:[function(_dereq_,module,exports){
+},{"./_baseGetTag":76,"./isObject":224}],221:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -55957,7 +55995,47 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],221:[function(_dereq_,module,exports){
+},{}],222:[function(_dereq_,module,exports){
+var isNumber = _dereq_('./isNumber');
+
+/**
+ * Checks if `value` is `NaN`.
+ *
+ * **Note:** This method is based on
+ * [`Number.isNaN`](https://mdn.io/Number/isNaN) and is not the same as
+ * global [`isNaN`](https://mdn.io/isNaN) which returns `true` for
+ * `undefined` and other non-number values.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+ * @example
+ *
+ * _.isNaN(NaN);
+ * // => true
+ *
+ * _.isNaN(new Number(NaN));
+ * // => true
+ *
+ * isNaN(undefined);
+ * // => true
+ *
+ * _.isNaN(undefined);
+ * // => false
+ */
+function isNaN(value) {
+  // An `NaN` primitive is the only value that is not equal to itself.
+  // Perform the `toStringTag` check first to avoid errors with some
+  // ActiveX objects in IE.
+  return isNumber(value) && value != +value;
+}
+
+module.exports = isNaN;
+
+},{"./isNumber":223}],223:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -55997,7 +56075,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":76,"./isObjectLike":223}],222:[function(_dereq_,module,exports){
+},{"./_baseGetTag":76,"./isObjectLike":225}],224:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -56030,7 +56108,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],223:[function(_dereq_,module,exports){
+},{}],225:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -56061,7 +56139,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],224:[function(_dereq_,module,exports){
+},{}],226:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -56125,7 +56203,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":76,"./_getPrototype":137,"./isObjectLike":223}],225:[function(_dereq_,module,exports){
+},{"./_baseGetTag":76,"./_getPrototype":137,"./isObjectLike":225}],227:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -56156,7 +56234,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":76,"./isObjectLike":223}],226:[function(_dereq_,module,exports){
+},{"./_baseGetTag":76,"./isObjectLike":225}],228:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -56185,7 +56263,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":83,"./_baseUnary":102,"./_nodeUtil":177}],227:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":83,"./_baseUnary":102,"./_nodeUtil":177}],229:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -56224,7 +56302,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":54,"./_baseKeys":85,"./isArrayLike":215}],228:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":54,"./_baseKeys":85,"./isArrayLike":215}],230:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -56258,7 +56336,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":54,"./_baseKeysIn":86,"./isArrayLike":215}],229:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":54,"./_baseKeysIn":86,"./isArrayLike":215}],231:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -56313,7 +56391,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":55,"./_baseIteratee":84,"./_baseMap":87,"./isArray":214}],230:[function(_dereq_,module,exports){
+},{"./_arrayMap":55,"./_baseIteratee":84,"./_baseMap":87,"./isArray":214}],232:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache');
 
 /** Error message constants. */
@@ -56388,7 +56466,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":40}],231:[function(_dereq_,module,exports){
+},{"./_MapCache":40}],233:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -56429,7 +56507,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":90,"./_createAssigner":121}],232:[function(_dereq_,module,exports){
+},{"./_baseMerge":90,"./_createAssigner":121}],234:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -56471,7 +56549,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],233:[function(_dereq_,module,exports){
+},{}],235:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -56502,7 +56580,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":84,"./negate":232,"./pickBy":234}],234:[function(_dereq_,module,exports){
+},{"./_baseIteratee":84,"./negate":234,"./pickBy":236}],236:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -56541,7 +56619,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":55,"./_baseIteratee":84,"./_basePickBy":92,"./_getAllKeysIn":133}],235:[function(_dereq_,module,exports){
+},{"./_arrayMap":55,"./_baseIteratee":84,"./_basePickBy":92,"./_getAllKeysIn":133}],237:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -56575,7 +56653,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":93,"./_basePropertyDeep":94,"./_isKey":156,"./_toKey":194}],236:[function(_dereq_,module,exports){
+},{"./_baseProperty":93,"./_basePropertyDeep":94,"./_isKey":156,"./_toKey":194}],238:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -56623,7 +56701,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":53,"./_baseFilter":71,"./_baseIteratee":84,"./isArray":214,"./negate":232}],237:[function(_dereq_,module,exports){
+},{"./_arrayFilter":53,"./_baseFilter":71,"./_baseIteratee":84,"./isArray":214,"./negate":234}],239:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -56660,7 +56738,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":97}],238:[function(_dereq_,module,exports){
+},{"./_baseSet":97}],240:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -56685,7 +56763,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],239:[function(_dereq_,module,exports){
+},{}],241:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -56705,7 +56783,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],240:[function(_dereq_,module,exports){
+},{}],242:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -56739,7 +56817,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":116,"./keysIn":228}],241:[function(_dereq_,module,exports){
+},{"./_copyObject":116,"./keysIn":230}],243:[function(_dereq_,module,exports){
 var baseToString = _dereq_('./_baseToString');
 
 /**
@@ -56769,7 +56847,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":101}],242:[function(_dereq_,module,exports){
+},{"./_baseToString":101}],244:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -56793,7 +56871,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":124}],243:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":124}],245:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -56830,7 +56908,7 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":60,"./_hasUnicodeWord":145,"./_unicodeWords":197,"./toString":241}],244:[function(_dereq_,module,exports){
+},{"./_asciiWords":60,"./_hasUnicodeWord":145,"./_unicodeWords":197,"./toString":243}],246:[function(_dereq_,module,exports){
 //! moment.js
 //! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -61295,7 +61373,7 @@ return hooks;
 
 })));
 
-},{}],245:[function(_dereq_,module,exports){
+},{}],247:[function(_dereq_,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -61672,7 +61750,7 @@ return hooks;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],246:[function(_dereq_,module,exports){
+},{}],248:[function(_dereq_,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -62627,7 +62705,7 @@ return hooks;
     return m;
 }));
 
-},{"angular":11}],247:[function(_dereq_,module,exports){
+},{"angular":11}],249:[function(_dereq_,module,exports){
 /**!
  * AngularJS file upload directives and services. Supports: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -65527,10 +65605,10 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],248:[function(_dereq_,module,exports){
+},{}],250:[function(_dereq_,module,exports){
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":247}],249:[function(_dereq_,module,exports){
+},{"./dist/ng-file-upload-all":249}],251:[function(_dereq_,module,exports){
 /*!
  * Signature Pad v1.6.0
  * https://github.com/szimek/signature_pad
@@ -66061,7 +66139,7 @@ return SignaturePad;
 
 })));
 
-},{}],250:[function(_dereq_,module,exports){
+},{}],252:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66150,7 +66228,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],251:[function(_dereq_,module,exports){
+},{}],253:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66328,7 +66406,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],252:[function(_dereq_,module,exports){
+},{}],254:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66408,7 +66486,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],253:[function(_dereq_,module,exports){
+},{}],255:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66493,7 +66571,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],254:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],256:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -66553,7 +66631,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],255:[function(_dereq_,module,exports){
+},{}],257:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66619,7 +66697,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],256:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],258:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -66648,7 +66726,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],257:[function(_dereq_,module,exports){
+},{}],259:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -66759,7 +66837,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],258:[function(_dereq_,module,exports){
+},{}],260:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -66787,7 +66865,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],259:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],261:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -66920,7 +66998,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":34}],260:[function(_dereq_,module,exports){
+},{"formiojs/utils":34}],262:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67082,7 +67160,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],261:[function(_dereq_,module,exports){
+},{}],263:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67283,7 +67361,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],262:[function(_dereq_,module,exports){
+},{}],264:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -67317,7 +67395,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],263:[function(_dereq_,module,exports){
+},{}],265:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -67371,7 +67449,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],264:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],266:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67638,7 +67716,112 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],265:[function(_dereq_,module,exports){
+},{}],267:[function(_dereq_,module,exports){
+"use strict";
+
+var GridUtils = _dereq_('../factories/GridUtils')();
+
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      formioComponentsProvider.register('form', {
+        title: 'Form',
+        template: 'formio/components/form.html',
+        group: 'advanced',
+        settings: {
+          input: true,
+          tableView: true,
+          key: 'formField',
+          src: '',
+          reference: true,
+          form: '',
+          path: '',
+          label: '',
+          protected: false,
+          unique: false,
+          persistent: true
+        },
+        controller: ['$scope', 'FormioUtils', 'Formio', function($scope, FormioUtils, Formio) {
+          var url = $scope.component.src;
+          if ($scope.component.form) {
+            url = '';
+            if ($scope.component.project) {
+              url += '/project/' + $scope.component.project;
+            }
+            else if ($scope.formio && $scope.formio.projectUrl) {
+              url += $scope.formio.projectUrl;
+            }
+            url += '/form/' + $scope.component.form;
+            url = (new Formio(url)).formUrl;
+          }
+
+          if ($scope.data[$scope.component.key] && $scope.data[$scope.component.key]._id) {
+            url += '/submission/' + $scope.data[$scope.component.key]._id;
+          }
+
+          $scope.formFormio = new Formio(url);
+          $scope.formFormio.loadForm().then(function(form) {
+            $scope.componentForm = form;
+          });
+
+          var submitForm = function(scope, cb) {
+            if (FormioUtils.getComponent(scope.activePage.components, $scope.component.key)) {
+              $scope.formFormio.saveSubmission($scope.data[$scope.component.key]).then(function(sub) {
+                angular.merge($scope.data[$scope.component.key], sub);
+                cb();
+              }, cb);
+            }
+            else {
+              return cb();
+            }
+          };
+
+          // Hook into the submit method.
+          FormioUtils.hook($scope.component.key + ':submit', function(scope, data, cb) {
+            submitForm(scope, cb);
+          });
+
+          // Hook into the nextpage method.
+          FormioUtils.hook($scope.component.key + ':nextPage', function(scope, cb) {
+            submitForm(scope, cb);
+          });
+
+          // See if we need to load the submission into scope.
+          if (
+            $scope.data[$scope.component.key] &&
+            $scope.data[$scope.component.key]._id &&
+            !$scope.data[$scope.component.key].data
+          ) {
+            $scope.formFormio.loadSubmission().then(function(submission) {
+              angular.merge($scope.data[$scope.component.key], submission);
+            });
+          }
+
+          // Make sure to hide the submit button on the loaded form.
+          $scope.$on('formLoad', function(err, form) {
+            FormioUtils.eachComponent(form.components, function(component) {
+              if ((component.type === 'button') && (component.action === 'submit')) {
+                component.hidden = true;
+              }
+            });
+          });
+        }],
+        tableView: GridUtils.generic
+      });
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      $templateCache.put('formio/components/form.html',
+        "<i style=\"font-size: 2em;\" ng-if=\"!componentForm\" ng-class=\"{'formio-hidden': componentForm}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n<formio ng-if=\"componentForm\" form=\"componentForm\" submission=\"data[component.key]\"></formio>\n"
+      );
+    }
+  ]);
+};
+
+},{"../factories/GridUtils":299}],268:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -67674,7 +67857,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],266:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],269:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67766,7 +67949,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],267:[function(_dereq_,module,exports){
+},{}],270:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -67794,6 +67977,7 @@ _dereq_('./currency')(app);
 _dereq_('./hidden')(app);
 _dereq_('./resource')(app);
 _dereq_('./file')(app);
+_dereq_('./form')(app);
 _dereq_('./signature')(app);
 _dereq_('./custom')(app);
 _dereq_('./container')(app);
@@ -67808,7 +67992,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":250,"./button":251,"./checkbox":252,"./columns":253,"./components":254,"./container":255,"./content":256,"./currency":257,"./custom":258,"./datagrid":259,"./datetime":260,"./day":261,"./email":262,"./fieldset":263,"./file":264,"./hidden":265,"./htmlelement":266,"./number":268,"./page":269,"./panel":270,"./password":271,"./phonenumber":272,"./radio":273,"./resource":274,"./select":275,"./selectboxes":276,"./signature":277,"./survey":278,"./table":279,"./textarea":280,"./textfield":281,"./well":282}],268:[function(_dereq_,module,exports){
+},{"./address":252,"./button":253,"./checkbox":254,"./columns":255,"./components":256,"./container":257,"./content":258,"./currency":259,"./custom":260,"./datagrid":261,"./datetime":262,"./day":263,"./email":264,"./fieldset":265,"./file":266,"./form":267,"./hidden":268,"./htmlelement":269,"./number":271,"./page":272,"./panel":273,"./password":274,"./phonenumber":275,"./radio":276,"./resource":277,"./select":278,"./selectboxes":279,"./signature":280,"./survey":281,"./table":282,"./textarea":283,"./textfield":284,"./well":285}],271:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -67853,7 +68037,7 @@ module.exports = function(app) {
           if (
             $scope.data &&
             $scope.data.hasOwnProperty($scope.component.key) &&
-            isNumeric($scope.data[$scope.component.key])
+            !isNumeric($scope.data[$scope.component.key])
           ) {
             $scope.data[$scope.component.key] = parseFloat($scope.data[$scope.component.key]);
           }
@@ -67867,13 +68051,13 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/number.html', FormioUtils.fieldWrap(
-        "<input\n  type=\"{{ component.inputType }}\"\n  class=\"form-control\"\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-model=\"data[component.key]\"\n  ng-required=\"isRequired(component)\"\n  ng-disabled=\"readOnly\"\n  safe-multiple-to-single\n  min=\"{{ component.validate.min }}\"\n  max=\"{{ component.validate.max }}\"\n  step=\"{{ component.validate.step }}\"\n  ng-attr-placeholder=\"{{ component.placeholder | formioTranslate:null:builder }}\"\n  custom-validator=\"component.validate.custom\"\n  ui-mask=\"{{ component.inputMask }}\"\n  ui-mask-placeholder=\"\"\n  ui-options=\"uiMaskOptions\"\n>\n"
+        "<input\n  type=\"number\"\n  class=\"form-control\"\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-model=\"data[component.key]\"\n  ng-required=\"isRequired(component)\"\n  ng-disabled=\"readOnly\"\n  safe-multiple-to-single\n  ng-attr-min=\"{{ component.validate.min }}\"\n  ng-attr-max=\"{{ component.validate.max }}\"\n  ng-attr-step=\"{{ component.validate.step }}\"\n  ng-attr-placeholder=\"{{ component.placeholder | formioTranslate:null:builder }}\"\n  custom-validator=\"component.validate.custom\"\n  ui-mask=\"{{ component.inputMask }}\"\n  ui-mask-placeholder=\"\"\n  ui-options=\"uiMaskOptions\"\n>\n"
       ));
     }
   ]);
 };
 
-},{}],269:[function(_dereq_,module,exports){
+},{}],272:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67900,7 +68084,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],270:[function(_dereq_,module,exports){
+},{}],273:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67936,7 +68120,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],271:[function(_dereq_,module,exports){
+},{}],274:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -67967,7 +68151,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],272:[function(_dereq_,module,exports){
+},{}],275:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -68002,7 +68186,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],273:[function(_dereq_,module,exports){
+},{}],276:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68053,7 +68237,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],274:[function(_dereq_,module,exports){
+},{}],277:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68240,7 +68424,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],275:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -68838,7 +69022,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":198,"lodash/cloneDeep":202,"lodash/get":209,"lodash/isEqual":218,"lodash/set":237}],276:[function(_dereq_,module,exports){
+},{"lodash/assign":198,"lodash/cloneDeep":202,"lodash/get":209,"lodash/isEqual":218,"lodash/set":239}],279:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68946,7 +69130,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],277:[function(_dereq_,module,exports){
+},{}],280:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -69087,7 +69271,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":249}],278:[function(_dereq_,module,exports){
+},{"signature_pad":251}],281:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69146,7 +69330,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],279:[function(_dereq_,module,exports){
+},{}],282:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69225,7 +69409,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],280:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],283:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69309,7 +69493,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],281:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69370,7 +69554,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],282:[function(_dereq_,module,exports){
+},{}],285:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69422,7 +69606,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":296}],283:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":299}],286:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69500,7 +69684,7 @@ module.exports = function() {
   };
 };
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],287:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -69783,106 +69967,111 @@ module.exports = function() {
           }
 
           form.submitting = true;
-
-          // Create a sanitized submission object.
-          var submissionData = {data: {}};
-          if ($scope.submission._id) {
-            submissionData._id = $scope.submission._id;
-          }
-          if ($scope.submission.data._id) {
-            submissionData._id = $scope.submission.data._id;
-          }
-
-          var grabIds = function(input) {
-            if (!input) {
-              return [];
+          FormioUtils.alter('submit', $scope, $scope.submission, function(err) {
+            if (err) {
+              return this.showAlerts(err.alerts);
             }
 
-            if (!(input instanceof Array)) {
-              input = [input];
+            // Create a sanitized submission object.
+            var submissionData = {data: {}};
+            if ($scope.submission._id) {
+              submissionData._id = $scope.submission._id;
+            }
+            if ($scope.submission.data._id) {
+              submissionData._id = $scope.submission.data._id;
             }
 
-            var final = [];
-            input.forEach(function(element) {
-              if (element && element._id) {
-                final.push(element._id);
-              }
-            });
-
-            return final;
-          };
-
-          var defaultPermissions = {};
-          FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (component.type === 'resource' && component.key && component.defaultPermission) {
-              defaultPermissions[component.key] = component.defaultPermission;
-            }
-            if ($scope.submission.data.hasOwnProperty(component.key)) {
-              var value = $scope.submission.data[component.key];
-              if (component.type === 'number' && (value !== null)) {
-                submissionData.data[component.key] = value ? parseFloat(value) : 0;
-              }
-              else {
-                submissionData.data[component.key] = value;
-              }
-            }
-          }, true);
-
-          angular.forEach($scope.submission.data, function(value, key) {
-            if (value && !value.hasOwnProperty('_id')) {
-              submissionData.data[key] = value;
-            }
-
-            // Setup the submission access.
-            var perm = defaultPermissions[key];
-            if (perm) {
-              submissionData.access = submissionData.access || [];
-
-              // Coerce value into an array for plucking.
-              if (!(value instanceof Array)) {
-                value = [value];
+            var grabIds = function(input) {
+              if (!input) {
+                return [];
               }
 
-              // Try to find and update an existing permission.
-              var found = false;
-              submissionData.access.forEach(function(permission) {
-                if (permission.type === perm) {
-                  found = true;
-                  permission.resources = permission.resources || [];
-                  permission.resources.concat(grabIds(value));
+              if (!(input instanceof Array)) {
+                input = [input];
+              }
+
+              var final = [];
+              input.forEach(function(element) {
+                if (element && element._id) {
+                  final.push(element._id);
                 }
               });
 
-              // Add a permission, because one was not found.
-              if (!found) {
-                submissionData.access.push({
-                  type: perm,
-                  resources: grabIds(value)
-                });
+              return final;
+            };
+
+            var defaultPermissions = {};
+            FormioUtils.eachComponent($scope.form.components, function(component) {
+              if (component.type === 'resource' && component.key && component.defaultPermission) {
+                defaultPermissions[component.key] = component.defaultPermission;
               }
+              if ($scope.submission.data.hasOwnProperty(component.key)) {
+                var value = $scope.submission.data[component.key];
+                if (component.type === 'number' && (value !== null)) {
+                  submissionData.data[component.key] = value ? parseFloat(value) : 0;
+                }
+                else {
+                  submissionData.data[component.key] = value;
+                }
+              }
+            }, true);
+
+            angular.forEach($scope.submission.data, function(value, key) {
+              if (value && !value.hasOwnProperty('_id')) {
+                submissionData.data[key] = value;
+              }
+
+              // Setup the submission access.
+              var perm = defaultPermissions[key];
+              if (perm) {
+                submissionData.access = submissionData.access || [];
+
+                // Coerce value into an array for plucking.
+                if (!(value instanceof Array)) {
+                  value = [value];
+                }
+
+                // Try to find and update an existing permission.
+                var found = false;
+                submissionData.access.forEach(function(permission) {
+                  if (permission.type === perm) {
+                    found = true;
+                    permission.resources = permission.resources || [];
+                    permission.resources.concat(grabIds(value));
+                  }
+                });
+
+                // Add a permission, because one was not found.
+                if (!found) {
+                  submissionData.access.push({
+                    type: perm,
+                    resources: grabIds(value)
+                  });
+                }
+              }
+            });
+
+            // Allow the form to be completed externally.
+            $scope.$on('submitDone', function(event, submission, message) {
+              onSubmit(submission, message, form);
+            });
+
+            // Allow an error to be thrown externally.
+            $scope.$on('submitError', function(event, error) {
+              FormioScope.onError($scope, $element)(error);
+            });
+
+            var submitEvent = $scope.$emit('formSubmit', submissionData);
+            if (submitEvent.defaultPrevented) {
+              // Listener wants to cancel the form submission
+              form.submitting = false;
+              return;
             }
-          });
 
-          // Allow the form to be completed externally.
-          $scope.$on('submitDone', function(event, submission, message) {
-            onSubmit(submission, message, form);
-          });
-
-          // Allow an error to be thrown externally.
-          $scope.$on('submitError', function(event, error) {
-            FormioScope.onError($scope, $element)(error);
-          });
-
-          var submitEvent = $scope.$emit('formSubmit', submissionData);
-          if (submitEvent.defaultPrevented) {
-            // Listener wants to cancel the form submission
-            form.submitting = false;
-            return;
-          }
-
-          // Make sure to make a copy of the submission data to remove bad characters.
-          submissionData = angular.copy(submissionData);
-          $scope.submitForm(submissionData, form);
+            // Make sure to make a copy of the submission data to remove bad characters.
+            submissionData = angular.copy(submissionData);
+            $scope.submitForm(submissionData, form);
+          }.bind(this));
         };
       }
     ],
@@ -69890,7 +70079,7 @@ module.exports = function() {
   };
 };
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -69907,20 +70096,9 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
-var _cloneDeep = _dereq_('lodash/cloneDeep');
-var _filter = _dereq_('lodash/filter');
 var _get = _dereq_('lodash/get');
-
-// FOR-524 - Attempt to load json logic.
-var jsonLogic;
-try {
-  jsonLogic = _dereq_('json-logic-js') || undefined;
-}
-catch (e) {
-  // Ignore optional module.
-}
 
 module.exports = [
   'Formio',
@@ -70042,22 +70220,12 @@ module.exports = [
 
           // FOR-71 - Dont watch in the builder view.
           // Calculate value when data changes.
-          if (!$scope.builder && ($scope.component.calculateValue || (jsonLogic && _get($scope.component, 'validate.json')))) {
+          if (!$scope.builder && ($scope.component.calculateValue || _get($scope.component, 'validate.json'))) {
             $scope.$watch('data', function() {
-              // Process calculated value stuff if present.
-              if ($scope.component.calculateValue) {
-                try {
-                  $scope.data[$scope.component.key] = eval('(function(data) { var value = [];' + $scope.component.calculateValue.toString() + '; return value; })($scope.data)');
-                }
-                catch (e) {
-                  /* eslint-disable no-console */
-                  console.warn('An error occurred calculating a value for ' + $scope.component.key, e);
-                  /* eslint-enable no-console */
-                }
-              }
+              FormioUtils.checkCalculated($scope.component, $scope.submission, $scope.data);
 
               // Process jsonLogic stuff if present.
-              if (jsonLogic && _get($scope.component, 'validate.json')) {
+              if (_get($scope.component, 'validate.json')) {
                 var input;
 
                 // Only json parse once.
@@ -70081,8 +70249,8 @@ module.exports = [
 
                 var valid;
                 try {
-                  valid = jsonLogic.apply(input, {
-                    data: $scope.submission.data,
+                  valid = FormioUtils.jsonLogic.apply(input, {
+                    data: $scope.submission ? $scope.submission.data : $scope.data,
                     row: $scope.data
                   });
                 }
@@ -70121,71 +70289,11 @@ module.exports = [
 
           // Add a new field value.
           $scope.addFieldValue = function() {
-            var value = '';
-            if ($scope.component.hasOwnProperty('customDefaultValue')) {
-              try {
-                /* eslint-disable no-unused-vars */
-                var data = _cloneDeep($scope.data);
-                /* eslint-enable no-unused-vars */
-                value = eval('(function(data) { var value = "";' + $scope.component.customDefaultValue.toString() + '; return value; })(data)');
-              }
-              catch (e) {
-                /* eslint-disable no-console */
-                console.warn('An error occurrend in a custom default value in ' + $scope.component.key, e);
-                /* eslint-enable no-console */
-                value = '';
-              }
-            }
-            else if ($scope.component.hasOwnProperty('defaultValue')) {
-              // Fix for select components
-              if ($scope.component.type === 'select') {
-                try {
-                  // Allow a key:value search
-                  var parts = $scope.component.defaultValue.split(':');
-                  var results;
-                  // If only one part was specified, search by value
-                  /* eslint-disable max-depth */
-                  if (parts.length === 1) {
-                    results = _filter($scope.selectItems, {value: parts[0]});
-
-                    // Trim results based on multiple
-                    if (!$scope.component.multiple) {
-                      value = results.shift();
-                    }
-                    else {
-                      value = results;
-                    }
-                  }
-                  // If two parts were specified, allow for key and value customization.
-                  else if (parts.length === 2) {
-                    var search = {};
-                    search[parts[0]] = parts[1];
-
-                    results = _filter($scope.selectItems, search);
-
-                    // Trim results based on multiple
-                    if (!$scope.component.multiple) {
-                      value = results.shift();
-                    }
-                    else {
-                      value = results;
-                    }
-                  }
-                }
-                catch (e) {
-                  /* eslint-disable no-console */
-                  console.log('An issue occurred with the select defaultValue for: ' + $scope.component.key);
-                  console.log('Could not find defaultValue (' + $scope.defaultValue + ') in the selectItems');
-                  console.log($scope.selectItems);
-                  /* eslint-enable no-console */
-                }
-              }
-              else {
-                value = $scope.component.defaultValue;
-              }
-            }
-            $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || [];
-            $scope.data[$scope.component.key].push(value);
+            var defaultData = {};
+            FormioUtils.checkDefaultValue($scope.component, $scope.submission, defaultData, $scope, function() {
+              $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || [];
+              $scope.data[$scope.component.key].push(defaultData[$scope.component.key]);
+            });
           };
 
           // Remove a field value.
@@ -70226,218 +70334,9 @@ module.exports = [
 
           // FOR-71 - Dont watch in the builder view.
           if (!$scope.builder) {
-            /**
-             * Using the list of default options, split them with the identifier, and use filter to get each item.
-             *
-             * @param defaultItems
-             * @param searchItems
-             * @returns {Array}
-             */
-            var pluckItems = function(defaultItems, searchItems) {
-              var temp = [];
-              if (!defaultItems || !defaultItems.length) {
-                return temp;
-              }
-              if (typeof defaultItems === 'string') {
-                defaultItems = [defaultItems];
-              }
-
-              defaultItems.forEach(function(item) {
-                var parts = item.split(':');
-                if (parts.length === 2) {
-                  var result = _filter(searchItems, function(potential) {
-                    if (_get(potential, parts[0]) === parts[1]) {
-                      return true;
-                    }
-                  });
-
-                  if (result) {
-                    temp = temp.concat(result);
-                  }
-                }
-              });
-
-              return temp;
-            };
-
-            $scope.$watch('component.multiple', function(mult) {
-              // Establish a default for data.
+            $scope.$watch('component.multiple', function() {
               $scope.data = $scope.data || {};
-              var value = null;
-
-              // Use the current data or default.
-              if ($scope.data.hasOwnProperty($scope.component.key)) {
-                if (!mult) {
-                  $scope.data[$scope.component.key] = $scope.data[$scope.component.key];
-                  return;
-                }
-
-                // If a value is present, and its an array, assign it to the value.
-                if ($scope.data[$scope.component.key] instanceof Array) {
-                  value = $scope.data[$scope.component.key];
-                }
-                // If a value is present and it is not an array, wrap the value.
-                else {
-                  value = $scope.data[$scope.component.key].split(',');
-                }
-
-                $scope.data[$scope.component.key] = value;
-                return;
-              }
-              else if ($scope.component.hasOwnProperty('customDefaultValue')) {
-                if (!mult) {
-                  try {
-                    value = eval('(function(data) { var value = "";' + $scope.component.customDefaultValue.toString() + '; return value; })($scope.data)');
-                  }
-                  catch (e) {
-                    /* eslint-disable no-console */
-                    console.warn('An error occurrend in a custom default value in ' + $scope.component.key, e);
-                    /* eslint-enable no-console */
-                    value = '';
-                  }
-                  $scope.data[$scope.component.key] = value;
-                  return;
-                }
-
-                try {
-                  value = eval('(function(data) { var value = "";' + $scope.component.customDefaultValue.toString() + '; return value; })($scope.data)');
-                }
-                catch (e) {
-                  /* eslint-disable no-console */
-                  console.warn('An error occurrend in a custom default value in ' + $scope.component.key, e);
-                  /* eslint-enable no-console */
-                  value = '';
-                }
-                $scope.data[$scope.component.key] = value;
-                return;
-              }
-              else if ($scope.component.hasOwnProperty('defaultValue')) {
-                // FA-835 - The default values for select boxes are set in the component.
-                if ($scope.component.type === 'selectboxes') {
-                  return;
-                }
-
-                // If there is a default value and it is not an array, wrap the value.
-                if (mult && typeof $scope.component.defaultValue === 'string') {
-                  value = $scope.component.defaultValue.split(',');
-                }
-                else {
-                  value = $scope.component.defaultValue;
-                }
-
-                // If no default is provided, then skip...
-                if (!value || !value.length) {
-                  return;
-                }
-
-                // FOR-193 - Fix default value for the number component.
-                // FOR-262 - Fix multiple default value for the number component.
-                if ($scope.component.type === 'number') {
-                  if (!mult) {
-                    // FOR-290 - Fix default values for number components, to allow decimal numbers.
-                    if ($scope.component.defaultValue.indexOf('.') !== -1) {
-                      $scope.data[$scope.component.key] = parseFloat($scope.component.defaultValue);
-                      return;
-                    }
-
-                    $scope.data[$scope.component.key] = parseInt($scope.component.defaultValue);
-                    return;
-                  }
-
-                  $scope.data[$scope.component.key] = value.map(function(item) {
-                    try {
-                      // FOR-290 - Fix default values for number components, to allow decimal numbers.
-                      if (item.indexOf('.') !== -1) {
-                        return parseFloat(item);
-                      }
-
-                      return parseInt(item);
-                    }
-                    catch (e) {
-                      return 0;
-                    }
-                  });
-                  return;
-                }
-                // FOR-135 - Add default values for select components.
-                else if ($scope.component.type === 'select') {
-                  // FOR-337 - Fix default values for select components without multi enabled.
-                  if (!mult) {
-                    $scope.data[$scope.component.key] = $scope.component.defaultValue;
-                    return;
-                  }
-
-                  // If using the values input, split the default values, and search the options for each value in the list.
-                  if ($scope.component.dataSrc === 'values') {
-                    var temp = [];
-
-                    $scope.component.data.values.forEach(function(item) {
-                      if (value.indexOf(item.value) !== -1) {
-                        temp.push(item);
-                      }
-                    });
-
-                    $scope.data[$scope.component.key] = temp;
-                    return;
-                  }
-                  // If using json input, split the values and search each key path for the item
-                  else if ($scope.component.dataSrc === 'json') {
-                    if (typeof $scope.component.data.json === 'string') {
-                      try {
-                        $scope.component.data.json = JSON.parse($scope.component.data.json);
-                      }
-                      catch (e) {
-                        /* eslint-disable no-console */
-                        console.log(e);
-                        console.log('Could not parse the given JSON for the select component: ' + $scope.component.key);
-                        console.log($scope.component.data.json);
-                        /* eslint-enable no-console */
-                        $scope.component.data.json = [];
-                      }
-                    }
-
-                    $scope.data[$scope.component.key] = pluckItems(value, $scope.component.data.json);
-                    return;
-                  }
-                  else if ($scope.component.dataSrc === 'url' || $scope.component.dataSrc === 'resource') {
-                    // Wait until loading is done.
-                    $scope.$on('selectLoaded', function() {
-                      $scope.data[$scope.component.key] = pluckItems(value, $scope.selectItems);
-                    });
-                  }
-                }
-                // FOR-504 - Fix default values for survey components.
-                else if ($scope.component.type === 'survey') {
-                  if (!$scope.component.hasOwnProperty('defaultValue')) {
-                    return;
-                  }
-
-                  $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || {};
-                  $scope.component.questions.forEach(function(question) {
-                    $timeout(function() {
-                      $scope.data[$scope.component.key][question.value] = $scope.data[$scope.component.key][question.value] || $scope.component.defaultValue;
-                    });
-                  });
-                }
-                else {
-                  if (!mult) {
-                    $scope.data[$scope.component.key] = $scope.component.defaultValue;
-                    return;
-                  }
-
-                  // If there is a default value and it is an array, assign it to the value.
-                  if ($scope.component.defaultValue instanceof Array) {
-                    $scope.data[$scope.component.key] = $scope.component.defaultValue;
-                    return;
-                  }
-
-                  // Make the defaultValue a single element array because were multi.
-                  $scope.data[$scope.component.key] = [$scope.component.defaultValue];
-                  return;
-                }
-              }
-
-              // Couldn't safely default, don't add a garbage value.
+              FormioUtils.checkDefaultValue($scope.component, $scope.submission, $scope.data, $scope);
               return;
             });
           }
@@ -70456,7 +70355,7 @@ module.exports = [
   }
 ];
 
-},{"json-logic-js":35,"lodash/cloneDeep":202,"lodash/filter":207,"lodash/get":209}],287:[function(_dereq_,module,exports){
+},{"lodash/get":209}],290:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -70523,7 +70422,7 @@ module.exports = [
   }
 ];
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70606,7 +70505,7 @@ module.exports = function() {
   };
 };
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],292:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -70625,7 +70524,7 @@ module.exports = [
   }
 ];
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],293:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70635,7 +70534,7 @@ module.exports = function() {
   };
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70667,7 +70566,7 @@ module.exports = function() {
   };
 };
 
-},{}],292:[function(_dereq_,module,exports){
+},{}],295:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -70722,8 +70621,11 @@ module.exports = function() {
   };
 };
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],296:[function(_dereq_,module,exports){
 "use strict";
+var isNaN = _dereq_('lodash/isNAN');
+var isFinite = _dereq_('lodash/isFinite');
+
 module.exports = function() {
   return {
     restrict: 'E',
@@ -70798,7 +70700,9 @@ module.exports = function() {
         $scope.formio = null;
         $scope.url = $scope.url || $scope.src;
         $scope.page = {};
+        $scope.activePage = {};
         $scope.pages = [];
+        $scope.history = [];
         $scope.hasTitles = false;
         $scope.colclass = '';
         if (!$scope.submission || !Object.keys($scope.submission).length) {
@@ -70821,6 +70725,7 @@ module.exports = function() {
           // When allowing navigate on invsalid
           // prev page alert can be visible.
           // Let's clear it
+          $scope.currentPage = $scope.currentPage || 0;
           $scope.showAlerts(null);
           $scope.pageWasVisited[$scope.currentPage] = true;
 
@@ -70841,6 +70746,7 @@ module.exports = function() {
             }
 
             $scope.page.components = $scope.pages[$scope.currentPage].components;
+            $scope.activePage = $scope.pages[$scope.currentPage];
             $scope.formioAlerts = [];
             if (scroll) {
               window.scrollTo(0, $scope.wizardTop);
@@ -70883,6 +70789,7 @@ module.exports = function() {
           }
           $scope.submission = {data: {}};
           $scope.currentPage = 0;
+          $scope.history = [];
         };
 
         // Check for errors.
@@ -70891,7 +70798,13 @@ module.exports = function() {
             // Change all of the fields to not be pristine.
             angular.forEach($element.find('[name="formioForm"]').find('*'), function(element) {
               var elementScope = angular.element(element).scope();
+              if (!elementScope || !elementScope.component) {
+                return;
+              }
               var fieldForm = elementScope.formioForm;
+              if (!fieldForm) {
+                return;
+              }
               if (fieldForm[elementScope.component.key]) {
                 fieldForm[elementScope.component.key].$pristine = false;
               }
@@ -70927,126 +70840,195 @@ module.exports = function() {
             }
           }
 
-          // Create a sanitized submission object.
-          var submissionData = {data: {}};
-          if ($scope.submission._id) {
-            submissionData._id = $scope.submission._id;
-          }
-          if ($scope.submission.data._id) {
-            submissionData._id = $scope.submission.data._id;
-          }
-
-          var grabIds = function(input) {
-            if (!input) {
-              return [];
+          FormioUtils.alter('submit', $scope, $scope.submission, function(err) {
+            if (err) {
+              return this.showAlerts(err.alerts);
             }
 
-            if (!(input instanceof Array)) {
-              input = [input];
+            // Create a sanitized submission object.
+            var submissionData = {data: {}};
+            if ($scope.submission._id) {
+              submissionData._id = $scope.submission._id;
+            }
+            if ($scope.submission.data._id) {
+              submissionData._id = $scope.submission.data._id;
             }
 
-            var final = [];
-            input.forEach(function(element) {
-              if (element && element._id) {
-                final.push(element._id);
-              }
-            });
-
-            return final;
-          };
-
-          var defaultPermissions = {};
-          FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (component.type === 'resource' && component.key && component.defaultPermission) {
-              defaultPermissions[component.key] = component.defaultPermission;
-            }
-            if (submissionData.data.hasOwnProperty(component.key) && (component.type === 'number')) {
-              var value = $scope.submission.data[component.key];
-              if (component.type === 'number') {
-                submissionData.data[component.key] = value ? parseFloat(value) : 0;
-              }
-              else {
-                submissionData.data[component.key] = value;
-              }
-            }
-          }, true);
-
-          angular.forEach($scope.submission.data, function(value, key) {
-            submissionData.data[key] = value;
-
-            // Setup the submission access.
-            var perm = defaultPermissions[key];
-            if (perm) {
-              submissionData.access = submissionData.access || [];
-
-              // Coerce value into an array for plucking.
-              if (!(value instanceof Array)) {
-                value = [value];
+            var grabIds = function(input) {
+              if (!input) {
+                return [];
               }
 
-              // Try to find and update an existing permission.
-              var found = false;
-              submissionData.access.forEach(function(permission) {
-                if (permission.type === perm) {
-                  found = true;
-                  permission.resources = permission.resources || [];
-                  permission.resources.concat(grabIds(value));
+              if (!(input instanceof Array)) {
+                input = [input];
+              }
+
+              var final = [];
+              input.forEach(function(element) {
+                if (element && element._id) {
+                  final.push(element._id);
                 }
               });
 
-              // Add a permission, because one was not found.
-              if (!found) {
-                submissionData.access.push({
-                  type: perm,
-                  resources: grabIds(value)
-                });
-              }
-            }
-          });
-          // Strip out any angular keys.
-          submissionData = angular.copy(submissionData);
+              return final;
+            };
 
-          var submitEvent = $scope.$emit('formSubmit', submissionData);
-          if (submitEvent.defaultPrevented) {
+            var defaultPermissions = {};
+            FormioUtils.eachComponent($scope.form.components, function(component) {
+              if (component.type === 'resource' && component.key && component.defaultPermission) {
+                defaultPermissions[component.key] = component.defaultPermission;
+              }
+              if (submissionData.data.hasOwnProperty(component.key) && (component.type === 'number')) {
+                var value = $scope.submission.data[component.key];
+                if (component.type === 'number') {
+                  submissionData.data[component.key] = value ? parseFloat(value) : 0;
+                }
+                else {
+                  submissionData.data[component.key] = value;
+                }
+              }
+            }, true);
+
+            angular.forEach($scope.submission.data, function(value, key) {
+              submissionData.data[key] = value;
+
+              // Setup the submission access.
+              var perm = defaultPermissions[key];
+              if (perm) {
+                submissionData.access = submissionData.access || [];
+
+                // Coerce value into an array for plucking.
+                if (!(value instanceof Array)) {
+                  value = [value];
+                }
+
+                // Try to find and update an existing permission.
+                var found = false;
+                submissionData.access.forEach(function(permission) {
+                  if (permission.type === perm) {
+                    found = true;
+                    permission.resources = permission.resources || [];
+                    permission.resources.concat(grabIds(value));
+                  }
+                });
+
+                // Add a permission, because one was not found.
+                if (!found) {
+                  submissionData.access.push({
+                    type: perm,
+                    resources: grabIds(value)
+                  });
+                }
+              }
+            });
+            // Strip out any angular keys.
+            submissionData = angular.copy(submissionData);
+
+            var submitEvent = $scope.$emit('formSubmit', submissionData);
+            if (submitEvent.defaultPrevented) {
               // Listener wants to cancel the form submission
               return;
-          }
-
-          var onDone = function(submission) {
-            if ($scope.storage && !$scope.readOnly) {
-              localStorage.setItem($scope.storage, '');
             }
-            $scope.showAlerts({
-              type: 'success',
-              message: 'Submission Complete!'
-            });
-            $scope.$emit('formSubmission', submission);
-          };
 
-          // Save to specified action.
-          if ($scope.action) {
-            var method = submissionData._id ? 'put' : 'post';
-            $http[method]($scope.action, submissionData).then(function(submission) {
-              Formio.clearCache();
-              onDone(submission);
-            }, FormioScope.onError($scope, $element));
-          }
-          else if ($scope.formio && !$scope.formio.noSubmit) {
-            $scope.formio.saveSubmission(submissionData).then(onDone).catch(FormioScope.onError($scope, $element));
-          }
-          else {
-            onDone(submissionData);
-          }
+            var onDone = function(submission) {
+              if ($scope.storage && !$scope.readOnly) {
+                localStorage.setItem($scope.storage, '');
+              }
+              $scope.showAlerts({
+                type: 'success',
+                message: 'Submission Complete!'
+              });
+              $scope.$emit('formSubmission', submission);
+            };
+
+            // Save to specified action.
+            if ($scope.action) {
+              var method = submissionData._id ? 'put' : 'post';
+              $http[method]($scope.action, submissionData).then(function(submission) {
+                Formio.clearCache();
+                onDone(submission);
+              }, FormioScope.onError($scope, $element));
+            }
+            else if ($scope.formio && !$scope.formio.noSubmit) {
+              $scope.formio.saveSubmission(submissionData).then(onDone).catch(FormioScope.onError($scope, $element));
+            }
+            else {
+              onDone(submissionData);
+            }
+          }.bind(this));
         };
 
         $scope.cancel = function() {
           $scope.clear();
-          showPage(true);
-          $scope.$emit('cancel');
+          FormioUtils.alter('cancel', $scope, function(err) {
+            if (err) {
+              return this.showAlerts(err.alerts);
+            }
+            showPage(true);
+            $scope.$emit('cancel');
+          }.bind(this));
         };
 
         $scope.pageHasErrors = {};
         $scope.pageWasVisited = {};
+
+        $scope.getPageByKey = function(key) {
+          var pageIndex = 0;
+          angular.forEach($scope.pages, function(page, index) {
+            if (page.key === key) {
+              pageIndex = index;
+              return false;
+            }
+          });
+          return pageIndex;
+        };
+
+        /* eslint-disable max-depth */
+        $scope.getNextPage = function() {
+          var nextPage = $scope.currentPage;
+          nextPage++;
+          var currentPage = $scope.pages[$scope.currentPage];
+          if (currentPage.nextPage) {
+            var page = 0;
+            // Allow for script execution.
+            if (typeof currentPage.nextPage === 'string') {
+              try {
+                eval(currentPage.nextPage.toString());
+                if (!isNaN(parseInt(page, 10)) && isFinite(page)) {
+                  return page;
+                }
+                if (typeof page !== 'string') {
+                  return page;
+                }
+
+                // Assume they passed back the key of the page to go to.
+                return $scope.getPageByKey(page);
+              }
+              catch (e) {
+                /* eslint-disable no-console */
+                console.warn('An error occurred in a custom nextPage function statement for component ' + $scope.page.key, e);
+                /* eslint-enable no-console */
+                return page;
+              }
+            }
+            // Or use JSON Logic.
+            else {
+              var result = FormioUtils.jsonLogic.apply(currentPage.nextPage, {
+                data: $scope.submission.data,
+                page: page,
+                form: $scope.page
+              });
+              var newPage = parseInt(result, 10);
+              if (!isNaN(parseInt(newPage, 10)) && isFinite(newPage)) {
+                return newPage;
+              }
+
+              return $scope.getPageByKey(result);
+            }
+          }
+          return nextPage;
+        };
+        /* eslint-enable max-depth */
 
         // Move onto the next page.
         $scope.next = function() {
@@ -71060,22 +71042,38 @@ module.exports = function() {
           else {
             $scope.pageHasErrors[$scope.currentPage] = false;
           }
-          if ($scope.currentPage >= ($scope.pages.length - 1)) {
-            return;
+
+          // Get the next page.
+          var nextPage = $scope.getNextPage();
+          if (nextPage >= $scope.pages.length) {
+            nextPage = $scope.pages.length - 1;
           }
-          $scope.currentPage++;
-          showPage(true);
-          $scope.$emit('wizardNext', $scope.currentPage);
+          if (nextPage < 0) {
+            nextPage = 0;
+          }
+
+          $scope.history.push($scope.currentPage);
+          $scope.currentPage = nextPage;
+          FormioUtils.alter('nextPage', $scope, function(err) {
+            if (err) {
+              return this.showAlerts(err.alerts);
+            }
+            showPage(true);
+            $scope.$emit('wizardNext', $scope.currentPage);
+          }.bind(this));
         };
 
         // Move onto the previous page.
         $scope.prev = function() {
-          if ($scope.currentPage < 1) {
-            return;
-          }
-          $scope.currentPage--;
-          showPage(true);
-          $scope.$emit('wizardPrev', $scope.currentPage);
+          var prev = $scope.history.pop();
+          $scope.currentPage = prev;
+          FormioUtils.alter('prevPage', $scope, function(err) {
+            if (err) {
+              return this.showAlerts(err.alerts);
+            }
+            showPage(true);
+            $scope.$emit('wizardPrev', $scope.currentPage);
+          }.bind(this));
         };
 
         $scope.goto = function(page) {
@@ -71140,17 +71138,26 @@ module.exports = function() {
           });
 
           // FOR-71
-          if (!$scope.builder && hasConditionalPages) {
+          if (!$scope.builder) {
             $scope.$watch('submission.data', function(data) {
-              var newPages = [];
-              angular.forEach(allPages, function(page) {
-                if (FormioUtils.isVisible(page, null, data)) {
-                  newPages.push(page);
+              if (hasConditionalPages) {
+                var newPages = [];
+                angular.forEach(allPages, function(page) {
+                  if (FormioUtils.isVisible(page, null, data)) {
+                    newPages.push(page);
+                  }
+                });
+                $scope.pages = newPages;
+                updatePages();
+                setTimeout($scope.$apply.bind($scope), 10);
+              }
+
+              // Calculate values for hidden fields outside of wizard.
+              angular.forEach(form.components, function(component) {
+                if (component.type !== 'panel') {
+                  FormioUtils.checkCalculated(component, $scope.submission, $scope.submission.data);
                 }
               });
-              $scope.pages = newPages;
-              updatePages();
-              setTimeout($scope.$apply.bind($scope), 10);
             }, true);
           }
 
@@ -71200,7 +71207,7 @@ module.exports = function() {
   };
 };
 
-},{}],294:[function(_dereq_,module,exports){
+},{"lodash/isFinite":219,"lodash/isNAN":222}],297:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71383,12 +71390,305 @@ module.exports = [
   }
 ];
 
-},{}],295:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
+var _filter = _dereq_('lodash/filter');
+var _get = _dereq_('lodash/get');
 
 module.exports = function() {
+  var hooks = {};
   return {
+    // Asynchronously iterate through a map.
+    each: function(items, each, done) {
+      var index = -1;
+      var arrayItems = [];
+      for (var i in items) {
+        arrayItems.push(items[i]);
+      }
+
+      (function next(err, previous) {
+        if (err) {
+          err.item = previous;
+          return done ? done(err) : null;
+        }
+        index++;
+        var item = arrayItems[index];
+        if (!item) {
+          return done ? done() : null;
+        }
+        each(item, function(err) {
+          next(err, item);
+        });
+      })();
+    },
+    hook: function(name, cb) {
+      var parts = name.split(':');
+      var key = parts[0];
+      name = (parts.length > 1) ? parts[1] : key;
+
+      if (!hooks[name]) {
+        hooks[name] = {};
+      }
+      hooks[name][key] = cb;
+    },
+    alter: function() {
+      var name = arguments[0];
+      var fn = (typeof arguments[arguments.length - 1] === 'function') ? arguments[arguments.length - 1] : null;
+      var args = Array.prototype.slice.call(arguments, 1, (arguments.length - 1));
+      if (hooks && hooks[name]) {
+        this.each(hooks[name], function(hook, next) {
+          hook.apply(this, args.concat([next]));
+        }, fn);
+      }
+      else {
+        // If this is an async hook instead of a sync.
+        if (fn) {
+          return fn(null, arguments[1]);
+        }
+        else {
+          return arguments[1];
+        }
+      }
+    },
+    pluckItems: function(defaultItems, searchItems) {
+      var temp = [];
+      if (!defaultItems || !defaultItems.length) {
+        return temp;
+      }
+      if (typeof defaultItems === 'string') {
+        defaultItems = [defaultItems];
+      }
+
+      defaultItems.forEach(function(item) {
+        var parts = item.split(':');
+        if (parts.length === 2) {
+          var result = _filter(searchItems, function(potential) {
+            if (_get(potential, parts[0]) === parts[1]) {
+              return true;
+            }
+          });
+
+          if (result) {
+            temp = temp.concat(result);
+          }
+        }
+      });
+
+      return temp;
+    },
+    checkDefaultValue: function(component, submission, data, $scope, done) {
+      /* eslint-disable max-depth */
+      var value = '';
+      if (!done) {
+        done = function(added) {
+          return added;
+        };
+      }
+
+      // Use the current data or default.
+      if (data.hasOwnProperty(component.key)) {
+        if (!component.multiple) {
+          return done(false);
+        }
+
+        // If the value is an array then we are good.
+        if (data[component.key] instanceof Array) {
+          return done(false);
+        }
+
+        // Split the value based on CSV
+        data[component.key] = data[component.key].split(',');
+        return done(true);
+      }
+      else if (component.hasOwnProperty('customDefaultValue')) {
+        if (typeof component.customDefaultValue === 'string') {
+          try {
+            value = eval('(function(data) { var value = "";' + component.customDefaultValue + '; return value; })(data)');
+          }
+          catch (e) {
+            /* eslint-disable no-console */
+            console.warn('An error occurrend in a custom default value in ' + component.key, e);
+            /* eslint-enable no-console */
+            value = '';
+          }
+        }
+        else {
+          try {
+            value = formioUtils.jsonLogic.apply(component.customDefaultValue, {
+              data: submission ? submission.data : data,
+              row: data
+            });
+          }
+          catch (e) {
+            /* eslint-disable no-console */
+            console.warn('An error occurred calculating a value for ' + component.key, e);
+            /* eslint-enable no-console */
+            value = '';
+          }
+        }
+        data[component.key] = component.multiple ? [value] : value;
+        return done(true);
+      }
+      else if (component.hasOwnProperty('defaultValue')) {
+        // FA-835 - The default values for select boxes are set in the component.
+        if (component.type === 'selectboxes') {
+          return done(false);
+        }
+
+        // If there is a default value and it is not an array, wrap the value.
+        if (component.multiple && typeof component.defaultValue === 'string') {
+          value = component.defaultValue.split(',');
+        }
+        else {
+          value = component.defaultValue;
+        }
+
+        // If no default is provided, then skip...
+        if (!value || !value.length) {
+          return done(false);
+        }
+
+        // FOR-193 - Fix default value for the number component.
+        // FOR-262 - Fix multiple default value for the number component.
+        if (component.type === 'number') {
+          if (!component.multiple) {
+            // FOR-290 - Fix default values for number components, to allow decimal numbers.
+            if (component.defaultValue.indexOf('.') !== -1) {
+              data[component.key] = parseFloat(component.defaultValue);
+              return done(true);
+            }
+
+            data[component.key] = parseInt(component.defaultValue);
+            return done(true);
+          }
+
+          data[component.key] = value.map(function(item) {
+            try {
+              // FOR-290 - Fix default values for number components, to allow decimal numbers.
+              if (item.indexOf('.') !== -1) {
+                return parseFloat(item);
+              }
+
+              return parseInt(item);
+            }
+            catch (e) {
+              return 0;
+            }
+          });
+          return done(true);
+        }
+        // FOR-135 - Add default values for select components.
+        else if (component.type === 'select') {
+          // FOR-337 - Fix default values for select components without multi enabled.
+          if (!component.multiple) {
+            data[component.key] = component.defaultValue;
+            return done(true);
+          }
+
+          // If using the values input, split the default values, and search the options for each value in the list.
+          if (component.dataSrc === 'values') {
+            var temp = [];
+
+            component.data.values.forEach(function(item) {
+              if (value.indexOf(item.value) !== -1) {
+                temp.push(item);
+              }
+            });
+
+            data[component.key] = temp;
+            return done(true);
+          }
+          // If using json input, split the values and search each key path for the item
+          else if (component.dataSrc === 'json') {
+            if (typeof component.data.json === 'string') {
+              try {
+                component.data.json = JSON.parse(component.data.json);
+              }
+              catch (e) {
+                /* eslint-disable no-console */
+                console.log(e);
+                console.log('Could not parse the given JSON for the select component: ' + component.key);
+                console.log(component.data.json);
+                /* eslint-enable no-console */
+                component.data.json = [];
+              }
+            }
+
+            data[component.key] = this.pluckItems(value, component.data.json);
+            return done(true);
+          }
+          else if (component.dataSrc === 'url' || component.dataSrc === 'resource') {
+            // Wait until loading is done.
+            $scope.$on('selectLoaded', function() {
+              data[component.key] = this.pluckItems(value, $scope.selectItems);
+              return done(true);
+            }.bind(this));
+          }
+        }
+        // FOR-504 - Fix default values for survey components.
+        else if (component.type === 'survey') {
+          if (!component.hasOwnProperty('defaultValue')) {
+            return done(false);
+          }
+
+          data[component.key] = data[component.key] || {};
+          this.each(component.questions, function(question, next) {
+            setTimeout(function() {
+              data[component.key][question.value] = data[component.key][question.value] || component.defaultValue;
+              return next();
+            }, 1);
+          }, function() {
+            done(true);
+          });
+        }
+        else {
+          if (!component.multiple) {
+            data[component.key] = component.defaultValue;
+            return done(true);
+          }
+
+          // If there is a default value and it is an array, assign it to the value.
+          if (component.defaultValue instanceof Array) {
+            data[component.key] = component.defaultValue;
+            return done(true);
+          }
+
+          // Make the defaultValue a single element array because were multi.
+          data[component.key] = [component.defaultValue];
+          return done(true);
+        }
+      }
+      /* eslint-enable max-depth */
+    },
+    checkCalculated: function(component, submission, data) {
+      // Process calculated value stuff if present.
+      if (component.calculateValue) {
+        if (typeof component.calculateValue === 'string') {
+          try {
+            data[component.key] = eval('(function(data) { var value = [];' + component.calculateValue.toString() + '; return value; })(data)');
+          }
+          catch (e) {
+            /* eslint-disable no-console */
+            console.warn('An error occurred calculating a value for ' + component.key, e);
+            /* eslint-enable no-console */
+          }
+        }
+        else {
+          try {
+            data[component.key] = formioUtils.jsonLogic.apply(component.calculateValue, {
+              data: submission ? submission.data : data,
+              row: data
+            });
+          }
+          catch (e) {
+            /* eslint-disable no-console */
+            console.warn('An error occurred calculating a value for ' + component.key, e);
+            /* eslint-enable no-console */
+          }
+        }
+      }
+    },
     checkVisible: function(component, row, data) {
       var visible = formioUtils.checkCondition(component, row, data);
       if (!visible) {
@@ -71416,6 +71716,7 @@ module.exports = function() {
     eachComponent: formioUtils.eachComponent,
     getComponent: formioUtils.getComponent,
     getValue: formioUtils.getValue,
+    jsonLogic: formioUtils.jsonLogic,
     hideFields: function(form, components) {
       this.eachComponent(form.components, function(component) {
         for (var i in components) {
@@ -71495,7 +71796,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":34}],296:[function(_dereq_,module,exports){
+},{"formiojs/utils":34,"lodash/filter":207,"lodash/get":209}],299:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -71621,7 +71922,7 @@ module.exports = function() {
   };
 };
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],300:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -71670,7 +71971,7 @@ module.exports = [
   }
 ];
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],301:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71704,7 +72005,7 @@ module.exports = [
   }
 ];
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -71713,7 +72014,7 @@ module.exports = [
   }
 ];
 
-},{}],300:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -71726,7 +72027,7 @@ module.exports = [
   }
 ];
 
-},{}],301:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -71745,7 +72046,7 @@ module.exports = [
   }
 ];
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -71758,7 +72059,7 @@ module.exports = [
   }
 ];
 
-},{}],303:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -71773,7 +72074,7 @@ module.exports = [
   }
 ];
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -71822,7 +72123,7 @@ module.exports = [
   }
 ];
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -71830,7 +72131,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],306:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -71844,7 +72145,7 @@ _dereq_('bootstrap-ui-datetime-picker/dist/datetime-picker');
 _dereq_('ng-dialog');
 _dereq_('./formio');
 
-},{"./formio":307,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":246,"ng-file-upload":248,"ui-select/dist/select":312}],307:[function(_dereq_,module,exports){
+},{"./formio":310,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":248,"ng-file-upload":250,"ui-select/dist/select":315}],310:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -71959,7 +72260,7 @@ app.run([
     );
 
     $templateCache.put('formio-wizard.html',
-      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\">\n    <div ng-class=\"{disabled: ($index > currentPage) && !formioOptions.wizardFreeNavigation, active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner\"\n        ng-class=\"{\n          'bg-success': !pageHasErrors[$index],\n          'bg-danger': pageHasErrors[$index],\n          'bg-warning': !pageWasVisited[$index] && currentPage > $index\n        }\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate:null:builder }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      url=\"url\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
+      "<div class=\"formio-wizard-wrapper\">\n  <div class=\"row bs-wizard\" style=\"border-bottom:0;\" ng-class=\"{hasTitles: hasTitles}\" ng-if=\"activePage.breadcrumb !== 'none'\">\n    <div ng-class=\"{disabled: ($index > currentPage) && !formioOptions.wizardFreeNavigation, active: ($index == currentPage), complete: ($index < currentPage), noTitle: !page.title}\" class=\"{{ colclass }} bs-wizard-step\" ng-repeat=\"page in pages track by $index\">\n      <div class=\"bs-wizard-stepnum-wrapper\">\n        <div class=\"text-center bs-wizard-stepnum\" ng-if=\"page.title\">{{ page.title }}</div>\n      </div>\n      <div class=\"progress\"><div class=\"progress-bar progress-bar-primary\"></div></div>\n      <a ng-click=\"goto($index)\" class=\"bs-wizard-dot bg-primary\"><div class=\"bs-wizard-dot-inner\"\n        ng-class=\"{\n          'bg-success': !pageHasErrors[$index],\n          'bg-danger': pageHasErrors[$index],\n          'bg-warning': !pageWasVisited[$index] && currentPage > $index\n        }\"></div></a>\n    </div>\n  </div>\n  <style type=\"text/css\">.bs-wizard > .bs-wizard-step:first-child { margin-left: {{ margin }}%; }</style>\n  <i ng-show=\"!wizardLoaded\" id=\"formio-loading\" style=\"font-size: 2em;\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\">{{ alert.message | formioTranslate:null:builder }}</div>\n  <div class=\"formio-wizard\">\n    <formio\n      ng-if=\"wizardLoaded\"\n      submission=\"submission\"\n      form=\"page\"\n      url=\"url\"\n      read-only=\"readOnly\"\n      hide-components=\"hideComponents\"\n      disable-components=\"disableComponents\"\n      formio-options=\"formioOptions\"\n      id=\"formio-wizard-form\"\n    ></formio>\n  </div>\n  <ul ng-show=\"wizardLoaded\" class=\"list-inline\">\n    <li><a class=\"btn btn-default\" ng-click=\"cancel()\">Cancel</a></li>\n    <li ng-if=\"currentPage > 0\"><a class=\"btn btn-primary\" ng-click=\"prev()\">Previous</a></li>\n    <li ng-if=\"currentPage < (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"next()\">Next</a>\n    </li>\n    <li ng-if=\"currentPage >= (pages.length - 1)\">\n      <a class=\"btn btn-primary\" ng-click=\"submit()\">Submit Form</a>\n    </li>\n  </ul>\n</div>\n"
     );
 
     $templateCache.put('formio-delete.html',
@@ -71995,7 +72296,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":267,"./directives/customValidator":283,"./directives/formio":284,"./directives/formioBindHtml.js":285,"./directives/formioComponent":286,"./directives/formioComponentView":287,"./directives/formioDelete":288,"./directives/formioElement":289,"./directives/formioErrors":290,"./directives/formioSubmission":291,"./directives/formioSubmissions":292,"./directives/formioWizard":293,"./factories/FormioScope":294,"./factories/FormioUtils":295,"./factories/formioInterceptor":297,"./factories/formioTableView":298,"./filters/flattenComponents":299,"./filters/safehtml":300,"./filters/tableComponents":301,"./filters/tableFieldView":302,"./filters/tableView":303,"./filters/translate":304,"./filters/trusturl":305,"./polyfills/polyfills":309,"./providers/Formio":310}],308:[function(_dereq_,module,exports){
+},{"./components":270,"./directives/customValidator":286,"./directives/formio":287,"./directives/formioBindHtml.js":288,"./directives/formioComponent":289,"./directives/formioComponentView":290,"./directives/formioDelete":291,"./directives/formioElement":292,"./directives/formioErrors":293,"./directives/formioSubmission":294,"./directives/formioSubmissions":295,"./directives/formioWizard":296,"./factories/FormioScope":297,"./factories/FormioUtils":298,"./factories/formioInterceptor":300,"./factories/formioTableView":301,"./filters/flattenComponents":302,"./filters/safehtml":303,"./filters/tableComponents":304,"./filters/tableFieldView":305,"./filters/tableView":306,"./filters/translate":307,"./filters/trusturl":308,"./polyfills/polyfills":312,"./providers/Formio":313}],311:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -72026,13 +72327,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":308}],310:[function(_dereq_,module,exports){
+},{"./Object.assign":311}],313:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -72102,7 +72403,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":27}],311:[function(_dereq_,module,exports){
+},{"formiojs":27}],314:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -72139,7 +72440,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],312:[function(_dereq_,module,exports){
+},{}],315:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -74567,7 +74868,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],313:[function(_dereq_,module,exports){
+},{}],316:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -75030,7 +75331,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75102,7 +75403,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],315:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75176,7 +75477,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],319:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75267,7 +75568,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75349,7 +75650,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],318:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -75401,21 +75702,45 @@ module.exports = function(app) {
         '<form-builder-option property="defaultValue"></form-builder-option>' +
         '<uib-accordion>' +
         '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
-        '    <textarea class="form-control" rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
-        '    <small>' +
-        '      <p>Enter custom default value code.</p>' +
-        '      <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
-        '      <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
-        '      <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
-        '    </small>' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Default" class="panel panel-default" is-open="true">' +
+        '        <textarea class="form-control" rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '        <small>' +
+        '          <p>Enter custom default value code.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Default" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom default value using <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.customDefaultValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
         '  </div>' +
         '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
-        '    <textarea class="form-control" rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
-        '    <small>' +
-        '      <p>Enter code to calculate a value.</p>' +
-        '      <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
-        '      <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
-        '    </small>' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Value" class="panel panel-default" is-open="true">' +
+        '        <textarea class="form-control" rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '        <small>' +
+        '          <p>Enter code to calculate a value.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Value" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom calculation logic with JSON and <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.calculateValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
         '  </div>' +
         '</uib-accordion>'
       );
@@ -75471,7 +75796,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],319:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75523,7 +75848,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],320:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75594,7 +75919,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],324:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75664,7 +75989,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75729,7 +76054,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],326:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75795,7 +76120,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],324:[function(_dereq_,module,exports){
+},{}],327:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -75985,7 +76310,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],325:[function(_dereq_,module,exports){
+},{}],328:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76060,7 +76385,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],329:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -76109,7 +76434,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":202,"lodash/each":205}],327:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":202,"lodash/each":205}],330:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76164,7 +76489,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],328:[function(_dereq_,module,exports){
+},{}],331:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -76250,7 +76575,97 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":229}],329:[function(_dereq_,module,exports){
+},{"lodash/map":231}],332:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      formioComponentsProvider.register('form', {
+        fbtemplate: 'formio/formbuilder/form.html',
+        icon: 'fa fa-wpforms',
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/form/display.html'
+          },
+          {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
+        documentation: 'http://help.form.io/userguide/#form',
+        onEdit: ['$scope', function($scope) {
+          $scope.forms = [];
+          $scope.component.project = $scope.formio.projectId;
+          $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
+            $scope.forms = forms;
+            if (!$scope.component.form) {
+              $scope.component.form = forms[0]._id;
+            }
+          });
+        }]
+      });
+
+      // Override the controller for form building.
+      var formComponent = formioComponentsProvider.$get().components.form;
+      var formController = formComponent.controller;
+      formComponent.controller = [
+        '$scope',
+        '$controller',
+        function(
+          $scope,
+          $controller
+        ) {
+          if (!$scope.builder) {
+            return $controller(formController, {$scope: $scope});
+          }
+
+          $scope.form = {};
+          $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
+            angular.forEach(forms, function(form) {
+              if (form._id === $scope.component.form) {
+                $scope.form = form;
+              }
+            });
+          });
+        }
+      ];
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      $templateCache.put('formio/formbuilder/form.html', '<span class="hidden-element-text">{{ form.title }} {{ form.type }}</span>');
+
+      // Create the settings markup.
+      $templateCache.put('formio/components/form/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="label" label="Name" placeholder="Enter the name for this form field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="form" form-builder-tooltip="The form to load within this form component..">Form</label>' +
+            '<select class="form-control" id="form" name="form" ng-options="value._id as value.title for value in forms" ng-model="component.form"></select>' +
+          '</div>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="reference"></form-builder-option>' +
+          '<form-builder-option property="protected"></form-builder-option>' +
+          '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+    }
+  ]);
+};
+
+},{}],333:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76310,7 +76725,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],330:[function(_dereq_,module,exports){
+},{}],334:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76370,7 +76785,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],331:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -76398,6 +76813,7 @@ _dereq_('./currency')(app);
 _dereq_('./hidden')(app);
 _dereq_('./resource')(app);
 _dereq_('./file')(app);
+_dereq_('./form')(app);
 _dereq_('./signature')(app);
 _dereq_('./custom')(app);
 _dereq_('./datagrid')(app);
@@ -76412,7 +76828,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":314,"./button":315,"./checkbox":316,"./columns":317,"./components":318,"./container":319,"./content":320,"./currency":321,"./custom":322,"./datagrid":323,"./datetime":324,"./day":325,"./email":326,"./fieldset":327,"./file":328,"./hidden":329,"./htmlelement":330,"./number":332,"./page":333,"./panel":334,"./password":335,"./phonenumber":336,"./radio":337,"./resource":338,"./select":339,"./selectboxes":340,"./signature":341,"./survey":342,"./table":343,"./textarea":344,"./textfield":345,"./well":346}],332:[function(_dereq_,module,exports){
+},{"./address":317,"./button":318,"./checkbox":319,"./columns":320,"./components":321,"./container":322,"./content":323,"./currency":324,"./custom":325,"./datagrid":326,"./datetime":327,"./day":328,"./email":329,"./fieldset":330,"./file":331,"./form":332,"./hidden":333,"./htmlelement":334,"./number":336,"./page":337,"./panel":338,"./password":339,"./phonenumber":340,"./radio":341,"./resource":342,"./select":343,"./selectboxes":344,"./signature":345,"./survey":346,"./table":347,"./textarea":348,"./textfield":349,"./well":350}],336:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76487,7 +76903,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],333:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76508,7 +76924,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],334:[function(_dereq_,module,exports){
+},{}],338:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76523,6 +76939,19 @@ module.exports = function(app) {
         icon: 'fa fa-list-alt',
         onEdit: ['$scope', function($scope) {
           $scope.themes = FORM_OPTIONS.themes;
+          if (!$scope.component.breadcrumb) {
+            $scope.component.breadcrumb = 'default';
+          }
+          $scope.breadcrumbs = [
+            {
+              name: 'default',
+              title: 'Yes'
+            },
+            {
+              name: 'none',
+              title: 'No'
+            }
+          ];
         }],
         views: [
           {
@@ -76539,7 +76968,7 @@ module.exports = function(app) {
           },
           {
             name: 'Conditional',
-            template: 'formio/components/common/conditional.html'
+            template: 'formio/components/panel/conditional.html'
           }
         ],
         documentation: 'http://help.form.io/userguide/#panels',
@@ -76568,14 +76997,40 @@ module.exports = function(app) {
             '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
           '</div>' +
+          '<div class="form-group">' +
+            '<label for="breadcrumb" form-builder-tooltip="The breadcrumb to show with this page.">Show Breadcrumb</label>' +
+            '<select class="form-control" id="breadcrumb" name="breadcrumb" ng-options="breadcrumb.name as breadcrumb.title for breadcrumb in breadcrumbs" ng-model="component.breadcrumb"></select>' +
+          '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
         '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/panel/conditional.html',
+        '<form-builder-conditional></form-builder-conditional>' +
+        '<uib-accordion>' +
+          '<div uib-accordion-group heading="Advanced Next Page" class="panel panel-default">' +
+            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.nextPage" placeholder="/*** Example Code ***/\nnext = (data[\'mykey\'] > 1) ? \'pageA\' : \'pageB\';"></textarea>' +
+            '<small>' +
+              '<p>Enter custom conditional code.</p>' +
+              '<p>You must assign the <strong>next</strong> variable with the API key of the next page.</p>' +
+              '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+            '</small>' +
+          '</div>' +
+          '<div uib-accordion-group heading="JSON Next Page" class="panel panel-default">' +
+            '<small>' +
+              '<p>Execute custom next page with JSON and <a href="http://jsonlogic.com/">JsonLogic</a>.</p>' +
+              '<p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+              '<p><a href="http://formio.github.io/formio.js/app/examples/multiform.html" target="_blank">Click here for an example</a></p>' +
+            '</small>' +
+            '<textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.nextPage" placeholder="{ ... }"></textarea>' +
+          '</div>' +
+        '</uib-accordion>'
       );
     }
   ]);
 };
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76645,7 +77100,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76718,7 +77173,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],341:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76786,7 +77241,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76839,19 +77294,19 @@ module.exports = function(app) {
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<label for="resource" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
             '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
+            '<label for="selectFields" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
             '<input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">Search Fields</label>' +
+            '<label for="searchFields" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">Search Fields</label>' +
             '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The fields to query on the server" value="{{ component.searchFields }}">' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
+            '<label for="template" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -76877,7 +77332,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],343:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -77116,7 +77571,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":201}],340:[function(_dereq_,module,exports){
+},{"lodash/clone":201}],344:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77188,7 +77643,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],341:[function(_dereq_,module,exports){
+},{}],345:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77251,7 +77706,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],346:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77317,7 +77772,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77388,7 +77843,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],344:[function(_dereq_,module,exports){
+},{}],348:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77493,7 +77948,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],345:[function(_dereq_,module,exports){
+},{}],349:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77568,7 +78023,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],346:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77614,7 +78069,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],347:[function(_dereq_,module,exports){
+},{}],351:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -77641,6 +78096,11 @@ module.exports = {
     label: 'Description',
     placeholder: 'Description for this field.',
     tooltip: 'The description is text that will appear below the input field.'
+  },
+  path: {
+    label: 'Form Path',
+    placeholder: 'Enter the path of the Form to load',
+    tooltip: 'This is the path of the form to load.'
   },
   inputMask: {
     label: 'Input Mask',
@@ -77852,7 +78312,7 @@ module.exports = {
   }
 };
 
-},{}],348:[function(_dereq_,module,exports){
+},{}],352:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -77919,7 +78379,7 @@ module.exports = {
   ]
 };
 
-},{}],349:[function(_dereq_,module,exports){
+},{}],353:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -77950,6 +78410,7 @@ module.exports = ['debounce', function(debounce) {
       'FormioUtils',
       'dndDragIframeWorkaround',
       '$interval',
+      '$timeout',
       function(
         $scope,
         formioComponents,
@@ -77957,7 +78418,8 @@ module.exports = ['debounce', function(debounce) {
         Formio,
         FormioUtils,
         dndDragIframeWorkaround,
-        $interval
+        $interval,
+        $timeout
       ) {
         $scope.options = $scope.options || {};
 
@@ -78014,25 +78476,45 @@ module.exports = ['debounce', function(debounce) {
         if ($scope.src && $scope.formio && $scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
-            $scope.form.page = 0;
             if (!$scope.form.display) {
               $scope.form.display = 'form';
             }
             if (!$scope.options.noSubmit && $scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
+            $scope.showPage(0);
           });
         }
+
+        // Ensure we always have a page set.
+        $scope.$watch('form.page', function(page) {
+          if (page === undefined) {
+            $scope.showPage(0);
+          }
+        });
 
         $scope.$watch('form.display', function(display) {
           $scope.hideCount = (display === 'wizard') ? 1 : 2;
         });
 
+        // Ensure that they don't remove components by canceling the edit modal.
+        $scope.$watch('form._id', function(_id) {
+          if (!_id) {
+            return;
+          }
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            delete component.isNew;
+          }, true);
+        });
+
         // Make sure they can switch back and forth between wizard and pages.
         $scope.$on('formDisplay', function(event, display) {
           $scope.form.display = display;
-          $scope.form.page = 0;
           setNumPages();
+          $timeout(function() {
+            $scope.showPage(0);
+            $scope.$apply();
+          });
         });
 
         // Return the form pages.
@@ -78051,19 +78533,39 @@ module.exports = ['debounce', function(debounce) {
           return pages;
         };
 
-        // Show the form page.
-        $scope.showPage = function(page) {
-          var i = 0;
-          for (i = 0; i < $scope.form.components.length; i++) {
+        $scope.getPage = function() {
+          var pageNum = 0;
+          for (var i = 0; i < $scope.form.components.length; i++) {
             var component = $scope.form.components[i];
             if (component.type === 'panel') {
-              if (i === page) {
+              if (i === $scope.form.page) {
                 break;
+              }
+              pageNum++;
+            }
+          }
+          return pageNum;
+        };
+
+        // Show the form page.
+        /* eslint-disable max-depth */
+        $scope.showPage = function(page) {
+          var pageNum = 0;
+          if ($scope.form && $scope.form.components) {
+            for (var i = 0; i < $scope.form.components.length; i++) {
+              var component = $scope.form.components[i];
+              if (component.type === 'panel') {
+                if (pageNum === page) {
+                  pageNum = i;
+                  break;
+                }
+                pageNum++;
               }
             }
           }
-          $scope.form.page = i;
+          $scope.form.page = pageNum;
         };
+        /* eslint-enable max-depth */
 
         $scope.newPage = function() {
           var index = $scope.form.numPages;
@@ -78200,6 +78702,7 @@ module.exports = ['debounce', function(debounce) {
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
+        $scope.showPage(0);
       }
     ],
     link: function(scope, element) {
@@ -78231,7 +78734,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":200,"lodash/cloneDeep":202,"lodash/each":205,"lodash/groupBy":210,"lodash/merge":231,"lodash/omitBy":233,"lodash/upperFirst":242}],350:[function(_dereq_,module,exports){
+},{"lodash/capitalize":200,"lodash/cloneDeep":202,"lodash/each":205,"lodash/groupBy":210,"lodash/merge":233,"lodash/omitBy":235,"lodash/upperFirst":244}],354:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -78247,7 +78750,7 @@ module.exports = [
   }
 ];
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],355:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -78342,7 +78845,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":34,"lodash/get":209,"lodash/reject":236}],352:[function(_dereq_,module,exports){
+},{"formiojs/utils":34,"lodash/get":209,"lodash/reject":238}],356:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -78612,7 +79115,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":198,"lodash/camelCase":199,"lodash/isNumber":221}],353:[function(_dereq_,module,exports){
+},{"lodash/assign":198,"lodash/camelCase":199,"lodash/isNumber":223}],357:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -78637,7 +79140,7 @@ module.exports = [
   }
 ];
 
-},{}],354:[function(_dereq_,module,exports){
+},{}],358:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -78660,7 +79163,7 @@ module.exports = [
   }
 ];
 
-},{}],355:[function(_dereq_,module,exports){
+},{}],359:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -78729,7 +79232,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],356:[function(_dereq_,module,exports){
+},{}],360:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -78770,7 +79273,7 @@ module.exports = function() {
   };
 };
 
-},{}],357:[function(_dereq_,module,exports){
+},{}],361:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -78816,7 +79319,7 @@ module.exports = function() {
   };
 };
 
-},{}],358:[function(_dereq_,module,exports){
+},{}],362:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -78860,7 +79363,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":229}],359:[function(_dereq_,module,exports){
+},{"lodash/map":231}],363:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -78882,7 +79385,7 @@ module.exports = [
   }
 ];
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],364:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -78936,7 +79439,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":231}],361:[function(_dereq_,module,exports){
+},{"lodash/merge":233}],365:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -78977,7 +79480,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],362:[function(_dereq_,module,exports){
+},{}],366:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -79014,7 +79517,7 @@ module.exports = function() {
   };
 };
 
-},{}],363:[function(_dereq_,module,exports){
+},{}],367:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -79037,7 +79540,7 @@ module.exports = function() {
   };
 };
 
-},{}],364:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -79119,7 +79622,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":199,"lodash/map":229}],365:[function(_dereq_,module,exports){
+},{"lodash/camelCase":199,"lodash/map":231}],369:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -79228,7 +79731,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],370:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -79262,7 +79765,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],367:[function(_dereq_,module,exports){
+},{}],371:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
@@ -79270,9 +79773,9 @@ _dereq_('../bower_components/angular-ckeditor/angular-ckeditor');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":368,"angular-drag-and-drop-lists":2,"ng-dialog":246,"ng-formio/src/formio-complete.js":306}],368:[function(_dereq_,module,exports){
+},{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":372,"angular-drag-and-drop-lists":2,"ng-dialog":248,"ng-formio/src/formio-complete.js":309}],372:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.18.1 | https://unpkg.com/ng-formio-builder@2.18.1/LICENSE.txt */
+/*! ng-formio-builder v2.19.0 | https://unpkg.com/ng-formio-builder@2.19.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -79411,7 +79914,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
-      "<div class=\"row formbuilder\">\n  <div class=\"col-xs-4 col-sm-3 col-md-2 formcomponents\" ng-if=\"form && form.display\">\n    <uib-accordion close-others=\"true\" ng-if=\"form.display !== 'pdf'\">\n      <div uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <div uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n              </span>\n            </div>\n          </div>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n    <uib-accordion close-others=\"true\" ng-if=\"form.display === 'pdf'\">\n      <div uib-accordion-group heading=\"PDF Fields\" is-open=\"true\" class=\"panel panel-default form-builder-panel\">\n        <div class=\"formcomponentcontainer\" ng-repeat=\"pdftype in pdftypes\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ pdftype.title }}\" style=\"overflow: hidden; text-overflow: ellipsis;\" form-builder-draggable=\"pdftype\">\n            <i ng-if=\"pdftype.icon\" class=\"{{ pdftype.icon }}\"></i> {{ pdftype.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n  </div>\n  <div class=\"col-xs-8 col-sm-9 col-md-10 formarea\" ng-if=\"form && form.display\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === form.page), 'label-primary': ($index !== form.page)}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <div ng-if=\"form.display === 'pdf'\" ng-controller=\"formBuilderDnd\">\n        <div form-builder-droppable style=\"width:100%;height:2000px;position:absolute;\" id=\"fb-drop-zone\"></div>\n        <formio form=\"form\" ng-init=\"form.builder = true;\"></formio>\n      </div>\n      <form-builder-list ng-if=\"form.display !== 'pdf'\" component=\"form\" form=\"form\" formio=\"::formio\" hide-dnd-box-count=\"hideCount\" root-list=\"true\" class=\"rootlist\" options=\"options\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
+      "<div class=\"row formbuilder\">\n  <div class=\"col-xs-4 col-sm-3 col-md-2 formcomponents\" ng-if=\"form && form.display\">\n    <uib-accordion close-others=\"true\" ng-if=\"form.display !== 'pdf'\">\n      <div uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <div uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n              </span>\n            </div>\n          </div>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n    <uib-accordion close-others=\"true\" ng-if=\"form.display === 'pdf'\">\n      <div uib-accordion-group heading=\"PDF Fields\" is-open=\"true\" class=\"panel panel-default form-builder-panel\">\n        <div class=\"formcomponentcontainer\" ng-repeat=\"pdftype in pdftypes\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ pdftype.title }}\" style=\"overflow: hidden; text-overflow: ellipsis;\" form-builder-draggable=\"pdftype\">\n            <i ng-if=\"pdftype.icon\" class=\"{{ pdftype.icon }}\"></i> {{ pdftype.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n  </div>\n  <div class=\"col-xs-8 col-sm-9 col-md-10 formarea\" ng-if=\"form && form.display\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === getPage()), 'label-primary': ($index !== getPage())}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <div ng-if=\"form.display === 'pdf'\" ng-controller=\"formBuilderDnd\">\n        <div form-builder-droppable style=\"width:100%;height:2000px;position:absolute;\" id=\"fb-drop-zone\"></div>\n        <formio form=\"form\" ng-init=\"form.builder = true;\"></formio>\n      </div>\n      <form-builder-list ng-if=\"form.display !== 'pdf'\" component=\"form\" form=\"form\" formio=\"::formio\" hide-dnd-box-count=\"hideCount\" root-list=\"true\" class=\"rootlist\" options=\"options\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',
@@ -79426,5 +79929,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":331,"./constants/commonOptions":347,"./constants/formOptions":348,"./directives/formBuilder":349,"./directives/formBuilderComponent":350,"./directives/formBuilderConditional":351,"./directives/formBuilderDnd":352,"./directives/formBuilderElement":353,"./directives/formBuilderList":354,"./directives/formBuilderOption":355,"./directives/formBuilderOptionCustomValidation":356,"./directives/formBuilderOptionKey":357,"./directives/formBuilderOptionTags":358,"./directives/formBuilderRow":359,"./directives/formBuilderTable":360,"./directives/formBuilderTooltip":361,"./directives/jsonInput":362,"./directives/validApiKey":363,"./directives/valueBuilder":364,"./factories/BuilderUtils":365,"./factories/debounce":366}]},{},[367])(367)
+},{"./components":335,"./constants/commonOptions":351,"./constants/formOptions":352,"./directives/formBuilder":353,"./directives/formBuilderComponent":354,"./directives/formBuilderConditional":355,"./directives/formBuilderDnd":356,"./directives/formBuilderElement":357,"./directives/formBuilderList":358,"./directives/formBuilderOption":359,"./directives/formBuilderOptionCustomValidation":360,"./directives/formBuilderOptionKey":361,"./directives/formBuilderOptionTags":362,"./directives/formBuilderRow":363,"./directives/formBuilderTable":364,"./directives/formBuilderTooltip":365,"./directives/jsonInput":366,"./directives/validApiKey":367,"./directives/valueBuilder":368,"./factories/BuilderUtils":369,"./factories/debounce":370}]},{},[371])(371)
 });

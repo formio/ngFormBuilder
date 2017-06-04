@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 2.19.0
+### Added
+ - Form component to the form builder.
+ - JSON Logic on all places where custom javascript can be written.
+
+### Fixed
+ - Issues with the pages on the Wizard from showing the wrong pages or no pages at all.
+
+### Changed
+ - Upgraded ng-formio to 2.19.0
+ - Upgraded ng-dialog to 1.3.0
+ - Upgraded ng-tags-input to 3.2.0
 
 ## 2.18.2
 ### Added

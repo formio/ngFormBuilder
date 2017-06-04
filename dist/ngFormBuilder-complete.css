@@ -1065,6 +1065,19 @@ input[type="password"][draggable="true"] {
   z-index: 1000;
 }
 
+.component-form-group.component-type-hidden.form-builder-component,
+.component-form-group.component-type-form.form-builder-component {
+  height: 3em;
+  border: 2px dashed #ddd;
+}
+
+.component-form-group.component-type-hidden.form-builder-component .form-group,
+.component-form-group.component-type-form.form-builder-component .form-group {
+  text-align: center;
+  color: #aaa;
+  padding-top: 0.5em;
+}
+
 .component-btn-group .component-settings-button {
   float: right;
   z-index: 1001;

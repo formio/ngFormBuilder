@@ -24,6 +24,7 @@ require('./currency')(app);
 require('./hidden')(app);
 require('./resource')(app);
 require('./file')(app);
+require('./form')(app);
 require('./signature')(app);
 require('./custom')(app);
 require('./datagrid')(app);
