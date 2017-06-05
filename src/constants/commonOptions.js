@@ -24,6 +24,11 @@ module.exports = {
     placeholder: 'Description for this field.',
     tooltip: 'The description is text that will appear below the input field.'
   },
+  path: {
+    label: 'Form Path',
+    placeholder: 'Enter the path of the Form to load',
+    tooltip: 'This is the path of the form to load.'
+  },
   inputMask: {
     label: 'Input Mask',
     placeholder: 'Input Mask',
