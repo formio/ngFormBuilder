@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Added
+ - Added 'disable limiting response' option for select component with url as datasource. 
+
 ## 2.18.1
 ### Added
  - A configuration for the resource references.
