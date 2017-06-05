@@ -32,7 +32,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
  - Select resource components use Formio provider instead of $http.get to allow offline compatibility.
->>>>>>> 739b761904ae58e7a6bf17a9016360ae4274a42a
 
 ## 2.18.1
 ### Added
