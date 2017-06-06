@@ -24,6 +24,11 @@ module.exports = {
     placeholder: 'Description for this field.',
     tooltip: 'The description is text that will appear below the input field.'
   },
+  path: {
+    label: 'Form Path',
+    placeholder: 'Enter the path of the Form to load',
+    tooltip: 'This is the path of the form to load.'
+  },
   inputMask: {
     label: 'Input Mask',
     placeholder: 'Input Mask',
@@ -98,6 +103,11 @@ module.exports = {
     label: 'Hidden',
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
+  reference: {
+    label: 'Save as reference',
+    type: 'checkbox',
+    tooltip: 'Using this option will save this field as a reference and link its value to the value of the origin record.'
   },
   block: {
     label: 'Block',

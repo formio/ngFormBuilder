@@ -131,11 +131,16 @@ module.exports = [
     };
 
     // Allow prototyped scopes to update the original component.
-    $scope.updateComponent = function(newComponent, oldComponent) {
+    $scope.updateComponent = function(newComponent, key) {
       var list = $scope.component.components;
-      list.splice(list.indexOf(oldComponent), 1, newComponent);
-      $scope.emit('update', newComponent);
-      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
+      if (_.findIndex(list, {key: key}) !== -1) {
+        list.splice(_.findIndex(list, {key: key}), 1, newComponent);
+        $scope.emit('update', newComponent);
+        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
+      }
+      else {
+        //console.warn('not found', key);
+      }
     };
 
     var remove = function(component) {
