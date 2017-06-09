@@ -44,9 +44,9 @@ module.exports = [
     };
 
     $scope.$on('iframe-componentClick', function(event, data) {
-      angular.forEach($scope.component.components, function(component) {
+      angular.forEach($scope.component.components, function(component, index) {
         if (component.id === data.id) {
-          $scope.editComponent(component);
+          $scope.editComponent(component, index);
         }
       });
     });
@@ -131,16 +131,11 @@ module.exports = [
     };
 
     // Allow prototyped scopes to update the original component.
-    $scope.updateComponent = function(newComponent, key) {
+    $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
-      if (_.findIndex(list, {key: key}) !== -1) {
-        list.splice(_.findIndex(list, {key: key}), 1, newComponent);
-        $scope.emit('update', newComponent);
-        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
-      }
-      else {
-        //console.warn('not found', key);
-      }
+      list.splice(index, 1, newComponent);
+      $scope.emit('update', newComponent);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
@@ -176,7 +171,7 @@ module.exports = [
     };
 
     // Edit a specific component.
-    $scope.editComponent = function(component) {
+    $scope.editComponent = function(component, index) {
       $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
       // No edit view available
       if (!$scope.formComponent.hasOwnProperty('views')) {
@@ -187,6 +182,7 @@ module.exports = [
       var childScope = $scope.$new(false);
       childScope.component = component;
       childScope.data = {};
+      childScope.index = index;
       if (component.key) {
         childScope.data[component.key] = component.multiple ? [''] : '';
       }
