@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.19.2
+### Fixed
+ - Custom component was not updating settings.
+
 ## 2.19.1
 ### Added
  - Added 'disable limiting response' option for select component with url as datasource.

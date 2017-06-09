@@ -7435,7 +7435,6 @@ module.exports = function(app) {
       formioComponents
     ) {
       // Because of the weirdnesses of prototype inheritence, components can't update themselves, only their properties.
-      var currentKey = $scope.component.key;
       $scope.customComponent = angular.copy($scope.component);
       $scope.$watch('customComponent', function(newValue) {
         if (newValue) {
@@ -7445,8 +7444,7 @@ module.exports = function(app) {
           newValue.key = newValue.key || newValue.type;
           newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
           newValue.persistent = (newValue.hasOwnProperty('persistent') ? newValue.persistent : true);
-          $scope.updateComponent(newValue, currentKey);
-          currentKey = newValue.key;
+          $scope.updateComponent(newValue, $scope.index);
         }
       });
     }
@@ -7461,7 +7459,7 @@ module.exports = function(app) {
         '<div class="form-group">' +
         '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
         '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">Custom Element JSON</label>' +
-        '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="customComponent" placeholder="{}" rows="10"></textarea>' +
+        '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="component.conditional.json" placeholder="{}" rows="10"></textarea>' +
         '</div>' +
         '</ng-form>'
       );
@@ -10312,9 +10310,9 @@ module.exports = [
     };
 
     $scope.$on('iframe-componentClick', function(event, data) {
-      angular.forEach($scope.component.components, function(component) {
+      angular.forEach($scope.component.components, function(component, index) {
         if (component.id === data.id) {
-          $scope.editComponent(component);
+          $scope.editComponent(component, index);
         }
       });
     });
@@ -10399,16 +10397,11 @@ module.exports = [
     };
 
     // Allow prototyped scopes to update the original component.
-    $scope.updateComponent = function(newComponent, key) {
+    $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
-      if (_.findIndex(list, {key: key}) !== -1) {
-        list.splice(_.findIndex(list, {key: key}), 1, newComponent);
-        $scope.emit('update', newComponent);
-        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
-      }
-      else {
-        //console.warn('not found', key);
-      }
+      list.splice(index, 1, newComponent);
+      $scope.emit('update', newComponent);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
@@ -10444,7 +10437,7 @@ module.exports = [
     };
 
     // Edit a specific component.
-    $scope.editComponent = function(component) {
+    $scope.editComponent = function(component, index) {
       $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
       // No edit view available
       if (!$scope.formComponent.hasOwnProperty('views')) {
@@ -10455,6 +10448,7 @@ module.exports = [
       var childScope = $scope.$new(false);
       childScope.component = component;
       childScope.data = {};
+      childScope.index = index;
       if (component.key) {
         childScope.data[component.key] = component.multiple ? [''] : '';
       }
@@ -11186,7 +11180,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],263:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.19.0 | https://unpkg.com/ng-formio-builder@2.19.0/LICENSE.txt */
+/*! ng-formio-builder v2.19.1 | https://unpkg.com/ng-formio-builder@2.19.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -11309,7 +11303,7 @@ app.run([
     });
 
     $templateCache.put('formio/formbuilder/editbuttons.html',
-      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button component-settings-button-remove\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-clone\" style=\"z-index: 1000\" ng-click=\"cloneComponent(component)\"><span class=\"glyphicon glyphicon-new-window\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-move\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-edit\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
+      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button component-settings-button-remove\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-clone\" style=\"z-index: 1000\" ng-click=\"cloneComponent(component)\"><span class=\"glyphicon glyphicon-new-window\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-move\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-edit\" style=\"z-index: 1000\" ng-click=\"editComponent(component, $index)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/component.html',
