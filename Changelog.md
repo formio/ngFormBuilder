@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ## [UNRELEASED]
+
+## 2.19.3
 ### Added
  - Add tableView config to layout components.
 

@@ -49988,6 +49988,8 @@ function _interopRequireDefault(obj) {
 var _get = _dereq_('lodash/get');
 
 module.exports = {
+  jsonLogic: _jsonLogicJs2.default, // Share
+
   /**
    * Determine if a component is a layout component or not.
    *
@@ -76824,7 +76826,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/columns.html',
-        "<div class=\"row\">\n  <div ng-show=\"column.width\" class=\"col-sm-{{column.width}} col-sm-offset{{column.offset}} col-sm-push-{{column.push}} col-sm-pull-{{column.pull}}\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      builder=\"builder\"\n    ></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div ng-show=\"column.width\" class=\"col-sm-{{column.width}} col-sm-offset-{{column.offset}} col-sm-push-{{column.push}} col-sm-pull-{{column.pull}}\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      builder=\"builder\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/columns.html',
@@ -80075,6 +80077,7 @@ module.exports = function() {
               sendIframeMessage({name: 'form', data: $scope.form});
             }
             if ($scope.submission) {
+              $scope.submission.readOnly = $scope.readOnly;
               sendIframeMessage({name: 'submission', data: $scope.submission});
             }
           }
@@ -80093,7 +80096,7 @@ module.exports = function() {
         });
 
         $scope.$on('submissionLoad', function(event, submission) {
-          submission.editable = !$scope.readOnly;
+          submission.readOnly = $scope.readOnly;
           sendIframeMessage({name: 'submission', data: submission});
         });
 
@@ -85924,6 +85927,7 @@ module.exports = function(app) {
             '</table>' +
             '<button type="button" class="btn" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
           '</div>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -86324,7 +86328,7 @@ module.exports = function(app) {
         '<div class="form-group">' +
         '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
         '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">Custom Element JSON</label>' +
-        '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="component.conditional.json" placeholder="{}" rows="10"></textarea>' +
+        '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="customComponent" placeholder="{}" rows="10"></textarea>' +
         '</div>' +
         '</ng-form>'
       );
@@ -86761,6 +86765,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -87280,6 +87285,7 @@ module.exports = function(app) {
             '<select class="form-control" id="breadcrumb" name="breadcrumb" ng-options="breadcrumb.name as breadcrumb.title for breadcrumb in breadcrumbs" ng-model="component.breadcrumb"></select>' +
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
 
@@ -88119,6 +88125,7 @@ module.exports = function(app) {
           '<form-builder-option property="bordered"></form-builder-option>' +
           '<form-builder-option property="hover"></form-builder-option>' +
           '<form-builder-option property="condensed"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -88320,7 +88327,7 @@ module.exports = function(app) {
         views: [
           {
             name: 'Display',
-            template: 'formio/components/common/display.html'
+            template: 'formio/components/well/display.html'
           },
           {
             name: 'API',
@@ -88342,9 +88349,10 @@ module.exports = function(app) {
           '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
         '</div>'
       );
-      $templateCache.put('formio/components/common/display.html',
+      $templateCache.put('formio/components/well/display.html',
         '<ng-form>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '<ng-form>'
       );
     }
@@ -90053,7 +90061,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"../bower_components/angular-ckeditor/angular-ckeditor":1,"./ngFormBuilder.js":374,"angular-drag-and-drop-lists":2,"ng-dialog":250,"ng-formio/src/formio-full.js":311}],374:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.19.1 | https://unpkg.com/ng-formio-builder@2.19.1/LICENSE.txt */
+/*! ng-formio-builder v2.19.2 | https://unpkg.com/ng-formio-builder@2.19.2/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
