@@ -20,6 +20,7 @@ require('./phonenumber')(app);
 require('./address')(app);
 require('./datetime')(app);
 require('./day')(app);
+require('./time')(app);
 require('./currency')(app);
 require('./hidden')(app);
 require('./resource')(app);
