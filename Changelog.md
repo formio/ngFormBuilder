@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ## [UNRELEASED]
+### Added
+ - Time component.
 
 ## 2.19.3
 ### Added
