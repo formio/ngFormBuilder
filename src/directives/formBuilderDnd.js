@@ -74,7 +74,7 @@ module.exports = [
       }
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
-        $scope.editComponent(component);
+        $scope.editComponent(component, index);
       }
       else {
         // Ensure the component has a key.

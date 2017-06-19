@@ -10347,7 +10347,7 @@ module.exports = [
       }
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
-        $scope.editComponent(component);
+        $scope.editComponent(component, index);
       }
       else {
         // Ensure the component has a key.
@@ -11187,7 +11187,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],263:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.19.2 | https://unpkg.com/ng-formio-builder@2.19.2/LICENSE.txt */
+/*! ng-formio-builder v2.19.3 | https://unpkg.com/ng-formio-builder@2.19.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

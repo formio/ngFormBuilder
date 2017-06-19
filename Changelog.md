@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
 
+## 2.19.4
+### Fixed
+ - Fixed custom conditionals overwriting first element on form.
+
 ## 2.19.3
 ### Added
  - Add tableView config to layout components.
