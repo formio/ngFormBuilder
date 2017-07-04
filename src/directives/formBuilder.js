@@ -240,12 +240,17 @@ module.exports = ['debounce', function(debounce) {
         if ($scope.formio && resourceEnabled) {
           $scope.formComponentsByGroup.resource = {};
           $scope.formComponentGroups.resource = {
-            title: 'Existing Resource Fields',
+            title: $scope.options.resourceTitle || 'Existing Resource Fields',
             panelClass: 'subgroup-accordion-container',
             subgroups: {}
           };
 
-          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
+          var query = {params: {type: 'resource', limit: 100}};
+          if ($scope.options.resourceFilter) {
+            query.params.tags = $scope.options.resourceFilter;
+          }
+
+          $scope.formio.loadForms(query).then(function(resources) {
             // Iterate through all resources.
             _each(resources, function(resource) {
               var resourceKey = resource.name;
@@ -278,7 +283,7 @@ module.exports = ['debounce', function(debounce) {
                       label: component.label,
                       key: component.key,
                       lockKey: true,
-                      source: resource._id,
+                      source: (!$scope.options.noSource ? resource._id : undefined),
                       isNew: true
                     }
                   }
