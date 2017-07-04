@@ -201,6 +201,16 @@ module.exports = {
     placeholder: 'Add Another',
     tooltip: 'Set the text of the Add Another button.'
   },
+  'saveRow': {
+    label: 'Save Row Text',
+    placeholder: 'Save',
+    tooltip: 'Set the text of the Save Row button.'
+  },
+  'removeRow': {
+    label: 'Remove Row Text',
+    placeholder: 'Remove',
+    tooltip: 'Set the text of the remove Row button.'
+  },
   'defaultDate': {
     label: 'Default Value',
     placeholder: 'Default Value',
