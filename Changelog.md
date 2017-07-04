@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
 
+## 2.20.4
+### Added
+ - Ability to modify the existing resource options.
+
 ## 2.19.4
 ### Fixed
  - Fixed custom conditionals overwriting first element on form.
