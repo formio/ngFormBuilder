@@ -20,7 +20,7 @@ gulp.task('scripts:full', require('./gulp/scripts-full')(gulp, plugins));
 gulp.task('scripts:complete', require('./gulp/scripts-complete')(gulp, plugins));
 gulp.task('scripts', ['scripts:basic', 'scripts:complete', 'scripts:full']);
 gulp.task('build', function(cb) {
-  plugins.runSeq(['clean', 'eslint'], 'scripts', 'styles', cb)
+  plugins.runSeq(['clean'], 'scripts', 'styles', cb)
 });
 gulp.task('watch', require('./gulp/watch')(gulp, plugins));
 gulp.task('default', ['build', 'watch']);

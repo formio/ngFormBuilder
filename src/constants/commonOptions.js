@@ -186,6 +186,11 @@ module.exports = {
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
   },
+  'rowClass': {
+    label: 'Row CSS Class',
+    placeholder: 'Row CSS Class',
+    tooltip: 'CSS class to add to the edit row wrapper.'
+  },
   'customClass': {
     label: 'Custom CSS Class',
     placeholder: 'Custom CSS Class',
