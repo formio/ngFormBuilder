@@ -56,9 +56,10 @@ module.exports = ['debounce', function(debounce) {
         }
         $scope.hideCount = 2;
         $scope.form.page = 0;
-        $scope.formio = $scope.src ? new Formio($scope.src) : null;
+        var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
+        $scope.formio = $scope.src ? new Formio($scope.src, {base: baseUrl}) : null;
         if ($scope.url) {
-          $scope.formio = new Formio($scope.url);
+          $scope.formio = new Formio($scope.url, {base: baseUrl});
         }
 
         var setNumPages = function() {

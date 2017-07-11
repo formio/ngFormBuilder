@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
 
+### Added
+ - Allow passing in a baseUrl for forms on a different path.
+
 ## 2.20.4
 ### Added
  - Ability to modify the existing resource options.
