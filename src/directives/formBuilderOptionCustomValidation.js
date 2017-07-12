@@ -9,7 +9,7 @@ module.exports = function() {
       '<div>' +
       '<uib-accordion>' +
       '  <div uib-accordion-group heading="Custom Validation" class="panel panel-default">' +
-      '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
+      '    <formio-script-editor rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';"></formio-script-editor>' +
       '    <small>' +
       '      <p>Enter custom validation code.</p>' +
       '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
