@@ -76981,6 +76981,7 @@ module.exports = function(app) {
             '</table>' +
             '<button type="button" class="btn" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
           '</div>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -77357,7 +77358,6 @@ module.exports = function(app) {
       formioComponents
     ) {
       // Because of the weirdnesses of prototype inheritence, components can't update themselves, only their properties.
-      var currentKey = $scope.component.key;
       $scope.customComponent = angular.copy($scope.component);
       $scope.$watch('customComponent', function(newValue) {
         if (newValue) {
@@ -77367,8 +77367,7 @@ module.exports = function(app) {
           newValue.key = newValue.key || newValue.type;
           newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
           newValue.persistent = (newValue.hasOwnProperty('persistent') ? newValue.persistent : true);
-          $scope.updateComponent(newValue, currentKey);
-          currentKey = newValue.key;
+          $scope.updateComponent(newValue, $scope.index);
         }
       });
     }
@@ -77511,7 +77510,7 @@ module.exports = function(app) {
             }
           ];
         }],
-        icon: 'fa fa-clock-o',
+        icon: 'fa fa-calendar-plus-o',
         views: [
           {
             name: 'Display',
@@ -77820,6 +77819,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -77944,7 +77944,19 @@ module.exports = function(app) {
           $scope.forms = [];
           $scope.component.project = $scope.formio.projectId;
           $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
-            $scope.forms = forms;
+            var data = [];
+            if ($scope.form._id ) {
+              angular.forEach(forms, function(form) {
+                if (form._id !== $scope.form._id) {
+                  data.push(form);
+                }
+              });
+              $scope.forms = data;
+            }
+            else {
+              $scope.forms = forms;
+            }
+
             if (!$scope.component.form) {
               $scope.component.form = forms[0]._id;
             }
@@ -78146,6 +78158,7 @@ _dereq_('./phonenumber')(app);
 _dereq_('./address')(app);
 _dereq_('./datetime')(app);
 _dereq_('./day')(app);
+_dereq_('./time')(app);
 _dereq_('./currency')(app);
 _dereq_('./hidden')(app);
 _dereq_('./resource')(app);
@@ -78165,7 +78178,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":331,"./button":332,"./checkbox":333,"./columns":334,"./components":335,"./container":336,"./content":337,"./currency":338,"./custom":339,"./datagrid":340,"./datetime":341,"./day":342,"./email":343,"./fieldset":344,"./file":345,"./form":346,"./hidden":347,"./htmlelement":348,"./number":350,"./page":351,"./panel":352,"./password":353,"./phonenumber":354,"./radio":355,"./resource":356,"./select":357,"./selectboxes":358,"./signature":359,"./survey":360,"./table":361,"./textarea":362,"./textfield":363,"./well":364}],350:[function(_dereq_,module,exports){
+},{"./address":331,"./button":332,"./checkbox":333,"./columns":334,"./components":335,"./container":336,"./content":337,"./currency":338,"./custom":339,"./datagrid":340,"./datetime":341,"./day":342,"./email":343,"./fieldset":344,"./file":345,"./form":346,"./hidden":347,"./htmlelement":348,"./number":350,"./page":351,"./panel":352,"./password":353,"./phonenumber":354,"./radio":355,"./resource":356,"./select":357,"./selectboxes":358,"./signature":359,"./survey":360,"./table":361,"./textarea":362,"./textfield":363,"./time":364,"./well":365}],350:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78339,6 +78352,7 @@ module.exports = function(app) {
             '<select class="form-control" id="breadcrumb" name="breadcrumb" ng-options="breadcrumb.name as breadcrumb.title for breadcrumb in breadcrumbs" ng-model="component.breadcrumb"></select>' +
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
 
@@ -79178,6 +79192,7 @@ module.exports = function(app) {
           '<form-builder-option property="bordered"></form-builder-option>' +
           '<form-builder-option property="hover"></form-builder-option>' +
           '<form-builder-option property="condensed"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -79366,6 +79381,52 @@ module.exports = function(app) {
 
 },{}],364:[function(_dereq_,module,exports){
 "use strict";
+var _cloneDeep = _dereq_('lodash/cloneDeep');
+var _each = _dereq_('lodash/each');
+
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      var views = _cloneDeep(formioComponentsProvider.$get().components.textfield.views);
+      _each(views, function(view) {
+        if (view.name === 'Display') {
+          view.template = 'formio/components/time/display.html';
+        }
+      });
+      formioComponentsProvider.register('time', {
+        icon: 'fa fa-clock-o',
+        views: views,
+        documentation: 'http://help.form.io/userguide/#time'
+      });
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      $templateCache.put('formio/components/time/display.html',
+        '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
+          '<form-builder-option property="format"></form-builder-option>' +
+          '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="protected"></form-builder-option>' +
+          '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+    }
+  ]);
+};
+
+},{"lodash/cloneDeep":211,"lodash/each":214}],365:[function(_dereq_,module,exports){
+"use strict";
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -79379,7 +79440,7 @@ module.exports = function(app) {
         views: [
           {
             name: 'Display',
-            template: 'formio/components/common/display.html'
+            template: 'formio/components/well/display.html'
           },
           {
             name: 'API',
@@ -79401,16 +79462,17 @@ module.exports = function(app) {
           '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
         '</div>'
       );
-      $templateCache.put('formio/components/common/display.html',
+      $templateCache.put('formio/components/well/display.html',
         '<ng-form>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '<ng-form>'
       );
     }
   ]);
 };
 
-},{}],365:[function(_dereq_,module,exports){
+},{}],366:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -79447,6 +79509,11 @@ module.exports = {
     label: 'Input Mask',
     placeholder: 'Input Mask',
     tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone mask: (999) 999-9999<br><br>See the <a target=\'_blank\' href=\'https://github.com/RobinHerbots/jquery.inputmask\'>jquery.inputmask documentation</a> for more information.</a>'
+  },
+  format: {
+    label: 'Format',
+    placeholder: 'Format',
+    tooltip: 'The moment.js format for saving the value of this field.'
   },
   authenticate: {
     label: 'Formio Authenticate',
@@ -79653,7 +79720,7 @@ module.exports = {
   }
 };
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],367:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -79720,7 +79787,7 @@ module.exports = {
   ]
 };
 
-},{}],367:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -79780,9 +79847,10 @@ module.exports = ['debounce', function(debounce) {
         }
         $scope.hideCount = 2;
         $scope.form.page = 0;
-        $scope.formio = $scope.src ? new Formio($scope.src) : null;
+        var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
+        $scope.formio = $scope.src ? new Formio($scope.src, {base: baseUrl}) : null;
         if ($scope.url) {
-          $scope.formio = new Formio($scope.url);
+          $scope.formio = new Formio($scope.url, {base: baseUrl});
         }
 
         var setNumPages = function() {
@@ -79964,12 +80032,17 @@ module.exports = ['debounce', function(debounce) {
         if ($scope.formio && resourceEnabled) {
           $scope.formComponentsByGroup.resource = {};
           $scope.formComponentGroups.resource = {
-            title: 'Existing Resource Fields',
+            title: $scope.options.resourceTitle || 'Existing Resource Fields',
             panelClass: 'subgroup-accordion-container',
             subgroups: {}
           };
 
-          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
+          var query = {params: {type: 'resource', limit: 100}};
+          if ($scope.options.resourceFilter) {
+            query.params.tags = $scope.options.resourceFilter;
+          }
+
+          $scope.formio.loadForms(query).then(function(resources) {
             // Iterate through all resources.
             _each(resources, function(resource) {
               var resourceKey = resource.name;
@@ -80002,7 +80075,7 @@ module.exports = ['debounce', function(debounce) {
                       label: component.label,
                       key: component.key,
                       lockKey: true,
-                      source: resource._id,
+                      source: (!$scope.options.noSource ? resource._id : undefined),
                       isNew: true
                     }
                   }
@@ -80075,7 +80148,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":209,"lodash/cloneDeep":211,"lodash/each":214,"lodash/groupBy":220,"lodash/merge":244,"lodash/omitBy":246,"lodash/upperFirst":257}],368:[function(_dereq_,module,exports){
+},{"lodash/capitalize":209,"lodash/cloneDeep":211,"lodash/each":214,"lodash/groupBy":220,"lodash/merge":244,"lodash/omitBy":246,"lodash/upperFirst":257}],369:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -80091,7 +80164,7 @@ module.exports = [
   }
 ];
 
-},{}],369:[function(_dereq_,module,exports){
+},{}],370:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -80186,7 +80259,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":34,"lodash/get":219,"lodash/reject":249}],370:[function(_dereq_,module,exports){
+},{"formiojs/utils":34,"lodash/get":219,"lodash/reject":249}],371:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -80234,9 +80307,9 @@ module.exports = [
     };
 
     $scope.$on('iframe-componentClick', function(event, data) {
-      angular.forEach($scope.component.components, function(component) {
+      angular.forEach($scope.component.components, function(component, index) {
         if (component.id === data.id) {
-          $scope.editComponent(component);
+          $scope.editComponent(component, index);
         }
       });
     });
@@ -80264,7 +80337,7 @@ module.exports = [
       }
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
-        $scope.editComponent(component);
+        $scope.editComponent(component, index);
       }
       else {
         // Ensure the component has a key.
@@ -80321,16 +80394,11 @@ module.exports = [
     };
 
     // Allow prototyped scopes to update the original component.
-    $scope.updateComponent = function(newComponent, key) {
+    $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
-      if (_.findIndex(list, {key: key}) !== -1) {
-        list.splice(_.findIndex(list, {key: key}), 1, newComponent);
-        $scope.emit('update', newComponent);
-        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
-      }
-      else {
-        //console.warn('not found', key);
-      }
+      list.splice(index, 1, newComponent);
+      $scope.emit('update', newComponent);
+      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
@@ -80366,7 +80434,7 @@ module.exports = [
     };
 
     // Edit a specific component.
-    $scope.editComponent = function(component) {
+    $scope.editComponent = function(component, index) {
       $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
       // No edit view available
       if (!$scope.formComponent.hasOwnProperty('views')) {
@@ -80377,6 +80445,7 @@ module.exports = [
       var childScope = $scope.$new(false);
       childScope.component = component;
       childScope.data = {};
+      childScope.index = index;
       if (component.key) {
         childScope.data[component.key] = component.multiple ? [''] : '';
       }
@@ -80477,7 +80546,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":205,"lodash/camelCase":208,"lodash/isNumber":234}],371:[function(_dereq_,module,exports){
+},{"lodash/assign":205,"lodash/camelCase":208,"lodash/isNumber":234}],372:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -80502,7 +80571,7 @@ module.exports = [
   }
 ];
 
-},{}],372:[function(_dereq_,module,exports){
+},{}],373:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -80525,7 +80594,7 @@ module.exports = [
   }
 ];
 
-},{}],373:[function(_dereq_,module,exports){
+},{}],374:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -80594,7 +80663,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],374:[function(_dereq_,module,exports){
+},{}],375:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -80635,7 +80704,7 @@ module.exports = function() {
   };
 };
 
-},{}],375:[function(_dereq_,module,exports){
+},{}],376:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -80681,7 +80750,7 @@ module.exports = function() {
   };
 };
 
-},{}],376:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -80725,7 +80794,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":242}],377:[function(_dereq_,module,exports){
+},{"lodash/map":242}],378:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -80747,7 +80816,7 @@ module.exports = [
   }
 ];
 
-},{}],378:[function(_dereq_,module,exports){
+},{}],379:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -80801,7 +80870,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":244}],379:[function(_dereq_,module,exports){
+},{"lodash/merge":244}],380:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -80842,7 +80911,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],380:[function(_dereq_,module,exports){
+},{}],381:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -80879,7 +80948,7 @@ module.exports = function() {
   };
 };
 
-},{}],381:[function(_dereq_,module,exports){
+},{}],382:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -80902,7 +80971,7 @@ module.exports = function() {
   };
 };
 
-},{}],382:[function(_dereq_,module,exports){
+},{}],383:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -80984,7 +81053,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":208,"lodash/map":242}],383:[function(_dereq_,module,exports){
+},{"lodash/camelCase":208,"lodash/map":242}],384:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -81079,6 +81148,11 @@ module.exports = ['FormioUtils', function(FormioUtils) {
         return;
       }
 
+      // If the component's key is locked, add a timestamp to it when it's being created
+      if (component.lockKey && component.isNew) {
+        component.key = component.key + Date.now().toString();
+      }
+
       var memoization = findExistingComponents(form.components, component);
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
@@ -81093,7 +81167,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],384:[function(_dereq_,module,exports){
+},{}],385:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -81127,14 +81201,14 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],385:[function(_dereq_,module,exports){
+},{}],386:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":386,"angular-drag-and-drop-lists":2,"ng-dialog":261,"ng-formio/src/formio-complete.js":323}],386:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":387,"angular-drag-and-drop-lists":2,"ng-dialog":261,"ng-formio/src/formio-complete.js":323}],387:[function(_dereq_,module,exports){
 "use strict";
 /*! ng-formio-builder v2.19.7 | https://unpkg.com/ng-formio-builder@2.19.7/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
@@ -81259,7 +81333,7 @@ app.run([
     });
 
     $templateCache.put('formio/formbuilder/editbuttons.html',
-      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button component-settings-button-remove\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-clone\" style=\"z-index: 1000\" ng-click=\"cloneComponent(component)\"><span class=\"glyphicon glyphicon-new-window\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-move\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-edit\" style=\"z-index: 1000\" ng-click=\"editComponent(component)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
+      "<div class=\"component-btn-group\">\n  <div class=\"btn btn-xxs btn-danger component-settings-button component-settings-button-remove\" style=\"z-index: 1000\" ng-click=\"removeComponent(component, formComponent.confirmRemove)\"><span class=\"glyphicon glyphicon-remove\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-clone\" style=\"z-index: 1000\" ng-click=\"cloneComponent(component)\"><span class=\"glyphicon glyphicon-new-window\"></span></div>\n  <div ng-if=\"::!hideMoveButton\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-move\" style=\"z-index: 1000\"><span class=\"glyphicon glyphicon glyphicon-move\"></span></div>\n  <div ng-if=\"::formComponent.views && !component.lockConfiguration\" class=\"btn btn-xxs btn-default component-settings-button component-settings-button-edit\" style=\"z-index: 1000\" ng-click=\"editComponent(component, $index)\"><span class=\"glyphicon glyphicon-cog\"></span></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/component.html',
@@ -81290,5 +81364,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":349,"./constants/commonOptions":365,"./constants/formOptions":366,"./directives/formBuilder":367,"./directives/formBuilderComponent":368,"./directives/formBuilderConditional":369,"./directives/formBuilderDnd":370,"./directives/formBuilderElement":371,"./directives/formBuilderList":372,"./directives/formBuilderOption":373,"./directives/formBuilderOptionCustomValidation":374,"./directives/formBuilderOptionKey":375,"./directives/formBuilderOptionTags":376,"./directives/formBuilderRow":377,"./directives/formBuilderTable":378,"./directives/formBuilderTooltip":379,"./directives/jsonInput":380,"./directives/validApiKey":381,"./directives/valueBuilder":382,"./factories/BuilderUtils":383,"./factories/debounce":384}]},{},[385])(385)
+},{"./components":349,"./constants/commonOptions":366,"./constants/formOptions":367,"./directives/formBuilder":368,"./directives/formBuilderComponent":369,"./directives/formBuilderConditional":370,"./directives/formBuilderDnd":371,"./directives/formBuilderElement":372,"./directives/formBuilderList":373,"./directives/formBuilderOption":374,"./directives/formBuilderOptionCustomValidation":375,"./directives/formBuilderOptionKey":376,"./directives/formBuilderOptionTags":377,"./directives/formBuilderRow":378,"./directives/formBuilderTable":379,"./directives/formBuilderTooltip":380,"./directives/jsonInput":381,"./directives/validApiKey":382,"./directives/valueBuilder":383,"./factories/BuilderUtils":384,"./factories/debounce":385}]},{},[386])(386)
 });

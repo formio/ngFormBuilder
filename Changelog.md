@@ -4,8 +4,26 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.19.7
+### Added
+ - Ability to modify the existing resource options.
+ - Allow passing in a baseUrl for forms on a different path.
+ - Time component.
 
-## [Unreleased]
+### Fixed
+ - Wysiwyg dependencies and spelling error.
+
+## 2.19.4
+### Fixed
+ - Fixed custom conditionals overwriting first element on form.
+
+## 2.19.3
+### Added
+ - Add tableView config to layout components.
+
+## 2.19.2
+### Fixed
+ - Custom component was not updating settings.
 
 ## 2.19.1
 ### Added
