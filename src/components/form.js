@@ -28,7 +28,19 @@ module.exports = function(app) {
           $scope.forms = [];
           $scope.component.project = $scope.formio.projectId;
           $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
-            $scope.forms = forms;
+            var data = [];
+            if ($scope.form._id ) {
+              angular.forEach(forms, function(form) {
+                if (form._id !== $scope.form._id) {
+                  data.push(form);
+                }
+              });
+              $scope.forms = data;
+            }
+            else {
+              $scope.forms = forms;
+            }
+
             if (!$scope.component.form) {
               $scope.component.form = forms[0]._id;
             }

@@ -4,14 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-
 ## [UNRELEASED]
 ### Fixed
  - 'Width' for columns has minimal value of 1.
-
-## 2.20.4
+ 
+## 2.19.7
 ### Added
  - Ability to modify the existing resource options.
+ - Allow passing in a baseUrl for forms on a different path.
+ - Time component.
+
+### Fixed
+ - Wysiwyg dependencies and spelling error.
 
 ## 2.19.4
 ### Fixed

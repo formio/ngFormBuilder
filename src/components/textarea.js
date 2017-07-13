@@ -78,7 +78,7 @@ module.exports = function(app) {
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<div ng-controller="wysiwygSettings">' +
             '<div class="checkbox">' +
-              '<label><input type="checkbox" ng-model="wysiwygEnabled"> Enable WYWIWYG</label>' +
+              '<label><input type="checkbox" ng-model="wysiwygEnabled"> Enable WYSIWYG</label>' +
             '</div>' +
             '<div class="form-group">' +
               '<label for="wysiwyg">WYSIWYG Settings</label>' +

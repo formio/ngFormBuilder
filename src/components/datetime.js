@@ -50,7 +50,7 @@ module.exports = function(app) {
             }
           ];
         }],
-        icon: 'fa fa-clock-o',
+        icon: 'fa fa-calendar-plus-o',
         views: [
           {
             name: 'Display',

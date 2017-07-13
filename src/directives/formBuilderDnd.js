@@ -252,9 +252,30 @@ module.exports = [
 
     // Clone form component
     $scope.cloneComponent = function(component) {
-      $scope.formElement = angular.copy(component);
-      $scope.formElement.key = component.key + '' + $scope.form.components.length;
-      $scope.form.components.push($scope.formElement);
+      var newComponent = angular.copy(component);
+
+      // If we are in a panel, the cloned component container should be the parent.components,
+      // Otherwise it should be the form.components.
+      var container;
+      if ($scope.$parent.component) {
+        container = $scope.$parent.component.components;
+      }
+      else {
+        container = $scope.form.components;
+      }
+
+      // Add the new component right after the original.
+      var index = container.indexOf(component);
+      container.splice(index + 1, 0, newComponent);
+
+      // timeout: wait for the form to have the new component.
+      $timeout(function() {
+        FormioUtils.eachComponent([newComponent], function(child) {
+          child.isNew = true;
+          BuilderUtils.uniquify($scope.form, child);
+          delete child.isNew;
+        }, true);
+      });
     };
 
     // Add to scope so it can be used in templates

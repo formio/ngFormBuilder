@@ -34,6 +34,11 @@ module.exports = {
     placeholder: 'Input Mask',
     tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone mask: (999) 999-9999<br><br>See the <a target=\'_blank\' href=\'https://github.com/RobinHerbots/jquery.inputmask\'>jquery.inputmask documentation</a> for more information.</a>'
   },
+  format: {
+    label: 'Format',
+    placeholder: 'Format',
+    tooltip: 'The moment.js format for saving the value of this field.'
+  },
   authenticate: {
     label: 'Formio Authenticate',
     tooltip: 'Check this if you would like to use Formio Authentication with the request.',
