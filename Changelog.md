@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ## [UNRELEASED]
+### Fixed
+ - 'Width' for columns has minimal value of 1.
 
 ## 2.20.4
 ### Added
