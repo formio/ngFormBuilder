@@ -78870,6 +78870,10 @@ module.exports = function(app) {
           '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
           '  <input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
+          '<div ng-show="component.dataSrc == \'url\'">' +
+          '<input type="checkbox" ng-model="component.data.disableLimit" name="disableLimit"></input>' +
+          '  <label for="disableLimit" form-builder-tooltip="When enabled the request will not include the limit and skip options in the query string">Disable limiting response</label>' +
+          '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\' || component.dataSrc == \'json\'" property="limit" label="Limit" placeholder="Maximum number of items to view per page of results." title="Use this to limit the number of items to request or view."></form-builder-option>' +
@@ -80442,9 +80446,30 @@ module.exports = [
 
     // Clone form component
     $scope.cloneComponent = function(component) {
-      $scope.formElement = angular.copy(component);
-      $scope.formElement.key = component.key + '' + $scope.form.components.length;
-      $scope.form.components.push($scope.formElement);
+      var newComponent = angular.copy(component);
+
+      // If we are in a panel, the cloned component container should be the parent.components,
+      // Otherwise it should be the form.components.
+      var container;
+      if ($scope.$parent.component) {
+        container = $scope.$parent.component.components;
+      }
+      else {
+        container = $scope.form.components;
+      }
+
+      // Add the new component right after the original.
+      var index = container.indexOf(component);
+      container.splice(index + 1, 0, newComponent);
+
+      // timeout: wait for the form to have the new component.
+      $timeout(function() {
+        FormioUtils.eachComponent([newComponent], function(child) {
+          child.isNew = true;
+          BuilderUtils.uniquify($scope.form, child);
+          delete child.isNew;
+        }, true);
+      });
     };
 
     // Add to scope so it can be used in templates
