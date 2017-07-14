@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.20.4
+### Changes
+ - Upgrade ng-formio to 2.20.4
+
+### Added
+ - Custom properties support.
+
+## 2.20.2
+--- NO CHANGES MADE ---
+
 ## 2.19.7
 ### Added
  - Ability to modify the existing resource options.

@@ -94,6 +94,8 @@ app.directive('formBuilderTooltip', require('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', require('./directives/valueBuilder'));
 
+app.directive('objectBuilder', require('./directives/objectBuilder'));
+
 app.directive('formBuilderConditional', require('./directives/formBuilderConditional'));
 
 /**
