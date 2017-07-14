@@ -4,10 +4,19 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 2.20.4
+### Changes
+ - Upgrade ng-formio to 2.20.4
+
+### Added
+ - Custom properties support.
+
 ### Fixed
  - 'Width' for columns has minimal value of 1.
- 
+
+## 2.20.2
+--- NO CHANGES MADE ---
+
 ## 2.19.7
 ### Added
  - Ability to modify the existing resource options.

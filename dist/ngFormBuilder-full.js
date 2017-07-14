@@ -79729,6 +79729,7 @@ module.exports = function(app) {
           $scope.selectItems = [];
           $scope.hasNextPage = false;
           $scope.resourceLoading = false;
+          $scope.options = $scope.options || {};
           params.limit = 100;
           params.skip = 0;
           if (settings.multiple) {
@@ -80935,13 +80936,24 @@ module.exports = function(app) {
           return 'formio/components/textarea.html';
         },
         viewTemplate: function($scope) {
-          if ($scope.readOnly && $scope.component.wysiwyg) {
+          if ($scope.component.wysiwyg) {
             return 'formio/componentsView/content.html';
           }
           else {
             return 'formio/components/textarea.html';
           }
         },
+        viewController: [
+          '$scope',
+          '$sanitize',
+          function($scope, $sanitize) {
+            if ($scope.component.wysiwyg) {
+              $scope.$watch('data.' + $scope.component.key, function() {
+                $scope.html = $sanitize($scope.data[$scope.component.key]);
+              });
+            }
+          }
+        ],
         controller: [
           '$scope',
           '$sanitize',
@@ -81966,10 +81978,12 @@ module.exports = [
       templateUrl: 'formio/component-view.html',
       controller: [
         '$scope',
+        '$controller',
         'Formio',
         'FormioUtils',
         function(
           $scope,
+          $controller,
           Formio,
           FormioUtils
         ) {
@@ -81996,6 +82010,10 @@ module.exports = [
           }
           else {
             $scope.template = component.viewTemplate;
+          }
+
+          if (component.viewController) {
+            $controller(component.viewController, {$scope: $scope});
           }
 
           // Set the component name.
@@ -87238,7 +87256,7 @@ module.exports = function(app) {
               '<tbody>' +
                 '<tr ng-repeat="column in component.columns track by $index">' +
                   '<td class="col-xs-2"><input type="number" class="form-control" ng-value="$index + 1" disabled/></td>' +
-                  '<td class="col-xs-2"><input type="number" class="form-control" min="0" max="12" ng-model="column.width"/></td>' +
+                  '<td class="col-xs-2"><input type="number" class="form-control" min="1" max="12" ng-model="column.width"/></td>' +
                   '<td class="col-xs-2"><input type="number" class="form-control" min="0" max="12" ng-model="column.offset"/></td>' +
                   '<td class="col-xs-2"><input type="number" class="form-control" min="0" max="12" ng-model="column.push"/></td>' +
                   '<td class="col-xs-2"><input type="number" class="form-control" min="0" max="12" ng-model="column.pull"/></td>' +
@@ -87355,6 +87373,11 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option-key></form-builder-option-key>' +
           '<form-builder-option-tags></form-builder-option-tags>' +
+          '<uib-accordion>' +
+            '<div uib-accordion-group heading="Custom Properties" class="panel panel-default">' +
+              '<object-builder data="component.properties" label="Custom Properties" tooltip-text="This allows you to configure any custom properties for this component." />' +
+            '</div>' +
+          '</uib-accordion>' +
         '</ng-form>'
       );
 
@@ -91217,6 +91240,73 @@ module.exports = function() {
 
 },{}],384:[function(_dereq_,module,exports){
 "use strict";
+/**
+* A directive that provides a UI to add key-value pair object.
+*/
+module.exports = function() {
+  return {
+    scope: {
+      data: '=',
+      label: '@',
+      tooltipText: '@'
+    },
+    restrict: 'E',
+    template: '<div class="form-group">' +
+                '<label form-builder-tooltip="{{ tooltipText | formioTranslate }}">{{ label | formioTranslate }}</label>' +
+                '<table class="table table-condensed">' +
+                  '<thead>' +
+                    '<tr>' +
+                      '<th class="col-xs-6">{{ "Key" | formioTranslate }}</th>' +
+                      '<th class="col-xs-4">{{ "Value" | formioTranslate }}</th>' +
+                      '<th class="col-xs-2"></th>' +
+                    '</tr>' +
+                  '</thead>' +
+                  '<tbody>' +
+                    '<tr ng-repeat="v in dataArray track by $index">' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v.key" placeholder="{{ \'Key\' | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v.value" placeholder="{{ \'Value\' | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                    '</tr>' +
+                  '</tbody>' +
+                '</table>' +
+                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+              '</div>',
+    replace: true,
+    link: function($scope) {
+      $scope.data = $scope.data || {};
+      $scope.dataArray = [];
+      for (var key in $scope.data) {
+        $scope.dataArray.push({
+          key: key,
+          value: $scope.data[key]
+        });
+      }
+
+      $scope.addValue = function() {
+        $scope.dataArray.push({key: '', value: ''});
+      };
+
+      $scope.removeValue = function(index) {
+        $scope.dataArray.splice(index, 1);
+      };
+
+      if ($scope.dataArray.length === 0) {
+        $scope.addValue();
+      }
+
+      $scope.$watch('dataArray', function(newValue) {
+        $scope.data = {};
+        for (var i in newValue) {
+          var item = newValue[i];
+          $scope.data[item.key] = item.value;
+        }
+      }, true);
+    }
+  };
+};
+
+},{}],385:[function(_dereq_,module,exports){
+"use strict";
 /*
 * Prevents user inputting invalid api key characters.
 * Valid characters for an api key are alphanumeric and hyphens
@@ -91238,7 +91328,7 @@ module.exports = function() {
   };
 };
 
-},{}],385:[function(_dereq_,module,exports){
+},{}],386:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -91320,7 +91410,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":210,"lodash/map":244}],386:[function(_dereq_,module,exports){
+},{"lodash/camelCase":210,"lodash/map":244}],387:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -91434,7 +91524,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],388:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -91468,16 +91558,16 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],388:[function(_dereq_,module,exports){
+},{}],389:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-full.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":389,"angular-drag-and-drop-lists":2,"ng-dialog":263,"ng-formio/src/formio-full.js":325}],389:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":390,"angular-drag-and-drop-lists":2,"ng-dialog":263,"ng-formio/src/formio-full.js":325}],390:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.2 | https://unpkg.com/ng-formio-builder@2.20.2/LICENSE.txt */
+/*! ng-formio-builder v2.20.4 | https://unpkg.com/ng-formio-builder@2.20.4/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -91573,6 +91663,8 @@ app.directive('formBuilderTooltip', _dereq_('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', _dereq_('./directives/valueBuilder'));
 
+app.directive('objectBuilder', _dereq_('./directives/objectBuilder'));
+
 app.directive('formBuilderConditional', _dereq_('./directives/formBuilderConditional'));
 
 /**
@@ -91631,5 +91723,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":351,"./constants/commonOptions":368,"./constants/formOptions":369,"./directives/formBuilder":370,"./directives/formBuilderComponent":371,"./directives/formBuilderConditional":372,"./directives/formBuilderDnd":373,"./directives/formBuilderElement":374,"./directives/formBuilderList":375,"./directives/formBuilderOption":376,"./directives/formBuilderOptionCustomValidation":377,"./directives/formBuilderOptionKey":378,"./directives/formBuilderOptionTags":379,"./directives/formBuilderRow":380,"./directives/formBuilderTable":381,"./directives/formBuilderTooltip":382,"./directives/jsonInput":383,"./directives/validApiKey":384,"./directives/valueBuilder":385,"./factories/BuilderUtils":386,"./factories/debounce":387}]},{},[388])(388)
+},{"./components":351,"./constants/commonOptions":368,"./constants/formOptions":369,"./directives/formBuilder":370,"./directives/formBuilderComponent":371,"./directives/formBuilderConditional":372,"./directives/formBuilderDnd":373,"./directives/formBuilderElement":374,"./directives/formBuilderList":375,"./directives/formBuilderOption":376,"./directives/formBuilderOptionCustomValidation":377,"./directives/formBuilderOptionKey":378,"./directives/formBuilderOptionTags":379,"./directives/formBuilderRow":380,"./directives/formBuilderTable":381,"./directives/formBuilderTooltip":382,"./directives/jsonInput":383,"./directives/objectBuilder":384,"./directives/validApiKey":385,"./directives/valueBuilder":386,"./factories/BuilderUtils":387,"./factories/debounce":388}]},{},[389])(389)
 });
