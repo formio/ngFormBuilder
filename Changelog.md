@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - Custom properties support.
 
+### Fixed
+ - 'Width' for columns has minimal value of 1.
+
 ## 2.20.2
 --- NO CHANGES MADE ---
 
