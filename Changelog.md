@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Fixed
+ - Columns hiding if width not set.
+ - Signature wrong size if within columns component.
+
 ## 2.20.4
 ### Changes
  - Upgrade ng-formio to 2.20.4
