@@ -2149,7 +2149,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":11,"moment":259}],5:[function(_dereq_,module,exports){
+},{"angular":12,"moment":260}],5:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.5
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -2962,6 +2962,336 @@ _dereq_('./angular-sanitize');
 module.exports = 'ngSanitize';
 
 },{"./angular-sanitize":5}],7:[function(_dereq_,module,exports){
+'use strict';
+
+/**
+ * Binds a ACE Editor widget
+ */
+angular.module('ui.ace', [])
+  .constant('uiAceConfig', {})
+  .directive('uiAce', ['uiAceConfig', function (uiAceConfig) {
+
+    if (angular.isUndefined(window.ace)) {
+      throw new Error('ui-ace need ace to work... (o rly?)');
+    }
+
+    /**
+     * Sets editor options such as the wrapping mode or the syntax checker.
+     *
+     * The supported options are:
+     *
+     *   <ul>
+     *     <li>showGutter</li>
+     *     <li>useWrapMode</li>
+     *     <li>onLoad</li>
+     *     <li>theme</li>
+     *     <li>mode</li>
+     *   </ul>
+     *
+     * @param acee
+     * @param session ACE editor session
+     * @param {object} opts Options to be set
+     */
+    var setOptions = function(acee, session, opts) {
+
+      // sets the ace worker path, if running from concatenated
+      // or minified source
+      if (angular.isDefined(opts.workerPath)) {
+        var config = window.ace.require('ace/config');
+        config.set('workerPath', opts.workerPath);
+      }
+      // ace requires loading
+      if (angular.isDefined(opts.require)) {
+        opts.require.forEach(function (n) {
+            window.ace.require(n);
+        });
+      }
+      // Boolean options
+      if (angular.isDefined(opts.showGutter)) {
+        acee.renderer.setShowGutter(opts.showGutter);
+      }
+      if (angular.isDefined(opts.useWrapMode)) {
+        session.setUseWrapMode(opts.useWrapMode);
+      }
+      if (angular.isDefined(opts.showInvisibles)) {
+        acee.renderer.setShowInvisibles(opts.showInvisibles);
+      }
+      if (angular.isDefined(opts.showIndentGuides)) {
+        acee.renderer.setDisplayIndentGuides(opts.showIndentGuides);
+      }
+      if (angular.isDefined(opts.useSoftTabs)) {
+        session.setUseSoftTabs(opts.useSoftTabs);
+      }
+      if (angular.isDefined(opts.showPrintMargin)) {
+        acee.setShowPrintMargin(opts.showPrintMargin);
+      }
+
+      // commands
+      if (angular.isDefined(opts.disableSearch) && opts.disableSearch) {
+        acee.commands.addCommands([
+          {
+            name: 'unfind',
+            bindKey: {
+              win: 'Ctrl-F',
+              mac: 'Command-F'
+            },
+            exec: function () {
+              return false;
+            },
+            readOnly: true
+          }
+        ]);
+      }
+
+      // Basic options
+      if (angular.isString(opts.theme)) {
+        acee.setTheme('ace/theme/' + opts.theme);
+      }
+      if (angular.isString(opts.mode)) {
+        session.setMode('ace/mode/' + opts.mode);
+      }
+      // Advanced options
+      if (angular.isDefined(opts.firstLineNumber)) {
+        if (angular.isNumber(opts.firstLineNumber)) {
+          session.setOption('firstLineNumber', opts.firstLineNumber);
+        } else if (angular.isFunction(opts.firstLineNumber)) {
+          session.setOption('firstLineNumber', opts.firstLineNumber());
+        }
+      }
+
+      // advanced options
+      var key, obj;
+      if (angular.isDefined(opts.advanced)) {
+          for (key in opts.advanced) {
+              // create a javascript object with the key and value
+              obj = { name: key, value: opts.advanced[key] };
+              // try to assign the option to the ace editor
+              acee.setOption(obj.name, obj.value);
+          }
+      }
+
+      // advanced options for the renderer
+      if (angular.isDefined(opts.rendererOptions)) {
+          for (key in opts.rendererOptions) {
+              // create a javascript object with the key and value
+              obj = { name: key, value: opts.rendererOptions[key] };
+              // try to assign the option to the ace editor
+              acee.renderer.setOption(obj.name, obj.value);
+          }
+      }
+
+      // onLoad callbacks
+      angular.forEach(opts.callbacks, function (cb) {
+        if (angular.isFunction(cb)) {
+          cb(acee);
+        }
+      });
+    };
+
+    return {
+      restrict: 'EA',
+      require: '?ngModel',
+      link: function (scope, elm, attrs, ngModel) {
+
+        /**
+         * Corresponds the uiAceConfig ACE configuration.
+         * @type object
+         */
+        var options = uiAceConfig.ace || {};
+
+        /**
+         * uiAceConfig merged with user options via json in attribute or data binding
+         * @type object
+         */
+        var opts = angular.extend({}, options, scope.$eval(attrs.uiAce));
+
+        /**
+         * ACE editor
+         * @type object
+         */
+        var acee = window.ace.edit(elm[0]);
+
+        /**
+         * ACE editor session.
+         * @type object
+         * @see [EditSession]{@link http://ace.c9.io/#nav=api&api=edit_session}
+         */
+        var session = acee.getSession();
+
+        /**
+         * Reference to a change listener created by the listener factory.
+         * @function
+         * @see listenerFactory.onChange
+         */
+        var onChangeListener;
+
+        /**
+         * Reference to a blur listener created by the listener factory.
+         * @function
+         * @see listenerFactory.onBlur
+         */
+        var onBlurListener;
+
+        /**
+         * Calls a callback by checking its existing. The argument list
+         * is variable and thus this function is relying on the arguments
+         * object.
+         * @throws {Error} If the callback isn't a function
+         */
+        var executeUserCallback = function () {
+
+          /**
+           * The callback function grabbed from the array-like arguments
+           * object. The first argument should always be the callback.
+           *
+           * @see [arguments]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions_and_function_scope/arguments}
+           * @type {*}
+           */
+          var callback = arguments[0];
+
+          /**
+           * Arguments to be passed to the callback. These are taken
+           * from the array-like arguments object. The first argument
+           * is stripped because that should be the callback function.
+           *
+           * @see [arguments]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions_and_function_scope/arguments}
+           * @type {Array}
+           */
+          var args = Array.prototype.slice.call(arguments, 1);
+
+          if (angular.isDefined(callback)) {
+            scope.$evalAsync(function () {
+              if (angular.isFunction(callback)) {
+                callback(args);
+              } else {
+                throw new Error('ui-ace use a function as callback.');
+              }
+            });
+          }
+        };
+
+        /**
+         * Listener factory. Until now only change listeners can be created.
+         * @type object
+         */
+        var listenerFactory = {
+          /**
+           * Creates a change listener which propagates the change event
+           * and the editor session to the callback from the user option
+           * onChange. It might be exchanged during runtime, if this
+           * happens the old listener will be unbound.
+           *
+           * @param callback callback function defined in the user options
+           * @see onChangeListener
+           */
+          onChange: function (callback) {
+            return function (e) {
+              var newValue = session.getValue();
+
+              if (ngModel && newValue !== ngModel.$viewValue &&
+                  // HACK make sure to only trigger the apply outside of the
+                  // digest loop 'cause ACE is actually using this callback
+                  // for any text transformation !
+                  !scope.$$phase && !scope.$root.$$phase) {
+                scope.$evalAsync(function () {
+                  ngModel.$setViewValue(newValue);
+                });
+              }
+
+              executeUserCallback(callback, e, acee);
+            };
+          },
+          /**
+           * Creates a blur listener which propagates the editor session
+           * to the callback from the user option onBlur. It might be
+           * exchanged during runtime, if this happens the old listener
+           * will be unbound.
+           *
+           * @param callback callback function defined in the user options
+           * @see onBlurListener
+           */
+          onBlur: function (callback) {
+            return function () {
+              executeUserCallback(callback, acee);
+            };
+          }
+        };
+
+        attrs.$observe('readonly', function (value) {
+          acee.setReadOnly(!!value || value === '');
+        });
+
+        // Value Blind
+        if (ngModel) {
+          ngModel.$formatters.push(function (value) {
+            if (angular.isUndefined(value) || value === null) {
+              return '';
+            }
+            else if (angular.isObject(value) || angular.isArray(value)) {
+              throw new Error('ui-ace cannot use an object or an array as a model');
+            }
+            return value;
+          });
+
+          ngModel.$render = function () {
+            session.setValue(ngModel.$viewValue);
+          };
+        }
+
+        // Listen for option updates
+        var updateOptions = function (current, previous) {
+          if (current === previous) return;
+          opts = angular.extend({}, options, scope.$eval(attrs.uiAce));
+
+          opts.callbacks = [ opts.onLoad ];
+          if (opts.onLoad !== options.onLoad) {
+            // also call the global onLoad handler
+            opts.callbacks.unshift(options.onLoad);
+          }
+
+          // EVENTS
+
+          // unbind old change listener
+          session.removeListener('change', onChangeListener);
+
+          // bind new change listener
+          onChangeListener = listenerFactory.onChange(opts.onChange);
+          session.on('change', onChangeListener);
+
+          // unbind old blur listener
+          //session.removeListener('blur', onBlurListener);
+          acee.removeListener('blur', onBlurListener);
+
+          // bind new blur listener
+          onBlurListener = listenerFactory.onBlur(opts.onBlur);
+          acee.on('blur', onBlurListener);
+
+          setOptions(acee, session, opts);
+        };
+
+        scope.$watch(attrs.uiAce, updateOptions, /* deep watch */ true);
+
+        // set the options here, even if we try to watch later, if this
+        // line is missing things go wrong (and the tests will also fail)
+        updateOptions(options);
+
+        elm.on('$destroy', function () {
+          acee.session.$stopWorker();
+          acee.destroy();
+        });
+
+        scope.$watch(function() {
+          return [elm[0].offsetWidth, elm[0].offsetHeight];
+        }, function() {
+          acee.resize();
+          acee.renderer.updateFull();
+        }, true);
+
+      }
+    };
+  }]);
+
+},{}],8:[function(_dereq_,module,exports){
 /*
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
@@ -10738,12 +11068,12 @@ angular.module('ui.bootstrap.datepickerPopup').run(function() {!angular.$$csp().
 angular.module('ui.bootstrap.tooltip').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTooltipCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-tooltip-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-bottom > .tooltip-arrow,[uib-popover-popup].popover.top-left > .arrow,[uib-popover-popup].popover.top-right > .arrow,[uib-popover-popup].popover.bottom-left > .arrow,[uib-popover-popup].popover.bottom-right > .arrow,[uib-popover-popup].popover.left-top > .arrow,[uib-popover-popup].popover.left-bottom > .arrow,[uib-popover-popup].popover.right-top > .arrow,[uib-popover-popup].popover.right-bottom > .arrow,[uib-popover-html-popup].popover.top-left > .arrow,[uib-popover-html-popup].popover.top-right > .arrow,[uib-popover-html-popup].popover.bottom-left > .arrow,[uib-popover-html-popup].popover.bottom-right > .arrow,[uib-popover-html-popup].popover.left-top > .arrow,[uib-popover-html-popup].popover.left-bottom > .arrow,[uib-popover-html-popup].popover.right-top > .arrow,[uib-popover-html-popup].popover.right-bottom > .arrow,[uib-popover-template-popup].popover.top-left > .arrow,[uib-popover-template-popup].popover.top-right > .arrow,[uib-popover-template-popup].popover.bottom-left > .arrow,[uib-popover-template-popup].popover.bottom-right > .arrow,[uib-popover-template-popup].popover.left-top > .arrow,[uib-popover-template-popup].popover.left-bottom > .arrow,[uib-popover-template-popup].popover.right-top > .arrow,[uib-popover-template-popup].popover.right-bottom > .arrow{top:auto;bottom:auto;left:auto;right:auto;margin:0;}[uib-popover-popup].popover,[uib-popover-html-popup].popover,[uib-popover-template-popup].popover{display:block !important;}</style>'); angular.$$uibTooltipCss = true; });
 angular.module('ui.bootstrap.timepicker').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTimepickerCss && angular.element(document).find('head').prepend('<style type="text/css">.uib-time input{width:50px;}</style>'); angular.$$uibTimepickerCss = true; });
 angular.module('ui.bootstrap.typeahead').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTypeaheadCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'); angular.$$uibTypeaheadCss = true; });
-},{}],8:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 _dereq_('./dist/ui-bootstrap-tpls');
 
 module.exports = 'ui.bootstrap';
 
-},{"./dist/ui-bootstrap-tpls":7}],9:[function(_dereq_,module,exports){
+},{"./dist/ui-bootstrap-tpls":8}],10:[function(_dereq_,module,exports){
 /*!
  * angular-ui-mask
  * https://github.com/angular-ui/ui-mask
@@ -11527,7 +11857,7 @@ angular.module('ui.mask', [])
         ]);
 
 }());
-},{}],10:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.5
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -45359,11 +45689,11 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],11:[function(_dereq_,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 _dereq_('./angular');
 module.exports = angular;
 
-},{"./angular":10}],12:[function(_dereq_,module,exports){
+},{"./angular":11}],13:[function(_dereq_,module,exports){
 // https://github.com/Gillardo/bootstrap-ui-datetime-picker
 // Version: 2.5.4
 // Released: 2017-01-23 
@@ -46050,7 +46380,7 @@ angular.module('ui.bootstrap.datetimepicker').run(['$templateCache', function($t
 if(typeof exports === 'object' && typeof module === 'object') {
     module.exports = 'ui.bootstrap.datetimepicker';
 }
-},{}],13:[function(_dereq_,module,exports){
+},{}],14:[function(_dereq_,module,exports){
 // This file is autogenerated via the `commonjs` Grunt task. You can require() this file in a CommonJS environment.
 _dereq_('../../js/transition.js')
 _dereq_('../../js/alert.js')
@@ -46064,7 +46394,7 @@ _dereq_('../../js/popover.js')
 _dereq_('../../js/scrollspy.js')
 _dereq_('../../js/tab.js')
 _dereq_('../../js/affix.js')
-},{"../../js/affix.js":14,"../../js/alert.js":15,"../../js/button.js":16,"../../js/carousel.js":17,"../../js/collapse.js":18,"../../js/dropdown.js":19,"../../js/modal.js":20,"../../js/popover.js":21,"../../js/scrollspy.js":22,"../../js/tab.js":23,"../../js/tooltip.js":24,"../../js/transition.js":25}],14:[function(_dereq_,module,exports){
+},{"../../js/affix.js":15,"../../js/alert.js":16,"../../js/button.js":17,"../../js/carousel.js":18,"../../js/collapse.js":19,"../../js/dropdown.js":20,"../../js/modal.js":21,"../../js/popover.js":22,"../../js/scrollspy.js":23,"../../js/tab.js":24,"../../js/tooltip.js":25,"../../js/transition.js":26}],15:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: affix.js v3.3.7
  * http://getbootstrap.com/javascript/#affix
@@ -46228,7 +46558,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],15:[function(_dereq_,module,exports){
+},{}],16:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: alert.js v3.3.7
  * http://getbootstrap.com/javascript/#alerts
@@ -46324,7 +46654,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],16:[function(_dereq_,module,exports){
+},{}],17:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: button.js v3.3.7
  * http://getbootstrap.com/javascript/#buttons
@@ -46451,7 +46781,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: carousel.js v3.3.7
  * http://getbootstrap.com/javascript/#carousel
@@ -46690,7 +47020,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],18:[function(_dereq_,module,exports){
+},{}],19:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: collapse.js v3.3.7
  * http://getbootstrap.com/javascript/#collapse
@@ -46904,7 +47234,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],19:[function(_dereq_,module,exports){
+},{}],20:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: dropdown.js v3.3.7
  * http://getbootstrap.com/javascript/#dropdowns
@@ -47071,7 +47401,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],20:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: modal.js v3.3.7
  * http://getbootstrap.com/javascript/#modals
@@ -47412,7 +47742,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],21:[function(_dereq_,module,exports){
+},{}],22:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: popover.js v3.3.7
  * http://getbootstrap.com/javascript/#popovers
@@ -47522,7 +47852,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],22:[function(_dereq_,module,exports){
+},{}],23:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: scrollspy.js v3.3.7
  * http://getbootstrap.com/javascript/#scrollspy
@@ -47696,7 +48026,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],23:[function(_dereq_,module,exports){
+},{}],24:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: tab.js v3.3.7
  * http://getbootstrap.com/javascript/#tabs
@@ -47853,7 +48183,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],24:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: tooltip.js v3.3.7
  * http://getbootstrap.com/javascript/#tooltip
@@ -48375,7 +48705,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],25:[function(_dereq_,module,exports){
+},{}],26:[function(_dereq_,module,exports){
 /* ========================================================================
  * Bootstrap: transition.js v3.3.7
  * http://getbootstrap.com/javascript/#transitions
@@ -48436,7 +48766,7 @@ _dereq_('../../js/affix.js')
 
 }(jQuery);
 
-},{}],26:[function(_dereq_,module,exports){
+},{}],27:[function(_dereq_,module,exports){
 /*!
  * EventEmitter2
  * https://github.com/hij1nx/EventEmitter2
@@ -49160,7 +49490,7 @@ _dereq_('../../js/affix.js')
   }
 }();
 
-},{}],27:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
@@ -50184,14 +50514,14 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":28,"eventemitter2":26,"native-promise-only":260,"shallow-copy":328,"whatwg-fetch":330}],28:[function(_dereq_,module,exports){
+},{"./providers":29,"eventemitter2":27,"native-promise-only":261,"shallow-copy":330,"whatwg-fetch":332}],29:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   storage: _dereq_('./storage')
 };
 
-},{"./storage":30}],29:[function(_dereq_,module,exports){
+},{"./storage":31}],30:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -50263,7 +50593,7 @@ var dropbox = function dropbox(formio) {
 dropbox.title = 'Dropbox';
 module.exports = dropbox;
 
-},{"native-promise-only":260}],30:[function(_dereq_,module,exports){
+},{"native-promise-only":261}],31:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -50272,7 +50602,7 @@ module.exports = {
   url: _dereq_('./url.js')
 };
 
-},{"./dropbox.js":29,"./s3.js":31,"./url.js":32}],31:[function(_dereq_,module,exports){
+},{"./dropbox.js":30,"./s3.js":32,"./url.js":33}],32:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -50387,7 +50717,7 @@ var s3 = function s3(formio) {
 s3.title = 'S3';
 module.exports = s3;
 
-},{"native-promise-only":260}],32:[function(_dereq_,module,exports){
+},{"native-promise-only":261}],33:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -50466,7 +50796,8 @@ var url = function url(formio) {
 url.title = 'Url';
 module.exports = url;
 
-},{"native-promise-only":260}],33:[function(_dereq_,module,exports){
+},{"native-promise-only":261}],34:[function(_dereq_,module,exports){
+(function (global){
 'use strict';
 
 var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -50497,8 +50828,24 @@ function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : { default: obj };
 }
 
-module.exports = {
+var FormioUtils = {
   jsonLogic: _jsonLogicJs2.default, // Share
+
+  /**
+   * Determines the boolean value of a setting.
+   *
+   * @param value
+   * @return {boolean}
+   */
+  boolValue: function boolValue(value) {
+    if (typeof value === 'boolean') {
+      return value;
+    } else if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    } else {
+      return !!value;
+    }
+  },
 
   /**
    * Determine if a component is a layout component or not.
@@ -50577,24 +50924,66 @@ module.exports = {
   },
 
   /**
+   * Matches if a component matches the query.
+   *
+   * @param component
+   * @param query
+   * @return {boolean}
+   */
+  matchComponent: function matchComponent(component, query) {
+    if (typeof query === 'string') {
+      return component.key === query;
+    } else {
+      var matches = false;
+      for (var search in query) {
+        matches = (0, _get3.default)(component, search) === query[search];
+        if (!matches) {
+          break;
+        }
+      }
+      return matches;
+    }
+  },
+
+  /**
    * Get a component by its key
    *
    * @param {Object} components
    *   The components to iterate.
-   * @param {String} key
-   *   The key of the component to get.
+   * @param {String|Object} key
+   *   The key of the component to get, or a query of the component to search.
    *
    * @returns {Object}
    *   The component that matches the given key, or undefined if not found.
    */
   getComponent: function getComponent(components, key) {
     var result;
-    module.exports.eachComponent(components, function (component) {
-      if (component.key === key) {
+    FormioUtils.eachComponent(components, function (component, path) {
+      if (FormioUtils.matchComponent(component, key)) {
+        component.path = path;
         result = component;
+        return true;
       }
     });
     return result;
+  },
+
+  /**
+   * Finds a component provided a query of properties of that component.
+   *
+   * @param components
+   * @param query
+   * @return {*}
+   */
+  findComponents: function findComponents(components, query) {
+    var results = [];
+    FormioUtils.eachComponent(components, function (component, path) {
+      if (FormioUtils.matchComponent(component, query)) {
+        component.path = path;
+        results.push(component);
+      }
+    }, true);
+    return results;
   },
 
   /**
@@ -50610,7 +50999,7 @@ module.exports = {
    */
   flattenComponents: function flattenComponents(components, includeAll) {
     var flattened = {};
-    module.exports.eachComponent(components, function (component, path) {
+    FormioUtils.eachComponent(components, function (component, path) {
       flattened[path] = component;
     }, includeAll);
     return flattened;
@@ -50769,12 +51158,15 @@ module.exports = {
   }
 };
 
-},{"json-logic-js":35,"lodash/clone":210,"lodash/get":219,"lodash/template":253}],34:[function(_dereq_,module,exports){
+module.exports = global.FormioUtils = FormioUtils;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"json-logic-js":36,"lodash/clone":211,"lodash/get":220,"lodash/template":254}],35:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./build/utils');
 
-},{"./build/utils":33}],35:[function(_dereq_,module,exports){
+},{"./build/utils":34}],36:[function(_dereq_,module,exports){
 /* globals define,module */
 /*
 Using a Universal Module Loader that should be browser, require, and AMD friendly
@@ -51161,7 +51553,7 @@ http://ricostacruz.com/cheatsheets/umdjs.html
   return jsonLogic;
 }));
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51170,7 +51562,7 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":140,"./_root":188}],37:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],38:[function(_dereq_,module,exports){
 var hashClear = _dereq_('./_hashClear'),
     hashDelete = _dereq_('./_hashDelete'),
     hashGet = _dereq_('./_hashGet'),
@@ -51204,7 +51596,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":150,"./_hashDelete":151,"./_hashGet":152,"./_hashHas":153,"./_hashSet":154}],38:[function(_dereq_,module,exports){
+},{"./_hashClear":151,"./_hashDelete":152,"./_hashGet":153,"./_hashHas":154,"./_hashSet":155}],39:[function(_dereq_,module,exports){
 var listCacheClear = _dereq_('./_listCacheClear'),
     listCacheDelete = _dereq_('./_listCacheDelete'),
     listCacheGet = _dereq_('./_listCacheGet'),
@@ -51238,7 +51630,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":165,"./_listCacheDelete":166,"./_listCacheGet":167,"./_listCacheHas":168,"./_listCacheSet":169}],39:[function(_dereq_,module,exports){
+},{"./_listCacheClear":166,"./_listCacheDelete":167,"./_listCacheGet":168,"./_listCacheHas":169,"./_listCacheSet":170}],40:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51247,7 +51639,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":140,"./_root":188}],40:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],41:[function(_dereq_,module,exports){
 var mapCacheClear = _dereq_('./_mapCacheClear'),
     mapCacheDelete = _dereq_('./_mapCacheDelete'),
     mapCacheGet = _dereq_('./_mapCacheGet'),
@@ -51281,7 +51673,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":170,"./_mapCacheDelete":171,"./_mapCacheGet":172,"./_mapCacheHas":173,"./_mapCacheSet":174}],41:[function(_dereq_,module,exports){
+},{"./_mapCacheClear":171,"./_mapCacheDelete":172,"./_mapCacheGet":173,"./_mapCacheHas":174,"./_mapCacheSet":175}],42:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51290,7 +51682,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":140,"./_root":188}],42:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],43:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51299,7 +51691,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":140,"./_root":188}],43:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],44:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -51328,7 +51720,7 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":40,"./_setCacheAdd":189,"./_setCacheHas":190}],44:[function(_dereq_,module,exports){
+},{"./_MapCache":41,"./_setCacheAdd":190,"./_setCacheHas":191}],45:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     stackClear = _dereq_('./_stackClear'),
     stackDelete = _dereq_('./_stackDelete'),
@@ -51357,7 +51749,7 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":38,"./_stackClear":194,"./_stackDelete":195,"./_stackGet":196,"./_stackHas":197,"./_stackSet":198}],45:[function(_dereq_,module,exports){
+},{"./_ListCache":39,"./_stackClear":195,"./_stackDelete":196,"./_stackGet":197,"./_stackHas":198,"./_stackSet":199}],46:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -51365,7 +51757,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":188}],46:[function(_dereq_,module,exports){
+},{"./_root":189}],47:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -51373,7 +51765,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":188}],47:[function(_dereq_,module,exports){
+},{"./_root":189}],48:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51382,7 +51774,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":140,"./_root":188}],48:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],49:[function(_dereq_,module,exports){
 /**
  * Adds the key-value `pair` to `map`.
  *
@@ -51399,7 +51791,7 @@ function addMapEntry(map, pair) {
 
 module.exports = addMapEntry;
 
-},{}],49:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 /**
  * Adds `value` to `set`.
  *
@@ -51416,7 +51808,7 @@ function addSetEntry(set, value) {
 
 module.exports = addSetEntry;
 
-},{}],50:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -51439,7 +51831,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],51:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseAggregator` for arrays.
  *
@@ -51463,7 +51855,7 @@ function arrayAggregator(array, setter, iteratee, accumulator) {
 
 module.exports = arrayAggregator;
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],53:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for
  * iteratee shorthands.
@@ -51487,7 +51879,7 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],53:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for
  * iteratee shorthands.
@@ -51514,7 +51906,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],54:[function(_dereq_,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 var baseTimes = _dereq_('./_baseTimes'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -51565,7 +51957,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":100,"./_isIndex":158,"./isArguments":223,"./isArray":224,"./isBuffer":227,"./isTypedArray":239}],55:[function(_dereq_,module,exports){
+},{"./_baseTimes":101,"./_isIndex":159,"./isArguments":224,"./isArray":225,"./isBuffer":228,"./isTypedArray":240}],56:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -51588,7 +51980,7 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],56:[function(_dereq_,module,exports){
+},{}],57:[function(_dereq_,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -51610,7 +52002,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],57:[function(_dereq_,module,exports){
+},{}],58:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for
  * iteratee shorthands.
@@ -51638,7 +52030,7 @@ function arrayReduce(array, iteratee, accumulator, initAccum) {
 
 module.exports = arrayReduce;
 
-},{}],58:[function(_dereq_,module,exports){
+},{}],59:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for iteratee
  * shorthands.
@@ -51663,7 +52055,7 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],59:[function(_dereq_,module,exports){
+},{}],60:[function(_dereq_,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -51677,7 +52069,7 @@ function asciiToArray(string) {
 
 module.exports = asciiToArray;
 
-},{}],60:[function(_dereq_,module,exports){
+},{}],61:[function(_dereq_,module,exports){
 /** Used to match words composed of alphanumeric characters. */
 var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
 
@@ -51694,7 +52086,7 @@ function asciiWords(string) {
 
 module.exports = asciiWords;
 
-},{}],61:[function(_dereq_,module,exports){
+},{}],62:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -51716,7 +52108,7 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":67,"./eq":215}],62:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":68,"./eq":216}],63:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -51746,7 +52138,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":67,"./eq":215}],63:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":68,"./eq":216}],64:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /**
@@ -51769,7 +52161,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":215}],64:[function(_dereq_,module,exports){
+},{"./eq":216}],65:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -51792,7 +52184,7 @@ function baseAggregator(collection, setter, iteratee, accumulator) {
 
 module.exports = baseAggregator;
 
-},{"./_baseEach":70}],65:[function(_dereq_,module,exports){
+},{"./_baseEach":71}],66:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keys = _dereq_('./keys');
 
@@ -51811,7 +52203,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":117,"./keys":240}],66:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./keys":241}],67:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -51830,7 +52222,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":117,"./keysIn":241}],67:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./keysIn":242}],68:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -51857,7 +52249,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":129}],68:[function(_dereq_,module,exports){
+},{"./_defineProperty":130}],69:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     arrayEach = _dereq_('./_arrayEach'),
     assignValue = _dereq_('./_assignValue'),
@@ -52012,7 +52404,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":44,"./_arrayEach":52,"./_assignValue":62,"./_baseAssign":65,"./_baseAssignIn":66,"./_cloneBuffer":109,"./_copyArray":116,"./_copySymbols":118,"./_copySymbolsIn":119,"./_getAllKeys":136,"./_getAllKeysIn":137,"./_getTag":145,"./_initCloneArray":155,"./_initCloneByTag":156,"./_initCloneObject":157,"./isArray":224,"./isBuffer":227,"./isObject":235,"./keys":240}],69:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_arrayEach":53,"./_assignValue":63,"./_baseAssign":66,"./_baseAssignIn":67,"./_cloneBuffer":110,"./_copyArray":117,"./_copySymbols":119,"./_copySymbolsIn":120,"./_getAllKeys":137,"./_getAllKeysIn":138,"./_getTag":146,"./_initCloneArray":156,"./_initCloneByTag":157,"./_initCloneObject":158,"./isArray":225,"./isBuffer":228,"./isObject":236,"./keys":241}],70:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -52044,7 +52436,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":235}],70:[function(_dereq_,module,exports){
+},{"./isObject":236}],71:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -52060,7 +52452,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":73,"./_createBaseEach":123}],71:[function(_dereq_,module,exports){
+},{"./_baseForOwn":74,"./_createBaseEach":124}],72:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -52083,7 +52475,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./_baseEach":70}],72:[function(_dereq_,module,exports){
+},{"./_baseEach":71}],73:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -52101,7 +52493,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":124}],73:[function(_dereq_,module,exports){
+},{"./_createBaseFor":125}],74:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -52119,7 +52511,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":72,"./keys":240}],74:[function(_dereq_,module,exports){
+},{"./_baseFor":73,"./keys":241}],75:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     toKey = _dereq_('./_toKey');
 
@@ -52145,7 +52537,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":106,"./_toKey":201}],75:[function(_dereq_,module,exports){
+},{"./_castPath":107,"./_toKey":202}],76:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isArray = _dereq_('./isArray');
 
@@ -52167,7 +52559,7 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":56,"./isArray":224}],76:[function(_dereq_,module,exports){
+},{"./_arrayPush":57,"./isArray":225}],77:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     getRawTag = _dereq_('./_getRawTag'),
     objectToString = _dereq_('./_objectToString');
@@ -52197,7 +52589,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":45,"./_getRawTag":142,"./_objectToString":182}],77:[function(_dereq_,module,exports){
+},{"./_Symbol":46,"./_getRawTag":143,"./_objectToString":183}],78:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -52212,7 +52604,7 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],78:[function(_dereq_,module,exports){
+},{}],79:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -52232,7 +52624,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":76,"./isObjectLike":236}],79:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237}],80:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -52262,7 +52654,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":80,"./isObjectLike":236}],80:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":81,"./isObjectLike":237}],81:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -52347,7 +52739,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":44,"./_equalArrays":130,"./_equalByTag":131,"./_equalObjects":132,"./_getTag":145,"./isArray":224,"./isBuffer":227,"./isTypedArray":239}],81:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_equalArrays":131,"./_equalByTag":132,"./_equalObjects":133,"./_getTag":146,"./isArray":225,"./isBuffer":228,"./isTypedArray":240}],82:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -52411,7 +52803,7 @@ function baseIsMatch(object, source, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./_Stack":44,"./_baseIsEqual":79}],82:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_baseIsEqual":80}],83:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isMasked = _dereq_('./_isMasked'),
     isObject = _dereq_('./isObject'),
@@ -52460,7 +52852,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":162,"./_toSource":202,"./isFunction":231,"./isObject":235}],83:[function(_dereq_,module,exports){
+},{"./_isMasked":163,"./_toSource":203,"./isFunction":232,"./isObject":236}],84:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -52522,7 +52914,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":76,"./isLength":232,"./isObjectLike":236}],84:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isLength":233,"./isObjectLike":237}],85:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -52555,7 +52947,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":88,"./_baseMatchesProperty":89,"./identity":222,"./isArray":224,"./property":248}],85:[function(_dereq_,module,exports){
+},{"./_baseMatches":89,"./_baseMatchesProperty":90,"./identity":223,"./isArray":225,"./property":249}],86:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -52587,7 +52979,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":163,"./_nativeKeys":179}],86:[function(_dereq_,module,exports){
+},{"./_isPrototype":164,"./_nativeKeys":180}],87:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isPrototype = _dereq_('./_isPrototype'),
     nativeKeysIn = _dereq_('./_nativeKeysIn');
@@ -52622,7 +53014,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":163,"./_nativeKeysIn":180,"./isObject":235}],87:[function(_dereq_,module,exports){
+},{"./_isPrototype":164,"./_nativeKeysIn":181,"./isObject":236}],88:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -52646,7 +53038,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":70,"./isArrayLike":225}],88:[function(_dereq_,module,exports){
+},{"./_baseEach":71,"./isArrayLike":226}],89:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -52670,7 +53062,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":81,"./_getMatchData":139,"./_matchesStrictComparable":176}],89:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":82,"./_getMatchData":140,"./_matchesStrictComparable":177}],90:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -52705,7 +53097,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":79,"./_isKey":160,"./_isStrictComparable":164,"./_matchesStrictComparable":176,"./_toKey":201,"./get":219,"./hasIn":221}],90:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":80,"./_isKey":161,"./_isStrictComparable":165,"./_matchesStrictComparable":177,"./_toKey":202,"./get":220,"./hasIn":222}],91:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -52748,7 +53140,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":44,"./_assignMergeValue":61,"./_baseFor":72,"./_baseMergeDeep":91,"./isObject":235,"./keysIn":241}],91:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_assignMergeValue":62,"./_baseFor":73,"./_baseMergeDeep":92,"./isObject":236,"./keysIn":242}],92:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -52843,7 +53235,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":61,"./_cloneBuffer":109,"./_cloneTypedArray":115,"./_copyArray":116,"./_initCloneObject":157,"./isArguments":223,"./isArray":224,"./isArrayLikeObject":226,"./isBuffer":227,"./isFunction":231,"./isObject":235,"./isPlainObject":237,"./isTypedArray":239,"./toPlainObject":255}],92:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":62,"./_cloneBuffer":110,"./_cloneTypedArray":116,"./_copyArray":117,"./_initCloneObject":158,"./isArguments":224,"./isArray":225,"./isArrayLikeObject":227,"./isBuffer":228,"./isFunction":232,"./isObject":236,"./isPlainObject":238,"./isTypedArray":240,"./toPlainObject":256}],93:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -52875,7 +53267,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":74,"./_baseSet":97,"./_castPath":106}],93:[function(_dereq_,module,exports){
+},{"./_baseGet":75,"./_baseSet":98,"./_castPath":107}],94:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -52891,7 +53283,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],94:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -52909,7 +53301,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":74}],95:[function(_dereq_,module,exports){
+},{"./_baseGet":75}],96:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.propertyOf` without support for deep paths.
  *
@@ -52925,7 +53317,7 @@ function basePropertyOf(object) {
 
 module.exports = basePropertyOf;
 
-},{}],96:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity'),
     overRest = _dereq_('./_overRest'),
     setToString = _dereq_('./_setToString');
@@ -52944,7 +53336,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":184,"./_setToString":192,"./identity":222}],97:[function(_dereq_,module,exports){
+},{"./_overRest":185,"./_setToString":193,"./identity":223}],98:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -52993,7 +53385,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":62,"./_castPath":106,"./_isIndex":158,"./_toKey":201,"./isObject":235}],98:[function(_dereq_,module,exports){
+},{"./_assignValue":63,"./_castPath":107,"./_isIndex":159,"./_toKey":202,"./isObject":236}],99:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -53017,7 +53409,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":129,"./constant":212,"./identity":222}],99:[function(_dereq_,module,exports){
+},{"./_defineProperty":130,"./constant":213,"./identity":223}],100:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -53050,7 +53442,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],100:[function(_dereq_,module,exports){
+},{}],101:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -53072,7 +53464,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],101:[function(_dereq_,module,exports){
+},{}],102:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     arrayMap = _dereq_('./_arrayMap'),
     isArray = _dereq_('./isArray'),
@@ -53111,7 +53503,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":45,"./_arrayMap":55,"./isArray":224,"./isSymbol":238}],102:[function(_dereq_,module,exports){
+},{"./_Symbol":46,"./_arrayMap":56,"./isArray":225,"./isSymbol":239}],103:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -53127,7 +53519,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],103:[function(_dereq_,module,exports){
+},{}],104:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap');
 
 /**
@@ -53148,7 +53540,7 @@ function baseValues(object, props) {
 
 module.exports = baseValues;
 
-},{"./_arrayMap":55}],104:[function(_dereq_,module,exports){
+},{"./_arrayMap":56}],105:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -53163,7 +53555,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],105:[function(_dereq_,module,exports){
+},{}],106:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -53179,7 +53571,7 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":222}],106:[function(_dereq_,module,exports){
+},{"./identity":223}],107:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isKey = _dereq_('./_isKey'),
     stringToPath = _dereq_('./_stringToPath'),
@@ -53202,7 +53594,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":160,"./_stringToPath":200,"./isArray":224,"./toString":256}],107:[function(_dereq_,module,exports){
+},{"./_isKey":161,"./_stringToPath":201,"./isArray":225,"./toString":257}],108:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -53222,7 +53614,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":99}],108:[function(_dereq_,module,exports){
+},{"./_baseSlice":100}],109:[function(_dereq_,module,exports){
 var Uint8Array = _dereq_('./_Uint8Array');
 
 /**
@@ -53240,7 +53632,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":46}],109:[function(_dereq_,module,exports){
+},{"./_Uint8Array":47}],110:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Detect free variable `exports`. */
@@ -53277,7 +53669,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":188}],110:[function(_dereq_,module,exports){
+},{"./_root":189}],111:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -53295,7 +53687,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":108}],111:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":109}],112:[function(_dereq_,module,exports){
 var addMapEntry = _dereq_('./_addMapEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     mapToArray = _dereq_('./_mapToArray');
@@ -53319,7 +53711,7 @@ function cloneMap(map, isDeep, cloneFunc) {
 
 module.exports = cloneMap;
 
-},{"./_addMapEntry":48,"./_arrayReduce":57,"./_mapToArray":175}],112:[function(_dereq_,module,exports){
+},{"./_addMapEntry":49,"./_arrayReduce":58,"./_mapToArray":176}],113:[function(_dereq_,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -53338,7 +53730,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],113:[function(_dereq_,module,exports){
+},{}],114:[function(_dereq_,module,exports){
 var addSetEntry = _dereq_('./_addSetEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     setToArray = _dereq_('./_setToArray');
@@ -53362,7 +53754,7 @@ function cloneSet(set, isDeep, cloneFunc) {
 
 module.exports = cloneSet;
 
-},{"./_addSetEntry":49,"./_arrayReduce":57,"./_setToArray":191}],114:[function(_dereq_,module,exports){
+},{"./_addSetEntry":50,"./_arrayReduce":58,"./_setToArray":192}],115:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -53382,7 +53774,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":45}],115:[function(_dereq_,module,exports){
+},{"./_Symbol":46}],116:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -53400,7 +53792,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":108}],116:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":109}],117:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -53422,7 +53814,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],117:[function(_dereq_,module,exports){
+},{}],118:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     baseAssignValue = _dereq_('./_baseAssignValue');
 
@@ -53464,7 +53856,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":62,"./_baseAssignValue":67}],118:[function(_dereq_,module,exports){
+},{"./_assignValue":63,"./_baseAssignValue":68}],119:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbols = _dereq_('./_getSymbols');
 
@@ -53482,7 +53874,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":117,"./_getSymbols":143}],119:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./_getSymbols":144}],120:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbolsIn = _dereq_('./_getSymbolsIn');
 
@@ -53500,7 +53892,7 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":117,"./_getSymbolsIn":144}],120:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./_getSymbolsIn":145}],121:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -53508,7 +53900,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":188}],121:[function(_dereq_,module,exports){
+},{"./_root":189}],122:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -53533,7 +53925,7 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":51,"./_baseAggregator":64,"./_baseIteratee":84,"./isArray":224}],122:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":52,"./_baseAggregator":65,"./_baseIteratee":85,"./isArray":225}],123:[function(_dereq_,module,exports){
 var baseRest = _dereq_('./_baseRest'),
     isIterateeCall = _dereq_('./_isIterateeCall');
 
@@ -53572,7 +53964,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":96,"./_isIterateeCall":159}],123:[function(_dereq_,module,exports){
+},{"./_baseRest":97,"./_isIterateeCall":160}],124:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -53606,7 +53998,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":225}],124:[function(_dereq_,module,exports){
+},{"./isArrayLike":226}],125:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -53633,7 +54025,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],125:[function(_dereq_,module,exports){
+},{}],126:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -53668,7 +54060,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":107,"./_hasUnicode":148,"./_stringToArray":199,"./toString":256}],126:[function(_dereq_,module,exports){
+},{"./_castSlice":108,"./_hasUnicode":149,"./_stringToArray":200,"./toString":257}],127:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -53694,7 +54086,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":57,"./deburr":213,"./words":258}],127:[function(_dereq_,module,exports){
+},{"./_arrayReduce":58,"./deburr":214,"./words":259}],128:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /** Used for built-in method references. */
@@ -53725,7 +54117,7 @@ function customDefaultsAssignIn(objValue, srcValue, key, object) {
 
 module.exports = customDefaultsAssignIn;
 
-},{"./eq":215}],128:[function(_dereq_,module,exports){
+},{"./eq":216}],129:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -53798,7 +54190,7 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":95}],129:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":96}],130:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 var defineProperty = (function() {
@@ -53811,7 +54203,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":140}],130:[function(_dereq_,module,exports){
+},{"./_getNative":141}],131:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -53896,7 +54288,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":43,"./_arraySome":58,"./_cacheHas":104}],131:[function(_dereq_,module,exports){
+},{"./_SetCache":44,"./_arraySome":59,"./_cacheHas":105}],132:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -54010,7 +54402,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":45,"./_Uint8Array":46,"./_equalArrays":130,"./_mapToArray":175,"./_setToArray":191,"./eq":215}],132:[function(_dereq_,module,exports){
+},{"./_Symbol":46,"./_Uint8Array":47,"./_equalArrays":131,"./_mapToArray":176,"./_setToArray":192,"./eq":216}],133:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -54101,7 +54493,7 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":136}],133:[function(_dereq_,module,exports){
+},{"./_getAllKeys":137}],134:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map characters to HTML entities. */
@@ -54124,7 +54516,7 @@ var escapeHtmlChar = basePropertyOf(htmlEscapes);
 
 module.exports = escapeHtmlChar;
 
-},{"./_basePropertyOf":95}],134:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":96}],135:[function(_dereq_,module,exports){
 /** Used to escape characters for inclusion in compiled string literals. */
 var stringEscapes = {
   '\\': '\\',
@@ -54148,7 +54540,7 @@ function escapeStringChar(chr) {
 
 module.exports = escapeStringChar;
 
-},{}],135:[function(_dereq_,module,exports){
+},{}],136:[function(_dereq_,module,exports){
 (function (global){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -54156,7 +54548,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],136:[function(_dereq_,module,exports){
+},{}],137:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbols = _dereq_('./_getSymbols'),
     keys = _dereq_('./keys');
@@ -54174,7 +54566,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":75,"./_getSymbols":143,"./keys":240}],137:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":76,"./_getSymbols":144,"./keys":241}],138:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -54193,7 +54585,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":75,"./_getSymbolsIn":144,"./keysIn":241}],138:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":76,"./_getSymbolsIn":145,"./keysIn":242}],139:[function(_dereq_,module,exports){
 var isKeyable = _dereq_('./_isKeyable');
 
 /**
@@ -54213,7 +54605,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":161}],139:[function(_dereq_,module,exports){
+},{"./_isKeyable":162}],140:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -54239,7 +54631,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":164,"./keys":240}],140:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":165,"./keys":241}],141:[function(_dereq_,module,exports){
 var baseIsNative = _dereq_('./_baseIsNative'),
     getValue = _dereq_('./_getValue');
 
@@ -54258,7 +54650,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":82,"./_getValue":146}],141:[function(_dereq_,module,exports){
+},{"./_baseIsNative":83,"./_getValue":147}],142:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /** Built-in value references. */
@@ -54266,7 +54658,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":183}],142:[function(_dereq_,module,exports){
+},{"./_overArg":184}],143:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used for built-in method references. */
@@ -54314,7 +54706,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":45}],143:[function(_dereq_,module,exports){
+},{"./_Symbol":46}],144:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     stubArray = _dereq_('./stubArray');
 
@@ -54346,7 +54738,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":53,"./stubArray":251}],144:[function(_dereq_,module,exports){
+},{"./_arrayFilter":54,"./stubArray":252}],145:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -54373,7 +54765,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":56,"./_getPrototype":141,"./_getSymbols":143,"./stubArray":251}],145:[function(_dereq_,module,exports){
+},{"./_arrayPush":57,"./_getPrototype":142,"./_getSymbols":144,"./stubArray":252}],146:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -54433,7 +54825,7 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":36,"./_Map":39,"./_Promise":41,"./_Set":42,"./_WeakMap":47,"./_baseGetTag":76,"./_toSource":202}],146:[function(_dereq_,module,exports){
+},{"./_DataView":37,"./_Map":40,"./_Promise":42,"./_Set":43,"./_WeakMap":48,"./_baseGetTag":77,"./_toSource":203}],147:[function(_dereq_,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -54448,7 +54840,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],147:[function(_dereq_,module,exports){
+},{}],148:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -54489,7 +54881,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":106,"./_isIndex":158,"./_toKey":201,"./isArguments":223,"./isArray":224,"./isLength":232}],148:[function(_dereq_,module,exports){
+},{"./_castPath":107,"./_isIndex":159,"./_toKey":202,"./isArguments":224,"./isArray":225,"./isLength":233}],149:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -54517,7 +54909,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],149:[function(_dereq_,module,exports){
+},{}],150:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -54534,7 +54926,7 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],150:[function(_dereq_,module,exports){
+},{}],151:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /**
@@ -54551,7 +54943,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":178}],151:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],152:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -54570,7 +54962,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],152:[function(_dereq_,module,exports){
+},{}],153:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -54602,7 +54994,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":178}],153:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],154:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -54627,7 +55019,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":178}],154:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],155:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -54652,7 +55044,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":178}],155:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],156:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -54680,7 +55072,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],156:[function(_dereq_,module,exports){
+},{}],157:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
     cloneDataView = _dereq_('./_cloneDataView'),
     cloneMap = _dereq_('./_cloneMap'),
@@ -54762,7 +55154,7 @@ function initCloneByTag(object, tag, cloneFunc, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":108,"./_cloneDataView":110,"./_cloneMap":111,"./_cloneRegExp":112,"./_cloneSet":113,"./_cloneSymbol":114,"./_cloneTypedArray":115}],157:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":109,"./_cloneDataView":111,"./_cloneMap":112,"./_cloneRegExp":113,"./_cloneSet":114,"./_cloneSymbol":115,"./_cloneTypedArray":116}],158:[function(_dereq_,module,exports){
 var baseCreate = _dereq_('./_baseCreate'),
     getPrototype = _dereq_('./_getPrototype'),
     isPrototype = _dereq_('./_isPrototype');
@@ -54782,7 +55174,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":69,"./_getPrototype":141,"./_isPrototype":163}],158:[function(_dereq_,module,exports){
+},{"./_baseCreate":70,"./_getPrototype":142,"./_isPrototype":164}],159:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -54806,7 +55198,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],159:[function(_dereq_,module,exports){
+},{}],160:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq'),
     isArrayLike = _dereq_('./isArrayLike'),
     isIndex = _dereq_('./_isIndex'),
@@ -54838,7 +55230,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":158,"./eq":215,"./isArrayLike":225,"./isObject":235}],160:[function(_dereq_,module,exports){
+},{"./_isIndex":159,"./eq":216,"./isArrayLike":226,"./isObject":236}],161:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -54869,7 +55261,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":224,"./isSymbol":238}],161:[function(_dereq_,module,exports){
+},{"./isArray":225,"./isSymbol":239}],162:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -54886,7 +55278,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],162:[function(_dereq_,module,exports){
+},{}],163:[function(_dereq_,module,exports){
 var coreJsData = _dereq_('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -54908,7 +55300,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":120}],163:[function(_dereq_,module,exports){
+},{"./_coreJsData":121}],164:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -54928,7 +55320,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],164:[function(_dereq_,module,exports){
+},{}],165:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -54945,7 +55337,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":235}],165:[function(_dereq_,module,exports){
+},{"./isObject":236}],166:[function(_dereq_,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -54960,7 +55352,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],166:[function(_dereq_,module,exports){
+},{}],167:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -54997,7 +55389,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":63}],167:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],168:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -55018,7 +55410,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":63}],168:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],169:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -55036,7 +55428,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":63}],169:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],170:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -55064,7 +55456,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":63}],170:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],171:[function(_dereq_,module,exports){
 var Hash = _dereq_('./_Hash'),
     ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map');
@@ -55087,7 +55479,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":37,"./_ListCache":38,"./_Map":39}],171:[function(_dereq_,module,exports){
+},{"./_Hash":38,"./_ListCache":39,"./_Map":40}],172:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55107,7 +55499,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":138}],172:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],173:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55125,7 +55517,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":138}],173:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],174:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55143,7 +55535,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":138}],174:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],175:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55167,7 +55559,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":138}],175:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],176:[function(_dereq_,module,exports){
 /**
  * Converts `map` to its key-value pairs.
  *
@@ -55187,7 +55579,7 @@ function mapToArray(map) {
 
 module.exports = mapToArray;
 
-},{}],176:[function(_dereq_,module,exports){
+},{}],177:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -55209,7 +55601,7 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],177:[function(_dereq_,module,exports){
+},{}],178:[function(_dereq_,module,exports){
 var memoize = _dereq_('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -55237,7 +55629,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":243}],178:[function(_dereq_,module,exports){
+},{"./memoize":244}],179:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -55245,7 +55637,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":140}],179:[function(_dereq_,module,exports){
+},{"./_getNative":141}],180:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -55253,7 +55645,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":183}],180:[function(_dereq_,module,exports){
+},{"./_overArg":184}],181:[function(_dereq_,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -55275,7 +55667,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],181:[function(_dereq_,module,exports){
+},{}],182:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -55299,7 +55691,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":135}],182:[function(_dereq_,module,exports){
+},{"./_freeGlobal":136}],183:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -55323,7 +55715,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],183:[function(_dereq_,module,exports){
+},{}],184:[function(_dereq_,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -55340,7 +55732,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],184:[function(_dereq_,module,exports){
+},{}],185:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -55378,25 +55770,25 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":50}],185:[function(_dereq_,module,exports){
+},{"./_apply":51}],186:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reEscape = /<%-([\s\S]+?)%>/g;
 
 module.exports = reEscape;
 
-},{}],186:[function(_dereq_,module,exports){
+},{}],187:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reEvaluate = /<%([\s\S]+?)%>/g;
 
 module.exports = reEvaluate;
 
-},{}],187:[function(_dereq_,module,exports){
+},{}],188:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reInterpolate = /<%=([\s\S]+?)%>/g;
 
 module.exports = reInterpolate;
 
-},{}],188:[function(_dereq_,module,exports){
+},{}],189:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -55407,7 +55799,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":135}],189:[function(_dereq_,module,exports){
+},{"./_freeGlobal":136}],190:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -55428,7 +55820,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],190:[function(_dereq_,module,exports){
+},{}],191:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -55444,7 +55836,7 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],191:[function(_dereq_,module,exports){
+},{}],192:[function(_dereq_,module,exports){
 /**
  * Converts `set` to an array of its values.
  *
@@ -55464,7 +55856,7 @@ function setToArray(set) {
 
 module.exports = setToArray;
 
-},{}],192:[function(_dereq_,module,exports){
+},{}],193:[function(_dereq_,module,exports){
 var baseSetToString = _dereq_('./_baseSetToString'),
     shortOut = _dereq_('./_shortOut');
 
@@ -55480,7 +55872,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":98,"./_shortOut":193}],193:[function(_dereq_,module,exports){
+},{"./_baseSetToString":99,"./_shortOut":194}],194:[function(_dereq_,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -55519,7 +55911,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],194:[function(_dereq_,module,exports){
+},{}],195:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache');
 
 /**
@@ -55536,7 +55928,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":38}],195:[function(_dereq_,module,exports){
+},{"./_ListCache":39}],196:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -55556,7 +55948,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],196:[function(_dereq_,module,exports){
+},{}],197:[function(_dereq_,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -55572,7 +55964,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],197:[function(_dereq_,module,exports){
+},{}],198:[function(_dereq_,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -55588,7 +55980,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],198:[function(_dereq_,module,exports){
+},{}],199:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map'),
     MapCache = _dereq_('./_MapCache');
@@ -55624,7 +56016,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":38,"./_Map":39,"./_MapCache":40}],199:[function(_dereq_,module,exports){
+},{"./_ListCache":39,"./_Map":40,"./_MapCache":41}],200:[function(_dereq_,module,exports){
 var asciiToArray = _dereq_('./_asciiToArray'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeToArray = _dereq_('./_unicodeToArray');
@@ -55644,7 +56036,7 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":59,"./_hasUnicode":148,"./_unicodeToArray":203}],200:[function(_dereq_,module,exports){
+},{"./_asciiToArray":60,"./_hasUnicode":149,"./_unicodeToArray":204}],201:[function(_dereq_,module,exports){
 var memoizeCapped = _dereq_('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -55674,7 +56066,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":177}],201:[function(_dereq_,module,exports){
+},{"./_memoizeCapped":178}],202:[function(_dereq_,module,exports){
 var isSymbol = _dereq_('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -55697,7 +56089,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":238}],202:[function(_dereq_,module,exports){
+},{"./isSymbol":239}],203:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -55725,7 +56117,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],203:[function(_dereq_,module,exports){
+},{}],204:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -55767,7 +56159,7 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],204:[function(_dereq_,module,exports){
+},{}],205:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -55838,7 +56230,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],205:[function(_dereq_,module,exports){
+},{}],206:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -55898,7 +56290,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":62,"./_copyObject":117,"./_createAssigner":122,"./_isPrototype":163,"./isArrayLike":225,"./keys":240}],206:[function(_dereq_,module,exports){
+},{"./_assignValue":63,"./_copyObject":118,"./_createAssigner":123,"./_isPrototype":164,"./isArrayLike":226,"./keys":241}],207:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
     keysIn = _dereq_('./keysIn');
@@ -55938,7 +56330,7 @@ var assignInWith = createAssigner(function(object, source, srcIndex, customizer)
 
 module.exports = assignInWith;
 
-},{"./_copyObject":117,"./_createAssigner":122,"./keysIn":241}],207:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./_createAssigner":123,"./keysIn":242}],208:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply'),
     baseRest = _dereq_('./_baseRest'),
     isError = _dereq_('./isError');
@@ -55975,7 +56367,7 @@ var attempt = baseRest(function(func, args) {
 
 module.exports = attempt;
 
-},{"./_apply":50,"./_baseRest":96,"./isError":229}],208:[function(_dereq_,module,exports){
+},{"./_apply":51,"./_baseRest":97,"./isError":230}],209:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -56006,7 +56398,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":126,"./capitalize":209}],209:[function(_dereq_,module,exports){
+},{"./_createCompounder":127,"./capitalize":210}],210:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -56031,7 +56423,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":256,"./upperFirst":257}],210:[function(_dereq_,module,exports){
+},{"./toString":257,"./upperFirst":258}],211:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -56069,7 +56461,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"./_baseClone":68}],211:[function(_dereq_,module,exports){
+},{"./_baseClone":69}],212:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -56100,7 +56492,7 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":68}],212:[function(_dereq_,module,exports){
+},{"./_baseClone":69}],213:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -56128,7 +56520,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],213:[function(_dereq_,module,exports){
+},{}],214:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -56175,10 +56567,10 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":128,"./toString":256}],214:[function(_dereq_,module,exports){
+},{"./_deburrLetter":129,"./toString":257}],215:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":218}],215:[function(_dereq_,module,exports){
+},{"./forEach":219}],216:[function(_dereq_,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -56217,7 +56609,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],216:[function(_dereq_,module,exports){
+},{}],217:[function(_dereq_,module,exports){
 var escapeHtmlChar = _dereq_('./_escapeHtmlChar'),
     toString = _dereq_('./toString');
 
@@ -56262,7 +56654,7 @@ function escape(string) {
 
 module.exports = escape;
 
-},{"./_escapeHtmlChar":133,"./toString":256}],217:[function(_dereq_,module,exports){
+},{"./_escapeHtmlChar":134,"./toString":257}],218:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -56312,7 +56704,7 @@ function filter(collection, predicate) {
 
 module.exports = filter;
 
-},{"./_arrayFilter":53,"./_baseFilter":71,"./_baseIteratee":84,"./isArray":224}],218:[function(_dereq_,module,exports){
+},{"./_arrayFilter":54,"./_baseFilter":72,"./_baseIteratee":85,"./isArray":225}],219:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -56355,7 +56747,7 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":52,"./_baseEach":70,"./_castFunction":105,"./isArray":224}],219:[function(_dereq_,module,exports){
+},{"./_arrayEach":53,"./_baseEach":71,"./_castFunction":106,"./isArray":225}],220:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -56390,7 +56782,7 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-},{"./_baseGet":74}],220:[function(_dereq_,module,exports){
+},{"./_baseGet":75}],221:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -56433,7 +56825,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":67,"./_createAggregator":121}],221:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":68,"./_createAggregator":122}],222:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -56469,7 +56861,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":77,"./_hasPath":147}],222:[function(_dereq_,module,exports){
+},{"./_baseHasIn":78,"./_hasPath":148}],223:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -56492,7 +56884,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],223:[function(_dereq_,module,exports){
+},{}],224:[function(_dereq_,module,exports){
 var baseIsArguments = _dereq_('./_baseIsArguments'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -56530,7 +56922,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":78,"./isObjectLike":236}],224:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":79,"./isObjectLike":237}],225:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -56558,7 +56950,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],225:[function(_dereq_,module,exports){
+},{}],226:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isLength = _dereq_('./isLength');
 
@@ -56593,7 +56985,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":231,"./isLength":232}],226:[function(_dereq_,module,exports){
+},{"./isFunction":232,"./isLength":233}],227:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -56628,7 +57020,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":225,"./isObjectLike":236}],227:[function(_dereq_,module,exports){
+},{"./isArrayLike":226,"./isObjectLike":237}],228:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -56668,7 +57060,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":188,"./stubFalse":252}],228:[function(_dereq_,module,exports){
+},{"./_root":189,"./stubFalse":253}],229:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual');
 
 /**
@@ -56705,7 +57097,7 @@ function isEqual(value, other) {
 
 module.exports = isEqual;
 
-},{"./_baseIsEqual":79}],229:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":80}],230:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike'),
     isPlainObject = _dereq_('./isPlainObject');
@@ -56743,7 +57135,7 @@ function isError(value) {
 
 module.exports = isError;
 
-},{"./_baseGetTag":76,"./isObjectLike":236,"./isPlainObject":237}],230:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237,"./isPlainObject":238}],231:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -56781,7 +57173,7 @@ function isFinite(value) {
 
 module.exports = isFinite;
 
-},{"./_root":188}],231:[function(_dereq_,module,exports){
+},{"./_root":189}],232:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObject = _dereq_('./isObject');
 
@@ -56820,7 +57212,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":76,"./isObject":235}],232:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObject":236}],233:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -56857,7 +57249,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],233:[function(_dereq_,module,exports){
+},{}],234:[function(_dereq_,module,exports){
 var isNumber = _dereq_('./isNumber');
 
 /**
@@ -56897,7 +57289,7 @@ function isNaN(value) {
 
 module.exports = isNaN;
 
-},{"./isNumber":234}],234:[function(_dereq_,module,exports){
+},{"./isNumber":235}],235:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -56937,7 +57329,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":76,"./isObjectLike":236}],235:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237}],236:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -56970,7 +57362,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],236:[function(_dereq_,module,exports){
+},{}],237:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -57001,7 +57393,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],237:[function(_dereq_,module,exports){
+},{}],238:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -57065,7 +57457,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":76,"./_getPrototype":141,"./isObjectLike":236}],238:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./_getPrototype":142,"./isObjectLike":237}],239:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -57096,7 +57488,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":76,"./isObjectLike":236}],239:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237}],240:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -57125,7 +57517,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":83,"./_baseUnary":102,"./_nodeUtil":181}],240:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":84,"./_baseUnary":103,"./_nodeUtil":182}],241:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -57164,7 +57556,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":54,"./_baseKeys":85,"./isArrayLike":225}],241:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":55,"./_baseKeys":86,"./isArrayLike":226}],242:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -57198,7 +57590,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":54,"./_baseKeysIn":86,"./isArrayLike":225}],242:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":55,"./_baseKeysIn":87,"./isArrayLike":226}],243:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -57253,7 +57645,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":55,"./_baseIteratee":84,"./_baseMap":87,"./isArray":224}],243:[function(_dereq_,module,exports){
+},{"./_arrayMap":56,"./_baseIteratee":85,"./_baseMap":88,"./isArray":225}],244:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache');
 
 /** Error message constants. */
@@ -57328,7 +57720,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":40}],244:[function(_dereq_,module,exports){
+},{"./_MapCache":41}],245:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -57369,7 +57761,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":90,"./_createAssigner":122}],245:[function(_dereq_,module,exports){
+},{"./_baseMerge":91,"./_createAssigner":123}],246:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -57411,7 +57803,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],246:[function(_dereq_,module,exports){
+},{}],247:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -57442,7 +57834,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":84,"./negate":245,"./pickBy":247}],247:[function(_dereq_,module,exports){
+},{"./_baseIteratee":85,"./negate":246,"./pickBy":248}],248:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -57481,7 +57873,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":55,"./_baseIteratee":84,"./_basePickBy":92,"./_getAllKeysIn":137}],248:[function(_dereq_,module,exports){
+},{"./_arrayMap":56,"./_baseIteratee":85,"./_basePickBy":93,"./_getAllKeysIn":138}],249:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -57515,7 +57907,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":93,"./_basePropertyDeep":94,"./_isKey":160,"./_toKey":201}],249:[function(_dereq_,module,exports){
+},{"./_baseProperty":94,"./_basePropertyDeep":95,"./_isKey":161,"./_toKey":202}],250:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -57563,7 +57955,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":53,"./_baseFilter":71,"./_baseIteratee":84,"./isArray":224,"./negate":245}],250:[function(_dereq_,module,exports){
+},{"./_arrayFilter":54,"./_baseFilter":72,"./_baseIteratee":85,"./isArray":225,"./negate":246}],251:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -57600,7 +57992,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":97}],251:[function(_dereq_,module,exports){
+},{"./_baseSet":98}],252:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -57625,7 +58017,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],252:[function(_dereq_,module,exports){
+},{}],253:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -57645,7 +58037,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],253:[function(_dereq_,module,exports){
+},{}],254:[function(_dereq_,module,exports){
 var assignInWith = _dereq_('./assignInWith'),
     attempt = _dereq_('./attempt'),
     baseValues = _dereq_('./_baseValues'),
@@ -57885,7 +58277,7 @@ function template(string, options, guard) {
 
 module.exports = template;
 
-},{"./_baseValues":103,"./_customDefaultsAssignIn":127,"./_escapeStringChar":134,"./_isIterateeCall":159,"./_reInterpolate":187,"./assignInWith":206,"./attempt":207,"./isError":229,"./keys":240,"./templateSettings":254,"./toString":256}],254:[function(_dereq_,module,exports){
+},{"./_baseValues":104,"./_customDefaultsAssignIn":128,"./_escapeStringChar":135,"./_isIterateeCall":160,"./_reInterpolate":188,"./assignInWith":207,"./attempt":208,"./isError":230,"./keys":241,"./templateSettings":255,"./toString":257}],255:[function(_dereq_,module,exports){
 var escape = _dereq_('./escape'),
     reEscape = _dereq_('./_reEscape'),
     reEvaluate = _dereq_('./_reEvaluate'),
@@ -57954,7 +58346,7 @@ var templateSettings = {
 
 module.exports = templateSettings;
 
-},{"./_reEscape":185,"./_reEvaluate":186,"./_reInterpolate":187,"./escape":216}],255:[function(_dereq_,module,exports){
+},{"./_reEscape":186,"./_reEvaluate":187,"./_reInterpolate":188,"./escape":217}],256:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -57988,7 +58380,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":117,"./keysIn":241}],256:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./keysIn":242}],257:[function(_dereq_,module,exports){
 var baseToString = _dereq_('./_baseToString');
 
 /**
@@ -58018,7 +58410,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":101}],257:[function(_dereq_,module,exports){
+},{"./_baseToString":102}],258:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -58042,7 +58434,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":125}],258:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":126}],259:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -58079,7 +58471,7 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":60,"./_hasUnicodeWord":149,"./_unicodeWords":204,"./toString":256}],259:[function(_dereq_,module,exports){
+},{"./_asciiWords":61,"./_hasUnicodeWord":150,"./_unicodeWords":205,"./toString":257}],260:[function(_dereq_,module,exports){
 //! moment.js
 //! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -62544,7 +62936,7 @@ return hooks;
 
 })));
 
-},{}],260:[function(_dereq_,module,exports){
+},{}],261:[function(_dereq_,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -62921,7 +63313,7 @@ return hooks;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],261:[function(_dereq_,module,exports){
+},{}],262:[function(_dereq_,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -63876,7 +64268,7 @@ return hooks;
     return m;
 }));
 
-},{"angular":11}],262:[function(_dereq_,module,exports){
+},{"angular":12}],263:[function(_dereq_,module,exports){
 /**!
  * AngularJS file upload directives and services. Supports: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -66776,10 +67168,10 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],263:[function(_dereq_,module,exports){
+},{}],264:[function(_dereq_,module,exports){
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":262}],264:[function(_dereq_,module,exports){
+},{"./dist/ng-file-upload-all":263}],265:[function(_dereq_,module,exports){
 /*!
  * Signature Pad v1.6.0
  * https://github.com/szimek/signature_pad
@@ -67310,7 +67702,7 @@ return SignaturePad;
 
 })));
 
-},{}],265:[function(_dereq_,module,exports){
+},{}],266:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67399,7 +67791,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],266:[function(_dereq_,module,exports){
+},{}],267:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67577,7 +67969,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],267:[function(_dereq_,module,exports){
+},{}],268:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67657,7 +68049,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],268:[function(_dereq_,module,exports){
+},{}],269:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -67732,7 +68124,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/columns.html',
-        "<div class=\"row\">\n  <div ng-show=\"column.width\" class=\"col-sm-{{column.width}} col-sm-offset-{{column.offset}} col-sm-push-{{column.push}} col-sm-pull-{{column.pull}}\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      builder=\"builder\"\n      options=\"options\"\n    ></formio-component>\n  </div>\n</div>\n"
+        "<div class=\"row\">\n  <div class=\"col-sm-{{column.width}} col-sm-offset-{{column.offset}} col-sm-push-{{column.push}} col-sm-pull-{{column.pull}}\" ng-repeat=\"column in component.columns track by $index\">\n    <formio-component\n      ng-repeat=\"_component in column.components track by $index\"\n      component=\"_component\"\n      data=\"data\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      ng-if=\"builder ? '::true' : isVisible(_component, data)\"\n      formio-form=\"formioForm\"\n      read-only=\"isDisabled(_component, data)\"\n      grid-row=\"gridRow\"\n      grid-col=\"gridCol\"\n      builder=\"builder\"\n      options=\"options\"\n    ></formio-component>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/columns.html',
@@ -67742,7 +68134,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],269:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],270:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -67802,7 +68194,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],270:[function(_dereq_,module,exports){
+},{}],271:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -67868,7 +68260,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],271:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],272:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -67897,7 +68289,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],272:[function(_dereq_,module,exports){
+},{}],273:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -68008,7 +68400,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],273:[function(_dereq_,module,exports){
+},{}],274:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68036,7 +68428,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],274:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],275:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -68169,7 +68561,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":34}],275:[function(_dereq_,module,exports){
+},{"formiojs/utils":35}],276:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68334,7 +68726,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],276:[function(_dereq_,module,exports){
+},{}],277:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68541,7 +68933,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],277:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -68575,7 +68967,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],278:[function(_dereq_,module,exports){
+},{}],279:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68629,7 +69021,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],279:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],280:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68743,6 +69135,7 @@ module.exports = function(app) {
           $scope.getFile = function(evt) {
             evt.preventDefault();
             $scope.form = $scope.form || $rootScope.filePath;
+            $scope.options = $scope.options || {};
             var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
             var formio = new Formio($scope.form, {base: baseUrl});
             formio
@@ -68783,6 +69176,7 @@ module.exports = function(app) {
         ) {
           if ($scope.builder) return;
           $scope.form = $scope.form || $rootScope.filePath;
+          $scope.options = $scope.options || {};
           var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
           var formio = new Formio($scope.form, {base: baseUrl});
           formio.downloadFile($scope.file)
@@ -68898,7 +69292,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],280:[function(_dereq_,module,exports){
+},{}],281:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68926,6 +69320,7 @@ module.exports = function(app) {
         },
         controller: ['$scope', 'FormioUtils', 'Formio', function($scope, FormioUtils, Formio) {
           var url = $scope.component.src;
+          $scope.options = $scope.options || {};
           var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
           if ($scope.component.form) {
             url = baseUrl;
@@ -68933,7 +69328,7 @@ module.exports = function(app) {
               url += '/project/' + $scope.component.project;
             }
             else if ($scope.formio && $scope.formio.projectUrl) {
-              url += $scope.formio.projectUrl;
+              url  = $scope.formio.projectUrl;
             }
             url += '/form/' + $scope.component.form;
             url = (new Formio(url, {base: baseUrl})).formUrl;
@@ -69004,7 +69399,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],281:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],282:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69040,7 +69435,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],282:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],283:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69132,7 +69527,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],283:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -69176,7 +69571,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":265,"./button":266,"./checkbox":267,"./columns":268,"./components":269,"./container":270,"./content":271,"./currency":272,"./custom":273,"./datagrid":274,"./datetime":275,"./day":276,"./email":277,"./fieldset":278,"./file":279,"./form":280,"./hidden":281,"./htmlelement":282,"./number":284,"./page":285,"./panel":286,"./password":287,"./phonenumber":288,"./radio":289,"./resource":290,"./select":291,"./selectboxes":292,"./signature":293,"./survey":294,"./table":295,"./textarea":296,"./textfield":297,"./time":298,"./well":299}],284:[function(_dereq_,module,exports){
+},{"./address":266,"./button":267,"./checkbox":268,"./columns":269,"./components":270,"./container":271,"./content":272,"./currency":273,"./custom":274,"./datagrid":275,"./datetime":276,"./day":277,"./email":278,"./fieldset":279,"./file":280,"./form":281,"./hidden":282,"./htmlelement":283,"./number":285,"./page":286,"./panel":287,"./password":288,"./phonenumber":289,"./radio":290,"./resource":291,"./select":292,"./selectboxes":293,"./signature":294,"./survey":295,"./table":296,"./textarea":297,"./textfield":298,"./time":299,"./well":300}],285:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69241,7 +69636,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69268,7 +69663,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],287:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69323,7 +69718,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],287:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -69354,7 +69749,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -69389,7 +69784,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],290:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69440,7 +69835,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69479,7 +69874,7 @@ module.exports = function(app) {
               url += '/project/' + settings.project;
             }
             else if ($scope.formio && $scope.formio.projectUrl) {
-              url += $scope.formio.projectUrl;
+              url  = $scope.formio.projectUrl;
             }
             url += '/form/' + settings.resource;
             var formio = new Formio(url, {base: baseUrl});
@@ -69629,7 +70024,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],292:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -70240,7 +70635,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":205,"lodash/cloneDeep":211,"lodash/get":219,"lodash/isEqual":228,"lodash/set":250}],292:[function(_dereq_,module,exports){
+},{"lodash/assign":206,"lodash/cloneDeep":212,"lodash/get":220,"lodash/isEqual":229,"lodash/set":251}],293:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70348,7 +70743,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -70489,7 +70884,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":264}],294:[function(_dereq_,module,exports){
+},{"signature_pad":265}],295:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70510,7 +70905,7 @@ module.exports = function(app) {
           angular.forEach(component.questions, function(question) {
             view += '<tr>';
             view += '<th>' + question.label + '</th>';
-            view += '<td>' + values[data[question.value]] + '</td>';
+            view += '<td>' + question.value + '</td>';
             view += '</tr>';
           });
           view += '</tbody></table>';
@@ -70548,7 +70943,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],295:[function(_dereq_,module,exports){
+},{}],296:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70627,7 +71022,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],296:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],297:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70669,6 +71064,9 @@ module.exports = function(app) {
           }
           if ($scope.readOnly && $scope.component.wysiwyg) {
             return 'formio/componentsView/content.html';
+          }
+          if (!$scope.readOnly && $scope.component.editorComponents) {
+            return 'formio/components/scripteditor.html';
           }
           return 'formio/components/textarea.html';
         },
@@ -70743,11 +71141,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/texteditor.html', FormioUtils.fieldWrap(
         "<textarea\n  class=\"form-control\"\n  ng-model=\"data[component.key]\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"isRequired(component)\"\n  ckeditor=\"component.wysiwyg\"\n  safe-multiple-to-single\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-attr-placeholder=\"{{ component.placeholder }}\"\n  custom-validator=\"component.validate.custom\"\n  rows=\"{{ component.rows }}\"\n></textarea>\n"
       ));
+      $templateCache.put('formio/components/scripteditor.html', FormioUtils.fieldWrap(
+        "<formio-script-editor \n  ng-model=\"data[component.key]\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"isRequired(component)\"\n  safe-multiple-to-single\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-attr-placeholder=\"{{ component.placeholder | formioTranslate:null:builder }}\"\n  custom-validator=\"component.validate.custom\"\n  rows=\"{{ component.rows }}\"\n></formio-script-editor>\n\n"
+      ));
     }
   ]);
 };
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70808,7 +71209,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 
 var moment = _dereq_('moment');
@@ -70880,7 +71281,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"moment":259}],299:[function(_dereq_,module,exports){
+},{"moment":260}],300:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70932,7 +71333,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":313}],300:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],301:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -71010,7 +71411,7 @@ module.exports = function() {
   };
 };
 
-},{}],301:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -71409,7 +71810,7 @@ module.exports = function() {
   };
 };
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -71426,7 +71827,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],303:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 var _get = _dereq_('lodash/get');
 
@@ -71694,7 +72095,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/get":219}],304:[function(_dereq_,module,exports){
+},{"lodash/get":220}],305:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -71767,7 +72168,7 @@ module.exports = [
   }
 ];
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -71851,7 +72252,7 @@ module.exports = function() {
   };
 };
 
-},{}],306:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -71870,7 +72271,7 @@ module.exports = [
   }
 ];
 
-},{}],307:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -71880,7 +72281,82 @@ module.exports = function() {
   };
 };
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
+"use strict";
+// Javascript editor directive
+module.exports = ['FormioUtils', function(FormioUtils) {
+  return {
+    restrict: 'E',
+    require: ['ngModel'],
+    replace: true,
+    template: function() {
+      if (typeof ace !== 'undefined') {
+        return '<div ui-ace="aceOptions" ng-style="aceStyles"></div>';
+      }
+      else {
+        return '<textarea class="form-control"></textarea>';
+      }
+    },
+    link: function($scope, element, attrs) {
+      if (typeof ace !== 'undefined') {
+        var rows = attrs.rows ? attrs.rows - 0 : 5;
+        $scope.aceStyles = {
+          height: rows * 25 + 'px'
+        };
+      }
+    },
+    controller: ['$scope', function($scope) {
+      if (typeof ace !== 'undefined') {
+        $scope.aceOptions = {
+          useWrapMode: true,
+          showGutter: true,
+          theme: 'dawn',
+          mode: 'javascript',
+          showIndentGuides: true,
+          showPrintMargin: false,
+          onLoad: function(editor) {
+            // Disable message: 'Automatically scrolling cursor into view after selection change this will be disabled in the next version set editor.$blockScrolling = Infinity to disable this message'
+            editor.$blockScrolling = Infinity;
+            editor.setOptions({enableBasicAutocompletion: true});
+            editor.components = $scope.form ? $scope.form.components : $scope.component.editorComponents;
+            /* eslint-disable no-undef*/
+            var tools = ace.require('ace/ext/language_tools');
+            /* eslint-enable  no-undef*/
+            if (tools.completed !== true) {
+                tools.completed   = true;
+                tools.addCompleter({
+                  getCompletions: function(editor, session, pos, prefix, callback) {
+                    callback(null, _.map(FormioUtils.flattenComponents(editor.components, true), function(comp) {
+                      return {name: comp.key, value: comp.key, score: 1000, meta: 'component'};
+                    }));
+                  }
+                });
+            }
+            function update() {
+                var show = !editor.session.getValue().length;
+                var node =  editor.renderer.emptyMessageNode;
+                if (!show && node) {
+                    editor.renderer.scroller.removeChild(editor.renderer.emptyMessageNode);
+                    editor.renderer.emptyMessageNode = null;
+                }
+                else if (show && !node) {
+                    node = editor.renderer.emptyMessageNode = document.createElement('div');
+                    node.innerHTML = editor.container.attributes['placeholder'].value.replace('\n', '<br>');
+                    node.className = 'ace_invisible ace_emptyMessage';
+                    node.style.padding = '0 9px';
+                    editor.renderer.scroller.appendChild(node);
+                }
+            }
+            editor.on('input', update);
+            setTimeout(update, 100);
+          }
+        };
+      }
+    }]
+  };
+}];
+
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -71912,7 +72388,7 @@ module.exports = function() {
   };
 };
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],311:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -71968,7 +72444,7 @@ module.exports = function() {
   };
 };
 
-},{}],310:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 "use strict";
 var isNaN = _dereq_('lodash/isNAN');
 var isFinite = _dereq_('lodash/isFinite');
@@ -72559,7 +73035,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/isFinite":230,"lodash/isNAN":233}],311:[function(_dereq_,module,exports){
+},{"lodash/isFinite":231,"lodash/isNAN":234}],313:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -72743,7 +73219,7 @@ module.exports = [
   }
 ];
 
-},{}],312:[function(_dereq_,module,exports){
+},{}],314:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 var _filter = _dereq_('lodash/filter');
@@ -73149,7 +73625,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":34,"lodash/filter":217,"lodash/get":219}],313:[function(_dereq_,module,exports){
+},{"formiojs/utils":35,"lodash/filter":218,"lodash/get":220}],315:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -73275,7 +73751,7 @@ module.exports = function() {
   };
 };
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],316:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -73324,7 +73800,7 @@ module.exports = [
   }
 ];
 
-},{}],315:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -73358,7 +73834,7 @@ module.exports = [
   }
 ];
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -73367,7 +73843,7 @@ module.exports = [
   }
 ];
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],319:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -73380,7 +73856,7 @@ module.exports = [
   }
 ];
 
-},{}],318:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -73399,7 +73875,7 @@ module.exports = [
   }
 ];
 
-},{}],319:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -73412,7 +73888,7 @@ module.exports = [
   }
 ];
 
-},{}],320:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -73427,7 +73903,7 @@ module.exports = [
   }
 ];
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -73476,7 +73952,7 @@ module.exports = [
   }
 ];
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],324:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -73484,7 +73960,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -73497,9 +73973,10 @@ _dereq_('angular-ui-bootstrap');
 _dereq_('angular-ckeditor');
 _dereq_('bootstrap-ui-datetime-picker/dist/datetime-picker');
 _dereq_('ng-dialog');
+_dereq_('angular-ui-ace/src/ui-ace');
 _dereq_('./formio');
 
-},{"./formio":324,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-bootstrap":8,"angular-ui-mask/dist/mask":9,"bootstrap":13,"bootstrap-ui-datetime-picker/dist/datetime-picker":12,"ng-dialog":261,"ng-file-upload":263,"ui-select/dist/select":329}],324:[function(_dereq_,module,exports){
+},{"./formio":326,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":262,"ng-file-upload":264,"ui-select/dist/select":331}],326:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -73514,6 +73991,7 @@ var app = angular.module('formio', [
   'ngDialog',
   'ngFileUpload',
   'ngFileSaver',
+  'ui.ace',
   'ckeditor'
 ]);
 
@@ -73554,6 +74032,8 @@ app.directive('formioElement', _dereq_('./directives/formioElement'));
 app.directive('formioWizard', _dereq_('./directives/formioWizard'));
 
 app.directive('formioBindHtml', _dereq_('./directives/formioBindHtml.js'));
+
+app.directive('formioScriptEditor', _dereq_('./directives/formioScriptEditor'));
 
 /**
  * Filter to flatten form components.
@@ -73651,7 +74131,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":283,"./directives/customValidator":300,"./directives/formio":301,"./directives/formioBindHtml.js":302,"./directives/formioComponent":303,"./directives/formioComponentView":304,"./directives/formioDelete":305,"./directives/formioElement":306,"./directives/formioErrors":307,"./directives/formioSubmission":308,"./directives/formioSubmissions":309,"./directives/formioWizard":310,"./factories/FormioScope":311,"./factories/FormioUtils":312,"./factories/formioInterceptor":314,"./factories/formioTableView":315,"./filters/flattenComponents":316,"./filters/safehtml":317,"./filters/tableComponents":318,"./filters/tableFieldView":319,"./filters/tableView":320,"./filters/translate":321,"./filters/trusturl":322,"./polyfills/polyfills":326,"./providers/Formio":327}],325:[function(_dereq_,module,exports){
+},{"./components":284,"./directives/customValidator":301,"./directives/formio":302,"./directives/formioBindHtml.js":303,"./directives/formioComponent":304,"./directives/formioComponentView":305,"./directives/formioDelete":306,"./directives/formioElement":307,"./directives/formioErrors":308,"./directives/formioScriptEditor":309,"./directives/formioSubmission":310,"./directives/formioSubmissions":311,"./directives/formioWizard":312,"./factories/FormioScope":313,"./factories/FormioUtils":314,"./factories/formioInterceptor":316,"./factories/formioTableView":317,"./filters/flattenComponents":318,"./filters/safehtml":319,"./filters/tableComponents":320,"./filters/tableFieldView":321,"./filters/tableView":322,"./filters/translate":323,"./filters/trusturl":324,"./polyfills/polyfills":328,"./providers/Formio":329}],327:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -73682,13 +74162,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],328:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":325}],327:[function(_dereq_,module,exports){
+},{"./Object.assign":327}],329:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -73758,7 +74238,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":27}],328:[function(_dereq_,module,exports){
+},{"formiojs":28}],330:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -73795,7 +74275,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],329:[function(_dereq_,module,exports){
+},{}],331:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -76223,7 +76703,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],330:[function(_dereq_,module,exports){
+},{}],332:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -76686,7 +77166,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],331:[function(_dereq_,module,exports){
+},{}],333:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76758,7 +77238,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],332:[function(_dereq_,module,exports){
+},{}],334:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76832,7 +77312,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],333:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76923,7 +77403,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],334:[function(_dereq_,module,exports){
+},{}],336:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -76965,7 +77445,7 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/columns.html',
         '<div class="row">' +
-          '<div ng-show="column.width" ng-class="\'col-xs-\' + column.width + \' col-xs-offset-\' + column.offset + \' col-xs-push-\' + column.push + \' col-xs-pull-\' + column.pull" component-form-group" ng-repeat="column in component.columns">' +
+          '<div class="col-xs-{{column.width || 6}} col-xs-offset-{{column.offset}} col-xs-push-{{column.push}} col-xs-pull-{{column.pull}}" component-form-group" ng-repeat="column in component.columns">' +
             '<form-builder-list class="formio-column" component="column" form="form" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
@@ -77006,7 +77486,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -77060,7 +77540,7 @@ module.exports = function(app) {
         '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
         '    <uib-accordion>' +
         '      <div uib-accordion-group heading="JavaScript Default" class="panel panel-default" is-open="true">' +
-        '        <textarea class="form-control" rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '        <formio-script-editor rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
         '        <small>' +
         '          <p>Enter custom default value code.</p>' +
         '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
@@ -77081,7 +77561,7 @@ module.exports = function(app) {
         '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
         '    <uib-accordion>' +
         '      <div uib-accordion-group heading="JavaScript Value" class="panel panel-default" is-open="true">' +
-        '        <textarea class="form-control" rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '        <formio-script-editor rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
         '        <small>' +
         '          <p>Enter code to calculate a value.</p>' +
         '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
@@ -77157,7 +77637,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],338:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77209,7 +77689,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77280,7 +77760,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77350,7 +77830,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],341:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77413,7 +77893,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],340:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77479,7 +77959,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],341:[function(_dereq_,module,exports){
+},{}],343:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77669,7 +78149,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77744,7 +78224,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],345:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -77793,7 +78273,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":211,"lodash/each":214}],344:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":212,"lodash/each":215}],346:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -77849,7 +78329,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],345:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -77935,7 +78415,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":242}],346:[function(_dereq_,module,exports){
+},{"lodash/map":243}],348:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78037,7 +78517,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],347:[function(_dereq_,module,exports){
+},{}],349:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78097,7 +78577,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],348:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78157,7 +78637,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],349:[function(_dereq_,module,exports){
+},{}],351:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -78201,7 +78681,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":331,"./button":332,"./checkbox":333,"./columns":334,"./components":335,"./container":336,"./content":337,"./currency":338,"./custom":339,"./datagrid":340,"./datetime":341,"./day":342,"./email":343,"./fieldset":344,"./file":345,"./form":346,"./hidden":347,"./htmlelement":348,"./number":350,"./page":351,"./panel":352,"./password":353,"./phonenumber":354,"./radio":355,"./resource":356,"./select":357,"./selectboxes":358,"./signature":359,"./survey":360,"./table":361,"./textarea":362,"./textfield":363,"./time":364,"./well":365}],350:[function(_dereq_,module,exports){
+},{"./address":333,"./button":334,"./checkbox":335,"./columns":336,"./components":337,"./container":338,"./content":339,"./currency":340,"./custom":341,"./datagrid":342,"./datetime":343,"./day":344,"./email":345,"./fieldset":346,"./file":347,"./form":348,"./hidden":349,"./htmlelement":350,"./number":352,"./page":353,"./panel":354,"./password":355,"./phonenumber":356,"./radio":357,"./resource":358,"./select":359,"./selectboxes":360,"./signature":361,"./survey":362,"./table":363,"./textarea":364,"./textfield":365,"./time":366,"./well":367}],352:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78276,7 +78756,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],353:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78297,7 +78777,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],352:[function(_dereq_,module,exports){
+},{}],354:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78383,7 +78863,7 @@ module.exports = function(app) {
         '<form-builder-conditional></form-builder-conditional>' +
         '<uib-accordion>' +
           '<div uib-accordion-group heading="Advanced Next Page" class="panel panel-default">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.nextPage" placeholder="/*** Example Code ***/\nnext = (data[\'mykey\'] > 1) ? \'pageA\' : \'pageB\';"></textarea>' +
+            '<formio-script-editor rows="5" id="custom" name="custom" ng-model="component.nextPage" placeholder="/*** Example Code ***/\nnext = (data[\'mykey\'] > 1) ? \'pageA\' : \'pageB\';"></formio-script-editor>' +
             '<small>' +
               '<p>Enter custom conditional code.</p>' +
               '<p>You must assign the <strong>next</strong> variable with the API key of the next page.</p>' +
@@ -78404,7 +78884,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],353:[function(_dereq_,module,exports){
+},{}],355:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78474,7 +78954,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],354:[function(_dereq_,module,exports){
+},{}],356:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78547,7 +79027,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],355:[function(_dereq_,module,exports){
+},{}],357:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78615,7 +79095,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],356:[function(_dereq_,module,exports){
+},{}],358:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78706,7 +79186,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],357:[function(_dereq_,module,exports){
+},{}],359:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -78810,7 +79290,11 @@ module.exports = function(app) {
             }
           };
 
-          $scope.$watch('component.dataSrc', function(source) {
+          $scope.$watch('component.dataSrc', function(source, prevSource) {
+            if (source !== prevSource) {
+              $scope.component.template = '<span>{{ item.label }}</span>';
+            }
+
             if (($scope.resources.length === 0) && (source === 'resource')) {
               $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
                 $scope.resources = resources;
@@ -78920,7 +79404,7 @@ module.exports = function(app) {
           '</div>' +
           '<div class="form-group" ng-show="component.dataSrc == \'custom\'">' +
           '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">Custom Values</label>' +
-          '  <textarea class="form-control" rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];">{{ component.data.custom }}</textarea>' +
+          '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];"></formio-script-editor>' +
           '</div>' +
           '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
@@ -78949,7 +79433,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":210}],358:[function(_dereq_,module,exports){
+},{"lodash/clone":211}],360:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79021,7 +79505,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],359:[function(_dereq_,module,exports){
+},{}],361:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79084,7 +79568,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],362:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79150,7 +79634,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],361:[function(_dereq_,module,exports){
+},{}],363:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79222,7 +79706,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],362:[function(_dereq_,module,exports){
+},{}],364:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79327,7 +79811,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],363:[function(_dereq_,module,exports){
+},{}],365:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79402,7 +79886,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],364:[function(_dereq_,module,exports){
+},{}],366:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -79448,7 +79932,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":211,"lodash/each":214}],365:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":212,"lodash/each":215}],367:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79495,7 +79979,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -79743,7 +80227,7 @@ module.exports = {
   }
 };
 
-},{}],367:[function(_dereq_,module,exports){
+},{}],369:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -79810,7 +80294,7 @@ module.exports = {
   ]
 };
 
-},{}],368:[function(_dereq_,module,exports){
+},{}],370:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -80171,7 +80655,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":209,"lodash/cloneDeep":211,"lodash/each":214,"lodash/groupBy":220,"lodash/merge":244,"lodash/omitBy":246,"lodash/upperFirst":257}],369:[function(_dereq_,module,exports){
+},{"lodash/capitalize":210,"lodash/cloneDeep":212,"lodash/each":215,"lodash/groupBy":221,"lodash/merge":245,"lodash/omitBy":247,"lodash/upperFirst":258}],371:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -80187,7 +80671,7 @@ module.exports = [
   }
 ];
 
-},{}],370:[function(_dereq_,module,exports){
+},{}],372:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -80213,7 +80697,7 @@ module.exports = [
             '<input type="text" class="form-control input-md" ng-model="component.conditional.eq">' +
           '</div>' +
           '<div uib-accordion-group heading="Advanced" class="panel panel-default" is-open="status.advanced">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.customConditional" placeholder="/*** Example Code ***/\nshow = (data[\'mykey\'] > 1);"></textarea>' +
+            '<formio-script-editor rows="5" id="custom" name="custom" ng-model="component.customConditional" placeholder="/*** Example Code ***/\nshow = (data[\'mykey\'] > 1);"></formio-script-editor>' +
             '<small>' +
             '<p>Enter custom conditional code.</p>' +
             '<p>You must assign the <strong>show</strong> variable as either <strong>true</strong> or <strong>false</strong>.</p>' +
@@ -80282,7 +80766,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":34,"lodash/get":219,"lodash/reject":249}],371:[function(_dereq_,module,exports){
+},{"formiojs/utils":35,"lodash/get":220,"lodash/reject":250}],373:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -80355,6 +80839,7 @@ module.exports = [
     });
 
     $scope.addComponent = function(component, index) {
+      delete component.hideLabel;
       if (index === 'undefined') {
         index = -1;
       }
@@ -80569,7 +81054,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":205,"lodash/camelCase":208,"lodash/isNumber":234}],372:[function(_dereq_,module,exports){
+},{"lodash/assign":206,"lodash/camelCase":209,"lodash/isNumber":235}],374:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -80594,7 +81079,7 @@ module.exports = [
   }
 ];
 
-},{}],373:[function(_dereq_,module,exports){
+},{}],375:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -80617,7 +81102,7 @@ module.exports = [
   }
 ];
 
-},{}],374:[function(_dereq_,module,exports){
+},{}],376:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -80686,7 +81171,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],375:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -80699,7 +81184,7 @@ module.exports = function() {
       '<div>' +
       '<uib-accordion>' +
       '  <div uib-accordion-group heading="Custom Validation" class="panel panel-default">' +
-      '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
+      '    <formio-script-editor rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';"></formio-script-editor>' +
       '    <small>' +
       '      <p>Enter custom validation code.</p>' +
       '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
@@ -80727,7 +81212,7 @@ module.exports = function() {
   };
 };
 
-},{}],376:[function(_dereq_,module,exports){
+},{}],378:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -80773,7 +81258,7 @@ module.exports = function() {
   };
 };
 
-},{}],377:[function(_dereq_,module,exports){
+},{}],379:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -80817,7 +81302,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":242}],378:[function(_dereq_,module,exports){
+},{"lodash/map":243}],380:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -80839,7 +81324,7 @@ module.exports = [
   }
 ];
 
-},{}],379:[function(_dereq_,module,exports){
+},{}],381:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -80893,7 +81378,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":244}],380:[function(_dereq_,module,exports){
+},{"lodash/merge":245}],382:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -80934,7 +81419,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],381:[function(_dereq_,module,exports){
+},{}],383:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -80971,7 +81456,7 @@ module.exports = function() {
   };
 };
 
-},{}],382:[function(_dereq_,module,exports){
+},{}],384:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -81038,7 +81523,7 @@ module.exports = function() {
   };
 };
 
-},{}],383:[function(_dereq_,module,exports){
+},{}],385:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -81061,7 +81546,7 @@ module.exports = function() {
   };
 };
 
-},{}],384:[function(_dereq_,module,exports){
+},{}],386:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -81143,7 +81628,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":208,"lodash/map":242}],385:[function(_dereq_,module,exports){
+},{"lodash/camelCase":209,"lodash/map":243}],387:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -81257,7 +81742,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],386:[function(_dereq_,module,exports){
+},{}],388:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -81291,16 +81776,16 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],389:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":388,"angular-drag-and-drop-lists":2,"ng-dialog":261,"ng-formio/src/formio-complete.js":323}],388:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":390,"angular-drag-and-drop-lists":2,"ng-dialog":262,"ng-formio/src/formio-complete.js":325}],390:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.4 | https://unpkg.com/ng-formio-builder@2.20.4/LICENSE.txt */
+/*! ng-formio-builder v2.20.5 | https://unpkg.com/ng-formio-builder@2.20.5/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -81456,5 +81941,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":349,"./constants/commonOptions":366,"./constants/formOptions":367,"./directives/formBuilder":368,"./directives/formBuilderComponent":369,"./directives/formBuilderConditional":370,"./directives/formBuilderDnd":371,"./directives/formBuilderElement":372,"./directives/formBuilderList":373,"./directives/formBuilderOption":374,"./directives/formBuilderOptionCustomValidation":375,"./directives/formBuilderOptionKey":376,"./directives/formBuilderOptionTags":377,"./directives/formBuilderRow":378,"./directives/formBuilderTable":379,"./directives/formBuilderTooltip":380,"./directives/jsonInput":381,"./directives/objectBuilder":382,"./directives/validApiKey":383,"./directives/valueBuilder":384,"./factories/BuilderUtils":385,"./factories/debounce":386}]},{},[387])(387)
+},{"./components":351,"./constants/commonOptions":368,"./constants/formOptions":369,"./directives/formBuilder":370,"./directives/formBuilderComponent":371,"./directives/formBuilderConditional":372,"./directives/formBuilderDnd":373,"./directives/formBuilderElement":374,"./directives/formBuilderList":375,"./directives/formBuilderOption":376,"./directives/formBuilderOptionCustomValidation":377,"./directives/formBuilderOptionKey":378,"./directives/formBuilderOptionTags":379,"./directives/formBuilderRow":380,"./directives/formBuilderTable":381,"./directives/formBuilderTooltip":382,"./directives/jsonInput":383,"./directives/objectBuilder":384,"./directives/validApiKey":385,"./directives/valueBuilder":386,"./factories/BuilderUtils":387,"./factories/debounce":388}]},{},[389])(389)
 });

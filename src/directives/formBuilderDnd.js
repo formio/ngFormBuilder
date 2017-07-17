@@ -69,7 +69,7 @@ module.exports = [
     });
 
     $scope.addComponent = function(component, index) {
-	  delete component.hideLabel;
+      delete component.hideLabel;
       if (index === 'undefined') {
         index = -1;
       }

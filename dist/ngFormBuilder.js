@@ -1,4 +1,5 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.formioBuilder = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+(function (global){
 'use strict';
 
 var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -29,8 +30,24 @@ function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : { default: obj };
 }
 
-module.exports = {
+var FormioUtils = {
   jsonLogic: _jsonLogicJs2.default, // Share
+
+  /**
+   * Determines the boolean value of a setting.
+   *
+   * @param value
+   * @return {boolean}
+   */
+  boolValue: function boolValue(value) {
+    if (typeof value === 'boolean') {
+      return value;
+    } else if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    } else {
+      return !!value;
+    }
+  },
 
   /**
    * Determine if a component is a layout component or not.
@@ -109,24 +126,66 @@ module.exports = {
   },
 
   /**
+   * Matches if a component matches the query.
+   *
+   * @param component
+   * @param query
+   * @return {boolean}
+   */
+  matchComponent: function matchComponent(component, query) {
+    if (typeof query === 'string') {
+      return component.key === query;
+    } else {
+      var matches = false;
+      for (var search in query) {
+        matches = (0, _get3.default)(component, search) === query[search];
+        if (!matches) {
+          break;
+        }
+      }
+      return matches;
+    }
+  },
+
+  /**
    * Get a component by its key
    *
    * @param {Object} components
    *   The components to iterate.
-   * @param {String} key
-   *   The key of the component to get.
+   * @param {String|Object} key
+   *   The key of the component to get, or a query of the component to search.
    *
    * @returns {Object}
    *   The component that matches the given key, or undefined if not found.
    */
   getComponent: function getComponent(components, key) {
     var result;
-    module.exports.eachComponent(components, function (component) {
-      if (component.key === key) {
+    FormioUtils.eachComponent(components, function (component, path) {
+      if (FormioUtils.matchComponent(component, key)) {
+        component.path = path;
         result = component;
+        return true;
       }
     });
     return result;
+  },
+
+  /**
+   * Finds a component provided a query of properties of that component.
+   *
+   * @param components
+   * @param query
+   * @return {*}
+   */
+  findComponents: function findComponents(components, query) {
+    var results = [];
+    FormioUtils.eachComponent(components, function (component, path) {
+      if (FormioUtils.matchComponent(component, query)) {
+        component.path = path;
+        results.push(component);
+      }
+    }, true);
+    return results;
   },
 
   /**
@@ -142,7 +201,7 @@ module.exports = {
    */
   flattenComponents: function flattenComponents(components, includeAll) {
     var flattened = {};
-    module.exports.eachComponent(components, function (component, path) {
+    FormioUtils.eachComponent(components, function (component, path) {
       flattened[path] = component;
     }, includeAll);
     return flattened;
@@ -301,6 +360,9 @@ module.exports = {
   }
 };
 
+module.exports = global.FormioUtils = FormioUtils;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"json-logic-js":3,"lodash/clone":178,"lodash/get":186,"lodash/template":216}],2:[function(_dereq_,module,exports){
 'use strict';
 
@@ -7688,7 +7750,7 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/columns.html',
         '<div class="row">' +
-          '<div ng-show="column.width" ng-class="\'col-xs-\' + column.width + \' col-xs-offset-\' + column.offset + \' col-xs-push-\' + column.push + \' col-xs-pull-\' + column.pull" component-form-group" ng-repeat="column in component.columns">' +
+          '<div class="col-xs-{{column.width || 6}} col-xs-offset-{{column.offset}} col-xs-push-{{column.push}} col-xs-pull-{{column.pull}}" component-form-group" ng-repeat="column in component.columns">' +
             '<form-builder-list class="formio-column" component="column" form="form" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
@@ -7783,7 +7845,7 @@ module.exports = function(app) {
         '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
         '    <uib-accordion>' +
         '      <div uib-accordion-group heading="JavaScript Default" class="panel panel-default" is-open="true">' +
-        '        <textarea class="form-control" rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '        <formio-script-editor rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
         '        <small>' +
         '          <p>Enter custom default value code.</p>' +
         '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
@@ -7804,7 +7866,7 @@ module.exports = function(app) {
         '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
         '    <uib-accordion>' +
         '      <div uib-accordion-group heading="JavaScript Value" class="panel panel-default" is-open="true">' +
-        '        <textarea class="form-control" rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></textarea>' +
+        '        <formio-script-editor rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
         '        <small>' +
         '          <p>Enter code to calculate a value.</p>' +
         '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
@@ -9106,7 +9168,7 @@ module.exports = function(app) {
         '<form-builder-conditional></form-builder-conditional>' +
         '<uib-accordion>' +
           '<div uib-accordion-group heading="Advanced Next Page" class="panel panel-default">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.nextPage" placeholder="/*** Example Code ***/\nnext = (data[\'mykey\'] > 1) ? \'pageA\' : \'pageB\';"></textarea>' +
+            '<formio-script-editor rows="5" id="custom" name="custom" ng-model="component.nextPage" placeholder="/*** Example Code ***/\nnext = (data[\'mykey\'] > 1) ? \'pageA\' : \'pageB\';"></formio-script-editor>' +
             '<small>' +
               '<p>Enter custom conditional code.</p>' +
               '<p>You must assign the <strong>next</strong> variable with the API key of the next page.</p>' +
@@ -9533,7 +9595,11 @@ module.exports = function(app) {
             }
           };
 
-          $scope.$watch('component.dataSrc', function(source) {
+          $scope.$watch('component.dataSrc', function(source, prevSource) {
+            if (source !== prevSource) {
+              $scope.component.template = '<span>{{ item.label }}</span>';
+            }
+
             if (($scope.resources.length === 0) && (source === 'resource')) {
               $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
                 $scope.resources = resources;
@@ -9643,7 +9709,7 @@ module.exports = function(app) {
           '</div>' +
           '<div class="form-group" ng-show="component.dataSrc == \'custom\'">' +
           '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">Custom Values</label>' +
-          '  <textarea class="form-control" rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];">{{ component.data.custom }}</textarea>' +
+          '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];"></formio-script-editor>' +
           '</div>' +
           '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
@@ -10936,7 +11002,7 @@ module.exports = [
             '<input type="text" class="form-control input-md" ng-model="component.conditional.eq">' +
           '</div>' +
           '<div uib-accordion-group heading="Advanced" class="panel panel-default" is-open="status.advanced">' +
-            '<textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.customConditional" placeholder="/*** Example Code ***/\nshow = (data[\'mykey\'] > 1);"></textarea>' +
+            '<formio-script-editor rows="5" id="custom" name="custom" ng-model="component.customConditional" placeholder="/*** Example Code ***/\nshow = (data[\'mykey\'] > 1);"></formio-script-editor>' +
             '<small>' +
             '<p>Enter custom conditional code.</p>' +
             '<p>You must assign the <strong>show</strong> variable as either <strong>true</strong> or <strong>false</strong>.</p>' +
@@ -11078,6 +11144,7 @@ module.exports = [
     });
 
     $scope.addComponent = function(component, index) {
+      delete component.hideLabel;
       if (index === 'undefined') {
         index = -1;
       }
@@ -11422,7 +11489,7 @@ module.exports = function() {
       '<div>' +
       '<uib-accordion>' +
       '  <div uib-accordion-group heading="Custom Validation" class="panel panel-default">' +
-      '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';">{{ component.validate.custom }}</textarea>' +
+      '    <formio-script-editor rows="5" id="custom" name="custom" ng-model="component.validate.custom" placeholder="/*** Example Code ***/\nvalid = (input === 3) ? true : \'Must be 3\';"></formio-script-editor>' +
       '    <small>' +
       '      <p>Enter custom validation code.</p>' +
       '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
@@ -12016,7 +12083,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],278:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.4 | https://unpkg.com/ng-formio-builder@2.20.4/LICENSE.txt */
+/*! ng-formio-builder v2.20.5 | https://unpkg.com/ng-formio-builder@2.20.5/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
