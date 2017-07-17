@@ -100,7 +100,11 @@ module.exports = function(app) {
             }
           };
 
-          $scope.$watch('component.dataSrc', function(source) {
+          $scope.$watch('component.dataSrc', function(source, prevSource) {
+            if (source !== prevSource) {
+              $scope.component.template = '<span>{{ item.label }}</span>';
+            }
+
             if (($scope.resources.length === 0) && (source === 'resource')) {
               $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
                 $scope.resources = resources;
