@@ -41,7 +41,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/container.html',
         '<fieldset>' +
         '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
-        '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</fieldset>'
       );
     }

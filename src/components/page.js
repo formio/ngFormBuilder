@@ -11,7 +11,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/formbuilder/page.html',
-        '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>'
+        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>'
       );
     }
   ]);

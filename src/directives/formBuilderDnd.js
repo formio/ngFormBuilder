@@ -1,6 +1,7 @@
 var _isNumber = require('lodash/isNumber');
 var _camelCase = require('lodash/camelCase');
 var _assign = require('lodash/assign');
+var _upperFirst = require('lodash/upperFirst');
 module.exports = [
   '$scope',
   '$element',
@@ -69,7 +70,25 @@ module.exports = [
     });
 
     $scope.addComponent = function(component, index) {
+
       delete component.hideLabel;
+
+      // Add parent key to default key if parent is present.
+      // Sometimes $scope.component is the parent but columns and tables it is actually the column.
+      var parent = $scope.parent || $scope.component;
+      if (parent.type !== 'form') {
+        $scope.parentKey = parent.key;
+        component.key = $scope.parentKey + _upperFirst(component.key);
+      } else {
+        $scope.parentKey = '';
+      }
+
+      // Allow changing default lock options.
+      if ($scope.options && $scope.options.noLockKeys) {
+        delete component.source;
+        delete component.lockKey;
+      }
+
       if (index === 'undefined') {
         index = -1;
       }
@@ -225,7 +244,7 @@ module.exports = [
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
-              $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
+              $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
               BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }

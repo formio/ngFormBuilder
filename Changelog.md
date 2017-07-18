@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Added
+ - Ability to override locking of fields.
+ - Append parent key to default field key names when adding.
+ - Allow filtering existing resource fields by tag.
+
+### Fixed
+ - Options not being passed to components during build.
+
 ## 2.20.5
 ### Changed
  - Upgraded ng-formio to 2.20.5

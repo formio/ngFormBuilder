@@ -39,7 +39,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/columns.html',
         '<div class="row">' +
           '<div class="col-xs-{{column.width || 6}} col-xs-offset-{{column.offset}} col-xs-push-{{column.push}} col-xs-pull-{{column.pull}}" component-form-group" ng-repeat="column in component.columns">' +
-            '<form-builder-list class="formio-column" component="column" form="form" formio="::formio"></form-builder-list>' +
+            '<form-builder-list class="formio-column" parent="component" component="column" form="form" options="options" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
       );

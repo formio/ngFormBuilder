@@ -56,7 +56,7 @@ module.exports = function(app) {
         '<div class="panel panel-{{ component.theme }}">' +
           '<div ng-if="component.title" class="panel-heading"><h3 class="panel-title">{{ component.title }}</h3></div>' +
           '<div class="panel-body">' +
-            '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+            '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
       );

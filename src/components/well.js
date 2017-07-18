@@ -30,7 +30,7 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/well.html',
         '<div class="well">' +
-          '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+          '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</div>'
       );
       $templateCache.put('formio/components/well/display.html',

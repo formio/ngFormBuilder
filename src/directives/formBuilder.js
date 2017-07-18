@@ -247,7 +247,7 @@ module.exports = ['debounce', function(debounce) {
           };
 
           var query = {params: {type: 'resource', limit: 100}};
-          if ($scope.options.resourceFilter) {
+          if ($scope.options && $scope.options.resourceFilter) {
             query.params.tags = $scope.options.resourceFilter;
           }
 
@@ -265,6 +265,7 @@ module.exports = ['debounce', function(debounce) {
               // Iterate through each component.
               FormioUtils.eachComponent(resource.components, function(component) {
                 if (component.type === 'button') return;
+                if ($scope.options && $scope.options.resourceFilter && component.tags.indexOf($scope.options.resourceFilter) === -1) return;
 
                 var componentName = component.label;
                 if (!componentName && component.key) {
