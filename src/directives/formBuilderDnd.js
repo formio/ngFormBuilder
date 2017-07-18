@@ -1,7 +1,11 @@
 var _isNumber = require('lodash/isNumber');
 var _camelCase = require('lodash/camelCase');
 var _assign = require('lodash/assign');
-var _upperFirst = require('lodash/upperFirst');
+
+var _upperFirst = function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 module.exports = [
   '$scope',
   '$element',

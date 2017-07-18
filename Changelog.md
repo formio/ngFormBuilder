@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.20.8
+### Fixed
+ - Builder lowercasing all auto keys.
+
 ## 2.20.7
 ### Fixed
  - Undefined being added to resource forms.

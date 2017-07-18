@@ -91039,7 +91039,11 @@ module.exports = [
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
 var _assign = _dereq_('lodash/assign');
-var _upperFirst = _dereq_('lodash/upperFirst');
+
+var _upperFirst = function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 module.exports = [
   '$scope',
   '$element',
@@ -91341,7 +91345,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":208,"lodash/camelCase":211,"lodash/isNumber":237,"lodash/upperFirst":260}],376:[function(_dereq_,module,exports){
+},{"lodash/assign":208,"lodash/camelCase":211,"lodash/isNumber":237}],376:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -92073,7 +92077,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":392,"angular-drag-and-drop-lists":2,"ng-dialog":264,"ng-formio/src/formio-full.js":327}],392:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.6 | https://unpkg.com/ng-formio-builder@2.20.6/LICENSE.txt */
+/*! ng-formio-builder v2.20.7 | https://unpkg.com/ng-formio-builder@2.20.7/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
