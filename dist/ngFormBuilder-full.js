@@ -91114,7 +91114,7 @@ module.exports = [
       // Add parent key to default key if parent is present.
       // Sometimes $scope.component is the parent but columns and tables it is actually the column.
       var parent = $scope.parent || $scope.component;
-      if (parent.type !== 'form') {
+      if (parent.type !== 'form' && parent.type !== 'resource') {
         $scope.parentKey = parent.key;
         component.key = $scope.parentKey + _upperFirst(component.key);
       } else {
@@ -92073,7 +92073,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":392,"angular-drag-and-drop-lists":2,"ng-dialog":264,"ng-formio/src/formio-full.js":327}],392:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.5 | https://unpkg.com/ng-formio-builder@2.20.5/LICENSE.txt */
+/*! ng-formio-builder v2.20.6 | https://unpkg.com/ng-formio-builder@2.20.6/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

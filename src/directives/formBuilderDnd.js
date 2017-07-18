@@ -76,7 +76,7 @@ module.exports = [
       // Add parent key to default key if parent is present.
       // Sometimes $scope.component is the parent but columns and tables it is actually the column.
       var parent = $scope.parent || $scope.component;
-      if (parent.type !== 'form') {
+      if (parent.type !== 'form' && parent.type !== 'resource') {
         $scope.parentKey = parent.key;
         component.key = $scope.parentKey + _upperFirst(component.key);
       } else {
