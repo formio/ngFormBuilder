@@ -87713,7 +87713,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/columns.html',
         '<div class="row">' +
           '<div class="col-xs-{{column.width || 6}} col-xs-offset-{{column.offset}} col-xs-push-{{column.push}} col-xs-pull-{{column.pull}}" component-form-group" ng-repeat="column in component.columns">' +
-            '<form-builder-list class="formio-column" component="column" form="form" formio="::formio"></form-builder-list>' +
+            '<form-builder-list class="formio-column" parent="component" component="column" form="form" options="options" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
       );
@@ -87949,7 +87949,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/container.html',
         '<fieldset>' +
         '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
-        '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</fieldset>'
       );
     }
@@ -88580,7 +88580,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/fieldset.html',
         '<fieldset>' +
           '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
-          '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+          '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</fieldset>'
       );
 
@@ -89038,7 +89038,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/formbuilder/page.html',
-        '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>'
+        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>'
       );
     }
   ]);
@@ -89104,7 +89104,7 @@ module.exports = function(app) {
         '<div class="panel panel-{{ component.theme }}">' +
           '<div ng-if="component.title" class="panel-heading"><h3 class="panel-title">{{ component.title }}</h3></div>' +
           '<div class="panel-body">' +
-            '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+            '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
       );
@@ -89949,8 +89949,8 @@ module.exports = function(app) {
             '</tr></thead>' +
             '<tbody>' +
               '<tr ng-repeat="row in component.rows">' +
-                '<td ng-repeat="component in row">' +
-                  '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+                '<td ng-repeat="col in row">' +
+                  '<form-builder-list parent="component" component="col" form="form" options="options" formio="::formio"></form-builder-list>' +
                 '</td>' +
               '</tr>' +
             '</tbody>' +
@@ -90233,7 +90233,7 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/well.html',
         '<div class="well">' +
-          '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+          '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</div>'
       );
       $templateCache.put('formio/components/well/display.html',
@@ -90812,7 +90812,7 @@ module.exports = ['debounce', function(debounce) {
           };
 
           var query = {params: {type: 'resource', limit: 100}};
-          if ($scope.options.resourceFilter) {
+          if ($scope.options && $scope.options.resourceFilter) {
             query.params.tags = $scope.options.resourceFilter;
           }
 
@@ -90830,6 +90830,7 @@ module.exports = ['debounce', function(debounce) {
               // Iterate through each component.
               FormioUtils.eachComponent(resource.components, function(component) {
                 if (component.type === 'button') return;
+                if ($scope.options && $scope.options.resourceFilter && component.tags.indexOf($scope.options.resourceFilter) === -1) return;
 
                 var componentName = component.label;
                 if (!componentName && component.key) {
@@ -91038,6 +91039,7 @@ module.exports = [
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
 var _assign = _dereq_('lodash/assign');
+var _upperFirst = _dereq_('lodash/upperFirst');
 module.exports = [
   '$scope',
   '$element',
@@ -91106,7 +91108,25 @@ module.exports = [
     });
 
     $scope.addComponent = function(component, index) {
+
       delete component.hideLabel;
+
+      // Add parent key to default key if parent is present.
+      // Sometimes $scope.component is the parent but columns and tables it is actually the column.
+      var parent = $scope.parent || $scope.component;
+      if (parent.type !== 'form') {
+        $scope.parentKey = parent.key;
+        component.key = $scope.parentKey + _upperFirst(component.key);
+      } else {
+        $scope.parentKey = '';
+      }
+
+      // Allow changing default lock options.
+      if ($scope.options && $scope.options.noLockKeys) {
+        delete component.source;
+        delete component.lockKey;
+      }
+
       if (index === 'undefined') {
         index = -1;
       }
@@ -91262,7 +91282,7 @@ module.exports = [
               if ($scope.data.hasOwnProperty($scope.component.key)) {
                 delete $scope.data[$scope.component.key];
               }
-              $scope.component.key = _camelCase($scope.component.label.replace(invalidRegex, ''));
+              $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
               BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
@@ -91321,7 +91341,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":208,"lodash/camelCase":211,"lodash/isNumber":237}],376:[function(_dereq_,module,exports){
+},{"lodash/assign":208,"lodash/camelCase":211,"lodash/isNumber":237,"lodash/upperFirst":260}],376:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -91355,6 +91375,7 @@ module.exports = [
         component: '=',
         formio: '=',
         form: '=',
+        parent: '=?',
         // # of items needed in the list before hiding the
         // drag and drop prompt div
         hideDndBoxCount: '=',
