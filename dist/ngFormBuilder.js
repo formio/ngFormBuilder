@@ -10868,7 +10868,7 @@ module.exports = ['debounce', function(debounce) {
               // Iterate through each component.
               FormioUtils.eachComponent(resource.components, function(component) {
                 if (component.type === 'button') return;
-                if ($scope.options && $scope.options.resourceFilter && component.tags.indexOf($scope.options.resourceFilter) === -1) return;
+                if ($scope.options && $scope.options.resourceFilter && component.tags && component.tags.indexOf($scope.options.resourceFilter) === -1) return;
 
                 var componentName = component.label;
                 if (!componentName && component.key) {
