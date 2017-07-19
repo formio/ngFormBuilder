@@ -91115,20 +91115,20 @@ module.exports = [
 
       delete component.hideLabel;
 
-      // Add parent key to default key if parent is present.
-      // Sometimes $scope.component is the parent but columns and tables it is actually the column.
-      var parent = $scope.parent || $scope.component;
-      if (parent.type !== 'form' && parent.type !== 'resource') {
-        $scope.parentKey = parent.key;
-        component.key = $scope.parentKey + _upperFirst(component.key);
-      } else {
-        $scope.parentKey = '';
-      }
-
       // Allow changing default lock options.
       if ($scope.options && $scope.options.noLockKeys) {
         delete component.source;
         delete component.lockKey;
+      }
+
+      // Add parent key to default key if parent is present.
+      // Sometimes $scope.component is the parent but columns and tables it is actually the column.
+      var parent = $scope.parent || $scope.component;
+      if (parent.type !== 'form' && parent.type !== 'resource' && component.isNew) {
+        $scope.parentKey = parent.key;
+        component.key = $scope.parentKey + _upperFirst(component.key);
+      } else {
+        $scope.parentKey = '';
       }
 
       if (index === 'undefined') {
@@ -92077,7 +92077,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":392,"angular-drag-and-drop-lists":2,"ng-dialog":264,"ng-formio/src/formio-full.js":327}],392:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.7 | https://unpkg.com/ng-formio-builder@2.20.7/LICENSE.txt */
+/*! ng-formio-builder v2.20.8 | https://unpkg.com/ng-formio-builder@2.20.8/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
