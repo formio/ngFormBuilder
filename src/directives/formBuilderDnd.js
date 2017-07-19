@@ -40,7 +40,9 @@ module.exports = [
     }
 
     // Components depend on this existing
-    $scope.data = {};
+    if (!$scope.data) {
+      $scope.data = {};
+    }
 
     $scope.emit = function() {
       var args = [].slice.call(arguments);
