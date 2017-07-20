@@ -9,6 +9,10 @@ module.exports = {
       title: 'Event'
     },
     {
+      name: 'custom',
+      title: 'Custom'
+    },
+    {
       name: 'reset',
       title: 'Reset'
     },
