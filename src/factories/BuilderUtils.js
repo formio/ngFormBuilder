@@ -91,11 +91,6 @@ module.exports = ['FormioUtils', function(FormioUtils) {
         return;
       }
 
-      // If the component's key is locked, add a timestamp to it when it's being created
-      if (component.lockKey && component.isNew) {
-        component.key = component.key + Date.now().toString();
-      }
-
       var memoization = findExistingComponents(form.components, component);
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
