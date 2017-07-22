@@ -7597,6 +7597,10 @@ module.exports = function(app) {
           '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button Event\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
           '</div>' +
+          '<div class="form-group" ng-if="component.action === \'custom\'">' +
+          '  <label for="custom" form-builder-tooltip="The custom logic to evaluate when the button is clicked.">{{\'Button Custom Logic\' | formioTranslate}}</label>' +
+          '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.custom" placeholder="/*** Example Code ***/\ndata[\'mykey\'] = data[\'anotherKey\'];"></formio-script-editor>' +
+          '</div>' +
           '<div class="form-group">' +
             '<label for="theme" form-builder-tooltip="The color theme of this panel.">{{\'Theme\' | formioTranslate}}</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
@@ -10545,6 +10549,10 @@ module.exports = {
       title: 'Event'
     },
     {
+      name: 'custom',
+      title: 'Custom'
+    },
+    {
       name: 'reset',
       title: 'Reset'
     },
@@ -11116,7 +11124,9 @@ module.exports = [
     }
 
     // Components depend on this existing
-    $scope.data = {};
+    if (!$scope.data) {
+      $scope.data = {};
+    }
 
     $scope.emit = function() {
       var args = [].slice.call(arguments);
@@ -11422,7 +11432,8 @@ module.exports = [
         // drag and drop prompt div
         hideDndBoxCount: '=',
         rootList: '=',
-        options: '='
+        options: '=',
+        data:'=?'
       },
       restrict: 'E',
       replace: true,
@@ -12053,11 +12064,6 @@ module.exports = ['FormioUtils', function(FormioUtils) {
         return;
       }
 
-      // If the component's key is locked, add a timestamp to it when it's being created
-      if (component.lockKey && component.isNew) {
-        component.key = component.key + Date.now().toString();
-      }
-
       var memoization = findExistingComponents(form.components, component);
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
@@ -12108,7 +12114,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],278:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.20.8 | https://unpkg.com/ng-formio-builder@2.20.8/LICENSE.txt */
+/*! ng-formio-builder v2.20.12 | https://unpkg.com/ng-formio-builder@2.20.12/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
