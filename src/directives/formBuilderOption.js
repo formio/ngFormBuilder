@@ -19,7 +19,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
 
       var property = attrs.property;
       var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
-      var placeholder = (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
+      var placeholder = attrs.placeholder || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
       var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = attrs.tooltip || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 

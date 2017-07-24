@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
- - Allow overriding of tooltips on form builder options.
+ - Allow overriding of tooltips and placeholders on form builder options.
 
 ## 2.20.11
 ### Fixed
