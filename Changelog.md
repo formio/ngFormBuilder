@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 2.20.13
+
+### Changed
+ - Upgrade ng-formio to 2.20.13
 
 ### Added
  - Allow overriding of tooltips and placeholders on form builder options.
