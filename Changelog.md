@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.20.16
+### Changed
+ - Upgrade ng-formio to 2.20.16 and other dependencies.
+
+## 2.20.15
+## 2.20.14
+ - No release.
+
 ## 2.20.13
 
 ### Changed

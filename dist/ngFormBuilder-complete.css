@@ -57,6 +57,10 @@
   right: 0;
   bottom: 0;
   left: 0;
+  /* fix for Scrollbars not clickable on overflow #552 */
+  background: rgba(0, 0, 0, 0.4); 
+  animation: ngdialog-fadein 0.5s;
+  /* end fix for Scrollbars not clickable on overflow #552 */
 }
 
 .ngdialog.ngdialog-disabled-animation,
@@ -68,7 +72,6 @@
 
 .ngdialog-overlay {
   position: fixed;
-  background: rgba(0, 0, 0, 0.4);
   top: 0;
   right: 0;
   bottom: 0;
@@ -76,6 +79,10 @@
   -webkit-backface-visibility: hidden;
   -webkit-animation: ngdialog-fadein 0.5s;
   animation: ngdialog-fadein 0.5s;
+  /* fix for Scrollbars not clickable on overflow #552 */
+  margin-right: 15px;
+  background: transparent;
+  /* end fix for Scrollbars not clickable on overflow #552 */
 }
 
 .ngdialog-no-overlay {
@@ -112,6 +119,7 @@ html.ngdialog-open,
 body.ngdialog-open {
   overflow: hidden;
 }
+
 @-webkit-keyframes ngdialog-flyin {
   0% {
     opacity: 0;
@@ -195,7 +203,8 @@ body.ngdialog-open {
 }
 
 .ngdialog.ngdialog-theme-default .ngdialog-close {
-  border-radius: 5px;
+  border: none;
+  background: transparent;
   cursor: pointer;
   position: absolute;
   right: 0;
@@ -203,19 +212,15 @@ body.ngdialog-open {
 }
 
 .ngdialog.ngdialog-theme-default .ngdialog-close:before {
+  display: block;
+  padding: 3px;
   background: transparent;
-  border-radius: 3px;
   color: #bbb;
   content: '\00D7';
   font-size: 26px;
   font-weight: 400;
-  height: 30px;
   line-height: 26px;
-  position: absolute;
-  right: 3px;
   text-align: center;
-  top: 3px;
-  width: 30px;
 }
 
 .ngdialog.ngdialog-theme-default .ngdialog-close:hover:before,
