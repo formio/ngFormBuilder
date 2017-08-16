@@ -27,7 +27,7 @@ module.exports = function(app) {
                 '<div class="panel-body">' +
                   '<div class="form-group" ng-if="component.wysiwyg && editorVisible">' +
                     '<label for="editor-preview" class="control-label" ng-if="component.label">{{ component.label }}</label>' +
-                    '<textarea class="form-control" id="editor-preview" ng-if="component.wysiwyg && editorVisible" ckeditor="component.wysiwyg"></textarea>' +
+                    '<textarea class="form-control" id="editor-preview" ng-model="fakeNgModel" ng-if="component.wysiwyg && editorVisible" ckeditor="component.wysiwyg"></textarea>' +
                   '</div>' +
                   '<formio-component ng-if="!component.wysiwyg" component="component" data="{}" formio="::formio"></formio-component>' +
                 '</div>' +
