@@ -36,7 +36,7 @@ module.exports = function(app) {
   ]);
   app.controller('wysiwygSettings', ['$scope', function($scope) {
     $scope.wysiwygEnabled = !!$scope.component.wysiwyg;
-    $scope.wysiwygSettings = {
+    $scope.wysiwygSettings = $scope.wysiwygEnabled && typeof($scope.component.wysiwyg) == "object" ? $scope.component.wysiwyg: {
       toolbarGroups:  [
         {name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
         {name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
