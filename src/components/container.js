@@ -30,6 +30,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/container/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +

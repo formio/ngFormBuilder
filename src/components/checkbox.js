@@ -53,6 +53,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">Input Type</label>' +
             '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title for inputType in inputTypes" ng-model="component.inputType"></select>' +
