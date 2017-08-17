@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-[Unreleased]
+## 2.21.3
 ### Added
  - Error labels to show when an error has occured.
+
+### Changed
+ - Upgraded dependencies.
+
+## 2.21.0, 2.21.1, 2.21.2
+ - No release
 
 ## 2.20.16
 ### Changed
