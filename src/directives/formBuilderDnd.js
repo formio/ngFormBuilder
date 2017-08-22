@@ -304,6 +304,24 @@ module.exports = [
       });
     };
 
+    $scope.copyComponent = function(component) {
+      window.sessionStorage.setItem('componentClipboard', JSON.stringify(angular.copy(component)));
+    }
+
+    $scope.pasteComponent = function() {
+      var component;
+      try {
+        component = JSON.parse(window.sessionStorage.getItem('componentClipboard'));
+      }
+      catch(e) {
+        console.log('Error fetching componentClipboard');
+      }
+
+      if (component) {
+        $scope.cloneComponent(component);
+      }
+    }
+
     // Add to scope so it can be used in templates
     $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
   }
