@@ -2149,7 +2149,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":12,"moment":275}],5:[function(_dereq_,module,exports){
+},{"angular":12,"moment":260}],5:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.5
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -49864,40 +49864,6 @@ var Formio = function () {
     value: function actionInfo(name) {
       return this.makeRequest('actionInfo', this.formUrl + '/actions/' + name);
     }
-  }, {
-    key: 'isObjectId',
-    value: function isObjectId(id) {
-      var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$");
-      return checkForHexRegExp.test(id);
-    }
-  }, {
-    key: 'getProjectId',
-    value: function getProjectId() {
-      if (!this.projectId) {
-        return Promise.resolve('');
-      }
-      if (this.isObjectId(this.projectId)) {
-        return Promise.resolve(this.projectId);
-      } else {
-        return this.loadProject().then(function (project) {
-          return project._id;
-        });
-      }
-    }
-  }, {
-    key: 'getFormId',
-    value: function getFormId() {
-      if (!this.formId) {
-        return Promise.resolve('');
-      }
-      if (this.isObjectId(this.formId)) {
-        return Promise.resolve(this.formId);
-      } else {
-        return this.loadForm().then(function (form) {
-          return form._id;
-        });
-      }
-    }
 
     /**
      * Returns a temporary authentication token for single purpose token generation.
@@ -49915,52 +49881,6 @@ var Formio = function () {
           'x-expire': expire,
           'x-allow': allowed
         })
-      });
-    }
-
-    /**
-     * Get a download url for a submission PDF of this submission.
-     *
-     * @return {*}
-     */
-
-  }, {
-    key: 'getDownloadUrl',
-    value: function getDownloadUrl(form) {
-      var _this2 = this;
-
-      if (!this.submissionId) {
-        return Promise.resolve('');
-      }
-
-      if (!form) {
-        // Make sure to load the form first.
-        return this.loadForm().then(function (_form) {
-          if (!_form) {
-            return '';
-          }
-          return _this2.getDownloadUrl(_form);
-        });
-      }
-
-      var download = '';
-      download = Formio.baseUrl;
-      if (form.project) {
-        download += '/project/' + form.project;
-      }
-      download += '/form/' + form._id;
-      download += '/submission/' + this.submissionId;
-      download += '/download';
-      if (form.settings && form.settings.pdf) {
-        download += '/' + form.settings.pdf.id;
-      }
-      return new Promise(function (resolve, reject) {
-        _this2.getTempToken(3600, 'GET:' + download.replace(Formio.baseUrl, '')).then(function (tempToken) {
-          download += '?token=' + tempToken.key;
-          resolve(download);
-        }, function () {
-          resolve(download);
-        }).catch(reject);
       });
     }
   }, {
@@ -50012,65 +49932,6 @@ var Formio = function () {
       }.bind(this));
 
       return Formio.pluginAlter('wrapFileRequestPromise', request, requestArgs);
-    }
-
-    // Determine if the user can submit the form.
-
-  }, {
-    key: 'canSubmit',
-    value: function canSubmit() {
-      return Promise.all([this.loadForm(), Formio.currentUser(), Formio.accessInfo()]).then(function (results) {
-        var form = results.shift();
-        var user = results.shift();
-        var access = results.shift();
-
-        // Get the anonymous and admin roles.
-        var anonRole = {};
-        var adminRole = {};
-        for (var roleName in access.roles) {
-          var role = access.roles[roleName];
-          if (role.default) {
-            anonRole = role;
-          }
-          if (role.admin) {
-            adminRole = role;
-          }
-        }
-
-        var canSubmit = false;
-        var canSubmitAnonymously = false;
-
-        // If the user is an admin, then they can submit this form.
-        if (user && user.roles.indexOf(adminRole._id) !== -1) {
-          return true;
-        }
-
-        for (var i in form.submissionAccess) {
-          var subRole = form.submissionAccess[i];
-          if (subRole.type === 'create_all' || subRole.type === 'create_own') {
-            for (var j in subRole.roles) {
-              // Check if anonymous is allowed.
-              if (anonRole._id === subRole.roles[j]) {
-                canSubmitAnonymously = true;
-              }
-              // Check if the logged in user has the appropriate role.
-              if (user && user.roles.indexOf(subRole.roles[j]) !== -1) {
-                canSubmit = true;
-                break;
-              }
-            }
-            if (canSubmit) {
-              break;
-            }
-          }
-        }
-        // If their user cannot submit, but anonymous can, then delete token and allow submission.
-        if (!canSubmit && canSubmitAnonymously) {
-          canSubmit = true;
-          Formio.setUser(null);
-        }
-        return canSubmit;
-      });
     }
   }], [{
     key: 'loadProjects',
@@ -50144,105 +50005,117 @@ var Formio = function () {
         opts = {};
       }
 
-      // Generate a cachekey.
       var cacheKey = btoa(url);
 
-      // Get the cached promise to save multiple loads.
-      if (!opts.ignoreCache && method === 'GET' && Formio.cache.hasOwnProperty(cacheKey)) {
-        return Formio.cache[cacheKey];
-      }
+      return new Promise(function (resolve, reject) {
+        // Get the cached promise to save multiple loads.
+        if (!opts.ignoreCache && method === 'GET' && Formio.cache.hasOwnProperty(cacheKey)) {
+          return resolve(Formio.cache[cacheKey]);
+        }
 
-      // Set up and fetch request
-      var headers = header || new Headers({
-        'Accept': 'application/json',
-        'Content-type': 'application/json; charset=UTF-8'
-      });
-      var token = Formio.getToken();
-      if (token && !opts.noToken) {
-        headers.append('x-jwt-token', token);
-      }
-
-      var options = {
-        method: method,
-        headers: headers,
-        mode: 'cors'
-      };
-      if (data) {
-        options.body = JSON.stringify(data);
-      }
-
-      var requestToken = headers.get('x-jwt-token');
-
-      // Allow plugins to alter the options.
-      options = Formio.pluginAlter('requestOptions', options, url);
-
-      var requestPromise = fetch(url, options).then(function (response) {
-        if (!response.ok) {
-          if (response.status === 440) {
-            Formio.setToken(null);
-            Formio.events.emit('formio.sessionExpired', response.body);
-          } else if (response.status === 401) {
-            Formio.events.emit('formio.unauthorized', response.body);
-          }
-          // Parse and return the error as a rejected promise to reject this promise
-          return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (error) {
-            throw error;
+        var requestToken = '';
+        resolve(new Promise(function (resolve, reject) {
+          // Set up and fetch request
+          var headers = header || new Headers({
+            'Accept': 'application/json',
+            'Content-type': 'application/json; charset=UTF-8'
           });
-        }
-
-        // Handle fetch results
-        var token = response.headers.get('x-jwt-token');
-
-        // In some strange cases, the fetch library will return an x-jwt-token without sending
-        // one to the server. This has even been debugged on the server to verify that no token
-        // was introduced with the request, but the response contains a token. This is an Invalid
-        // case where we do not send an x-jwt-token and get one in return for any GET request.
-        var tokenIntroduced = false;
-        if (method === 'GET' && !requestToken && token && url.indexOf('token=') === -1 && url.indexOf('x-jwt-token=' === -1)) {
-          console.warn('Token was introduced in request.');
-          tokenIntroduced = true;
-        }
-
-        if (response.status >= 200 && response.status < 300 && token && token !== '' && !tokenIntroduced) {
-          Formio.setToken(token);
-        }
-        // 204 is no content. Don't try to .json() it.
-        if (response.status === 204) {
-          return {};
-        }
-
-        var getResult = response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text();
-        return getResult.then(function (result) {
-          // Add some content-range metadata to the result here
-          var range = response.headers.get('content-range');
-          if (range && (typeof result === 'undefined' ? 'undefined' : _typeof(result)) === 'object') {
-            range = range.split('/');
-            if (range[0] !== '*') {
-              var skipLimit = range[0].split('-');
-              result.skip = Number(skipLimit[0]);
-              result.limit = skipLimit[1] - skipLimit[0] + 1;
-            }
-            result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
+          var token = Formio.getToken();
+          if (token && !opts.noToken) {
+            headers.append('x-jwt-token', token);
           }
 
-          if (!opts.getHeaders) {
-            return result;
-          }
-
-          var headers = {};
-          response.headers.forEach(function (item, key) {
-            headers[key] = item;
-          });
-
-          // Return the result with the headers.
-          return {
-            result: result,
-            headers: headers
+          var options = {
+            method: method,
+            headers: headers,
+            mode: 'cors'
           };
-        });
+          if (data) {
+            options.body = JSON.stringify(data);
+          }
+
+          requestToken = headers.get('x-jwt-token');
+          resolve(fetch(url, options));
+        }).catch(function (err) {
+          err.message = 'Could not connect to API server (' + err.message + ')';
+          err.networkError = true;
+          throw err;
+        }).then(function (response) {
+          if (!response.ok) {
+            if (response.status === 440) {
+              Formio.setToken(null);
+              Formio.events.emit('formio.sessionExpired', response.body);
+            } else if (response.status === 401) {
+              Formio.events.emit('formio.unauthorized', response.body);
+            }
+            // Parse and return the error as a rejected promise to reject this promise
+            return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (error) {
+              throw error;
+            });
+          }
+
+          // Handle fetch results
+          var token = response.headers.get('x-jwt-token');
+
+          // In some strange cases, the fetch library will return an x-jwt-token without sending
+          // one to the server. This has even been debugged on the server to verify that no token
+          // was introduced with the request, but the response contains a token. This is an Invalid
+          // case where we do not send an x-jwt-token and get one in return for any GET request.
+          var tokenIntroduced = false;
+          if (method === 'GET' && !requestToken && token && url.indexOf('token=') === -1 && url.indexOf('x-jwt-token=' === -1)) {
+            console.warn('Token was introduced in request.');
+            tokenIntroduced = true;
+          }
+
+          if (response.status >= 200 && response.status < 300 && token && token !== '' && !tokenIntroduced) {
+            Formio.setToken(token);
+          }
+          // 204 is no content. Don't try to .json() it.
+          if (response.status === 204) {
+            return {};
+          }
+          return (response.headers.get('content-type').indexOf('application/json') !== -1 ? response.json() : response.text()).then(function (result) {
+            // Add some content-range metadata to the result here
+            var range = response.headers.get('content-range');
+            if (range && (typeof result === 'undefined' ? 'undefined' : _typeof(result)) === 'object') {
+              range = range.split('/');
+              if (range[0] !== '*') {
+                var skipLimit = range[0].split('-');
+                result.skip = Number(skipLimit[0]);
+                result.limit = skipLimit[1] - skipLimit[0] + 1;
+              }
+              result.serverCount = range[1] === '*' ? range[1] : Number(range[1]);
+            }
+
+            if (!opts.getHeaders) {
+              return result;
+            }
+
+            var headers = {};
+            response.headers.forEach(function (item, key) {
+              headers[key] = item;
+            });
+
+            return new Promise(function (resolve, reject) {
+              resolve({ result: result, headers: headers });
+            });
+          });
+        }).catch(function (err) {
+          if (err === 'Bad Token') {
+            Formio.setToken(null);
+            Formio.events.emit('formio.badToken', err);
+          }
+          if (Formio.cache.hasOwnProperty(cacheKey)) {
+            // Remove failed promises from cache
+            delete Formio.cache[cacheKey];
+          }
+          // Propagate error so client can handle accordingly
+          throw err;
+        }));
       }).then(function (result) {
-        if (opts.getHeaders) {
-          return result;
+        // Save the cache
+        if (method === 'GET') {
+          Formio.cache[cacheKey] = Promise.resolve(result);
         }
 
         // Shallow copy result so modifications don't end up in cache
@@ -50254,30 +50127,7 @@ var Formio = function () {
           return resultCopy;
         }
         return copy(result);
-      }).catch(function (err) {
-        if (err === 'Bad Token') {
-          Formio.setToken(null);
-          Formio.events.emit('formio.badToken', err);
-        }
-        if (err.message) {
-          err.message = 'Could not connect to API server (' + err.message + ')';
-          err.networkError = true;
-        }
-        if (Formio.cache.hasOwnProperty(cacheKey)) {
-          // Remove failed promises from cache
-          delete Formio.cache[cacheKey];
-        }
-        // Propagate error so client can handle accordingly
-        throw err;
       });
-
-      // Cache the request promise.
-      if (method === 'GET') {
-        Formio.cache[cacheKey] = requestPromise;
-      }
-
-      // Return the request promise.
-      return requestPromise;
     }
   }, {
     key: 'setToken',
@@ -50466,11 +50316,6 @@ var Formio = function () {
       }, value);
     }
   }, {
-    key: 'accessInfo',
-    value: function accessInfo() {
-      return Formio.makeStaticRequest(Formio.projectUrl + '/access');
-    }
-  }, {
     key: 'currentUser',
     value: function currentUser() {
       var url = Formio.baseUrl + '/current';
@@ -50506,13 +50351,11 @@ var Formio = function () {
      * Attach an HTML form to Form.io.
      *
      * @param form
-     * @param options
-     * @param done
      */
 
   }, {
     key: 'form',
-    value: function form(_form2, options, done) {
+    value: function form(_form, options, done) {
       // Fix the parameters.
       if (!done && typeof options === 'function') {
         done = options;
@@ -50525,15 +50368,15 @@ var Formio = function () {
       options = options || {};
 
       // IF they provide a jquery object, then select the element.
-      if (_form2.jquery) {
-        _form2 = _form2[0];
+      if (_form.jquery) {
+        _form = _form[0];
       }
-      if (!_form2) {
+      if (!_form) {
         return done('Invalid Form');
       }
 
       var getAction = function getAction() {
-        return options.form || _form2.getAttribute('action');
+        return options.form || _form.getAttribute('action');
       };
 
       /**
@@ -50569,7 +50412,7 @@ var Formio = function () {
         };
 
         // Get the form data from this form.
-        var formData = new FormData(_form2);
+        var formData = new FormData(_form);
         var entries = formData.entries();
         var entry = null;
         while (entry = entries.next().value) {
@@ -50593,10 +50436,10 @@ var Formio = function () {
       };
 
       // Attach formio to the provided form.
-      if (_form2.attachEvent) {
-        _form2.attachEvent('submit', submit);
+      if (_form.attachEvent) {
+        _form.attachEvent('submit', submit);
       } else {
-        _form2.addEventListener('submit', submit);
+        _form.addEventListener('submit', submit);
       }
 
       return {
@@ -50671,57 +50514,14 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":29,"eventemitter2":27,"native-promise-only":276,"shallow-copy":345,"whatwg-fetch":347}],29:[function(_dereq_,module,exports){
+},{"./providers":29,"eventemitter2":27,"native-promise-only":261,"shallow-copy":330,"whatwg-fetch":332}],29:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   storage: _dereq_('./storage')
 };
 
-},{"./storage":32}],30:[function(_dereq_,module,exports){
-'use strict';
-
-var Promise = _dereq_('native-promise-only');
-var base64 = function base64() {
-  return {
-    title: 'Base64',
-    name: 'base64',
-    uploadFile: function uploadFile(file, fileName) {
-      var _this = this;
-
-      var reader = new FileReader();
-
-      return new Promise(function (resolve, reject) {
-        reader.onload = function (event) {
-          var url = event.target.result;
-          resolve({
-            storage: 'base64',
-            name: fileName,
-            url: url,
-            size: file.size,
-            type: file.type,
-            data: url.replace('data:' + file.type + ';base64,', '')
-          });
-        };
-
-        reader.onerror = function () {
-          return reject(_this);
-        };
-
-        reader.readAsDataURL(file);
-      });
-    },
-    downloadFile: function downloadFile(file) {
-      // Return the original as there is nothing to do.
-      return Promise.resolve(file);
-    }
-  };
-};
-
-base64.title = 'Base64';
-module.exports = base64;
-
-},{"native-promise-only":276}],31:[function(_dereq_,module,exports){
+},{"./storage":31}],30:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -50793,17 +50593,16 @@ var dropbox = function dropbox(formio) {
 dropbox.title = 'Dropbox';
 module.exports = dropbox;
 
-},{"native-promise-only":276}],32:[function(_dereq_,module,exports){
+},{"native-promise-only":261}],31:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
-  base64: _dereq_('./base64'),
   dropbox: _dereq_('./dropbox.js'),
   s3: _dereq_('./s3.js'),
   url: _dereq_('./url.js')
 };
 
-},{"./base64":30,"./dropbox.js":31,"./s3.js":33,"./url.js":34}],33:[function(_dereq_,module,exports){
+},{"./dropbox.js":30,"./s3.js":32,"./url.js":33}],32:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -50918,7 +50717,7 @@ var s3 = function s3(formio) {
 s3.title = 'S3';
 module.exports = s3;
 
-},{"native-promise-only":276}],34:[function(_dereq_,module,exports){
+},{"native-promise-only":261}],33:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -50997,7 +50796,7 @@ var url = function url(formio) {
 url.title = 'Url';
 module.exports = url;
 
-},{"native-promise-only":276}],35:[function(_dereq_,module,exports){
+},{"native-promise-only":261}],34:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
@@ -51016,26 +50815,6 @@ var _clone3 = _interopRequireDefault(_clone2);
 var _get2 = _dereq_('lodash/get');
 
 var _get3 = _interopRequireDefault(_get2);
-
-var _isString2 = _dereq_('lodash/isString');
-
-var _isString3 = _interopRequireDefault(_isString2);
-
-var _round2 = _dereq_('lodash/round');
-
-var _round3 = _interopRequireDefault(_round2);
-
-var _pad2 = _dereq_('lodash/pad');
-
-var _pad3 = _interopRequireDefault(_pad2);
-
-var _chunk2 = _dereq_('lodash/chunk');
-
-var _chunk3 = _interopRequireDefault(_chunk2);
-
-var _isNaN2 = _dereq_('lodash/isNaN');
-
-var _isNaN3 = _interopRequireDefault(_isNaN2);
 
 var _template = _dereq_('lodash/template');
 
@@ -51238,98 +51017,6 @@ var FormioUtils = {
   },
 
   /**
-   * Extension of standard #parseFloat(value) function, that also clears input string.
-   *
-   * @param {any} value
-   *   The value to parse.
-   *
-   * @returns {Number}
-   *   Parsed value.
-   */
-  parseFloat: function (_parseFloat) {
-    function parseFloat(_x) {
-      return _parseFloat.apply(this, arguments);
-    }
-
-    parseFloat.toString = function () {
-      return _parseFloat.toString();
-    };
-
-    return parseFloat;
-  }(function (value) {
-    return parseFloat((0, _isString3.default)(value) ? value.replace(/[^\de.+-]/gi, '') : value);
-  }),
-
-  /**
-   * Formats provided value in way how Currency component uses it.
-   *
-   * @param {any} value
-   *   The value to format.
-   *
-   * @returns {String}
-   *   Value formatted for Currency component.
-   */
-  formatAsCurrency: function formatAsCurrency(value) {
-    var parsedValue = this.parseFloat(value);
-
-    if ((0, _isNaN3.default)(parsedValue)) {
-      return '';
-    }
-
-    var parts = (0, _round3.default)(parsedValue, 2).toString().split('.');
-    parts[0] = (0, _chunk3.default)(Array.from(parts[0]).reverse(), 3).reverse().map(function (part) {
-      return part.reverse().join('');
-    }).join(',');
-    parts[1] = (0, _pad3.default)(parts[1], 2, '0');
-    return parts.join('.');
-  },
-
-  /**
-   * Escapes RegEx characters in provided String value.
-   *
-   * @param {String} value
-   *   String for escaping RegEx characters.
-   * @returns {string}
-   *   String with escaped RegEx characters.
-   */
-  escapeRegExCharacters: function escapeRegExCharacters(value) {
-    return value.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-  },
-
-  /**
-   * Checks the calculated value for a provided component and data.
-   *
-   * @param {Object} component
-   *   The component to check for the calculated value.
-   * @param {Object} submission
-   *   A submission object.
-   * @param data
-   *   The full submission data.
-   */
-  checkCalculated: function checkCalculated(component, submission, data) {
-    // Process calculated value stuff if present.
-    if (component.calculateValue) {
-      if (typeof component.calculateValue === 'string') {
-        try {
-          var util = this;
-          data[component.key] = eval('(function(data, util) { var value = [];' + component.calculateValue.toString() + '; return value; })(data, util)');
-        } catch (e) {
-          console.warn('An error occurred calculating a value for ' + component.key, e);
-        }
-      } else {
-        try {
-          data[component.key] = FormioUtils.jsonLogic.apply(component.calculateValue, {
-            data: submission ? submission.data : data,
-            row: data
-          });
-        } catch (e) {
-          console.warn('An error occurred calculating a value for ' + component.key, e);
-        }
-      }
-    }
-  },
-
-  /**
    * Checks the conditions for a provided component and data.
    *
    * @param component
@@ -51474,12 +51161,12 @@ var FormioUtils = {
 module.exports = global.FormioUtils = FormioUtils;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"json-logic-js":37,"lodash/chunk":218,"lodash/clone":219,"lodash/get":228,"lodash/isNaN":243,"lodash/isString":248,"lodash/pad":258,"lodash/round":262,"lodash/template":266}],36:[function(_dereq_,module,exports){
+},{"json-logic-js":36,"lodash/clone":211,"lodash/get":220,"lodash/template":254}],35:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./build/utils');
 
-},{"./build/utils":35}],37:[function(_dereq_,module,exports){
+},{"./build/utils":34}],36:[function(_dereq_,module,exports){
 /* globals define,module */
 /*
 Using a Universal Module Loader that should be browser, require, and AMD friendly
@@ -51866,7 +51553,7 @@ http://ricostacruz.com/cheatsheets/umdjs.html
   return jsonLogic;
 }));
 
-},{}],38:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51875,7 +51562,7 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":146,"./_root":194}],39:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],38:[function(_dereq_,module,exports){
 var hashClear = _dereq_('./_hashClear'),
     hashDelete = _dereq_('./_hashDelete'),
     hashGet = _dereq_('./_hashGet'),
@@ -51909,7 +51596,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":156,"./_hashDelete":157,"./_hashGet":158,"./_hashHas":159,"./_hashSet":160}],40:[function(_dereq_,module,exports){
+},{"./_hashClear":151,"./_hashDelete":152,"./_hashGet":153,"./_hashHas":154,"./_hashSet":155}],39:[function(_dereq_,module,exports){
 var listCacheClear = _dereq_('./_listCacheClear'),
     listCacheDelete = _dereq_('./_listCacheDelete'),
     listCacheGet = _dereq_('./_listCacheGet'),
@@ -51943,7 +51630,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":171,"./_listCacheDelete":172,"./_listCacheGet":173,"./_listCacheHas":174,"./_listCacheSet":175}],41:[function(_dereq_,module,exports){
+},{"./_listCacheClear":166,"./_listCacheDelete":167,"./_listCacheGet":168,"./_listCacheHas":169,"./_listCacheSet":170}],40:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51952,7 +51639,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":146,"./_root":194}],42:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],41:[function(_dereq_,module,exports){
 var mapCacheClear = _dereq_('./_mapCacheClear'),
     mapCacheDelete = _dereq_('./_mapCacheDelete'),
     mapCacheGet = _dereq_('./_mapCacheGet'),
@@ -51986,7 +51673,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":176,"./_mapCacheDelete":177,"./_mapCacheGet":178,"./_mapCacheHas":179,"./_mapCacheSet":180}],43:[function(_dereq_,module,exports){
+},{"./_mapCacheClear":171,"./_mapCacheDelete":172,"./_mapCacheGet":173,"./_mapCacheHas":174,"./_mapCacheSet":175}],42:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -51995,7 +51682,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":146,"./_root":194}],44:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],43:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -52004,7 +51691,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":146,"./_root":194}],45:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],44:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -52033,7 +51720,7 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":42,"./_setCacheAdd":195,"./_setCacheHas":196}],46:[function(_dereq_,module,exports){
+},{"./_MapCache":41,"./_setCacheAdd":190,"./_setCacheHas":191}],45:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     stackClear = _dereq_('./_stackClear'),
     stackDelete = _dereq_('./_stackDelete'),
@@ -52062,7 +51749,7 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":40,"./_stackClear":200,"./_stackDelete":201,"./_stackGet":202,"./_stackHas":203,"./_stackSet":204}],47:[function(_dereq_,module,exports){
+},{"./_ListCache":39,"./_stackClear":195,"./_stackDelete":196,"./_stackGet":197,"./_stackHas":198,"./_stackSet":199}],46:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -52070,7 +51757,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":194}],48:[function(_dereq_,module,exports){
+},{"./_root":189}],47:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -52078,7 +51765,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":194}],49:[function(_dereq_,module,exports){
+},{"./_root":189}],48:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -52087,7 +51774,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":146,"./_root":194}],50:[function(_dereq_,module,exports){
+},{"./_getNative":141,"./_root":189}],49:[function(_dereq_,module,exports){
 /**
  * Adds the key-value `pair` to `map`.
  *
@@ -52104,7 +51791,7 @@ function addMapEntry(map, pair) {
 
 module.exports = addMapEntry;
 
-},{}],51:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 /**
  * Adds `value` to `set`.
  *
@@ -52121,7 +51808,7 @@ function addSetEntry(set, value) {
 
 module.exports = addSetEntry;
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -52144,7 +51831,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],53:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseAggregator` for arrays.
  *
@@ -52168,7 +51855,7 @@ function arrayAggregator(array, setter, iteratee, accumulator) {
 
 module.exports = arrayAggregator;
 
-},{}],54:[function(_dereq_,module,exports){
+},{}],53:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for
  * iteratee shorthands.
@@ -52192,7 +51879,7 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],55:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for
  * iteratee shorthands.
@@ -52219,7 +51906,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],56:[function(_dereq_,module,exports){
+},{}],55:[function(_dereq_,module,exports){
 var baseTimes = _dereq_('./_baseTimes'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -52270,7 +51957,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":104,"./_isIndex":164,"./isArguments":232,"./isArray":233,"./isBuffer":236,"./isTypedArray":250}],57:[function(_dereq_,module,exports){
+},{"./_baseTimes":101,"./_isIndex":159,"./isArguments":224,"./isArray":225,"./isBuffer":228,"./isTypedArray":240}],56:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -52293,7 +51980,7 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],58:[function(_dereq_,module,exports){
+},{}],57:[function(_dereq_,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -52315,7 +52002,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],59:[function(_dereq_,module,exports){
+},{}],58:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for
  * iteratee shorthands.
@@ -52343,7 +52030,7 @@ function arrayReduce(array, iteratee, accumulator, initAccum) {
 
 module.exports = arrayReduce;
 
-},{}],60:[function(_dereq_,module,exports){
+},{}],59:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for iteratee
  * shorthands.
@@ -52368,21 +52055,7 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],61:[function(_dereq_,module,exports){
-var baseProperty = _dereq_('./_baseProperty');
-
-/**
- * Gets the size of an ASCII `string`.
- *
- * @private
- * @param {string} string The string inspect.
- * @returns {number} Returns the string size.
- */
-var asciiSize = baseProperty('length');
-
-module.exports = asciiSize;
-
-},{"./_baseProperty":96}],62:[function(_dereq_,module,exports){
+},{}],60:[function(_dereq_,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -52396,7 +52069,7 @@ function asciiToArray(string) {
 
 module.exports = asciiToArray;
 
-},{}],63:[function(_dereq_,module,exports){
+},{}],61:[function(_dereq_,module,exports){
 /** Used to match words composed of alphanumeric characters. */
 var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
 
@@ -52413,7 +52086,7 @@ function asciiWords(string) {
 
 module.exports = asciiWords;
 
-},{}],64:[function(_dereq_,module,exports){
+},{}],62:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -52435,7 +52108,7 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":70,"./eq":224}],65:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":68,"./eq":216}],63:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -52465,7 +52138,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":70,"./eq":224}],66:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":68,"./eq":216}],64:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /**
@@ -52488,7 +52161,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":224}],67:[function(_dereq_,module,exports){
+},{"./eq":216}],65:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -52511,7 +52184,7 @@ function baseAggregator(collection, setter, iteratee, accumulator) {
 
 module.exports = baseAggregator;
 
-},{"./_baseEach":73}],68:[function(_dereq_,module,exports){
+},{"./_baseEach":71}],66:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keys = _dereq_('./keys');
 
@@ -52530,7 +52203,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":121,"./keys":251}],69:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./keys":241}],67:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -52549,7 +52222,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":121,"./keysIn":252}],70:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./keysIn":242}],68:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -52576,7 +52249,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":135}],71:[function(_dereq_,module,exports){
+},{"./_defineProperty":130}],69:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     arrayEach = _dereq_('./_arrayEach'),
     assignValue = _dereq_('./_assignValue'),
@@ -52731,7 +52404,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":46,"./_arrayEach":54,"./_assignValue":65,"./_baseAssign":68,"./_baseAssignIn":69,"./_cloneBuffer":113,"./_copyArray":120,"./_copySymbols":122,"./_copySymbolsIn":123,"./_getAllKeys":142,"./_getAllKeysIn":143,"./_getTag":151,"./_initCloneArray":161,"./_initCloneByTag":162,"./_initCloneObject":163,"./isArray":233,"./isBuffer":236,"./isObject":245,"./keys":251}],72:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_arrayEach":53,"./_assignValue":63,"./_baseAssign":66,"./_baseAssignIn":67,"./_cloneBuffer":110,"./_copyArray":117,"./_copySymbols":119,"./_copySymbolsIn":120,"./_getAllKeys":137,"./_getAllKeysIn":138,"./_getTag":146,"./_initCloneArray":156,"./_initCloneByTag":157,"./_initCloneObject":158,"./isArray":225,"./isBuffer":228,"./isObject":236,"./keys":241}],70:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -52763,7 +52436,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":245}],73:[function(_dereq_,module,exports){
+},{"./isObject":236}],71:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -52779,7 +52452,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":76,"./_createBaseEach":127}],74:[function(_dereq_,module,exports){
+},{"./_baseForOwn":74,"./_createBaseEach":124}],72:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -52802,7 +52475,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./_baseEach":73}],75:[function(_dereq_,module,exports){
+},{"./_baseEach":71}],73:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -52820,7 +52493,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":128}],76:[function(_dereq_,module,exports){
+},{"./_createBaseFor":125}],74:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -52838,7 +52511,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":75,"./keys":251}],77:[function(_dereq_,module,exports){
+},{"./_baseFor":73,"./keys":241}],75:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     toKey = _dereq_('./_toKey');
 
@@ -52864,7 +52537,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":110,"./_toKey":208}],78:[function(_dereq_,module,exports){
+},{"./_castPath":107,"./_toKey":202}],76:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isArray = _dereq_('./isArray');
 
@@ -52886,7 +52559,7 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":58,"./isArray":233}],79:[function(_dereq_,module,exports){
+},{"./_arrayPush":57,"./isArray":225}],77:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     getRawTag = _dereq_('./_getRawTag'),
     objectToString = _dereq_('./_objectToString');
@@ -52916,7 +52589,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":47,"./_getRawTag":148,"./_objectToString":188}],80:[function(_dereq_,module,exports){
+},{"./_Symbol":46,"./_getRawTag":143,"./_objectToString":183}],78:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -52931,7 +52604,7 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],81:[function(_dereq_,module,exports){
+},{}],79:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -52951,7 +52624,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":79,"./isObjectLike":246}],82:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237}],80:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -52981,7 +52654,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":83,"./isObjectLike":246}],83:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":81,"./isObjectLike":237}],81:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -53066,7 +52739,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":46,"./_equalArrays":136,"./_equalByTag":137,"./_equalObjects":138,"./_getTag":151,"./isArray":233,"./isBuffer":236,"./isTypedArray":250}],84:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_equalArrays":131,"./_equalByTag":132,"./_equalObjects":133,"./_getTag":146,"./isArray":225,"./isBuffer":228,"./isTypedArray":240}],82:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -53130,7 +52803,7 @@ function baseIsMatch(object, source, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./_Stack":46,"./_baseIsEqual":82}],85:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_baseIsEqual":80}],83:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isMasked = _dereq_('./_isMasked'),
     isObject = _dereq_('./isObject'),
@@ -53179,7 +52852,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":168,"./_toSource":209,"./isFunction":240,"./isObject":245}],86:[function(_dereq_,module,exports){
+},{"./_isMasked":163,"./_toSource":203,"./isFunction":232,"./isObject":236}],84:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -53241,7 +52914,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":79,"./isLength":241,"./isObjectLike":246}],87:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isLength":233,"./isObjectLike":237}],85:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -53274,7 +52947,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":91,"./_baseMatchesProperty":92,"./identity":231,"./isArray":233,"./property":260}],88:[function(_dereq_,module,exports){
+},{"./_baseMatches":89,"./_baseMatchesProperty":90,"./identity":223,"./isArray":225,"./property":249}],86:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -53306,7 +52979,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":169,"./_nativeKeys":185}],89:[function(_dereq_,module,exports){
+},{"./_isPrototype":164,"./_nativeKeys":180}],87:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isPrototype = _dereq_('./_isPrototype'),
     nativeKeysIn = _dereq_('./_nativeKeysIn');
@@ -53341,7 +53014,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":169,"./_nativeKeysIn":186,"./isObject":245}],90:[function(_dereq_,module,exports){
+},{"./_isPrototype":164,"./_nativeKeysIn":181,"./isObject":236}],88:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -53365,7 +53038,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":73,"./isArrayLike":234}],91:[function(_dereq_,module,exports){
+},{"./_baseEach":71,"./isArrayLike":226}],89:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -53389,7 +53062,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":84,"./_getMatchData":145,"./_matchesStrictComparable":182}],92:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":82,"./_getMatchData":140,"./_matchesStrictComparable":177}],90:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -53424,7 +53097,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":82,"./_isKey":166,"./_isStrictComparable":170,"./_matchesStrictComparable":182,"./_toKey":208,"./get":228,"./hasIn":230}],93:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":80,"./_isKey":161,"./_isStrictComparable":165,"./_matchesStrictComparable":177,"./_toKey":202,"./get":220,"./hasIn":222}],91:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -53467,7 +53140,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":46,"./_assignMergeValue":64,"./_baseFor":75,"./_baseMergeDeep":94,"./isObject":245,"./keysIn":252}],94:[function(_dereq_,module,exports){
+},{"./_Stack":45,"./_assignMergeValue":62,"./_baseFor":73,"./_baseMergeDeep":92,"./isObject":236,"./keysIn":242}],92:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -53562,7 +53235,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":64,"./_cloneBuffer":113,"./_cloneTypedArray":119,"./_copyArray":120,"./_initCloneObject":163,"./isArguments":232,"./isArray":233,"./isArrayLikeObject":235,"./isBuffer":236,"./isFunction":240,"./isObject":245,"./isPlainObject":247,"./isTypedArray":250,"./toPlainObject":271}],95:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":62,"./_cloneBuffer":110,"./_cloneTypedArray":116,"./_copyArray":117,"./_initCloneObject":158,"./isArguments":224,"./isArray":225,"./isArrayLikeObject":227,"./isBuffer":228,"./isFunction":232,"./isObject":236,"./isPlainObject":238,"./isTypedArray":240,"./toPlainObject":256}],93:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -53594,7 +53267,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":77,"./_baseSet":101,"./_castPath":110}],96:[function(_dereq_,module,exports){
+},{"./_baseGet":75,"./_baseSet":98,"./_castPath":107}],94:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -53610,7 +53283,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],97:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -53628,7 +53301,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":77}],98:[function(_dereq_,module,exports){
+},{"./_baseGet":75}],96:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.propertyOf` without support for deep paths.
  *
@@ -53644,44 +53317,7 @@ function basePropertyOf(object) {
 
 module.exports = basePropertyOf;
 
-},{}],99:[function(_dereq_,module,exports){
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeFloor = Math.floor;
-
-/**
- * The base implementation of `_.repeat` which doesn't coerce arguments.
- *
- * @private
- * @param {string} string The string to repeat.
- * @param {number} n The number of times to repeat the string.
- * @returns {string} Returns the repeated string.
- */
-function baseRepeat(string, n) {
-  var result = '';
-  if (!string || n < 1 || n > MAX_SAFE_INTEGER) {
-    return result;
-  }
-  // Leverage the exponentiation by squaring algorithm for a faster repeat.
-  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
-  do {
-    if (n % 2) {
-      result += string;
-    }
-    n = nativeFloor(n / 2);
-    if (n) {
-      string += string;
-    }
-  } while (n);
-
-  return result;
-}
-
-module.exports = baseRepeat;
-
-},{}],100:[function(_dereq_,module,exports){
+},{}],97:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity'),
     overRest = _dereq_('./_overRest'),
     setToString = _dereq_('./_setToString');
@@ -53700,7 +53336,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":190,"./_setToString":198,"./identity":231}],101:[function(_dereq_,module,exports){
+},{"./_overRest":185,"./_setToString":193,"./identity":223}],98:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -53749,7 +53385,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":65,"./_castPath":110,"./_isIndex":164,"./_toKey":208,"./isObject":245}],102:[function(_dereq_,module,exports){
+},{"./_assignValue":63,"./_castPath":107,"./_isIndex":159,"./_toKey":202,"./isObject":236}],99:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -53773,7 +53409,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":135,"./constant":221,"./identity":231}],103:[function(_dereq_,module,exports){
+},{"./_defineProperty":130,"./constant":213,"./identity":223}],100:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -53806,7 +53442,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],104:[function(_dereq_,module,exports){
+},{}],101:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -53828,7 +53464,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],105:[function(_dereq_,module,exports){
+},{}],102:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     arrayMap = _dereq_('./_arrayMap'),
     isArray = _dereq_('./isArray'),
@@ -53867,7 +53503,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":47,"./_arrayMap":57,"./isArray":233,"./isSymbol":249}],106:[function(_dereq_,module,exports){
+},{"./_Symbol":46,"./_arrayMap":56,"./isArray":225,"./isSymbol":239}],103:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -53883,7 +53519,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],107:[function(_dereq_,module,exports){
+},{}],104:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap');
 
 /**
@@ -53904,7 +53540,7 @@ function baseValues(object, props) {
 
 module.exports = baseValues;
 
-},{"./_arrayMap":57}],108:[function(_dereq_,module,exports){
+},{"./_arrayMap":56}],105:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -53919,7 +53555,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],109:[function(_dereq_,module,exports){
+},{}],106:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -53935,7 +53571,7 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":231}],110:[function(_dereq_,module,exports){
+},{"./identity":223}],107:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isKey = _dereq_('./_isKey'),
     stringToPath = _dereq_('./_stringToPath'),
@@ -53958,7 +53594,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":166,"./_stringToPath":207,"./isArray":233,"./toString":272}],111:[function(_dereq_,module,exports){
+},{"./_isKey":161,"./_stringToPath":201,"./isArray":225,"./toString":257}],108:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -53978,7 +53614,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":103}],112:[function(_dereq_,module,exports){
+},{"./_baseSlice":100}],109:[function(_dereq_,module,exports){
 var Uint8Array = _dereq_('./_Uint8Array');
 
 /**
@@ -53996,7 +53632,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":48}],113:[function(_dereq_,module,exports){
+},{"./_Uint8Array":47}],110:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Detect free variable `exports`. */
@@ -54033,7 +53669,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":194}],114:[function(_dereq_,module,exports){
+},{"./_root":189}],111:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -54051,7 +53687,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":112}],115:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":109}],112:[function(_dereq_,module,exports){
 var addMapEntry = _dereq_('./_addMapEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     mapToArray = _dereq_('./_mapToArray');
@@ -54075,7 +53711,7 @@ function cloneMap(map, isDeep, cloneFunc) {
 
 module.exports = cloneMap;
 
-},{"./_addMapEntry":50,"./_arrayReduce":59,"./_mapToArray":181}],116:[function(_dereq_,module,exports){
+},{"./_addMapEntry":49,"./_arrayReduce":58,"./_mapToArray":176}],113:[function(_dereq_,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -54094,7 +53730,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],117:[function(_dereq_,module,exports){
+},{}],114:[function(_dereq_,module,exports){
 var addSetEntry = _dereq_('./_addSetEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     setToArray = _dereq_('./_setToArray');
@@ -54118,7 +53754,7 @@ function cloneSet(set, isDeep, cloneFunc) {
 
 module.exports = cloneSet;
 
-},{"./_addSetEntry":51,"./_arrayReduce":59,"./_setToArray":197}],118:[function(_dereq_,module,exports){
+},{"./_addSetEntry":50,"./_arrayReduce":58,"./_setToArray":192}],115:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -54138,7 +53774,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":47}],119:[function(_dereq_,module,exports){
+},{"./_Symbol":46}],116:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -54156,7 +53792,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":112}],120:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":109}],117:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -54178,7 +53814,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],121:[function(_dereq_,module,exports){
+},{}],118:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     baseAssignValue = _dereq_('./_baseAssignValue');
 
@@ -54220,7 +53856,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":65,"./_baseAssignValue":70}],122:[function(_dereq_,module,exports){
+},{"./_assignValue":63,"./_baseAssignValue":68}],119:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbols = _dereq_('./_getSymbols');
 
@@ -54238,7 +53874,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":121,"./_getSymbols":149}],123:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./_getSymbols":144}],120:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbolsIn = _dereq_('./_getSymbolsIn');
 
@@ -54256,7 +53892,7 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":121,"./_getSymbolsIn":150}],124:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./_getSymbolsIn":145}],121:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -54264,7 +53900,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":194}],125:[function(_dereq_,module,exports){
+},{"./_root":189}],122:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -54289,7 +53925,7 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":53,"./_baseAggregator":67,"./_baseIteratee":87,"./isArray":233}],126:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":52,"./_baseAggregator":65,"./_baseIteratee":85,"./isArray":225}],123:[function(_dereq_,module,exports){
 var baseRest = _dereq_('./_baseRest'),
     isIterateeCall = _dereq_('./_isIterateeCall');
 
@@ -54328,7 +53964,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":100,"./_isIterateeCall":165}],127:[function(_dereq_,module,exports){
+},{"./_baseRest":97,"./_isIterateeCall":160}],124:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -54362,7 +53998,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":234}],128:[function(_dereq_,module,exports){
+},{"./isArrayLike":226}],125:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -54389,7 +54025,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],129:[function(_dereq_,module,exports){
+},{}],126:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -54424,7 +54060,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":111,"./_hasUnicode":154,"./_stringToArray":206,"./toString":272}],130:[function(_dereq_,module,exports){
+},{"./_castSlice":108,"./_hasUnicode":149,"./_stringToArray":200,"./toString":257}],127:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -54450,77 +54086,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":59,"./deburr":222,"./words":274}],131:[function(_dereq_,module,exports){
-var baseRepeat = _dereq_('./_baseRepeat'),
-    baseToString = _dereq_('./_baseToString'),
-    castSlice = _dereq_('./_castSlice'),
-    hasUnicode = _dereq_('./_hasUnicode'),
-    stringSize = _dereq_('./_stringSize'),
-    stringToArray = _dereq_('./_stringToArray');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil;
-
-/**
- * Creates the padding for `string` based on `length`. The `chars` string
- * is truncated if the number of characters exceeds `length`.
- *
- * @private
- * @param {number} length The padding length.
- * @param {string} [chars=' '] The string used as padding.
- * @returns {string} Returns the padding for `string`.
- */
-function createPadding(length, chars) {
-  chars = chars === undefined ? ' ' : baseToString(chars);
-
-  var charsLength = chars.length;
-  if (charsLength < 2) {
-    return charsLength ? baseRepeat(chars, length) : chars;
-  }
-  var result = baseRepeat(chars, nativeCeil(length / stringSize(chars)));
-  return hasUnicode(chars)
-    ? castSlice(stringToArray(result), 0, length).join('')
-    : result.slice(0, length);
-}
-
-module.exports = createPadding;
-
-},{"./_baseRepeat":99,"./_baseToString":105,"./_castSlice":111,"./_hasUnicode":154,"./_stringSize":205,"./_stringToArray":206}],132:[function(_dereq_,module,exports){
-var toInteger = _dereq_('./toInteger'),
-    toNumber = _dereq_('./toNumber'),
-    toString = _dereq_('./toString');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMin = Math.min;
-
-/**
- * Creates a function like `_.round`.
- *
- * @private
- * @param {string} methodName The name of the `Math` method to use when rounding.
- * @returns {Function} Returns the new round function.
- */
-function createRound(methodName) {
-  var func = Math[methodName];
-  return function(number, precision) {
-    number = toNumber(number);
-    precision = precision == null ? 0 : nativeMin(toInteger(precision), 292);
-    if (precision) {
-      // Shift with exponential notation to avoid floating-point issues.
-      // See [MDN](https://mdn.io/round#Examples) for more details.
-      var pair = (toString(number) + 'e').split('e'),
-          value = func(pair[0] + 'e' + (+pair[1] + precision));
-
-      pair = (toString(value) + 'e').split('e');
-      return +(pair[0] + 'e' + (+pair[1] - precision));
-    }
-    return func(number);
-  };
-}
-
-module.exports = createRound;
-
-},{"./toInteger":269,"./toNumber":270,"./toString":272}],133:[function(_dereq_,module,exports){
+},{"./_arrayReduce":58,"./deburr":214,"./words":259}],128:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /** Used for built-in method references. */
@@ -54551,7 +54117,7 @@ function customDefaultsAssignIn(objValue, srcValue, key, object) {
 
 module.exports = customDefaultsAssignIn;
 
-},{"./eq":224}],134:[function(_dereq_,module,exports){
+},{"./eq":216}],129:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -54624,7 +54190,7 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":98}],135:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":96}],130:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 var defineProperty = (function() {
@@ -54637,7 +54203,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":146}],136:[function(_dereq_,module,exports){
+},{"./_getNative":141}],131:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -54722,7 +54288,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":45,"./_arraySome":60,"./_cacheHas":108}],137:[function(_dereq_,module,exports){
+},{"./_SetCache":44,"./_arraySome":59,"./_cacheHas":105}],132:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -54836,7 +54402,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":47,"./_Uint8Array":48,"./_equalArrays":136,"./_mapToArray":181,"./_setToArray":197,"./eq":224}],138:[function(_dereq_,module,exports){
+},{"./_Symbol":46,"./_Uint8Array":47,"./_equalArrays":131,"./_mapToArray":176,"./_setToArray":192,"./eq":216}],133:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -54927,7 +54493,7 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":142}],139:[function(_dereq_,module,exports){
+},{"./_getAllKeys":137}],134:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map characters to HTML entities. */
@@ -54950,7 +54516,7 @@ var escapeHtmlChar = basePropertyOf(htmlEscapes);
 
 module.exports = escapeHtmlChar;
 
-},{"./_basePropertyOf":98}],140:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":96}],135:[function(_dereq_,module,exports){
 /** Used to escape characters for inclusion in compiled string literals. */
 var stringEscapes = {
   '\\': '\\',
@@ -54974,7 +54540,7 @@ function escapeStringChar(chr) {
 
 module.exports = escapeStringChar;
 
-},{}],141:[function(_dereq_,module,exports){
+},{}],136:[function(_dereq_,module,exports){
 (function (global){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -54982,7 +54548,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],142:[function(_dereq_,module,exports){
+},{}],137:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbols = _dereq_('./_getSymbols'),
     keys = _dereq_('./keys');
@@ -55000,7 +54566,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":78,"./_getSymbols":149,"./keys":251}],143:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":76,"./_getSymbols":144,"./keys":241}],138:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -55019,7 +54585,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":78,"./_getSymbolsIn":150,"./keysIn":252}],144:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":76,"./_getSymbolsIn":145,"./keysIn":242}],139:[function(_dereq_,module,exports){
 var isKeyable = _dereq_('./_isKeyable');
 
 /**
@@ -55039,7 +54605,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":167}],145:[function(_dereq_,module,exports){
+},{"./_isKeyable":162}],140:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -55065,7 +54631,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":170,"./keys":251}],146:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":165,"./keys":241}],141:[function(_dereq_,module,exports){
 var baseIsNative = _dereq_('./_baseIsNative'),
     getValue = _dereq_('./_getValue');
 
@@ -55084,7 +54650,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":85,"./_getValue":152}],147:[function(_dereq_,module,exports){
+},{"./_baseIsNative":83,"./_getValue":147}],142:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /** Built-in value references. */
@@ -55092,7 +54658,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":189}],148:[function(_dereq_,module,exports){
+},{"./_overArg":184}],143:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used for built-in method references. */
@@ -55140,7 +54706,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":47}],149:[function(_dereq_,module,exports){
+},{"./_Symbol":46}],144:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     stubArray = _dereq_('./stubArray');
 
@@ -55172,7 +54738,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":55,"./stubArray":264}],150:[function(_dereq_,module,exports){
+},{"./_arrayFilter":54,"./stubArray":252}],145:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -55199,7 +54765,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":58,"./_getPrototype":147,"./_getSymbols":149,"./stubArray":264}],151:[function(_dereq_,module,exports){
+},{"./_arrayPush":57,"./_getPrototype":142,"./_getSymbols":144,"./stubArray":252}],146:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -55259,7 +54825,7 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":38,"./_Map":41,"./_Promise":43,"./_Set":44,"./_WeakMap":49,"./_baseGetTag":79,"./_toSource":209}],152:[function(_dereq_,module,exports){
+},{"./_DataView":37,"./_Map":40,"./_Promise":42,"./_Set":43,"./_WeakMap":48,"./_baseGetTag":77,"./_toSource":203}],147:[function(_dereq_,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -55274,7 +54840,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],153:[function(_dereq_,module,exports){
+},{}],148:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -55315,7 +54881,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":110,"./_isIndex":164,"./_toKey":208,"./isArguments":232,"./isArray":233,"./isLength":241}],154:[function(_dereq_,module,exports){
+},{"./_castPath":107,"./_isIndex":159,"./_toKey":202,"./isArguments":224,"./isArray":225,"./isLength":233}],149:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -55343,7 +54909,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],155:[function(_dereq_,module,exports){
+},{}],150:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -55360,7 +54926,7 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],156:[function(_dereq_,module,exports){
+},{}],151:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /**
@@ -55377,7 +54943,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":184}],157:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],152:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -55396,7 +54962,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],158:[function(_dereq_,module,exports){
+},{}],153:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -55428,7 +54994,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":184}],159:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],154:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -55453,7 +55019,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":184}],160:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],155:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -55478,7 +55044,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":184}],161:[function(_dereq_,module,exports){
+},{"./_nativeCreate":179}],156:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -55506,7 +55072,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],162:[function(_dereq_,module,exports){
+},{}],157:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
     cloneDataView = _dereq_('./_cloneDataView'),
     cloneMap = _dereq_('./_cloneMap'),
@@ -55588,7 +55154,7 @@ function initCloneByTag(object, tag, cloneFunc, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":112,"./_cloneDataView":114,"./_cloneMap":115,"./_cloneRegExp":116,"./_cloneSet":117,"./_cloneSymbol":118,"./_cloneTypedArray":119}],163:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":109,"./_cloneDataView":111,"./_cloneMap":112,"./_cloneRegExp":113,"./_cloneSet":114,"./_cloneSymbol":115,"./_cloneTypedArray":116}],158:[function(_dereq_,module,exports){
 var baseCreate = _dereq_('./_baseCreate'),
     getPrototype = _dereq_('./_getPrototype'),
     isPrototype = _dereq_('./_isPrototype');
@@ -55608,7 +55174,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":72,"./_getPrototype":147,"./_isPrototype":169}],164:[function(_dereq_,module,exports){
+},{"./_baseCreate":70,"./_getPrototype":142,"./_isPrototype":164}],159:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -55632,7 +55198,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],165:[function(_dereq_,module,exports){
+},{}],160:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq'),
     isArrayLike = _dereq_('./isArrayLike'),
     isIndex = _dereq_('./_isIndex'),
@@ -55664,7 +55230,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":164,"./eq":224,"./isArrayLike":234,"./isObject":245}],166:[function(_dereq_,module,exports){
+},{"./_isIndex":159,"./eq":216,"./isArrayLike":226,"./isObject":236}],161:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -55695,7 +55261,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":233,"./isSymbol":249}],167:[function(_dereq_,module,exports){
+},{"./isArray":225,"./isSymbol":239}],162:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -55712,7 +55278,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],168:[function(_dereq_,module,exports){
+},{}],163:[function(_dereq_,module,exports){
 var coreJsData = _dereq_('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -55734,7 +55300,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":124}],169:[function(_dereq_,module,exports){
+},{"./_coreJsData":121}],164:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -55754,7 +55320,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],170:[function(_dereq_,module,exports){
+},{}],165:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -55771,7 +55337,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":245}],171:[function(_dereq_,module,exports){
+},{"./isObject":236}],166:[function(_dereq_,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -55786,7 +55352,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],172:[function(_dereq_,module,exports){
+},{}],167:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -55823,7 +55389,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":66}],173:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],168:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -55844,7 +55410,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":66}],174:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],169:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -55862,7 +55428,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":66}],175:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],170:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -55890,7 +55456,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":66}],176:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":64}],171:[function(_dereq_,module,exports){
 var Hash = _dereq_('./_Hash'),
     ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map');
@@ -55913,7 +55479,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":39,"./_ListCache":40,"./_Map":41}],177:[function(_dereq_,module,exports){
+},{"./_Hash":38,"./_ListCache":39,"./_Map":40}],172:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55933,7 +55499,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":144}],178:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],173:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55951,7 +55517,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":144}],179:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],174:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55969,7 +55535,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":144}],180:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],175:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -55993,7 +55559,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":144}],181:[function(_dereq_,module,exports){
+},{"./_getMapData":139}],176:[function(_dereq_,module,exports){
 /**
  * Converts `map` to its key-value pairs.
  *
@@ -56013,7 +55579,7 @@ function mapToArray(map) {
 
 module.exports = mapToArray;
 
-},{}],182:[function(_dereq_,module,exports){
+},{}],177:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -56035,7 +55601,7 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],183:[function(_dereq_,module,exports){
+},{}],178:[function(_dereq_,module,exports){
 var memoize = _dereq_('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -56063,7 +55629,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":254}],184:[function(_dereq_,module,exports){
+},{"./memoize":244}],179:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -56071,7 +55637,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":146}],185:[function(_dereq_,module,exports){
+},{"./_getNative":141}],180:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -56079,7 +55645,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":189}],186:[function(_dereq_,module,exports){
+},{"./_overArg":184}],181:[function(_dereq_,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -56101,7 +55667,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],187:[function(_dereq_,module,exports){
+},{}],182:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -56125,7 +55691,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":141}],188:[function(_dereq_,module,exports){
+},{"./_freeGlobal":136}],183:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -56149,7 +55715,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],189:[function(_dereq_,module,exports){
+},{}],184:[function(_dereq_,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -56166,7 +55732,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],190:[function(_dereq_,module,exports){
+},{}],185:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -56204,25 +55770,25 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":52}],191:[function(_dereq_,module,exports){
+},{"./_apply":51}],186:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reEscape = /<%-([\s\S]+?)%>/g;
 
 module.exports = reEscape;
 
-},{}],192:[function(_dereq_,module,exports){
+},{}],187:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reEvaluate = /<%([\s\S]+?)%>/g;
 
 module.exports = reEvaluate;
 
-},{}],193:[function(_dereq_,module,exports){
+},{}],188:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reInterpolate = /<%=([\s\S]+?)%>/g;
 
 module.exports = reInterpolate;
 
-},{}],194:[function(_dereq_,module,exports){
+},{}],189:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -56233,7 +55799,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":141}],195:[function(_dereq_,module,exports){
+},{"./_freeGlobal":136}],190:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -56254,7 +55820,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],196:[function(_dereq_,module,exports){
+},{}],191:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -56270,7 +55836,7 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],197:[function(_dereq_,module,exports){
+},{}],192:[function(_dereq_,module,exports){
 /**
  * Converts `set` to an array of its values.
  *
@@ -56290,7 +55856,7 @@ function setToArray(set) {
 
 module.exports = setToArray;
 
-},{}],198:[function(_dereq_,module,exports){
+},{}],193:[function(_dereq_,module,exports){
 var baseSetToString = _dereq_('./_baseSetToString'),
     shortOut = _dereq_('./_shortOut');
 
@@ -56306,7 +55872,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":102,"./_shortOut":199}],199:[function(_dereq_,module,exports){
+},{"./_baseSetToString":99,"./_shortOut":194}],194:[function(_dereq_,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -56345,7 +55911,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],200:[function(_dereq_,module,exports){
+},{}],195:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache');
 
 /**
@@ -56362,7 +55928,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":40}],201:[function(_dereq_,module,exports){
+},{"./_ListCache":39}],196:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -56382,7 +55948,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],202:[function(_dereq_,module,exports){
+},{}],197:[function(_dereq_,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -56398,7 +55964,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],203:[function(_dereq_,module,exports){
+},{}],198:[function(_dereq_,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -56414,7 +55980,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],204:[function(_dereq_,module,exports){
+},{}],199:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map'),
     MapCache = _dereq_('./_MapCache');
@@ -56450,27 +56016,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":40,"./_Map":41,"./_MapCache":42}],205:[function(_dereq_,module,exports){
-var asciiSize = _dereq_('./_asciiSize'),
-    hasUnicode = _dereq_('./_hasUnicode'),
-    unicodeSize = _dereq_('./_unicodeSize');
-
-/**
- * Gets the number of symbols in `string`.
- *
- * @private
- * @param {string} string The string to inspect.
- * @returns {number} Returns the string size.
- */
-function stringSize(string) {
-  return hasUnicode(string)
-    ? unicodeSize(string)
-    : asciiSize(string);
-}
-
-module.exports = stringSize;
-
-},{"./_asciiSize":61,"./_hasUnicode":154,"./_unicodeSize":210}],206:[function(_dereq_,module,exports){
+},{"./_ListCache":39,"./_Map":40,"./_MapCache":41}],200:[function(_dereq_,module,exports){
 var asciiToArray = _dereq_('./_asciiToArray'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeToArray = _dereq_('./_unicodeToArray');
@@ -56490,7 +56036,7 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":62,"./_hasUnicode":154,"./_unicodeToArray":211}],207:[function(_dereq_,module,exports){
+},{"./_asciiToArray":60,"./_hasUnicode":149,"./_unicodeToArray":204}],201:[function(_dereq_,module,exports){
 var memoizeCapped = _dereq_('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -56520,7 +56066,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":183}],208:[function(_dereq_,module,exports){
+},{"./_memoizeCapped":178}],202:[function(_dereq_,module,exports){
 var isSymbol = _dereq_('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -56543,7 +56089,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":249}],209:[function(_dereq_,module,exports){
+},{"./isSymbol":239}],203:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -56571,53 +56117,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],210:[function(_dereq_,module,exports){
-/** Used to compose unicode character classes. */
-var rsAstralRange = '\\ud800-\\udfff',
-    rsComboMarksRange = '\\u0300-\\u036f',
-    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
-    rsVarRange = '\\ufe0e\\ufe0f';
-
-/** Used to compose unicode capture groups. */
-var rsAstral = '[' + rsAstralRange + ']',
-    rsCombo = '[' + rsComboRange + ']',
-    rsFitz = '\\ud83c[\\udffb-\\udfff]',
-    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
-    rsNonAstral = '[^' + rsAstralRange + ']',
-    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-    rsZWJ = '\\u200d';
-
-/** Used to compose unicode regexes. */
-var reOptMod = rsModifier + '?',
-    rsOptVar = '[' + rsVarRange + ']?',
-    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
-    rsSeq = rsOptVar + reOptMod + rsOptJoin,
-    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
-
-/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
-
-/**
- * Gets the size of a Unicode `string`.
- *
- * @private
- * @param {string} string The string inspect.
- * @returns {number} Returns the string size.
- */
-function unicodeSize(string) {
-  var result = reUnicode.lastIndex = 0;
-  while (reUnicode.test(string)) {
-    ++result;
-  }
-  return result;
-}
-
-module.exports = unicodeSize;
-
-},{}],211:[function(_dereq_,module,exports){
+},{}],204:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -56659,7 +56159,7 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],212:[function(_dereq_,module,exports){
+},{}],205:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -56730,7 +56230,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],213:[function(_dereq_,module,exports){
+},{}],206:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -56790,7 +56290,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":65,"./_copyObject":121,"./_createAssigner":126,"./_isPrototype":169,"./isArrayLike":234,"./keys":251}],214:[function(_dereq_,module,exports){
+},{"./_assignValue":63,"./_copyObject":118,"./_createAssigner":123,"./_isPrototype":164,"./isArrayLike":226,"./keys":241}],207:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
     keysIn = _dereq_('./keysIn');
@@ -56830,7 +56330,7 @@ var assignInWith = createAssigner(function(object, source, srcIndex, customizer)
 
 module.exports = assignInWith;
 
-},{"./_copyObject":121,"./_createAssigner":126,"./keysIn":252}],215:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./_createAssigner":123,"./keysIn":242}],208:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply'),
     baseRest = _dereq_('./_baseRest'),
     isError = _dereq_('./isError');
@@ -56867,7 +56367,7 @@ var attempt = baseRest(function(func, args) {
 
 module.exports = attempt;
 
-},{"./_apply":52,"./_baseRest":100,"./isError":238}],216:[function(_dereq_,module,exports){
+},{"./_apply":51,"./_baseRest":97,"./isError":230}],209:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -56898,7 +56398,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":130,"./capitalize":217}],217:[function(_dereq_,module,exports){
+},{"./_createCompounder":127,"./capitalize":210}],210:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -56923,59 +56423,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":272,"./upperFirst":273}],218:[function(_dereq_,module,exports){
-var baseSlice = _dereq_('./_baseSlice'),
-    isIterateeCall = _dereq_('./_isIterateeCall'),
-    toInteger = _dereq_('./toInteger');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil,
-    nativeMax = Math.max;
-
-/**
- * Creates an array of elements split into groups the length of `size`.
- * If `array` can't be split evenly, the final chunk will be the remaining
- * elements.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Array
- * @param {Array} array The array to process.
- * @param {number} [size=1] The length of each chunk
- * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
- * @returns {Array} Returns the new array of chunks.
- * @example
- *
- * _.chunk(['a', 'b', 'c', 'd'], 2);
- * // => [['a', 'b'], ['c', 'd']]
- *
- * _.chunk(['a', 'b', 'c', 'd'], 3);
- * // => [['a', 'b', 'c'], ['d']]
- */
-function chunk(array, size, guard) {
-  if ((guard ? isIterateeCall(array, size, guard) : size === undefined)) {
-    size = 1;
-  } else {
-    size = nativeMax(toInteger(size), 0);
-  }
-  var length = array == null ? 0 : array.length;
-  if (!length || size < 1) {
-    return [];
-  }
-  var index = 0,
-      resIndex = 0,
-      result = Array(nativeCeil(length / size));
-
-  while (index < length) {
-    result[resIndex++] = baseSlice(array, index, (index += size));
-  }
-  return result;
-}
-
-module.exports = chunk;
-
-},{"./_baseSlice":103,"./_isIterateeCall":165,"./toInteger":269}],219:[function(_dereq_,module,exports){
+},{"./toString":257,"./upperFirst":258}],211:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -57013,7 +56461,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"./_baseClone":71}],220:[function(_dereq_,module,exports){
+},{"./_baseClone":69}],212:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -57044,7 +56492,7 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":71}],221:[function(_dereq_,module,exports){
+},{"./_baseClone":69}],213:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -57072,7 +56520,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],222:[function(_dereq_,module,exports){
+},{}],214:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -57119,10 +56567,10 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":134,"./toString":272}],223:[function(_dereq_,module,exports){
+},{"./_deburrLetter":129,"./toString":257}],215:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":227}],224:[function(_dereq_,module,exports){
+},{"./forEach":219}],216:[function(_dereq_,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -57161,7 +56609,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],225:[function(_dereq_,module,exports){
+},{}],217:[function(_dereq_,module,exports){
 var escapeHtmlChar = _dereq_('./_escapeHtmlChar'),
     toString = _dereq_('./toString');
 
@@ -57206,7 +56654,7 @@ function escape(string) {
 
 module.exports = escape;
 
-},{"./_escapeHtmlChar":139,"./toString":272}],226:[function(_dereq_,module,exports){
+},{"./_escapeHtmlChar":134,"./toString":257}],218:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -57256,7 +56704,7 @@ function filter(collection, predicate) {
 
 module.exports = filter;
 
-},{"./_arrayFilter":55,"./_baseFilter":74,"./_baseIteratee":87,"./isArray":233}],227:[function(_dereq_,module,exports){
+},{"./_arrayFilter":54,"./_baseFilter":72,"./_baseIteratee":85,"./isArray":225}],219:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -57299,7 +56747,7 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":54,"./_baseEach":73,"./_castFunction":109,"./isArray":233}],228:[function(_dereq_,module,exports){
+},{"./_arrayEach":53,"./_baseEach":71,"./_castFunction":106,"./isArray":225}],220:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -57334,7 +56782,7 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-},{"./_baseGet":77}],229:[function(_dereq_,module,exports){
+},{"./_baseGet":75}],221:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -57377,7 +56825,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":70,"./_createAggregator":125}],230:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":68,"./_createAggregator":122}],222:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -57413,7 +56861,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":80,"./_hasPath":153}],231:[function(_dereq_,module,exports){
+},{"./_baseHasIn":78,"./_hasPath":148}],223:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -57436,7 +56884,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],232:[function(_dereq_,module,exports){
+},{}],224:[function(_dereq_,module,exports){
 var baseIsArguments = _dereq_('./_baseIsArguments'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -57474,7 +56922,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":81,"./isObjectLike":246}],233:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":79,"./isObjectLike":237}],225:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -57502,7 +56950,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],234:[function(_dereq_,module,exports){
+},{}],226:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isLength = _dereq_('./isLength');
 
@@ -57537,7 +56985,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":240,"./isLength":241}],235:[function(_dereq_,module,exports){
+},{"./isFunction":232,"./isLength":233}],227:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -57572,7 +57020,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":234,"./isObjectLike":246}],236:[function(_dereq_,module,exports){
+},{"./isArrayLike":226,"./isObjectLike":237}],228:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -57612,7 +57060,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":194,"./stubFalse":265}],237:[function(_dereq_,module,exports){
+},{"./_root":189,"./stubFalse":253}],229:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual');
 
 /**
@@ -57649,7 +57097,7 @@ function isEqual(value, other) {
 
 module.exports = isEqual;
 
-},{"./_baseIsEqual":82}],238:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":80}],230:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike'),
     isPlainObject = _dereq_('./isPlainObject');
@@ -57687,7 +57135,7 @@ function isError(value) {
 
 module.exports = isError;
 
-},{"./_baseGetTag":79,"./isObjectLike":246,"./isPlainObject":247}],239:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237,"./isPlainObject":238}],231:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -57725,7 +57173,7 @@ function isFinite(value) {
 
 module.exports = isFinite;
 
-},{"./_root":194}],240:[function(_dereq_,module,exports){
+},{"./_root":189}],232:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObject = _dereq_('./isObject');
 
@@ -57764,7 +57212,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":79,"./isObject":245}],241:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObject":236}],233:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -57801,7 +57249,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],242:[function(_dereq_,module,exports){
+},{}],234:[function(_dereq_,module,exports){
 var isNumber = _dereq_('./isNumber');
 
 /**
@@ -57841,9 +57289,7 @@ function isNaN(value) {
 
 module.exports = isNaN;
 
-},{"./isNumber":244}],243:[function(_dereq_,module,exports){
-arguments[4][242][0].apply(exports,arguments)
-},{"./isNumber":244,"dup":242}],244:[function(_dereq_,module,exports){
+},{"./isNumber":235}],235:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -57883,7 +57329,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":79,"./isObjectLike":246}],245:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237}],236:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -57916,7 +57362,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],246:[function(_dereq_,module,exports){
+},{}],237:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -57947,7 +57393,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],247:[function(_dereq_,module,exports){
+},{}],238:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -58011,39 +57457,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":79,"./_getPrototype":147,"./isObjectLike":246}],248:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isArray = _dereq_('./isArray'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var stringTag = '[object String]';
-
-/**
- * Checks if `value` is classified as a `String` primitive or object.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a string, else `false`.
- * @example
- *
- * _.isString('abc');
- * // => true
- *
- * _.isString(1);
- * // => false
- */
-function isString(value) {
-  return typeof value == 'string' ||
-    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag);
-}
-
-module.exports = isString;
-
-},{"./_baseGetTag":79,"./isArray":233,"./isObjectLike":246}],249:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./_getPrototype":142,"./isObjectLike":237}],239:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -58074,7 +57488,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":79,"./isObjectLike":246}],250:[function(_dereq_,module,exports){
+},{"./_baseGetTag":77,"./isObjectLike":237}],240:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -58103,7 +57517,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":86,"./_baseUnary":106,"./_nodeUtil":187}],251:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":84,"./_baseUnary":103,"./_nodeUtil":182}],241:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -58142,7 +57556,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":56,"./_baseKeys":88,"./isArrayLike":234}],252:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":55,"./_baseKeys":86,"./isArrayLike":226}],242:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -58176,7 +57590,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":56,"./_baseKeysIn":89,"./isArrayLike":234}],253:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":55,"./_baseKeysIn":87,"./isArrayLike":226}],243:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -58231,7 +57645,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":57,"./_baseIteratee":87,"./_baseMap":90,"./isArray":233}],254:[function(_dereq_,module,exports){
+},{"./_arrayMap":56,"./_baseIteratee":85,"./_baseMap":88,"./isArray":225}],244:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache');
 
 /** Error message constants. */
@@ -58306,7 +57720,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":42}],255:[function(_dereq_,module,exports){
+},{"./_MapCache":41}],245:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -58347,7 +57761,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":93,"./_createAssigner":126}],256:[function(_dereq_,module,exports){
+},{"./_baseMerge":91,"./_createAssigner":123}],246:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -58389,7 +57803,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],257:[function(_dereq_,module,exports){
+},{}],247:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -58420,58 +57834,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":87,"./negate":256,"./pickBy":259}],258:[function(_dereq_,module,exports){
-var createPadding = _dereq_('./_createPadding'),
-    stringSize = _dereq_('./_stringSize'),
-    toInteger = _dereq_('./toInteger'),
-    toString = _dereq_('./toString');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil,
-    nativeFloor = Math.floor;
-
-/**
- * Pads `string` on the left and right sides if it's shorter than `length`.
- * Padding characters are truncated if they can't be evenly divided by `length`.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category String
- * @param {string} [string=''] The string to pad.
- * @param {number} [length=0] The padding length.
- * @param {string} [chars=' '] The string used as padding.
- * @returns {string} Returns the padded string.
- * @example
- *
- * _.pad('abc', 8);
- * // => '  abc   '
- *
- * _.pad('abc', 8, '_-');
- * // => '_-abc_-_'
- *
- * _.pad('abc', 3);
- * // => 'abc'
- */
-function pad(string, length, chars) {
-  string = toString(string);
-  length = toInteger(length);
-
-  var strLength = length ? stringSize(string) : 0;
-  if (!length || strLength >= length) {
-    return string;
-  }
-  var mid = (length - strLength) / 2;
-  return (
-    createPadding(nativeFloor(mid), chars) +
-    string +
-    createPadding(nativeCeil(mid), chars)
-  );
-}
-
-module.exports = pad;
-
-},{"./_createPadding":131,"./_stringSize":205,"./toInteger":269,"./toString":272}],259:[function(_dereq_,module,exports){
+},{"./_baseIteratee":85,"./negate":246,"./pickBy":248}],248:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -58510,7 +57873,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":57,"./_baseIteratee":87,"./_basePickBy":95,"./_getAllKeysIn":143}],260:[function(_dereq_,module,exports){
+},{"./_arrayMap":56,"./_baseIteratee":85,"./_basePickBy":93,"./_getAllKeysIn":138}],249:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -58544,7 +57907,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":96,"./_basePropertyDeep":97,"./_isKey":166,"./_toKey":208}],261:[function(_dereq_,module,exports){
+},{"./_baseProperty":94,"./_basePropertyDeep":95,"./_isKey":161,"./_toKey":202}],250:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -58592,35 +57955,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":55,"./_baseFilter":74,"./_baseIteratee":87,"./isArray":233,"./negate":256}],262:[function(_dereq_,module,exports){
-var createRound = _dereq_('./_createRound');
-
-/**
- * Computes `number` rounded to `precision`.
- *
- * @static
- * @memberOf _
- * @since 3.10.0
- * @category Math
- * @param {number} number The number to round.
- * @param {number} [precision=0] The precision to round to.
- * @returns {number} Returns the rounded number.
- * @example
- *
- * _.round(4.006);
- * // => 4
- *
- * _.round(4.006, 2);
- * // => 4.01
- *
- * _.round(4060, -2);
- * // => 4100
- */
-var round = createRound('round');
-
-module.exports = round;
-
-},{"./_createRound":132}],263:[function(_dereq_,module,exports){
+},{"./_arrayFilter":54,"./_baseFilter":72,"./_baseIteratee":85,"./isArray":225,"./negate":246}],251:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -58657,7 +57992,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":101}],264:[function(_dereq_,module,exports){
+},{"./_baseSet":98}],252:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -58682,7 +58017,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],265:[function(_dereq_,module,exports){
+},{}],253:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -58702,7 +58037,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],266:[function(_dereq_,module,exports){
+},{}],254:[function(_dereq_,module,exports){
 var assignInWith = _dereq_('./assignInWith'),
     attempt = _dereq_('./attempt'),
     baseValues = _dereq_('./_baseValues'),
@@ -58942,7 +58277,7 @@ function template(string, options, guard) {
 
 module.exports = template;
 
-},{"./_baseValues":107,"./_customDefaultsAssignIn":133,"./_escapeStringChar":140,"./_isIterateeCall":165,"./_reInterpolate":193,"./assignInWith":214,"./attempt":215,"./isError":238,"./keys":251,"./templateSettings":267,"./toString":272}],267:[function(_dereq_,module,exports){
+},{"./_baseValues":104,"./_customDefaultsAssignIn":128,"./_escapeStringChar":135,"./_isIterateeCall":160,"./_reInterpolate":188,"./assignInWith":207,"./attempt":208,"./isError":230,"./keys":241,"./templateSettings":255,"./toString":257}],255:[function(_dereq_,module,exports){
 var escape = _dereq_('./escape'),
     reEscape = _dereq_('./_reEscape'),
     reEvaluate = _dereq_('./_reEvaluate'),
@@ -59011,157 +58346,7 @@ var templateSettings = {
 
 module.exports = templateSettings;
 
-},{"./_reEscape":191,"./_reEvaluate":192,"./_reInterpolate":193,"./escape":225}],268:[function(_dereq_,module,exports){
-var toNumber = _dereq_('./toNumber');
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0,
-    MAX_INTEGER = 1.7976931348623157e+308;
-
-/**
- * Converts `value` to a finite number.
- *
- * @static
- * @memberOf _
- * @since 4.12.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {number} Returns the converted number.
- * @example
- *
- * _.toFinite(3.2);
- * // => 3.2
- *
- * _.toFinite(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toFinite(Infinity);
- * // => 1.7976931348623157e+308
- *
- * _.toFinite('3.2');
- * // => 3.2
- */
-function toFinite(value) {
-  if (!value) {
-    return value === 0 ? value : 0;
-  }
-  value = toNumber(value);
-  if (value === INFINITY || value === -INFINITY) {
-    var sign = (value < 0 ? -1 : 1);
-    return sign * MAX_INTEGER;
-  }
-  return value === value ? value : 0;
-}
-
-module.exports = toFinite;
-
-},{"./toNumber":270}],269:[function(_dereq_,module,exports){
-var toFinite = _dereq_('./toFinite');
-
-/**
- * Converts `value` to an integer.
- *
- * **Note:** This method is loosely based on
- * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {number} Returns the converted integer.
- * @example
- *
- * _.toInteger(3.2);
- * // => 3
- *
- * _.toInteger(Number.MIN_VALUE);
- * // => 0
- *
- * _.toInteger(Infinity);
- * // => 1.7976931348623157e+308
- *
- * _.toInteger('3.2');
- * // => 3
- */
-function toInteger(value) {
-  var result = toFinite(value),
-      remainder = result % 1;
-
-  return result === result ? (remainder ? result - remainder : result) : 0;
-}
-
-module.exports = toInteger;
-
-},{"./toFinite":268}],270:[function(_dereq_,module,exports){
-var isObject = _dereq_('./isObject'),
-    isSymbol = _dereq_('./isSymbol');
-
-/** Used as references for various `Number` constants. */
-var NAN = 0 / 0;
-
-/** Used to match leading and trailing whitespace. */
-var reTrim = /^\s+|\s+$/g;
-
-/** Used to detect bad signed hexadecimal string values. */
-var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-
-/** Used to detect binary string values. */
-var reIsBinary = /^0b[01]+$/i;
-
-/** Used to detect octal string values. */
-var reIsOctal = /^0o[0-7]+$/i;
-
-/** Built-in method references without a dependency on `root`. */
-var freeParseInt = parseInt;
-
-/**
- * Converts `value` to a number.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {number} Returns the number.
- * @example
- *
- * _.toNumber(3.2);
- * // => 3.2
- *
- * _.toNumber(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toNumber(Infinity);
- * // => Infinity
- *
- * _.toNumber('3.2');
- * // => 3.2
- */
-function toNumber(value) {
-  if (typeof value == 'number') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return NAN;
-  }
-  if (isObject(value)) {
-    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-    value = isObject(other) ? (other + '') : other;
-  }
-  if (typeof value != 'string') {
-    return value === 0 ? value : +value;
-  }
-  value = value.replace(reTrim, '');
-  var isBinary = reIsBinary.test(value);
-  return (isBinary || reIsOctal.test(value))
-    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
-    : (reIsBadHex.test(value) ? NAN : +value);
-}
-
-module.exports = toNumber;
-
-},{"./isObject":245,"./isSymbol":249}],271:[function(_dereq_,module,exports){
+},{"./_reEscape":186,"./_reEvaluate":187,"./_reInterpolate":188,"./escape":217}],256:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -59195,7 +58380,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":121,"./keysIn":252}],272:[function(_dereq_,module,exports){
+},{"./_copyObject":118,"./keysIn":242}],257:[function(_dereq_,module,exports){
 var baseToString = _dereq_('./_baseToString');
 
 /**
@@ -59225,7 +58410,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":105}],273:[function(_dereq_,module,exports){
+},{"./_baseToString":102}],258:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -59249,7 +58434,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":129}],274:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":126}],259:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -59286,7 +58471,7 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":63,"./_hasUnicodeWord":155,"./_unicodeWords":212,"./toString":272}],275:[function(_dereq_,module,exports){
+},{"./_asciiWords":61,"./_hasUnicodeWord":150,"./_unicodeWords":205,"./toString":257}],260:[function(_dereq_,module,exports){
 //! moment.js
 //! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -63751,7 +62936,7 @@ return hooks;
 
 })));
 
-},{}],276:[function(_dereq_,module,exports){
+},{}],261:[function(_dereq_,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -64128,7 +63313,7 @@ return hooks;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],277:[function(_dereq_,module,exports){
+},{}],262:[function(_dereq_,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -65083,7 +64268,7 @@ return hooks;
     return m;
 }));
 
-},{"angular":12}],278:[function(_dereq_,module,exports){
+},{"angular":12}],263:[function(_dereq_,module,exports){
 /**!
  * AngularJS file upload directives and services. Supports: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -67983,10 +67168,10 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],279:[function(_dereq_,module,exports){
+},{}],264:[function(_dereq_,module,exports){
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":278}],280:[function(_dereq_,module,exports){
+},{"./dist/ng-file-upload-all":263}],265:[function(_dereq_,module,exports){
 /*!
  * Signature Pad v1.6.0
  * https://github.com/szimek/signature_pad
@@ -68517,7 +67702,7 @@ return SignaturePad;
 
 })));
 
-},{}],281:[function(_dereq_,module,exports){
+},{}],266:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68606,7 +67791,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],282:[function(_dereq_,module,exports){
+},{}],267:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68629,7 +67814,7 @@ module.exports = function(app) {
           disableOnInvalid: false,
           theme: 'primary'
         },
-        controller: ['$scope', 'FormioUtils', function($scope, FormioUtils) {
+        controller: ['$scope', function($scope) {
           if ($scope.builder) return;
           var settings = $scope.component;
           $scope.getButtonType = function() {
@@ -68639,28 +67824,9 @@ module.exports = function(app) {
               case 'reset':
                 return 'reset';
               case 'event':
-              case 'custom':
               case 'oauth':
               default:
                 return 'button';
-            }
-          };
-
-          var onCustom = function() {
-            try {
-              /* eslint-disable no-unused-vars */
-              var parent = $scope.$parent;
-              while (!parent.form) {
-                parent = parent.$parent;
-              }
-              var components = FormioUtils.flattenComponents(parent.form.components, true);
-              /* eslint-enable no-unused-vars */
-              eval('(function(data) { ' + $scope.component.custom + ' })($scope.data)');
-            }
-            catch (e) {
-              /* eslint-disable no-console */
-              console.warn('An error occurred evaluating custom logic for ' + $scope.component.key, e);
-              /* eslint-enable no-console */
             }
           };
 
@@ -68670,9 +67836,6 @@ module.exports = function(app) {
                 return;
               case 'event':
                 $scope.$emit($scope.component.event, $scope.data);
-                break;
-              case 'custom':
-                onCustom();
                 break;
               case 'reset':
                 $scope.resetForm();
@@ -68806,7 +67969,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],283:[function(_dereq_,module,exports){
+},{}],268:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68880,13 +68043,13 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/checkbox.html',
-        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      ng-if=\"component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ component.name }}\"\n      value=\"{{ component.value }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.name]\"\n      ng-required=\"component.validate.required\"\n    >\n    <input\n      ng-if=\"!component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n    >\n    <span ng-if=\"!(component.hideLabel && component.datagridLabel === false)\">{{ component.label | formioTranslate:null:builder }}</span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
+        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      ng-if=\"component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ component.name }}\"\n      value=\"{{ component.value }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.name]\"\n      ng-required=\"component.validate.required\"\n    >\n    <input\n      ng-if=\"!component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n    >\n    <span ng-if=\"!(component.hideLabel && component.datagridLabel === false)\">{{ component.label | formioTranslate:null:builder }}</span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],269:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68900,7 +68063,6 @@ module.exports = function(app) {
         template: 'formio/components/columns.html',
         group: 'layout',
         settings: {
-          clearOnHide: false,
           input: false,
           tableView: false,
           key: 'columns',
@@ -68972,7 +68134,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],285:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],270:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -69032,7 +68194,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],271:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69098,7 +68260,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],287:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],272:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69127,7 +68289,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],273:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69238,7 +68400,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],274:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69266,7 +68428,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],290:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],275:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -69399,7 +68561,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":36}],291:[function(_dereq_,module,exports){
+},{"formiojs/utils":35}],276:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69564,7 +68726,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],292:[function(_dereq_,module,exports){
+},{}],277:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69771,7 +68933,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -69805,7 +68967,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],294:[function(_dereq_,module,exports){
+},{}],279:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69819,7 +68981,6 @@ module.exports = function(app) {
         template: 'formio/components/fieldset.html',
         group: 'layout',
         settings: {
-          clearOnHide: false,
           key: 'fieldset',
           input: false,
           tableView: false,
@@ -69860,7 +69021,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],295:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],280:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70043,6 +69204,17 @@ module.exports = function(app) {
         delete $scope.fileUploads[index];
       };
 
+      // This fixes new fields having an empty space in the array.
+      if ($scope.data && $scope.data[$scope.component.key] === '') {
+        $scope.data[$scope.component.key] = [];
+      }
+      if ($scope.data && $scope.data[$scope.component.key] === undefined) {
+        $scope.data[$scope.component.key] = [];
+      }
+      if ($scope.data && $scope.data[$scope.component.key] && $scope.data[$scope.component.key][0] === '') {
+        $scope.data[$scope.component.key].splice(0, 1);
+      }
+
       $scope.upload = function(files) {
         if ($scope.component.storage && files && files.length) {
           angular.forEach(files, function(file) {
@@ -70074,27 +69246,21 @@ module.exports = function(app) {
               }, $scope.component.url)
                 .then(function(fileInfo) {
                   delete $scope.fileUploads[fileName];
-                  // This fixes new fields having an empty space in the array.
-                  if ($scope.data && $scope.data[$scope.component.key] === '') {
+                  // Ensure that the file component is an array.
+                  if (
+                    !$scope.data[$scope.component.key] ||
+                    !($scope.data[$scope.component.key] instanceof Array)
+                  ) {
                     $scope.data[$scope.component.key] = [];
                   }
-                  if ($scope.data && $scope.data[$scope.component.key] === undefined) {
-                    $scope.data[$scope.component.key] = [];
-                  }
-                  if (!$scope.data[$scope.component.key] || !($scope.data[$scope.component.key] instanceof Array)) {
-                    $scope.data[$scope.component.key] = [];
-                  }
-
                   $scope.data[$scope.component.key].push(fileInfo);
                   $scope.$apply();
-                  $scope.$emit('fileUploaded', fileName, fileInfo);
                 })
                 .catch(function(response) {
                   $scope.fileUploads[fileName].status = 'error';
                   $scope.fileUploads[fileName].message = response.data;
                   delete $scope.fileUploads[fileName].progress;
                   $scope.$apply();
-                  $scope.$emit('fileUploadFailed', fileName, response);
                 });
             }
           });
@@ -70116,7 +69282,7 @@ module.exports = function(app) {
       );
 
       $templateCache.put('formio/components/file.html',
-        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">{{ component.label | formioTranslate:null:builder }}</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<div class=\"formio-errors\"><formio-errors ng-if=\"::!builder\"></formio-errors></div>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formio.formUrl\" ng-if=\"!component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formio.formUrl\" width=\"component.imageSize\" ng-if=\"component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-image-list>\n  <div ng-if=\"!readOnly && (component.multiple || (!component.multiple && !data[component.key].length))\">\n    <div ngf-drop=\"upload($files)\" class=\"fileSelector\" ngf-drag-over-class=\"'fileDragOver'\" ngf-multiple=\"component.multiple\" id=\"{{ componentId }}\" name=\"{{ componentId }}\"><span class=\"glyphicon glyphicon-cloud-upload\"></span>Drop files to attach, or <a style=\"cursor: pointer;\" ngf-select=\"upload($files)\" tabindex=\"{{ component.tabindex || 0 }}\" ngf-multiple=\"component.multiple\">browse</a>.</div>\n    <div ng-if=\"!component.storage\" class=\"alert alert-warning\">No storage has been set for this field. File uploads are disabled until storage is set up.</div>\n    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>\n  </div>\n  <div ng-repeat=\"fileUpload in fileUploads track by $index\" ng-class=\"{'has-error': fileUpload.status === 'error'}\" class=\"file\">\n    <div class=\"row\">\n      <div class=\"fileName control-label col-sm-10\">{{ fileUpload.name }} <span ng-click=\"removeUpload(fileUpload.name)\" class=\"glyphicon glyphicon-remove\"></span></div>\n      <div class=\"fileSize control-label col-sm-2 text-right\">{{ fileSize(fileUpload.size) }}</div>\n    </div>\n    <div class=\"row\">\n      <div class=\"col-sm-12\">\n        <span ng-if=\"fileUpload.status === 'progress'\">\n          <div class=\"progress\">\n            <div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"{{fileUpload.progress}}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width:{{fileUpload.progress}}%\">\n              <span class=\"sr-only\">{{fileUpload.progress}}% Complete</span>\n            </div>\n          </div>\n        </span>\n        <div ng-if=\"!fileUpload.status !== 'progress'\" class=\"bg-{{ fileUpload.status }} control-label\">{{ fileUpload.message }}</div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">{{ component.label | formioTranslate:null:builder }}</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formio.formUrl\" ng-if=\"!component.image\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formio.formUrl\" width=\"component.imageSize\" ng-if=\"component.image\"></formio-image-list>\n  <div ng-if=\"!readOnly && (component.multiple || (!component.multiple && !data[component.key].length))\">\n    <div ngf-drop=\"upload($files)\" class=\"fileSelector\" ngf-drag-over-class=\"'fileDragOver'\" ngf-multiple=\"component.multiple\" id=\"{{ componentId }}\" name=\"{{ componentId }}\"><span class=\"glyphicon glyphicon-cloud-upload\"></span>Drop files to attach, or <a style=\"cursor: pointer;\" ngf-select=\"upload($files)\" tabindex=\"{{ component.tabindex || 0 }}\" ngf-multiple=\"component.multiple\">browse</a>.</div>\n    <div ng-if=\"!component.storage\" class=\"alert alert-warning\">No storage has been set for this field. File uploads are disabled until storage is set up.</div>\n    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>\n  </div>\n  <div ng-repeat=\"fileUpload in fileUploads track by $index\" ng-class=\"{'has-error': fileUpload.status === 'error'}\" class=\"file\">\n    <div class=\"row\">\n      <div class=\"fileName control-label col-sm-10\">{{ fileUpload.name }} <span ng-click=\"removeUpload(fileUpload.name)\" class=\"glyphicon glyphicon-remove\"></span></div>\n      <div class=\"fileSize control-label col-sm-2 text-right\">{{ fileSize(fileUpload.size) }}</div>\n    </div>\n    <div class=\"row\">\n      <div class=\"col-sm-12\">\n        <span ng-if=\"fileUpload.status === 'progress'\">\n          <div class=\"progress\">\n            <div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"{{fileUpload.progress}}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width:{{fileUpload.progress}}%\">\n              <span class=\"sr-only\">{{fileUpload.progress}}% Complete</span>\n            </div>\n          </div>\n        </span>\n        <div ng-if=\"!fileUpload.status !== 'progress'\" class=\"bg-{{ fileUpload.status }} control-label\">{{ fileUpload.message }}</div>\n      </div>\n    </div>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/file.html',
@@ -70126,7 +69292,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],296:[function(_dereq_,module,exports){
+},{}],281:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70140,7 +69306,6 @@ module.exports = function(app) {
         template: 'formio/components/form.html',
         group: 'advanced',
         settings: {
-          clearOnHide: false,
           input: true,
           tableView: true,
           key: 'formField',
@@ -70179,15 +69344,8 @@ module.exports = function(app) {
           });
 
           var submitForm = function(scope, cb) {
-            var components = [];
-            if (scope.activePage) {
-              components = scope.activePage.components;
-            }
-            else if (scope.form) {
-              components = scope.form.components;
-            }
-            if (FormioUtils.getComponent(components, $scope.component.key)) {
-              $scope.formFormio.saveSubmission(angular.copy($scope.data[$scope.component.key])).then(function(sub) {
+            if (FormioUtils.getComponent(scope.activePage.components, $scope.component.key)) {
+              $scope.formFormio.saveSubmission($scope.data[$scope.component.key]).then(function(sub) {
                 angular.merge($scope.data[$scope.component.key], sub);
                 cb();
               }, cb);
@@ -70204,11 +69362,6 @@ module.exports = function(app) {
 
           // Hook into the nextpage method.
           FormioUtils.hook($scope.component.key + ':nextPage', function(scope, cb) {
-            submitForm(scope, cb);
-          });
-
-          // Hook into the prevpage method.
-          FormioUtils.hook($scope.component.key + ':prevPage', function(scope, cb) {
             submitForm(scope, cb);
           });
 
@@ -70246,7 +69399,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],297:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],282:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70282,7 +69435,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],298:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],283:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70374,7 +69527,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -70418,7 +69571,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":281,"./button":282,"./checkbox":283,"./columns":284,"./components":285,"./container":286,"./content":287,"./currency":288,"./custom":289,"./datagrid":290,"./datetime":291,"./day":292,"./email":293,"./fieldset":294,"./file":295,"./form":296,"./hidden":297,"./htmlelement":298,"./number":300,"./page":301,"./panel":302,"./password":303,"./phonenumber":304,"./radio":305,"./resource":306,"./select":307,"./selectboxes":308,"./signature":309,"./survey":310,"./table":311,"./textarea":312,"./textfield":313,"./time":314,"./well":315}],300:[function(_dereq_,module,exports){
+},{"./address":266,"./button":267,"./checkbox":268,"./columns":269,"./components":270,"./container":271,"./content":272,"./currency":273,"./custom":274,"./datagrid":275,"./datetime":276,"./day":277,"./email":278,"./fieldset":279,"./file":280,"./form":281,"./hidden":282,"./htmlelement":283,"./number":285,"./page":286,"./panel":287,"./password":288,"./phonenumber":289,"./radio":290,"./resource":291,"./select":292,"./selectboxes":293,"./signature":294,"./survey":295,"./table":296,"./textarea":297,"./textfield":298,"./time":299,"./well":300}],285:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70483,7 +69636,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],301:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70510,7 +69663,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],287:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70524,7 +69677,6 @@ module.exports = function(app) {
         template: 'formio/components/panel.html',
         group: 'layout',
         settings: {
-          clearOnHide: false,
           key: 'panel',
           input: false,
           title: '',
@@ -70566,7 +69718,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],303:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -70597,7 +69749,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -70632,7 +69784,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],290:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70683,7 +69835,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],306:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70702,7 +69854,7 @@ module.exports = function(app) {
         template: function($scope) {
           return $scope.component.multiple ? 'formio/components/resource-multiple.html' : 'formio/components/resource.html';
         },
-        controller: ['$scope', 'Formio', 'ngDialog', '$location', function($scope, Formio, ngDialog, $location) {
+        controller: ['$scope', 'Formio', 'ngDialog', function($scope, Formio, ngDialog) {
           if ($scope.builder) return;
           var settings = $scope.component;
           var params = settings.params || {};
@@ -70733,38 +69885,14 @@ module.exports = function(app) {
                 return;
               }
               $scope.resourceLoading = true;
-
               // If they wish to return only some fields.
               if (settings.selectFields) {
                 params.select = settings.selectFields;
               }
-
-              // If they wish to return only some submissions.
-              var makeSelection = false;
               if (settings.searchFields && input) {
                 angular.forEach(settings.searchFields, function(field) {
-                  if (field === '_id') {
-                    delete params[field];
-                  }
-                  else {
-                    params[field] = input;
-                  }
+                  params[field] = input;
                 });
-              }
-              else if (settings.searchFields && input === undefined) {
-                var search = $location.search();
-                angular.forEach(settings.searchFields, function(field) {
-                  var key = $scope.component.key + '.' + field;
-                  if (search[key]) {
-                    params[field] = search[key];
-                    makeSelection = true;
-                  }
-                });
-              }
-
-              // If not loading more then start from the beginning.
-              if (!append) {
-                params.skip = 0;
               }
 
               // Load the submissions.
@@ -70777,17 +69905,6 @@ module.exports = function(app) {
                 }
                 else {
                   $scope.selectItems = submissions;
-                  // If only one choice then select it.
-                  if (makeSelection && submissions.length === 1) {
-                    var component = $scope.component;
-                    var data      = $scope.data;
-                    if (component.multiple) {
-                      data[component.key] = submissions;
-                    }
-                    else {
-                      data[component.key] = submissions[0];
-                    }
-                  }
                 }
                 $scope.hasNextPage = (submissions.length >= params.limit) && ($scope.selectItems.length < submissions.serverCount);
               })['finally'](function() {
@@ -70845,7 +69962,7 @@ module.exports = function(app) {
                       data[component.key] = submission;
                     }
 
-                    $scope.refreshSubmissions(null);
+                    $scope.refreshSubmissions();
                     $scope.closeThisDialog(submission);
                   });
                 }]
@@ -70907,7 +70024,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],307:[function(_dereq_,module,exports){
+},{}],292:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -71049,7 +70166,6 @@ module.exports = function(app) {
           '$scope',
           '$http',
           'Formio',
-          'FormioUtils',
           '$interpolate',
           '$q',
           '$timeout',
@@ -71058,7 +70174,6 @@ module.exports = function(app) {
             $scope,
             $http,
             Formio,
-            FormioUtils,
             $interpolate,
             $q,
             $timeout
@@ -71298,11 +70413,6 @@ module.exports = function(app) {
                 break;
               case 'url':
               case 'resource':
-                if (settings.filter === 'contains' || settings.filter === 'startsWith') {
-                  settings.filter = '';
-                  $scope.component.filter = '';
-                }
-                $scope.options = $scope.options || {};
                 var url = '';
                 var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
                 //var baseUrl = Formio.getBaseUrl();
@@ -71373,23 +70483,20 @@ module.exports = function(app) {
                       (typeof input === 'string') &&
                       input
                     ) {
-                      options.params[settings.searchField] = /__regex$/.test(settings.searchField)
-                        ? FormioUtils.escapeRegExCharacters(input)
-                        : input;
+                      options.params[encodeURIComponent(settings.searchField)] = encodeURIComponent(input);
                     }
                     else {
-                      delete options.params[settings.searchField];
+                      delete options.params[encodeURIComponent(settings.searchField)];
                     }
 
                     // Add the other filter.
                     if (settings.filter) {
+                      var filter = $interpolate(settings.filter)({
+                        data: $scope.submission ? $scope.submission.data : {},
+                        row: $scope.data
+                      });
                       // This changes 'a=b&c=d' into an object and assigns to params.
-                      _assign(options.params, _.mapValues(JSON.parse('{"' + decodeURI(settings.filter).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}'), function(value) {
-                        return $interpolate(value)({
-                          data: $scope.submission ? $scope.submission.data : {},
-                          row: $scope.data
-                        });
-                      }));
+                      _assign(options.params, JSON.parse('{"' + decodeURI(filter).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g,'":"') + '"}'));
                     }
 
                     // If they wish to return only some fields.
@@ -71528,7 +70635,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":213,"lodash/cloneDeep":220,"lodash/get":228,"lodash/isEqual":237,"lodash/set":263}],308:[function(_dereq_,module,exports){
+},{"lodash/assign":206,"lodash/cloneDeep":212,"lodash/get":220,"lodash/isEqual":229,"lodash/set":251}],293:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71636,7 +70743,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -71753,8 +70860,7 @@ module.exports = function(app) {
         }
 
         ngModel.$render = function() {
-          var dataUrl = ngModel.$viewValue || '';
-          signaturePad.fromDataURL(dataUrl);
+          signaturePad.fromDataURL(ngModel.$viewValue);
         };
         signaturePad.onEnd = function() {
           scope.$evalAsync(readSignature);
@@ -71778,7 +70884,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":280}],310:[function(_dereq_,module,exports){
+},{"signature_pad":265}],295:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71796,14 +70902,12 @@ module.exports = function(app) {
           angular.forEach(component.values, function(v) {
             values[v.value] = v.label;
           });
-          if (data) {
-            angular.forEach(component.questions, function(question) {
-              view += '<tr>';
-              view += '<th>' + question.label + '</th>';
-              view += '<td>' + values[data[question.value]] + '</td>';
-              view += '</tr>';
-            });
-          }
+          angular.forEach(component.questions, function(question) {
+            view += '<tr>';
+            view += '<th>' + question.label + '</th>';
+            view += '<td>' + question.value + '</td>';
+            view += '</tr>';
+          });
           view += '</tbody></table>';
           return view;
         },
@@ -71839,7 +70943,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],311:[function(_dereq_,module,exports){
+},{}],296:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -71853,7 +70957,6 @@ module.exports = function(app) {
         template: 'formio/components/table.html',
         group: 'layout',
         settings: {
-          clearOnHide: false,
           input: false,
           key: 'table',
           numRows: 3,
@@ -71919,7 +71022,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],312:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],297:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72045,7 +71148,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],313:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -72106,7 +71209,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 
 var moment = _dereq_('moment');
@@ -72178,7 +71281,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"moment":275}],315:[function(_dereq_,module,exports){
+},{"moment":260}],300:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -72192,7 +71295,6 @@ module.exports = function(app) {
         template: 'formio/components/well.html',
         group: 'layout',
         settings: {
-          clearOnHide: false,
           key: 'well',
           input: false,
           components: [],
@@ -72231,7 +71333,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":330}],316:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":315}],301:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -72309,7 +71411,7 @@ module.exports = function() {
   };
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -72378,12 +71480,31 @@ module.exports = function() {
         };
 
         $scope.downloadUrl = '';
-        $scope.setDownloadUrl = function(form) {
+
+        $scope.getPDFDownload = function(pdf) {
           if (!$scope.formio) {
             return;
           }
-          $scope.formio.getDownloadUrl(form).then(function(url) {
-            $scope.downloadUrl = url;
+          var download = '';
+          if ($scope.formio && $scope.formio.submissionUrl) {
+            download = $scope.formio.submissionUrl;
+          }
+          else if ($scope.submission._id) {
+            download = Formio.baseUrl + '/project/' + $scope.form.project + '/';
+            download += '/form/' + $scope.form._id;
+            download += '/submission/' + $scope.submission._id;
+          }
+          if (!download) {
+            return;
+          }
+
+          download += '/download/' + pdf.id;
+          var allowedPath = download.replace(Formio.baseUrl, '');
+          allowedPath = allowedPath.replace(Formio.getProjectUrl(), '');
+          return $scope.formio.getTempToken(3600, 'GET:' + allowedPath).then(function(tempToken) {
+            download += '?token=' + tempToken.key;
+            $scope.downloadUrl = download;
+            return download;
           });
         };
 
@@ -72418,11 +71539,11 @@ module.exports = function() {
           sendIframeMessage(message);
         });
 
-        $scope.pdfImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAD6CAMAAAC/MqoPAAAAA3NCSVQICAjb4U/gAAAC9FBMVEX///+HiYuGhomCg4aCgIF6eX12eHokJCQkICAgICAjHSOOj5KJi46DhYd1dnltb3EkICAgICAjHSOVl5qTlZeOj5KHiYt6eX0kICAjHSOZmp2Vl5qGhokkICDOz9G+vsCztbapq66cnqGbnZ6ZmZmTlZckICCbnZ6Zmp2Vl5qTlZeOj5KMioqGhomCg4aCgIGZmp2TlZeCgIGmqauho6aen6KcnqGmqaucnqGbnZ66u76cnqGZmp2Vl5rKISjS0dLR0NHOz9HMzMzHycrHxsfFxMXCwsPCw8W+vsCen6KbnZ7GISjCwsO+v8K+vsCpq66kpqmeoaObnZ7////7+/v5+vr39/j09fXz8/P88PHx8fL37+/u7+/r7O3r6+zp6uvn5+jj5+fz4+P44eLw4eHj5OXi4+Th4uPf4OLf3+Dc3t/b3N7a29z109TY2tvv1NXv0tPX2NrW19jU1tfS09XP0dLOz9Hrx8jxxMbnxsfMzMzkxMXHycrGx8nDxcfqubvCw8XCwsPkuLrutbe/wcO+v8Lftre+vsC7vb+6u763ubu1t7riqqzeqquztbbqpqmxs7bZqKmvsbOtr7Kqra+pq67bnJ7gm56mqavXnJ3nl5ulp6qkpqmjpaeho6aeoaPbj5Gen6KcnqHXjpGbnZ7jiYzfio7SjpDdiYyZmp3LjI6ZmZnahoqVl5rXgoaTlZeSk5bSgIOPkZPOf4Lgen6Oj5LLf4KLjY+Ji46HiYvVcnaGhonNcnWDhYfKcXSCg4bca3DFcXTBcHJ+gIJ9foHRZWl6fH7MZmbOZWnGZGd6eX12eHrBY2bZXGF1dnlydHa4YWNwcXTOV1vKVlvIVlrCVlnPUFW+VVnOTlS3VFe1VFbKS1HGSE3BR0y/R0y7R0zEREq2R0rSP0WzRkmtRUjBOkC4OT6zOD3OMDaqNzrBLTO2KzCzKzCuKi/KISiqKi6lKS2+ICa6HyW7Hya2HySuHiOyHiSrHiKnHSGiHCCeHB+aGx/MBOLyAAAA/HRSTlMAERERERERERERESIiIiIiIiIiMzMzMzMzM0RERERVVVVVVVVVVVVmZmZmZmZmZmZ3d3eIiIiImZmZqqqqqrvMzMzMzMzMzMzMzMzM3d3d3e7u7v////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8PeNL3AAAACXBIWXMAAC37AAAt+wH8h0rnAAAAHHRFWHRTb2Z0d2FyZQBBZG9iZSBGaXJld29ya3MgQ1M26LyyjAAAFydJREFUeJzt3Xl8FNd9AHD31K56LfSIaOumTY80aeK06R23TXq5xXV8ZIRhzWEkgkAHKICQZCwpQpZsSSsWRQdeR2hlCWEsXFkHyELmtMEkGBvnMKZ2iV1jW2COGAOSwPzT33tv5s2bY3fn+O2slg8//DFikeT97u94b2Zn5FtuuRk342bcjJtxM8zCl5nhaWRm+lJNJuHP8Psy/H6/z7uA/1oG/CvVfL+P/vJS7qP/uQx4wVOJh9f/93q6u6LRzs0dHZH29ra21taWluZwOBRqbGxsqK+vr6urra2trq6qqqqsrKyoqFhHo5TEWiFKtKE8TD6NfgF8ZUUlfJNq+G519Q2NoVA4/Lek2lJI931algO8HeCqvKGBwOsIvFqBV+jhJXHCFF+9Huj1hN7Scs/vQvZTJ/f9Ppe3mcjVlGsyrsv1mpI1mtDo6QtVyvHV1WBvDIWbW1pb2//G58tMjRwaLvAHXE7hIA9RuVzscsqNGedsHquFf6t+rqd2kndOb2ttn/2p1OQ9w58ZCHxWlbeYyUnKNXAh4cxqEuwFMLVXVpFmh3pvbYP/Zvu9n/Olot+h3AOBzwtyqHXtgNOmXN/ignuVJmQ/56s9D98J0v5YQ2O4pa090gH2jtt/LQV2WNUCgT8Tqp3KhT7n802bcrXSGXqlPrif4tfwzFM7tHsdo3ds7oR+75j9W97LM3wzA1lfUOXNOvn6anFJ0zY5r3UTucznuVfLXrbXQrO3tEU6o13RFrDf9zmv6Zl+fyCQ9cWIblGLKdc2uVLnDFoEUUj/YcH0K9XUq3hS8nUNlN7V0xMh9ujtHtMzCH3WbcqEExY1bbWLcqHS1XxTbKE2OF/Wi3aa9ua2SLS7t6+vmdpn/4rHdGj1rNuM8jrDhGO1btbiWnUBDc4vLOJ6mnm54ysqIe3h1ki0p69/IBoi9s77ftNTuo/0+pc0s12zkREHnJpxNeGCusAYYvJXqZmneYe0h1ragT4wOBwO07x3ednwQJ8RyPpyG5/tYpvHk2vhGm8+/DLo2cwX7CTtUPGbu58ZHB7tbpTt/+ApHQr+yyabVy6vUOVrqZzPNgM8XwiNvUi2r+ajvpSkvSHUGunqGxzZNdbYGGomNd915y84lPyT7fgvGv9H4qQY/2sS/6OLN+wE+5JtHE/skPb2aN/A6NjuzfXMHu2685ed0X863WMHdPwaJe+V1fWh1s6egZGx/WNkT89q/hvOhl2qZQljiEw71vAs7S2Rrn6gHwrV1Ss1/40/vkHprOPXMPv6hlBbtG8Y6J3Vtbzmez9/Q9KL2DIn26tqG1s6egZ37T88CgOf13zvX9yI9MJChqf2dRXV9c3tXf2j+w8fq2B2VvO9/3gD0gvYIs+mHaS9DgbdMyN7Dx8LgV2oedv2VMsSxhBd6Cke8r62tKIaBl3v8NihY22lFZqat2tPtSxhDOWzTQ7YSd4h7fXh9u6BXQePRdfK9rBi/7mk0rc+Ur5CglhS/t0D6oPl5UHyYPkjO8+onyqJ8apT+rPL8xme2km314Zao/2jB48Okz9o7Hfastt9JiJnyQHjg8Gt6PTly/OVoqdpr25o6ewb2f/y6MrVJbrE3/mzHtElaafJgyvOmH2qc/qy5QwPRb+SYKHimzt6h/ceHi2kf3Rsd0eXDpg8qNix6Iq9AGp+1Zq16yrrQpGewd2HDy8vFPKuHMz8TJLpK1hvQ30LD5YrD34XlZ6Xl8cTDyVfUgrN3tY1MHbotWVGO+Tdcr87o8MHW4WSVx48s5F9dEr41FdZnIn3TePSly4V7atK1lasb4Q5N3bw2NJl+WLNh2wewDum/5QxH9E+WE4/2qj7VDcBdNUOaYeKr25o7ezfdfDo4qUmee/s+vuk019lpa998JShDTDoon11Ccw5GPGj+4/maezqxs6i3Tld+FB4cIXa2Yh0Yif4goKiVWtKK+ubN5PVrfTBxeY1b82OTWcjYCsiPScnh9pJ4iHtK9eUVtSFI72wiy9d+GCMmv9zL+hB3YMHzCaAK/rixYtzeNHnFxStXltRG470wMK+doHOXsvtf5pUOmvrch3yVdNHXcR/E7pqLyhcvXZdbai9G+glDzB7vibv9AR91+8kk75VHeYikn64BJcuJ57Y8wtXlayrhoUd9jRr5j2gz7tc85HO+34jefQzS+hHB0zp+gnghv6gal8K9oKVQG8E+tih1XONdl7z9yXc2jilH1gRYxnT0yW1AxzSH2R4Nu2WFxSVlFbBnga2c6vu5/Z846ybncjujM5jpyd0NfF5y/OLYHVrIPSDRXPuN8k7r/lEb8S6o2/Uc5NAX7RokWAHI4z4hpYobOeKskV7gaHm/y6J9I2aB4WPg/pPdUFfuJDYmT6HVPyqtRWwnesf3V8gZcfLe0fnZ5NFL39V+yD98A1VikN/eiGxL2J2kvaCVSUVcMTeN7J3sRTDLuc9cu+v49PLyzdufUP/IP2QreuIW5qnFywkwe15+TDiyXZueDf59vFr/r6fR6fHfhB9I/v0Ao0d6EUl6+gR+6hksBtqfraH9Efoh4bV3hWd4VnD5yyFOVdaRU7PbZYW5+eva2wMhRvAG2N9/2vv6OxEzRlk+gI179DsMOKh4rueGd61e//BQ4cOv/zy0WPHXvvhyGCkapVhT/uHXtF3qq2OSudFvzgnj+3nWjq6+gaGR3eN7d67d//Bg/ACHAX+D/f3hrQ1f+8veUM/w5Ju3Oi4pjM7r/iKOnJVTXdf/8DA4PDICH0FCJ/ojw2ExZqP2e6o9FNsd7skzqfapz+wYIGqJ/ZlkPbSitqGMNmyRbu6unt64SUYhAqgfEj+a0ej1WrN/1Xy6extGYmffcWii/ZFpNthVwP26rpGcrlwa1s7bF6iXeAfGByh3Q/6Y0f7annN/3bS6UrsjPepTug6e07ecjhyJVeX0Fsj6A0C8ALAQXpPX/+wrIfoq5Nr/p5f9Ii+M+6nOqKrerKpJfaCIjLMyDWUleT2EHJzCHv/hehHx0APsT9ay/JufiCDTd94Kv6nOqVzO6zfMOrgKLVoNb3OQrmAtpZcON3cGuns6u0nF5fthdg90sLsn0kanb37GoTd7alEn2o7np6no9PjOHL0St+Iki80KSV8qm9t3xzt6YehNwaxa6T7MWr/VQS65/HUPAgBv5DNupyl7CxlAXkDFl4A+bq6Wnb1NL2YdGR0dHRksC9M7Leb3DiQalnCoHSG16xx9KxNHjs5Xyjr5WuIQ80UD6kfHhzo72sl9s8Y7amWJQwjfYG8r5NPWcnn54meXGvD8C1tHWzD09/f19MKQ7DFeMNIqmUJQ6aLNS93/IPCiVpa+iq+Xu75Poje7q52sH/FcGNgqmUJ46m584x5V+0MT96Vkt9/ZxdV1taHwjDto909PT3d0U5S83+kt6daljCemivaxYbX4vkb8DKetDzJfLQrGt0caWlovMens6daljCArtrnae2LBDt5eyJfGHhV6x8jN0hFNnd2bu5ob2tuaPxLnT3VsoRB6IqdpT5G3hV7kTLs6ayHHW4kEmlvaw3VN37Kn5mZdnSrdrnoKZ50/GNkO9NG77RuDtXf7ctwdVOkfBcEvZMhn7zfvywvj7wnlJNDT5WTs0iLFpFjaz6SaIvypz6Xxf3GmKP5TQ1b9uVC0bN1Ltwi33raWP8VPwodXz5njvCbni7oE9g1Oxx6X2A4zG7Sabgr4PO7uAdapVM50OllD0y+2JWcoOXfyAcGvB27fFUpuTGQ3vNPb9G5I+DLdJF2mZ4UOQ/2Z9GuKXtrNc8anh3VN9B7EO+YGYB2d01n1e5ezsucRHa27hWI0fFx1neh5ql9HT2gZfH1QMDnottlukmfO5SDcA6Xy3blJTD0vL1+Vw5pyA89gFh/dyCQmeGajjThNEnOzpbt/CVwmvd8rZ2cy6mqrqq6Owsq3nXBY8p5qmU7fwlwap7/5IPKu7MCM100u0h3PeHEMs/WB1rNK7fAVwA94He+vHE6ptw85siDwHnNF9E7ghX8uq/j0DFmu1H+rW83NZXlavPu0L5csJew+8AJ3efPcElfhjLbtfL5z5/9mMbz87md+W3bNXsbbr+L9LrPLR1twgkZl+EQJ+cLjzvOO5vz8m1ixA70Ge7p+PL5H3ysxrP6nndR8yv5DcF3kYLHoFuUz7Umz37yYzFyXduFmlfseHTU2T7/rIb+uGHWm9vjnbPS13wJFh15tjdp5B+fzM6WYust4tWDGXo3dMl/4tCR5dkvaekfZ0tSHLudzU0+a3iw49BRJxwJeVlrkuv+cpmU2G48iNWfpVbshdR+BwodW17GxJLECv/y5SYJ345Hx5rtEBKb7z8C7VlGf1JKYI/Z74tinKxciUtH2rdLAv1HVK7QDXYLg97EzmYdGh1TLrEp9zyjg/zyjyXn9lhzHouO1+eSnGtzehy73TmPRMeVy3RS8Cep/JJKT2S3Puv+A4WOLBfoTC7SJR3dsR2LjjXb9XQm19Dj2G3N+X/HoVP5grhykwEXSy6POVjXy8zoSHYcOt5sZyEftwWlJibX0Z3YjTWPREfsc4FeJj3P5JeelKzarc95HDqyXHpcPlaVzsagY8y6f8OiY8oltoe//FITg5vQEexYdKzZzqKY0c+eVeiPG+juZx0SHW22y8F27pcV+aUyI921HYeON9vlOGmB7nbO49Ix+pzGS1r5paAZ3eWcR6WjyaUntfJLpnKXsw6TjieXvq2VfxCD7sr+r3h0lNkuxxKNXL+ZM6fbnXV4dKTZLscHovzS92PR3djR6BblengMufSShm7c0biys5rHoiP2OY3HRfmVptj0ePb4cx6Jji2XikX5FdNl3ao91qzDoaPLodkF+RXzZd2lHY+ONNuVeFakx5Vr6dZnHRodbbbLUSzIX49Pdzjn/wWJjjfblTjJ5Vdir21u7Eh03D6n0cTlV+KsbRbsseY8Dj0Jcil4VpHHXdus2o2zDpeOKJek5znd5EQFgh2TjjTblchV5FfOxV/cTOhW+h2RjjXbeZy8ooSFZtfjE9vx6HizXYkfc7qltNu99ACNji+XrlyxmXbrcx6TngR5riqfPJeLY58rpB2JngS5VCbQJ/dY/CIbdhy6dblluCQ9KcgnJ52kPWa/00mHSceVS98X5ZNHrH6ZZTsi3Qh3JZc+EOWTk3GP2a3b1SmPR0ftc4igVj553PJXxu93bkejY8uVKafIJydq3Ns1qzsWHV0uTzlVPjFu/Wtj2eeKdiQ68oQj8bpOPjFh5QDOhG6wo9KTIJf0SZ+YsLidNeLN845PR5jtJMoM8omJLTa+PrH9n5NDd9nnEmt1qn6dyycmLO5rTO336+3odCQ5bXVKD57j8gmr21kTu7i+MTs2HUsuKfKfSFsm1LC8r9HbDXv5udh0nD6XaKuzLh+SpHGVbn1fo6WbHcfg0tHk0OrygIMVrUmlT1lf4ET8HLNjOEw60myn8bpCJ5PtbS6fOm9jgVPtc8zsiHRMuaTI6RauTKVP2Vng4tu/hkzHmHAEqyzobKYfV+AQdha4uHY8OqZcGlLom+gfcwX6CZvfKma/o9Exq12SfqLs4orZn7dw+dSUrQVOHfOGvGPRceVBJennlAfGuXzqtCO50Y5Ex5VLNUrS+WmpGpU+tc2R3GDHoSPLpT3KQYu6jB9X6RcsTzrdM9La8ehYE47EuHK4piJzz6t2i5PO8Iy0djQ6pjxXkYsnZjap9Clr56qMdM2cx6IjwkGpHKJrjtTUkr962tKeLiZ9DiYdVS59T6Frspt7gdOvWpx0ce04dFy5xM/LaJO7icuvXi12b08K3aW8RpHrD1FPcPnVdy1+rzj2ZNBdyukultI36f4ieEGRWy75WPYkZd0tfVw5GWeo6jIuv3r1Ief27CT1ulu4VKzITd5z2KHSP3L03msy6a7lZGlj9CGTvzzB6Zbb3YhPzoR3L1fPyZgdogUvqPbnHNqT0+sI8lzl3PN5078uVunXNjiyJ2fCI8jVk5AxTrpv4PJrH1lc3Y23BxH79KMfUeixNuo7OP3aR2TPU1yz7YU333zz4idvvvXWi9sffXi+RftXEekYcCk4EbfeSbygyK9de++F966x+ESN97/jNR1FnrDeIYLvcroaAv2T6++bZN6Ax6PjyNV6j3MKDuzX4smvX3/f5Kv0djQ6kpzXe+xrKHI3vPJR3JyT2J7YjkVHkqv1brafgVemZsdpk2q/ppdf/zABPRuNjiVX691km5r7xAl1uMdP+vXr34ovB/s0o+cq8nf0fxPc8K66l9HLL8K69pYIv3794QRyLDqWXNqk0LXvqAY3vHJVCGPOn4ORPv/FeHS9PDt7mtGV/bvmDdWyfReumskvCtV+8Qn4xPdV+XXd8maUT7OsFyvvqO7jD+VuOz111Sh/77maYPAVsdE/3P7N7ar8rYTyaUYfUujK5nzDiakpg/yjFzbIQ3Cb+YiDeDShfJrRz8vvqLKTcrk7Lqgn4/hR+nPiMctDF83lLyaWTy96k3IBARlyNSeEE7CK+wn9mhd8xUz+lqbTzeXTi65cQTAuBbecntLLX9lg+sbDQx8a6NqtnFE+/ej8AoIj+4Q3mZj7hLmbxnc+1MB/8M1E8ulX8EMKXQ831rkuHn3xokL/gW5BN5VPuzF33igH+ukdlk69PvzEdohH9UerMeTTbHFrMpPvs34DgFnElE+vLc3bBvnpTfaukrMjn070Mr18n73rhWzKp88ePnePttxdJzyhfJpkncFV+RHXCU8snxZ0Ga7IL1gb6W7l04AeVK53x6v0xPLpQA9uOTch0neguK3IU01v4nAmv4CTcivy1NLLhPsbWLnrr6NIihz13RdHzy/3+IRebuvyV5fy1NGDQ5MGuc2Lnt3JU0ZvEm7hOr9Hplu+R92FPNX04uPqbXvntwT3yAu6B+u58D8BxXl/3d6TCw6p92oCXMqVy93mbS0u5UiXFth6cmXjXE7gkrQHccZZhaNdUGLjuQW/p96fS+FSGeKMsyH3nF5zjsuPs9YOjk+h7ePsyD2myymnl7orp1+G5HJH2MdZ73PP6XLKQX6Oj7QavHK3J/eUzm9emzjClzHlvo4dnsu9pO/hd3AJpxrfYXLD2+nY8jkGuXf0oHLX3uTbws5Ffq/hguVr//Dk3tFf53Jhnm2RG93yFZ+Ics/oe8zkTcq51yTLjX3uIb2J97lQ7Yr8HdfrmhO5R/TgOYUu7NOVu3jcN7ojuUd0Xu7qNWHK4drUVJLlpn3uGV1N+oTyUNn4FNaIcyj3hl7D5TKdnHlPtdwb+hYuJzftBWuOTHglj9XnXtPJ4drbx8eFk3EXkvyOYjy5pwUvnIZk9HfcTrgE8Lhyjyb8uE4un4VM8noep8+9oxefM+b8fEp2r2og/YSShE+yeFwv35f0988TyL2ii28rkh+ntA/hvLObPveSDtF0hF0HOr6vCeNNRbdyL+kkysrcH5lbgVuQe01HC1d9zn7oWprSXcnlH+6N80PX0lGennT3fZ6udBx5GtITwC3L049uGZ5IfqPRLU44xB+mmo7ydKNj9Tnez4xOR3la0RPAbcrTiW4Zbk1+49BtTTgk+gyP6NhyQp/hjj4zkPWllMvt9rlMn+mG7icFf1s6ylnB+13Q/YHArKTTE8Adyed9bVYg4HdOzyT0rC+mVm57tsv0LELPdEr3ZZBe/0JK6Q4mHP0fHX2V9HqGzyn9Fh9t9ltvvfVP0ivgGdNWdy6/xU8W9lnEnk548nSzZpFl3e+cnuHPDEDaqT2tIguSHsh0PuVI1jMg7ZD3tNLDs4WcB+C5u8j6LX5a8iTxhJ8eMYumnJS7G7lqT7twLQe6PyOT7GcDgZkzUs2xEDPoM/X5MmE75pJO+p3+guynSfjlZ+wWTuywlSevYapJFoPUKWzeMeQ0oIDSJzI1O5n/B5/xAXbXPcU5AAAAAElFTkSuQmCC';
-
         var cancelFormLoadEvent = $scope.$on('formLoad', function(event, form) {
           cancelFormLoadEvent();
-          $scope.setDownloadUrl(form);
+          iframeReady.promise.then(function() {
+            $scope.getPDFDownload(form.settings.pdf);
+          });
           sendIframeMessage({name: 'form', data: form});
         });
 
@@ -72513,9 +71634,6 @@ module.exports = function() {
           if ($scope.options && $scope.options.submitMessage) {
             message = $scope.options.submitMessage;
           }
-          else if ($scope.form && $scope.form.settings && $scope.form.settings.submitMessage) {
-            message = $scope.form.settings.submitMessage;
-          }
           else {
             message = 'Submission was ' + ((method === 'put') ? 'updated' : 'created') + '.';
           }
@@ -72568,8 +71686,6 @@ module.exports = function() {
           return FormioUtils.isRequired(component, $scope.requireComponents);
         };
 
-        var alertsWatcher = null;
-
         // Called when the form is submitted.
         $scope.onSubmit = function(form) {
           $scope.formioAlerts = [];
@@ -72578,23 +71694,12 @@ module.exports = function() {
               type: 'danger',
               message: 'Please fix the following errors before submitting.'
             });
-
-            alertsWatcher = $scope.$watch(function() {
-              return form.$valid;
-            }, function(value) {
-              if (value) {
-                $scope.formioAlerts = [];
-                alertsWatcher();
-              }
-            });
-
             return;
           }
 
           form.submitting = true;
           FormioUtils.alter('submit', $scope, $scope.submission, function(err) {
             if (err) {
-              form.submitting = false;
               return this.showAlerts(err.alerts);
             }
 
@@ -72705,7 +71810,7 @@ module.exports = function() {
   };
 };
 
-},{}],318:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -72722,7 +71827,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],319:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 var _get = _dereq_('lodash/get');
 
@@ -72990,7 +72095,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/get":228}],320:[function(_dereq_,module,exports){
+},{"lodash/get":220}],305:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -73063,7 +72168,7 @@ module.exports = [
   }
 ];
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73147,7 +72252,7 @@ module.exports = function() {
   };
 };
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -73166,7 +72271,7 @@ module.exports = [
   }
 ];
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73176,7 +72281,7 @@ module.exports = function() {
   };
 };
 
-},{}],324:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 // Javascript editor directive
 module.exports = ['FormioUtils', function(FormioUtils) {
@@ -73251,7 +72356,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],325:[function(_dereq_,module,exports){
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73283,7 +72388,7 @@ module.exports = function() {
   };
 };
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],311:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73339,7 +72444,7 @@ module.exports = function() {
   };
 };
 
-},{}],327:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 "use strict";
 var isNaN = _dereq_('lodash/isNAN');
 var isFinite = _dereq_('lodash/isFinite');
@@ -73788,17 +72893,6 @@ module.exports = function() {
 
         // Move onto the previous page.
         $scope.prev = function() {
-          var errors = $scope.checkErrors();
-          if (errors) {
-            $scope.pageHasErrors[$scope.currentPage] = true;
-            if (!$scope.formioOptions.wizardFreeNavigation) {
-              return;
-            }
-          }
-          else {
-            $scope.pageHasErrors[$scope.currentPage] = false;
-          }
-
           var prev = $scope.history.pop();
           $scope.currentPage = prev;
           FormioUtils.alter('prevPage', $scope, function(err) {
@@ -73852,7 +72946,10 @@ module.exports = function() {
               if (!$scope.hasTitles && component.title) {
                 $scope.hasTitles = true;
               }
-              if (FormioUtils.hasCondition(component)) {
+              if (component.customConditional) {
+                hasConditionalPages = true;
+              }
+              else if (component.conditional && component.conditional.when) {
                 hasConditionalPages = true;
               }
               // Make sure this page is not in the hide compoenents array.
@@ -73938,7 +73035,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/isFinite":239,"lodash/isNAN":242}],328:[function(_dereq_,module,exports){
+},{"lodash/isFinite":231,"lodash/isNAN":234}],313:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74122,7 +73219,7 @@ module.exports = [
   }
 ];
 
-},{}],329:[function(_dereq_,module,exports){
+},{}],314:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 var _filter = _dereq_('lodash/filter');
@@ -74141,9 +73238,6 @@ module.exports = function() {
 
       (function next(err, previous) {
         if (err) {
-          if (typeof err === 'string') {
-            err = {alerts: {type: 'danger', message: '{"data": "' + err + '"}'}};
-          }
           err.item = previous;
           return done ? done(err) : null;
         }
@@ -74272,7 +73366,7 @@ module.exports = function() {
         }
 
         // If there is a default value and it is not an array, wrap the value.
-        if (component.multiple && component.defaultValue && typeof component.defaultValue === 'string') {
+        if (component.multiple && typeof component.defaultValue === 'string') {
           value = component.defaultValue.split(',');
         }
         else {
@@ -74396,10 +73490,34 @@ module.exports = function() {
       }
       /* eslint-enable max-depth */
     },
-    parseFloat: formioUtils.parseFloat,
-    formatAsCurrency: formioUtils.formatAsCurrency,
-    checkCalculated: formioUtils.checkCalculated,
-    escapeRegExCharacters: formioUtils.escapeRegExCharacters,
+    checkCalculated: function(component, submission, data) {
+      // Process calculated value stuff if present.
+      if (component.calculateValue) {
+        if (typeof component.calculateValue === 'string') {
+          try {
+            data[component.key] = eval('(function(data) { var value = [];' + component.calculateValue.toString() + '; return value; })(data)');
+          }
+          catch (e) {
+            /* eslint-disable no-console */
+            console.warn('An error occurred calculating a value for ' + component.key, e);
+            /* eslint-enable no-console */
+          }
+        }
+        else {
+          try {
+            data[component.key] = formioUtils.jsonLogic.apply(component.calculateValue, {
+              data: submission ? submission.data : data,
+              row: data
+            });
+          }
+          catch (e) {
+            /* eslint-disable no-console */
+            console.warn('An error occurred calculating a value for ' + component.key, e);
+            /* eslint-enable no-console */
+          }
+        }
+      }
+    },
     checkVisible: function(component, row, data) {
       var visible = formioUtils.checkCondition(component, row, data);
       if (!visible) {
@@ -74428,7 +73546,6 @@ module.exports = function() {
     getComponent: formioUtils.getComponent,
     getValue: formioUtils.getValue,
     jsonLogic: formioUtils.jsonLogic,
-    hasCondition: formioUtils.hasCondition,
     hideFields: function(form, components) {
       this.eachComponent(form.components, function(component) {
         for (var i in components) {
@@ -74508,7 +73625,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":36,"lodash/filter":226,"lodash/get":228}],330:[function(_dereq_,module,exports){
+},{"formiojs/utils":35,"lodash/filter":218,"lodash/get":220}],315:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -74634,7 +73751,7 @@ module.exports = function() {
   };
 };
 
-},{}],331:[function(_dereq_,module,exports){
+},{}],316:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -74683,7 +73800,7 @@ module.exports = [
   }
 ];
 
-},{}],332:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74717,7 +73834,7 @@ module.exports = [
   }
 ];
 
-},{}],333:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -74726,7 +73843,7 @@ module.exports = [
   }
 ];
 
-},{}],334:[function(_dereq_,module,exports){
+},{}],319:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -74739,7 +73856,7 @@ module.exports = [
   }
 ];
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -74758,7 +73875,7 @@ module.exports = [
   }
 ];
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -74771,7 +73888,7 @@ module.exports = [
   }
 ];
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74786,7 +73903,7 @@ module.exports = [
   }
 ];
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -74835,7 +73952,7 @@ module.exports = [
   }
 ];
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],324:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -74843,7 +73960,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],340:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -74859,7 +73976,7 @@ _dereq_('ng-dialog');
 _dereq_('angular-ui-ace/src/ui-ace');
 _dereq_('./formio');
 
-},{"./formio":341,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":277,"ng-file-upload":279,"ui-select/dist/select":346}],341:[function(_dereq_,module,exports){
+},{"./formio":326,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":262,"ng-file-upload":264,"ui-select/dist/select":331}],326:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -74974,7 +74091,7 @@ app.run([
 
     // The template for the formio forms.
     $templateCache.put('formio.html',
-      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" ng-class=\"{'formio-hidden': !formLoading}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" url=\"url\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" disable-components=\"disableComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <div ng-if=\"form.display === 'pdf' && form.settings.pdf\" style=\"position:relative;\">\n    <span style=\"position:absolute;right:10px;top:10px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomIn()\"><spann class=\"glyphicon glyphicon-zoom-in\"></spann></span>\n    <span style=\"position:absolute;right:10px;top:60px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomOut()\"><span class=\"glyphicon glyphicon-zoom-out\"></span></span>\n    <a ng-if=\"downloadUrl\" style=\"position:absolute;right:10px;top:110px;cursor:pointer;\" class=\"no-disable\" href=\"{{ downloadUrl | trustAsResourceUrl }}\" target=\"_blank\"><img src=\"{{ pdfImage }}\" style=\"width:3em;\" /></a>\n    <iframe src=\"{{ getIframeSrc(form.settings.pdf) | trustAsResourceUrl }}\" seamless class=\"formio-iframe\"></iframe>\n    <button ng-if=\"!readOnly && !form.builder\" type=\"button\" class=\"btn btn-primary\" ng-click=\"submitIFrameForm()\">Submit</button>\n  </div>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\" ng-if=\"::!builder\">\n      {{ alert.message | formioTranslate:null:builder }}\n    </div>\n    <a ng-if=\"downloadUrl && form.settings.pdf.id\" class=\"pull-right no-disable\" href=\"{{ downloadUrl | trustAsResourceUrl }}\" target=\"_blank\"><img src=\"{{ pdfImage }}\" style=\"width:3em;\" /></a>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components track by $index\"\n      component=\"component\"\n      ng-if=\"builder ? '::true' : isVisible(component)\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      read-only=\"isDisabled(component, submission.data)\"\n      builder=\"builder\"\n      options=\"options\"\n    ></formio-component>\n  </form>\n</div>\n"
+      "<div>\n  <i style=\"font-size: 2em;\" ng-if=\"formLoading\" ng-class=\"{'formio-hidden': !formLoading}\" class=\"formio-loading glyphicon glyphicon-refresh glyphicon-spin\"></i>\n  <formio-wizard ng-if=\"form.display === 'wizard'\" src=\"src\" form=\"form\" submission=\"submission\" form-action=\"formAction\" read-only=\"readOnly\" hide-components=\"hideComponents\" disable-components=\"disableComponents\" formio-options=\"formioOptions\" storage=\"form.name\"></formio-wizard>\n  <div ng-if=\"form.display === 'pdf' && form.settings.pdf\" style=\"position:relative;\">\n    <span style=\"position:absolute;right:10px;top:10px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomIn()\"><spann class=\"glyphicon glyphicon-zoom-in\"></spann></span>\n    <span style=\"position:absolute;right:10px;top:60px;cursor:pointer;\" class=\"btn btn-default no-disable\" ng-click=\"zoomOut()\"><span class=\"glyphicon glyphicon-zoom-out\"></span></span>\n    <a ng-if=\"downloadUrl\" style=\"position:absolute;right:10px;top:110px;cursor:pointer;\" class=\"btn btn-primary no-disable\" href=\"{{ downloadUrl | trustAsResourceUrl }}\" target=\"_blank\"><span class=\"glyphicon glyphicon-cloud-download\"></span></a>\n    <iframe src=\"{{ getIframeSrc(form.settings.pdf) | trustAsResourceUrl }}\" seamless class=\"formio-iframe\"></iframe>\n    <button ng-if=\"!readOnly && !form.builder\" type=\"button\" class=\"btn btn-primary\" ng-click=\"submitIFrameForm()\">Submit</button>\n  </div>\n  <form ng-if=\"!form.display || (form.display === 'form')\" role=\"form\" name=\"formioForm\" ng-submit=\"onSubmit(formioForm)\" novalidate>\n    <div ng-repeat=\"alert in formioAlerts track by $index\" class=\"alert alert-{{ alert.type }}\" role=\"alert\" ng-if=\"::!builder\">\n      {{ alert.message | formioTranslate:null:builder }}\n    </div>\n    <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n    <formio-component\n      ng-repeat=\"component in form.components track by $index\"\n      component=\"component\"\n      ng-if=\"builder ? '::true' : isVisible(component)\"\n      data=\"submission.data\"\n      formio-form=\"formioForm\"\n      formio=\"formio\"\n      submission=\"submission\"\n      hide-components=\"hideComponents\"\n      read-only=\"isDisabled(component, submission.data)\"\n      builder=\"builder\"\n      options=\"options\"\n    ></formio-component>\n  </form>\n</div>\n"
     );
 
     $templateCache.put('formio-wizard.html',
@@ -75007,14 +74124,14 @@ app.run([
     );
 
     $templateCache.put('formio/errors.html',
-      "<div ng-show=\"formioForm[componentId].$error && !formioForm[componentId].$pristine\">\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.email\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a valid email' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.required\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'is required' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.number\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a number' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.maxlength\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be shorter than' | formioTranslate:null:builder}} {{ component.validate.maxLength + 1 }} {{'characters' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.minlength\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be longer than' | formioTranslate:null:builder}} {{ component.validate.minLength - 1 }} {{'characters' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.min\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be greater than or equal to' | formioTranslate:null:builder}} {{ component.validate.min }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.max\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be less than or equal to' | formioTranslate:null:builder}} {{ component.validate.max }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.custom\">{{ component.customError | formioTranslate }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.pattern\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'does not match the pattern' | formioTranslate:null:builder}} {{ component.validate.pattern }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.day\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a valid date' | formioTranslate:null:builder}}.</p>\n</div>\n"
+      "<div ng-show=\"formioForm[componentId].$error && !formioForm[componentId].$pristine\">\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.email\">{{ component.label || component.placeholder || component.key }} {{'must be a valid email' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.required\">{{ component.label || component.placeholder || component.key }} {{'is required' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.number\">{{ component.label || component.placeholder || component.key }} {{'must be a number' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.maxlength\">{{ component.label || component.placeholder || component.key }} {{'must be shorter than' | formioTranslate:null:builder}} {{ component.validate.maxLength + 1 }} {{'characters' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.minlength\">{{ component.label || component.placeholder || component.key }} {{'must be longer than' | formioTranslate:null:builder}} {{ component.validate.minLength - 1 }} {{'characters' | formioTranslate:null:builder}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.min\">{{ component.label || component.placeholder || component.key }} {{'must be greater than or equal to' | formioTranslate:null:builder}} {{ component.validate.min }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.max\">{{ component.label || component.placeholder || component.key }} {{'must be less than or equal to' | formioTranslate:null:builder}} {{ component.validate.max }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.custom\">{{ component.customError | formioTranslate }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.pattern\">{{ component.label || component.placeholder || component.key }} {{'does not match the pattern' | formioTranslate:null:builder}} {{ component.validate.pattern }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.day\">{{ component.label || component.placeholder || component.key }} {{'must be a valid date' | formioTranslate:null:builder}}.</p>\n</div>\n"
     );
   }
 ]);
 
 _dereq_('./components');
 
-},{"./components":299,"./directives/customValidator":316,"./directives/formio":317,"./directives/formioBindHtml.js":318,"./directives/formioComponent":319,"./directives/formioComponentView":320,"./directives/formioDelete":321,"./directives/formioElement":322,"./directives/formioErrors":323,"./directives/formioScriptEditor":324,"./directives/formioSubmission":325,"./directives/formioSubmissions":326,"./directives/formioWizard":327,"./factories/FormioScope":328,"./factories/FormioUtils":329,"./factories/formioInterceptor":331,"./factories/formioTableView":332,"./filters/flattenComponents":333,"./filters/safehtml":334,"./filters/tableComponents":335,"./filters/tableFieldView":336,"./filters/tableView":337,"./filters/translate":338,"./filters/trusturl":339,"./polyfills/polyfills":343,"./providers/Formio":344}],342:[function(_dereq_,module,exports){
+},{"./components":284,"./directives/customValidator":301,"./directives/formio":302,"./directives/formioBindHtml.js":303,"./directives/formioComponent":304,"./directives/formioComponentView":305,"./directives/formioDelete":306,"./directives/formioElement":307,"./directives/formioErrors":308,"./directives/formioScriptEditor":309,"./directives/formioSubmission":310,"./directives/formioSubmissions":311,"./directives/formioWizard":312,"./factories/FormioScope":313,"./factories/FormioUtils":314,"./factories/formioInterceptor":316,"./factories/formioTableView":317,"./filters/flattenComponents":318,"./filters/safehtml":319,"./filters/tableComponents":320,"./filters/tableFieldView":321,"./filters/tableView":322,"./filters/translate":323,"./filters/trusturl":324,"./polyfills/polyfills":328,"./providers/Formio":329}],327:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -75045,13 +74162,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],328:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":342}],344:[function(_dereq_,module,exports){
+},{"./Object.assign":327}],329:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -75121,7 +74238,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":28}],345:[function(_dereq_,module,exports){
+},{"formiojs":28}],330:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -75158,7 +74275,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],346:[function(_dereq_,module,exports){
+},{}],331:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -77586,7 +76703,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],347:[function(_dereq_,module,exports){
+},{}],332:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -78049,7 +77166,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],348:[function(_dereq_,module,exports){
+},{}],333:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78122,7 +77239,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],349:[function(_dereq_,module,exports){
+},{}],334:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78200,7 +77317,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],350:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78292,7 +77409,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],336:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78375,7 +77492,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],352:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -78526,7 +77643,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],353:[function(_dereq_,module,exports){
+},{}],338:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78579,7 +77696,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],354:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78650,7 +77767,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],355:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78721,7 +77838,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],356:[function(_dereq_,module,exports){
+},{}],341:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78784,7 +77901,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],357:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -78851,7 +77968,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],358:[function(_dereq_,module,exports){
+},{}],343:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79042,7 +78159,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],359:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79118,7 +78235,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],345:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -79167,7 +78284,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":220,"lodash/each":223}],361:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":212,"lodash/each":215}],346:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79223,7 +78340,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],362:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -79309,7 +78426,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":253}],363:[function(_dereq_,module,exports){
+},{"lodash/map":243}],348:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79411,7 +78528,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],364:[function(_dereq_,module,exports){
+},{}],349:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79471,7 +78588,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],365:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79531,7 +78648,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],351:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -79575,7 +78692,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":348,"./button":349,"./checkbox":350,"./columns":351,"./components":352,"./container":353,"./content":354,"./currency":355,"./custom":356,"./datagrid":357,"./datetime":358,"./day":359,"./email":360,"./fieldset":361,"./file":362,"./form":363,"./hidden":364,"./htmlelement":365,"./number":367,"./page":368,"./panel":369,"./password":370,"./phonenumber":371,"./radio":372,"./resource":373,"./select":374,"./selectboxes":375,"./signature":376,"./survey":377,"./table":378,"./textarea":379,"./textfield":380,"./time":381,"./well":382}],367:[function(_dereq_,module,exports){
+},{"./address":333,"./button":334,"./checkbox":335,"./columns":336,"./components":337,"./container":338,"./content":339,"./currency":340,"./custom":341,"./datagrid":342,"./datetime":343,"./day":344,"./email":345,"./fieldset":346,"./file":347,"./form":348,"./hidden":349,"./htmlelement":350,"./number":352,"./page":353,"./panel":354,"./password":355,"./phonenumber":356,"./radio":357,"./resource":358,"./select":359,"./selectboxes":360,"./signature":361,"./survey":362,"./table":363,"./textarea":364,"./textfield":365,"./time":366,"./well":367}],352:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79651,7 +78768,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],368:[function(_dereq_,module,exports){
+},{}],353:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79672,7 +78789,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],369:[function(_dereq_,module,exports){
+},{}],354:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79779,7 +78896,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],370:[function(_dereq_,module,exports){
+},{}],355:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79850,7 +78967,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],371:[function(_dereq_,module,exports){
+},{}],356:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79924,7 +79041,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],372:[function(_dereq_,module,exports){
+},{}],357:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79993,7 +79110,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],373:[function(_dereq_,module,exports){
+},{}],358:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80085,7 +79202,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],374:[function(_dereq_,module,exports){
+},{}],359:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -80333,7 +79450,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":219}],375:[function(_dereq_,module,exports){
+},{"lodash/clone":211}],360:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80406,7 +79523,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],376:[function(_dereq_,module,exports){
+},{}],361:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80469,7 +79586,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],377:[function(_dereq_,module,exports){
+},{}],362:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80536,7 +79653,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],378:[function(_dereq_,module,exports){
+},{}],363:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80608,7 +79725,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],379:[function(_dereq_,module,exports){
+},{}],364:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80714,7 +79831,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],380:[function(_dereq_,module,exports){
+},{}],365:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80790,7 +79907,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],381:[function(_dereq_,module,exports){
+},{}],366:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -80837,7 +79954,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":220,"lodash/each":223}],382:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":212,"lodash/each":215}],367:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80884,7 +80001,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],383:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -81137,7 +80254,7 @@ module.exports = {
   }
 };
 
-},{}],384:[function(_dereq_,module,exports){
+},{}],369:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -81208,7 +80325,7 @@ module.exports = {
   ]
 };
 
-},{}],385:[function(_dereq_,module,exports){
+},{}],370:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -81570,7 +80687,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":217,"lodash/cloneDeep":220,"lodash/each":223,"lodash/groupBy":229,"lodash/merge":255,"lodash/omitBy":257,"lodash/upperFirst":273}],386:[function(_dereq_,module,exports){
+},{"lodash/capitalize":210,"lodash/cloneDeep":212,"lodash/each":215,"lodash/groupBy":221,"lodash/merge":245,"lodash/omitBy":247,"lodash/upperFirst":258}],371:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -81586,7 +80703,7 @@ module.exports = [
   }
 ];
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],372:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -81681,7 +80798,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":36,"lodash/get":228,"lodash/reject":261}],388:[function(_dereq_,module,exports){
+},{"formiojs/utils":35,"lodash/get":220,"lodash/reject":250}],373:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -81989,12 +81106,30 @@ module.exports = [
       });
     };
 
+    $scope.copyComponent = function(component) {
+      window.sessionStorage.setItem('componentClipboard', JSON.stringify(angular.copy(component)));
+    }
+
+    $scope.pasteComponent = function() {
+      var component;
+      try {
+        component = JSON.parse(window.sessionStorage.getItem('componentClipboard'));
+      }
+      catch(e) {
+        console.log('Error fetching componentClipboard');
+      }
+
+      if (component) {
+        $scope.cloneComponent(component);
+      }
+    }
+
     // Add to scope so it can be used in templates
     $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
   }
 ];
 
-},{"lodash/assign":213,"lodash/camelCase":216,"lodash/isNumber":244}],389:[function(_dereq_,module,exports){
+},{"lodash/assign":206,"lodash/camelCase":209,"lodash/isNumber":235}],374:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -82019,7 +81154,7 @@ module.exports = [
   }
 ];
 
-},{}],390:[function(_dereq_,module,exports){
+},{}],375:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -82044,7 +81179,7 @@ module.exports = [
   }
 ];
 
-},{}],391:[function(_dereq_,module,exports){
+},{}],376:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -82113,7 +81248,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],392:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -82154,7 +81289,7 @@ module.exports = function() {
   };
 };
 
-},{}],393:[function(_dereq_,module,exports){
+},{}],378:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -82200,7 +81335,7 @@ module.exports = function() {
   };
 };
 
-},{}],394:[function(_dereq_,module,exports){
+},{}],379:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -82244,7 +81379,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":253}],395:[function(_dereq_,module,exports){
+},{"lodash/map":243}],380:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -82266,7 +81401,7 @@ module.exports = [
   }
 ];
 
-},{}],396:[function(_dereq_,module,exports){
+},{}],381:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -82320,7 +81455,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":255}],397:[function(_dereq_,module,exports){
+},{"lodash/merge":245}],382:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -82361,7 +81496,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],398:[function(_dereq_,module,exports){
+},{}],383:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -82398,7 +81533,7 @@ module.exports = function() {
   };
 };
 
-},{}],399:[function(_dereq_,module,exports){
+},{}],384:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -82465,7 +81600,7 @@ module.exports = function() {
   };
 };
 
-},{}],400:[function(_dereq_,module,exports){
+},{}],385:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -82488,7 +81623,7 @@ module.exports = function() {
   };
 };
 
-},{}],401:[function(_dereq_,module,exports){
+},{}],386:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -82570,7 +81705,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":216,"lodash/map":253}],402:[function(_dereq_,module,exports){
+},{"lodash/camelCase":209,"lodash/map":243}],387:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -82679,7 +81814,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],403:[function(_dereq_,module,exports){
+},{}],388:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -82713,14 +81848,14 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],404:[function(_dereq_,module,exports){
+},{}],389:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":405,"angular-drag-and-drop-lists":2,"ng-dialog":277,"ng-formio/src/formio-complete.js":340}],405:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":390,"angular-drag-and-drop-lists":2,"ng-dialog":262,"ng-formio/src/formio-complete.js":325}],390:[function(_dereq_,module,exports){
 "use strict";
 /*! ng-formio-builder v2.21.3 | https://unpkg.com/ng-formio-builder@2.21.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
@@ -82878,5 +82013,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":366,"./constants/commonOptions":383,"./constants/formOptions":384,"./directives/formBuilder":385,"./directives/formBuilderComponent":386,"./directives/formBuilderConditional":387,"./directives/formBuilderDnd":388,"./directives/formBuilderElement":389,"./directives/formBuilderList":390,"./directives/formBuilderOption":391,"./directives/formBuilderOptionCustomValidation":392,"./directives/formBuilderOptionKey":393,"./directives/formBuilderOptionTags":394,"./directives/formBuilderRow":395,"./directives/formBuilderTable":396,"./directives/formBuilderTooltip":397,"./directives/jsonInput":398,"./directives/objectBuilder":399,"./directives/validApiKey":400,"./directives/valueBuilder":401,"./factories/BuilderUtils":402,"./factories/debounce":403}]},{},[404])(404)
+},{"./components":351,"./constants/commonOptions":368,"./constants/formOptions":369,"./directives/formBuilder":370,"./directives/formBuilderComponent":371,"./directives/formBuilderConditional":372,"./directives/formBuilderDnd":373,"./directives/formBuilderElement":374,"./directives/formBuilderList":375,"./directives/formBuilderOption":376,"./directives/formBuilderOptionCustomValidation":377,"./directives/formBuilderOptionKey":378,"./directives/formBuilderOptionTags":379,"./directives/formBuilderRow":380,"./directives/formBuilderTable":381,"./directives/formBuilderTooltip":382,"./directives/jsonInput":383,"./directives/objectBuilder":384,"./directives/validApiKey":385,"./directives/valueBuilder":386,"./factories/BuilderUtils":387,"./factories/debounce":388}]},{},[389])(389)
 });
