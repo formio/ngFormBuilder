@@ -283,7 +283,13 @@ module.exports = [
       // If we are in a panel, the cloned component container should be the parent.components,
       // Otherwise it should be the form.components.
       var container;
-      if ($scope.$parent.component) {
+      if ($scope.$parent.component && $scope.$parent.component.type === 'columns') {
+        var column = _.find($scope.$parent.component.columns, function(column) {
+          return _.find(column.components, {key: newComponent.key});
+        });
+        container = column.components;
+      }
+      else if ($scope.$parent.component) {
         container = $scope.$parent.component.components;
       }
       else {
