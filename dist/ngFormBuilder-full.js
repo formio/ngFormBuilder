@@ -81621,7 +81621,6 @@ module.exports = function(app) {
                   initialized.promise.then(function() {
                     dataWatch();
                     ensureValue();
-                    refreshValue();
                   });
                 }
               });
@@ -82411,7 +82410,7 @@ module.exports = function(app) {
             return 'formio/componentsView/content.html';
           }
           else {
-            return 'formio/components/textarea.html';
+            return 'formio/element-view.html';
           }
         },
         viewController: [
@@ -92181,14 +92180,14 @@ module.exports = [
     };
 
     $scope.$on('iframe-componentClick', function(event, data) {
-      angular.forEach($scope.component.components, function(component, index) {
+      FormioUtils.eachComponent($scope.component.components, function(component) {
         if (component.id === data.id) {
-          $scope.editComponent(component, index);
+          $scope.editComponent(component);
         }
       });
     });
     $scope.$on('iframe-componentUpdate', function(event, data) {
-      angular.forEach($scope.component.components, function(component) {
+      FormioUtils.eachComponent($scope.component.components, function(component) {
         if (component.id === data.id) {
           component.overlay = data.overlay;
         }
@@ -92328,6 +92327,7 @@ module.exports = [
 
     // Edit a specific component.
     $scope.editComponent = function(component, index) {
+      index = index || 0;
       $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
       // No edit view available
       if (!$scope.formComponent.hasOwnProperty('views')) {
@@ -93191,7 +93191,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":408,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-full.js":343}],408:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.22.1 | https://unpkg.com/ng-formio-builder@2.22.1/LICENSE.txt */
+/*! ng-formio-builder v2.22.3 | https://unpkg.com/ng-formio-builder@2.22.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

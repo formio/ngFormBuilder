@@ -51,14 +51,14 @@ module.exports = [
     };
 
     $scope.$on('iframe-componentClick', function(event, data) {
-      angular.forEach($scope.component.components, function(component, index) {
+      FormioUtils.eachComponent($scope.component.components, function(component) {
         if (component.id === data.id) {
-          $scope.editComponent(component, index);
+          $scope.editComponent(component);
         }
       });
     });
     $scope.$on('iframe-componentUpdate', function(event, data) {
-      angular.forEach($scope.component.components, function(component) {
+      FormioUtils.eachComponent($scope.component.components, function(component) {
         if (component.id === data.id) {
           component.overlay = data.overlay;
         }
@@ -198,6 +198,7 @@ module.exports = [
 
     // Edit a specific component.
     $scope.editComponent = function(component, index) {
+      index = index || 0;
       $scope.formComponent = formioComponents.components[component.type] || formioComponents.components.custom;
       // No edit view available
       if (!$scope.formComponent.hasOwnProperty('views')) {
