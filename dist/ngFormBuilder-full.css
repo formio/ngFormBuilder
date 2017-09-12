@@ -1329,6 +1329,7 @@ ul.component-list li {
 /***************************** Layout Styling *****************************/
 
 .form-builder-component .form-field-type-fieldset fieldset,
+.form-builder-component .form-field-type-editgrid fieldset,
 .form-builder-component .form-field-type-container fieldset {
   padding: 5px;
   margin-left: -5px;

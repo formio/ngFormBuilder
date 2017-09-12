@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.23.0
+### Added
+ - Edit Grid UI
+
+### Changed
+ - Upgrade ng-formio to 2.23.0
+
 ## 2.21.4
 ### Added
  - Copy and Paste functions (no UI) on drag and drop controller.
