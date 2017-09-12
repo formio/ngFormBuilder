@@ -50854,7 +50854,7 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":31,"browser-cookies":28,"eventemitter2":29,"native-promise-only":279,"shallow-copy":348,"whatwg-fetch":350}],31:[function(_dereq_,module,exports){
+},{"./providers":31,"browser-cookies":28,"eventemitter2":29,"native-promise-only":279,"shallow-copy":349,"whatwg-fetch":351}],31:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -62034,8 +62034,11 @@ http://ricostacruz.com/cheatsheets/umdjs.html
     },
     "var": function(a, b) {
       var not_found = (b === undefined) ? null : b;
-      var sub_props = String(a).split(".");
       var data = this;
+      if(typeof a === "undefined" || a==="" || a===null) {
+        return data;
+      }
+      var sub_props = String(a).split(".");
       for(var i = 0; i < sub_props.length; i++) {
         if(data === null) {
           return not_found;
@@ -62087,17 +62090,17 @@ http://ricostacruz.com/cheatsheets/umdjs.html
 
   jsonLogic.is_logic = function(logic) {
     return (
-      logic !== null && typeof logic === "object" && ! Array.isArray(logic)
+      typeof logic === "object" && // An object
+      logic !== null && // but not null
+      ! Array.isArray(logic) && // and not an array
+      Object.keys(logic).length === 1 // with exactly one key
     );
   };
 
   /*
   This helper will defer to the JsonLogic spec as a tie-breaker when different language interpreters define different behavior for the truthiness of primitives.  E.g., PHP considers empty arrays to be falsy, but Javascript considers them to be truthy. JsonLogic, as an ecosystem, needs one consistent answer.
 
-  Literal | JS    |  PHP  |  JsonLogic
-  --------+-------+-------+---------------
-  []      | true  | false | false
-  "0"     | true  | false | true
+  Spec and rationale here: http://jsonlogic.com/truthy
   */
   jsonLogic.truthy = function(value) {
     if(Array.isArray(value) && value.length === 0) {
@@ -62133,6 +62136,7 @@ http://ricostacruz.com/cheatsheets/umdjs.html
     var values = logic[op];
     var i;
     var current;
+    var scopedLogic, scopedData, filtered, initial;
 
     // easy syntax for unary operators, like {"var" : "x"} instead of strict {"var" : ["x"]}
     if( ! Array.isArray(values)) {
@@ -62177,8 +62181,75 @@ http://ricostacruz.com/cheatsheets/umdjs.html
         }
       }
       return current; // Last
-    }
 
+
+
+
+    }else if(op === 'filter'){
+      scopedData = jsonLogic.apply(values[0], data);
+      scopedLogic = values[1];
+
+      if ( ! Array.isArray(scopedData)) {
+          return [];
+      }
+      // Return only the elements from the array in the first argument,
+      // that return truthy when passed to the logic in the second argument.
+      // For parity with JavaScript, reindex the returned array
+      return scopedData.filter(function(datum){
+          return jsonLogic.truthy( jsonLogic.apply(scopedLogic, datum));
+      });
+  }else if(op === 'map'){
+      scopedData = jsonLogic.apply(values[0], data);
+      scopedLogic = values[1];
+
+      if ( ! Array.isArray(scopedData)) {
+          return [];
+      }
+
+      return scopedData.map(function(datum){
+          return jsonLogic.apply(scopedLogic, datum);
+      });
+
+  }else if(op === 'reduce'){
+      scopedData = jsonLogic.apply(values[0], data);
+      scopedLogic = values[1];
+      initial = typeof values[2] !== 'undefined' ? values[2] : null;
+
+      if ( ! Array.isArray(scopedData)) {
+          return initial;
+      }
+
+      return scopedData.reduce(
+          function(accumulator, current){
+              return jsonLogic.apply(
+                  scopedLogic,
+                  {'current':current, 'accumulator':accumulator}
+              );
+          },
+          initial
+      );
+
+    }else if(op === "all") {
+      scopedData = jsonLogic.apply(values[0], data);
+      scopedLogic = values[1];
+      // All of an empty set is false. Note, some and none have correct fallback after the for loop
+      if( ! scopedData.length) {
+        return false;
+      }
+      for(i=0; i < scopedData.length; i+=1) {
+        if( ! jsonLogic.truthy( jsonLogic.apply(scopedLogic, scopedData[i]) )) {
+          return false; // First falsy, short circuit
+        }
+      }
+      return true; // All were truthy
+    }else if(op === "none") {
+      filtered = jsonLogic.apply({'filter' : values}, data);
+      return filtered.length === 0;
+
+    }else if(op === "some") {
+      filtered = jsonLogic.apply({'filter' : values}, data);
+      return filtered.length > 0;
+    }
 
     // Everyone else gets immediate depth-first recursion
     values = values.map(function(val) {
@@ -79084,6 +79155,10 @@ module.exports = function(app) {
             }
           };
 
+          $scope.hasError = function() {
+            return (settings.action === 'submit') && $scope.formioForm.$invalid && !$scope.formioForm.$pristine;
+          };
+
           var onCustom = function() {
             try {
               /* eslint-disable no-unused-vars */
@@ -79234,7 +79309,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/button.html',
-        "<button ng-attr-type=\"{{ getButtonType() }}\"\n  id=\"{{ componentId }}\"\n  name=\"{{ componentId }}\"\n  ng-class=\"{'btn-block': component.block}\"\n  class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n  ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid)\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-click=\"$emit('buttonClick', component, componentId)\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate:null:builder }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n   <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n"
+        "<button ng-attr-type=\"{{ getButtonType() }}\"\n    id=\"{{ componentId }}\"\n    name=\"{{ componentId }}\"\n    ng-class=\"{'btn-block': component.block}\"\n    class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n    ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid) || hasError()\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-click=\"$emit('buttonClick', component, componentId)\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate:null:builder }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n  <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n<div ng-if=\"hasError()\" class=\"has-error\">\n  <p class=\"help-block\" onclick=\"scroll=window.scrollTo(0,0)\">\n    Please correct all errors before submitting.\n  </p>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/button.html',
@@ -79410,7 +79485,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],288:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -79536,7 +79611,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],290:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],290:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -79704,7 +79779,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],293:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],293:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -79831,7 +79906,7 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/datagrid.html', FormioUtils.fieldWrap(
-        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th\n        ng-repeat=\"col in cols track by $index\"\n        ng-class=\"{'field-required': col.validate.required}\"\n        ng-if=\"builder ? '::true' : anyVisible(col)\"\n      >{{ col.label | formioTranslate:null:builder }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\" ng-if=\"builder ? '::true' : anyVisible(col)\">\n        <formio-component\n          component=\"col\"\n          data=\"rows[rowIndex]\"\n          formio-form=\"formioForm\"\n          formio=\"formio\"\n          submission=\"submission\"\n          hide-components=\"hideComponents\"\n          ng-if=\"builder ? '::true' : isVisible(col, row)\"\n          read-only=\"isDisabled(col, row)\"\n          grid-row=\"rowIndex\"\n          grid-col=\"colIndex\"\n          builder=\"builder\"\n          options=\"options\"\n        ></formio-component>\n      </td>\n      <td ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('minLength') || rows.length > component.validate.minLength\">\n        <a ng-click=\"removeRow(rowIndex)\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\" ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('maxLength') || rows.length < component.validate.maxLength\">\n    <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate:null:builder }}\n    </a>\n  </div>\n</div>\n"
+        "<div class=\"formio-data-grid\" ng-controller=\"formioDataGrid\">\n  <table ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\" class=\"table datagrid-table\">\n    <tr>\n      <th\n        ng-repeat=\"col in cols track by $index\"\n        ng-class=\"{'field-required': col.validate.required}\"\n        ng-if=\"builder ? '::true' : anyVisible(col)\"\n      >{{ col.label | formioTranslate:null:builder }}</th>\n    </tr>\n    <tr ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n      <td ng-repeat=\"col in cols track by $index\" ng-init=\"col.hideLabel = true; colIndex = $index\" class=\"formio-data-grid-row\" ng-if=\"builder ? '::true' : anyVisible(col)\">\n        <formio-component\n          component=\"col\"\n          data=\"rows[rowIndex]\"\n          formio-form=\"formioForm\"\n          formio=\"formio\"\n          submission=\"submission\"\n          hide-components=\"hideComponents\"\n          ng-if=\"builder ? '::true' : isVisible(col, row)\"\n          read-only=\"isDisabled(col, row)\"\n          grid-row=\"rowIndex\"\n          grid-col=\"colIndex\"\n          builder=\"builder\"\n          options=\"options\"\n        ></formio-component>\n      </td>\n      <td ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('minLength') || rows.length > component.validate.minLength\">\n        <a ng-click=\"(readOnly || formioForm.submitting)? null: removeRow(rowIndex) \" ng-disabled = \"readOnly || formioForm.submitting\" class=\"btn btn-default\">\n          <span class=\"glyphicon glyphicon-remove-circle\"></span>\n        </a>\n      </td>\n    </tr>\n  </table>\n  <div class=\"datagrid-add\" ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('maxLength') || rows.length < component.validate.maxLength\">\n    <a ng-click=\"(readOnly || formioForm.submitting)? null: addRow() \" ng-disabled = \"readOnly || formioForm.submitting\" class=\"btn btn-primary\">\n      <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate:null:builder }}\n    </a>\n  </div>\n</div>\n"
       ));
     }
   ]);
@@ -80211,6 +80286,390 @@ module.exports = function(app) {
 
 },{}],296:[function(_dereq_,module,exports){
 "use strict";
+
+var formioUtils = _dereq_('formiojs/utils');
+
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      formioComponentsProvider.register('editgrid', {
+        title: 'Edit Grid',
+        template: 'formio/components/editgrid.html',
+        group: 'advanced',
+        tableView: function(data, component, $interpolate, componentInfo, tableChild) {
+          var view = '<table class="table table-striped table-bordered table-child">';
+
+          if (!tableChild) {
+            view += '<thead><tr>';
+            angular.forEach(component.components, function(component) {
+              view += '<th>' + (component.label || '') + ' (' + component.key + ')</th>';
+            });
+            view += '</tr></thead>';
+          }
+
+          view += '<tbody>';
+          angular.forEach(data, function(row) {
+            view += '<tr>';
+            formioUtils.eachComponent(component.components, function(component) {
+              // Don't render disabled fields, or fields with undefined data.
+              if (!component.tableView || row[component.key] === undefined) {
+                return;
+              }
+
+              // If the component has a defined tableView, use that, otherwise try and use the raw data as a string.
+              var info = componentInfo.components.hasOwnProperty(component.type) ? componentInfo.components[component.type] : {};
+              if (info.tableView) {
+                // Reset the tableChild value for datagrids, so that components have headers.
+                view += '<td>' + info.tableView(row[component.key] || '', component, $interpolate, componentInfo, false) + '</td>';
+              }
+              else {
+                view += '<td>';
+                if (component.prefix) {
+                  view += component.prefix;
+                }
+                view += row[component.key] || '';
+                if (component.suffix) {
+                  view += ' ' + component.suffix;
+                }
+                view += '</td>';
+              }
+            });
+            view += '</tr>';
+          });
+          view += '</tbody></table>';
+          return view;
+        },
+        settings: {
+          input: true,
+          tree: true,
+          components: [],
+          multiple: true,
+          tableView: true,
+          label: '',
+          key: 'editgrid',
+          protected: false,
+          persistent: true,
+          hidden: false,
+          clearOnHide: true,
+          templates: {
+            header: '' +
+              '<div class="row"> \n' +
+              '  {%util.eachComponent(components, function(component) { %} \n' +
+              '    <div class="col-sm-2"> \n' +
+              '      {{ component.label }} \n' +
+              '    </div> \n' +
+              '  {% }) %} \n' +
+              '</div>',
+            row: '' +
+              '<div class="row"> \n' +
+              '  {%util.eachComponent(components, function(component) { %} \n' +
+              '    <div class="col-sm-2"> \n' +
+              '      {{ row[component.key] }} \n' +
+              '    </div> \n' +
+              '  {% }) %} \n' +
+              '  <div class="col-sm-2"> \n' +
+              '    <div class="btn-group pull-right"> \n' +
+              '      <div class="btn btn-default editRow">Edit</div> \n' +
+              '      <div class="btn btn-danger removeRow">Delete</div> \n' +
+              '    </div> \n' +
+              '  </div> \n' +
+              '</div>',
+            footer: ''
+          }
+        }
+      });
+    }
+  ]);
+  app.directive('editgridValidation', function() {
+    return {
+      require: 'ngModel',
+      restrict: 'A',
+      link: function(scope, elem, attr, ctrl) {
+        if (scope.builder) return;
+
+        // Add the control to the main form.
+        scope.formioForm.$addControl(ctrl);
+
+        ctrl.$validators.editgrid = function(modelValue, viewValue) {
+          if (scope.openRows && scope.openRows.length) {
+            return false;
+          }
+          return true;
+        };
+      }
+    }
+  });
+  app.directive('editgridRowValidation', function() {
+    return {
+      require: 'ngModel',
+      restrict: 'A',
+      link: function(scope, elem, attr, ctrl) {
+        if (scope.builder) return;
+
+        // Add the control to the main form.
+        scope.formioForm.$addControl(ctrl);
+
+        var _get = function(item, path, def) {
+          if (!item) {
+            return def || undefined;
+          }
+          if (!path) {
+            return item;
+          }
+
+          // If the path is a string, turn it into an array.
+          if (typeof path === 'string') {
+            path = path.split('.');
+          }
+          // If the path is an array, take the first element, and recurse its path
+          if (path instanceof Array) {
+            var current = path.shift();
+            if (item.hasOwnProperty(current)) {
+              // If there are no more path items, stop here.
+              if (path.length === 0) {
+                return item[current];
+              }
+
+              return _get(item[current], path);
+            }
+
+            return undefined;
+          }
+
+          return undefined;
+        };
+
+        ctrl.$validators.editgridrow = function(modelValue, viewValue) {
+          var valid = true;
+          /*eslint-disable no-unused-vars */
+          if (scope.component.validate && scope.component.validate.row) {
+            var input = modelValue || viewValue;
+
+            // FOR-255 - Enable row data and form data to be visible in the validator.
+            var data = scope.submission.data;
+            var row = scope.row;
+            /*eslint-enable no-unused-vars */
+
+            var custom = scope.component.validate.row;
+            custom = custom.replace(/({{\s{0,}(.*[^\s]){1}\s{0,}}})/g, function(match, $1, $2) {
+              return _get(scope.submission.data, $2);
+            });
+
+            try {
+              /* jshint evil: true */
+              eval(custom);
+            }
+            catch (err) {
+              valid = err.message;
+            }
+
+            if (valid !== true) {
+              return false;
+            }
+          }
+
+          return true;
+        };
+      }
+    }
+  });
+  app.directive('renderTemplate', function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      scope: {
+        template: '=',
+        data: '=',
+        actions: '='
+      },
+      link: function(scope, element, attrs) {
+        scope.$watch('data', function() {
+          // Render template and set in element's innerHTML.
+          element.html(formioUtils.interpolate(scope.template, scope.data));
+          // Add actions to child elements with classes.
+          if (scope.actions && scope.actions.length) {
+            scope.actions.forEach(function(action) {
+              var elements = element.find('.' + action.class);
+              elements.each(function(index, element) {
+                element.addEventListener(action.event, action.action);
+              });
+            });
+          }
+        })
+      }
+    }
+  });
+  app.directive('editGridRow', function() {
+    return {
+      restict: 'E',
+      require: 'ngModel',
+      scope: false,
+      controller: [
+        '$scope',
+        function(
+          $scope
+        ) {
+          $scope.$watchCollection('rows', function() {
+            $scope.rowData = angular.copy($scope.rows[$scope.rowIndex]);
+            $scope.templateData = {
+              row: $scope.rowData,
+              rowIndex: $scope.rowIndex,
+              components: $scope.component.components,
+              util: formioUtils
+            };
+          });
+          $scope.editDone = function(form) {
+            if (!form.$valid) {
+              form.$setDirty(true);
+              for (var key in form) {
+                if (form[key] && form[key].hasOwnProperty('$pristine')) {
+                  form[key].$setDirty(true);
+                }
+                if (form[key] && form[key].$validate) {
+                  form[key].$validate();
+                }
+              }
+              return;
+            }
+            $scope.rows[$scope.rowIndex] = $scope.rowData;
+            $scope.openRows.splice($scope.openRows.indexOf($scope.rowIndex), 1);
+          }
+
+          var editRow = function() {
+            $scope.openRows.push($scope.rowIndex);
+            $scope.$apply();
+          }
+          var removeRow = function() {
+            $scope.removeRow($scope.rowIndex);
+            $scope.$apply();
+          }
+          $scope.actions = [
+            {
+              class: 'removeRow',
+              event: 'click',
+              action: removeRow
+            },
+            {
+              class: 'editRow',
+              event: 'click',
+              action: editRow
+            }
+          ]
+        }
+      ],
+      template: '' +
+      '<div ng-if="openRows.indexOf(rowIndex) !== -1">' +
+      '  <div class="edit-body {{component.rowClass}}">' +
+      '    <div class="editgrid-edit">' +
+      '      <div class="editgrid-body">' +
+      '        <ng-form name="formioForm">' +
+      '          <formio-component' +
+      '            ng-repeat="col in component.components track by $index"' +
+      '            ng-init="colIndex = $index"' +
+      '            component="col"' +
+      '            data="rowData"' +
+      '            formio-form="formioForm"' +
+      '            formio="formio"' +
+      '            submission="submission"' +
+      '            hide-components="hideComponents"' +
+      '            ng-if="builder ? \'::true\' : isVisible(col, rowData)"' +
+      '            formio-form="formioForm"' +
+      '            read-only="isDisabled(col, rowData)"' +
+      '            grid-row="rowIndex"' +
+      '            grid-col="colIndex"' +
+      '            builder="builder"' +
+      '          />' +
+      '        </ng-form>' +
+      '        <div class="editgrid-actions">' +
+      '          <div ng-click="editDone(formioForm)" class="btn btn-primary">{{ component.saveRow || \'Save\' }}</div>' +
+      '          <div ng-if="component.removeRow" on-click="removeRow(rowIndex)" class="btn btn-danger">{{component.removeRow || \'Cancel\' }}</div>' +
+      '        </div> ' +
+      '      </div>' +
+      '    </div>' +
+      '  </div>' +
+      '</div>' +
+      '<div ng-if="openRows.indexOf(rowIndex) === -1">' +
+      '  <render-template template="component.templates.row" data="templateData" actions="actions"/>' +
+      '</div>'
+    }
+  });
+  app.controller('formioEditGrid', [
+    '$scope',
+    'FormioUtils',
+    function($scope, FormioUtils) {
+      if ($scope.builder) return;
+      // Ensure each data grid has a valid data model.
+      $scope.data = $scope.data || {};
+      $scope.data[$scope.component.key] = $scope.data[$scope.component.key] || [];
+      $scope.$watch('data.' + $scope.component.key, function() {
+        $scope.headerData = {
+          components: $scope.cols,
+          value: $scope.data[$scope.component.key],
+          util: formioUtils
+        };
+      }, true);
+
+      $scope.openRows = [];
+
+      // Determine if any component is visible.
+      $scope.anyVisible = function(component) {
+        var data = $scope.data[$scope.component.key];
+        var visible = false;
+        angular.forEach(data, function(rowData) {
+          visible = (visible || FormioUtils.isVisible(component, rowData, $scope.data, $scope.hideComponents));
+        });
+        return visible;
+      };
+
+      // Pull out the rows and cols for easy iteration.
+      $scope.rows = $scope.data[$scope.component.key];
+      // If less than minLength, add that many rows.
+      if ($scope.component.validate && $scope.component.validate.hasOwnProperty('minLength') && $scope.rows.length < $scope.component.validate.minLength) {
+        var toAdd = $scope.component.validate.minLength - $scope.rows.length;
+        for (var i = 0; i < toAdd; i++) {
+          $scope.rows.push({});
+        }
+      }
+      // If more than maxLength, remove extra rows.
+      if ($scope.component.validate && $scope.component.validate.hasOwnProperty('maxLength') && $scope.rows.length < $scope.component.validate.maxLength) {
+        $scope.rows = $scope.rows.slice(0, $scope.component.validate.maxLength);
+      }
+      $scope.cols = $scope.component.components;
+      $scope.localKeys = $scope.component.components.map(function(component) {
+        return component.key;
+      });
+
+      // Add a row the to grid.
+      $scope.addRow = function() {
+        if (!Array.isArray($scope.rows)) {
+          $scope.rows = [];
+        }
+        $scope.openRows.push($scope.rows.length);
+        $scope.rows.push({});
+      };
+
+      // Remove a row from the grid.
+      $scope.removeRow = function(index) {
+        // Make sure to close if it is open.
+        if ($scope.openRows.indexOf(index) !== -1) {
+          $scope.openRows.splice($scope.openRows.indexOf(index), 1);
+        }
+        $scope.rows.splice(index, 1);
+      };
+    }
+  ]);
+  app.run([
+    '$templateCache',
+    'FormioUtils',
+    function($templateCache, FormioUtils) {
+      $templateCache.put('formio/components/editgrid.html', "<div name=\"{{ componentId }}\" ng-model=\"data[component.key]\" custom-validator=\"component.validate.custom\" editgrid-validation ng-controller=\"formioEditGrid\">\n  <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">{{ component.label | formioTranslate:null:builder }}</label>\n  <div class=\"formio-data-grid\" id=\"{{ component.key }}\">\n    <ul class=\"list-group\">\n      <li ng-if=\"component.templates.header\" class=\"list-group-item list-group-header\">\n        <render-template template=\"component.templates.header\" data=\"headerData\" />\n      </li>\n      <li class=\"list-group-item\" ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n        <div name=\"{{ componentId }}-row-{{ $index }}\" ng-model=\"row\" editgrid-row-validation>\n          <edit-grid-row />\n          <p class=\"help-block\" ng-show=\"openRows.indexOf($index) !== -1 && formioForm.$error.editgrid\">{{ 'Please save all rows before proceeding' | formioTranslate }}.</p>\n          <p class=\"help-block\" ng-show=\"formioForm[componentId + '-row-' + $index].$error.editgridrow\">{{ 'Please correct rows before proceeding' | formioTranslate }}.</p>\n        </div>\n      </li>\n      <li ng-if=\"component.templates.footer\" class=\"list-group-item list-group-footer\">\n        <render-template template=\"component.templates.footer\" data=\"headerData\" />\n      </li>\n    </ul>\n    <div class=\"datagrid-add\" ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('maxLength') || rows.length < component.validate.maxLength\">\n      <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n        <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate:null:builder }}\n      </a>\n    </div>\n  </div>\n</div>\n");
+    }
+  ]);
+};
+
+},{"formiojs/utils":38}],297:[function(_dereq_,module,exports){
+"use strict";
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -80243,7 +80702,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -80298,7 +80757,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],298:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],299:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -80564,7 +81023,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],300:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -80591,85 +81050,122 @@ module.exports = function(app) {
           unique: false,
           persistent: true
         },
-        controller: ['$scope', 'FormioUtils', 'Formio', function($scope, FormioUtils, Formio) {
-          var url = $scope.component.src;
-          $scope.options = $scope.options || {};
-          var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
-          if ($scope.component.form) {
-            url = baseUrl;
-            if ($scope.component.project) {
-              url += '/project/' + $scope.component.project;
-            }
-            else if ($scope.formio && $scope.formio.projectUrl) {
-              url  = $scope.formio.projectUrl;
-            }
-            url += '/form/' + $scope.component.form;
-            url = (new Formio(url, {base: baseUrl})).formUrl;
-          }
-
-          if ($scope.data[$scope.component.key] && $scope.data[$scope.component.key]._id) {
-            url += '/submission/' + $scope.data[$scope.component.key]._id;
-          }
-
-          $scope.formFormio = new Formio(url, {base: baseUrl});
-          $scope.formFormio.loadForm().then(function(form) {
-            $scope.componentForm = form;
-          });
-
-          var submitForm = function(scope, cb) {
-            var components = [];
-            if (scope.activePage) {
-              components = scope.activePage.components;
-            }
-            else if (scope.form) {
-              components = scope.form.components;
-            }
-            if (FormioUtils.getComponent(components, $scope.component.key)) {
-              $scope.formFormio.saveSubmission(angular.copy($scope.data[$scope.component.key])).then(function(sub) {
-                angular.merge($scope.data[$scope.component.key], sub);
-                cb();
-              }, cb);
-            }
-            else {
-              return cb();
-            }
-          };
-
-          // Hook into the submit method.
-          FormioUtils.hook($scope.component.key + ':submit', function(scope, data, cb) {
-            submitForm(scope, cb);
-          });
-
-          // Hook into the nextpage method.
-          FormioUtils.hook($scope.component.key + ':nextPage', function(scope, cb) {
-            submitForm(scope, cb);
-          });
-
-          // Hook into the prevpage method.
-          FormioUtils.hook($scope.component.key + ':prevPage', function(scope, cb) {
-            submitForm(scope, cb);
-          });
-
-          // See if we need to load the submission into scope.
-          if (
-            $scope.data[$scope.component.key] &&
-            $scope.data[$scope.component.key]._id &&
-            !$scope.data[$scope.component.key].data
+        controller: [
+          '$scope',
+          'FormioUtils',
+          'Formio',
+          '$timeout',
+          function(
+            $scope,
+            FormioUtils,
+            Formio,
+            $timeout
           ) {
-            $scope.formFormio.loadSubmission().then(function(submission) {
-              angular.merge($scope.data[$scope.component.key], submission);
-            });
-          }
+            $scope.options = $scope.options || {};
+            var url = $scope.component.src;
+            var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
 
-          // Make sure to hide the submit button on the loaded form.
-          $scope.$on('formLoad', function(err, form) {
-            FormioUtils.eachComponent(form.components, function(component) {
-              if ((component.type === 'button') && (component.action === 'submit')) {
-                component.hidden = true;
+            var refreshForm = function(formObj) {
+              if (!formObj) {
+                return;
               }
+              if ($scope.componentForm) {
+                $scope.componentForm = null;
+              }
+              $timeout(function() {
+                $scope.componentForm = formObj;
+              });
+            };
+
+            var loadForm = function() {
+              if (!$scope.component.form) {
+                return;
+              }
+
+              url = baseUrl;
+              if ($scope.component.project) {
+                url += '/project/' + $scope.component.project;
+              }
+              else if ($scope.formio && $scope.formio.projectUrl) {
+                url  = $scope.formio.projectUrl;
+              }
+              url += '/form/' + $scope.component.form;
+              url = (new Formio(url, {base: baseUrl})).formUrl;
+
+              if ($scope.data[$scope.component.key] && $scope.data[$scope.component.key]._id) {
+                url += '/submission/' + $scope.data[$scope.component.key]._id;
+              }
+
+              $scope.formFormio = new Formio(url, {base: baseUrl});
+              if ($scope.formFormio.formId) {
+                $scope.formFormio.loadForm().then(refreshForm);
+              }
+
+              // See if we need to load the submission into scope.
+              if (
+                $scope.formFormio.submissionId &&
+                $scope.data[$scope.component.key] &&
+                $scope.data[$scope.component.key]._id &&
+                !$scope.data[$scope.component.key].data
+              ) {
+                $scope.formFormio.loadSubmission().then(function(submission) {
+                  angular.merge($scope.data[$scope.component.key], submission);
+                });
+              }
+            };
+
+            var submitForm = function(scope, cb) {
+              var components = [];
+              if (scope.activePage) {
+                components = scope.activePage.components;
+              }
+              else if (scope.form) {
+                components = scope.form.components;
+              }
+              if (FormioUtils.getComponent(components, $scope.component.key)) {
+                $scope.formFormio.saveSubmission(angular.copy($scope.data[$scope.component.key])).then(function(sub) {
+                  angular.merge($scope.data[$scope.component.key], sub);
+                  cb();
+                }, cb);
+              }
+              else {
+                return cb();
+              }
+            };
+
+            // Hook into the submit method.
+            FormioUtils.hook($scope.component.key + ':submit', function(scope, data, cb) {
+              submitForm(scope, cb);
             });
-          });
-        }],
+
+            // Hook into the nextpage method.
+            FormioUtils.hook($scope.component.key + ':nextPage', function(scope, cb) {
+              submitForm(scope, cb);
+            });
+
+            // Hook into the prevpage method.
+            FormioUtils.hook($scope.component.key + ':prevPage', function(scope, cb) {
+              submitForm(scope, cb);
+            });
+
+            // Make sure to hide the submit button on the loaded form.
+            $scope.$on('formLoad', function(err, form) {
+              FormioUtils.eachComponent(form.components, function(component) {
+                if ((component.type === 'button') && (component.action === 'submit')) {
+                  component.hidden = true;
+                }
+              });
+            });
+
+            $scope.$watch('component.form', function() {
+              loadForm();
+            });
+
+            $scope.$watch('data[component.key]', function() {
+              refreshForm($scope.componentForm);
+            }, true);
+          }
+        ],
         tableView: GridUtils.generic
       });
     }
@@ -80684,7 +81180,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],300:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],301:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -80720,7 +81216,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],301:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],302:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -80812,7 +81308,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -80846,6 +81342,7 @@ _dereq_('./signature')(app);
 _dereq_('./custom')(app);
 _dereq_('./container')(app);
 _dereq_('./datagrid')(app);
+_dereq_('./editgrid')(app);
 _dereq_('./survey')(app);
 
 // Layout
@@ -80856,7 +81353,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":284,"./button":285,"./checkbox":286,"./columns":287,"./components":288,"./container":289,"./content":290,"./currency":291,"./custom":292,"./datagrid":293,"./datetime":294,"./day":295,"./email":296,"./fieldset":297,"./file":298,"./form":299,"./hidden":300,"./htmlelement":301,"./number":303,"./page":304,"./panel":305,"./password":306,"./phonenumber":307,"./radio":308,"./resource":309,"./select":310,"./selectboxes":311,"./signature":312,"./survey":313,"./table":314,"./textarea":315,"./textfield":316,"./time":317,"./well":318}],303:[function(_dereq_,module,exports){
+},{"./address":284,"./button":285,"./checkbox":286,"./columns":287,"./components":288,"./container":289,"./content":290,"./currency":291,"./custom":292,"./datagrid":293,"./datetime":294,"./day":295,"./editgrid":296,"./email":297,"./fieldset":298,"./file":299,"./form":300,"./hidden":301,"./htmlelement":302,"./number":304,"./page":305,"./panel":306,"./password":307,"./phonenumber":308,"./radio":309,"./resource":310,"./select":311,"./selectboxes":312,"./signature":313,"./survey":314,"./table":315,"./textarea":316,"./textfield":317,"./time":318,"./well":319}],304:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -80921,7 +81418,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -80948,7 +81445,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -81004,7 +81501,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],306:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81035,7 +81532,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],307:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81071,7 +81568,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -81122,7 +81619,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -81346,7 +81843,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],310:[function(_dereq_,module,exports){
+},{}],311:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -81966,7 +82463,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":216,"lodash/cloneDeep":223,"lodash/get":231,"lodash/isEqual":240,"lodash/set":266}],311:[function(_dereq_,module,exports){
+},{"lodash/assign":216,"lodash/cloneDeep":223,"lodash/get":231,"lodash/isEqual":240,"lodash/set":266}],312:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -82074,7 +82571,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],312:[function(_dereq_,module,exports){
+},{}],313:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -82216,7 +82713,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":283}],313:[function(_dereq_,module,exports){
+},{"signature_pad":283}],314:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -82277,7 +82774,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],315:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -82357,7 +82854,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],315:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],316:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -82483,7 +82980,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -82544,7 +83041,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 
 var moment = _dereq_('moment');
@@ -82616,7 +83113,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"moment":278}],318:[function(_dereq_,module,exports){
+},{"moment":278}],319:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -82669,7 +83166,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":333}],319:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],320:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -82747,7 +83244,7 @@ module.exports = function() {
   };
 };
 
-},{}],320:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -82987,8 +83484,11 @@ module.exports = function() {
             // copy to remove angular $$hashKey
             var submissionMethod = submissionData._id ? 'put' : 'post';
             $scope.formio.saveSubmission(submissionData, $scope.formioOptions).then(function(submission) {
-              submission.method = submissionMethod;
-              onSubmitDone(submission.method, submission, form);
+              // If submission saved propagate method to ngFormioHelper for correct message
+              if (typeof submission === 'object') {
+                submission.method = submissionMethod;
+              }
+              onSubmitDone(submissionMethod, submission, form);
             }, FormioScope.onError($scope, $element)).finally(function() {
               if (form) {
                 form.submitting = false;
@@ -83145,7 +83645,7 @@ module.exports = function() {
   };
 };
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -83162,7 +83662,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 var _get = _dereq_('lodash/get');
 
@@ -83430,7 +83930,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/get":231}],323:[function(_dereq_,module,exports){
+},{"lodash/get":231}],324:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -83503,7 +84003,7 @@ module.exports = [
   }
 ];
 
-},{}],324:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -83587,7 +84087,7 @@ module.exports = function() {
   };
 };
 
-},{}],325:[function(_dereq_,module,exports){
+},{}],326:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -83606,7 +84106,7 @@ module.exports = [
   }
 ];
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],327:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -83616,7 +84116,7 @@ module.exports = function() {
   };
 };
 
-},{}],327:[function(_dereq_,module,exports){
+},{}],328:[function(_dereq_,module,exports){
 "use strict";
 // Javascript editor directive
 module.exports = ['FormioUtils', function(FormioUtils) {
@@ -83691,7 +84191,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],328:[function(_dereq_,module,exports){
+},{}],329:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -83723,7 +84223,7 @@ module.exports = function() {
   };
 };
 
-},{}],329:[function(_dereq_,module,exports){
+},{}],330:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -83779,7 +84279,7 @@ module.exports = function() {
   };
 };
 
-},{}],330:[function(_dereq_,module,exports){
+},{}],331:[function(_dereq_,module,exports){
 "use strict";
 var isNaN = _dereq_('lodash/isNAN');
 var isFinite = _dereq_('lodash/isFinite');
@@ -84378,7 +84878,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/isFinite":242,"lodash/isNAN":245}],331:[function(_dereq_,module,exports){
+},{"lodash/isFinite":242,"lodash/isNAN":245}],332:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -84562,7 +85062,7 @@ module.exports = [
   }
 ];
 
-},{}],332:[function(_dereq_,module,exports){
+},{}],333:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 var _filter = _dereq_('lodash/filter');
@@ -84710,9 +85210,8 @@ module.exports = function() {
         if (component.type === 'selectboxes') {
           return done(false);
         }
-
         // If there is a default value and it is not an array, wrap the value.
-        if (component.multiple && component.defaultValue && typeof component.defaultValue === 'string') {
+        if (component.multiple && component.type !== 'file' && typeof component.defaultValue === 'string') {
           value = component.defaultValue.split(',');
         }
         else {
@@ -84927,10 +85426,10 @@ module.exports = function() {
                 '<formio-errors ng-if="::!builder"></formio-errors>' +
               '</div>' +
             '</td>' +
-            '<td><a ng-click="removeFieldValue($index)" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
+            '<td><a ng-click="(readOnly || formioForm.submitting)? null:removeFieldValue($index) " ng-disabled = "readOnly || formioForm.submitting" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
           '</tr>' +
           '<tr>' +
-            '<td colspan="2"><a ng-click="addFieldValue()" class="btn btn-primary"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" | formioTranslate:null:builder }}</a></td>' +
+            '<td colspan="2"><a ng-click="(readOnly || formioForm.submitting)? null: addFieldValue() " ng-disabled = "readOnly || formioForm.submitting" class="btn btn-primary"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" | formioTranslate:null:builder }}</a></td>' +
           '</tr>' +
         '</table></div>';
       return template;
@@ -84948,7 +85447,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":38,"lodash/filter":229,"lodash/get":231}],333:[function(_dereq_,module,exports){
+},{"formiojs/utils":38,"lodash/filter":229,"lodash/get":231}],334:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -85074,7 +85573,7 @@ module.exports = function() {
   };
 };
 
-},{}],334:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -85123,7 +85622,7 @@ module.exports = [
   }
 ];
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],336:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -85157,7 +85656,7 @@ module.exports = [
   }
 ];
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -85166,7 +85665,7 @@ module.exports = [
   }
 ];
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],338:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -85179,7 +85678,7 @@ module.exports = [
   }
 ];
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -85198,7 +85697,7 @@ module.exports = [
   }
 ];
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -85211,7 +85710,7 @@ module.exports = [
   }
 ];
 
-},{}],340:[function(_dereq_,module,exports){
+},{}],341:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -85226,7 +85725,7 @@ module.exports = [
   }
 ];
 
-},{}],341:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -85275,7 +85774,7 @@ module.exports = [
   }
 ];
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],343:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -85283,7 +85782,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 (function (global){
 "use strict";
 global.jQuery = _dereq_('jquery');
@@ -85303,7 +85802,7 @@ _dereq_('angular-ui-ace/src/ui-ace');
 _dereq_('./formio');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./formio":344,"angular":13,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask":11,"bootstrap":15,"bootstrap-ui-datetime-picker/dist/datetime-picker":14,"jquery":39,"ng-dialog":280,"ng-file-upload":282,"ui-select/dist/select":349}],344:[function(_dereq_,module,exports){
+},{"./formio":345,"angular":13,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask":11,"bootstrap":15,"bootstrap-ui-datetime-picker/dist/datetime-picker":14,"jquery":39,"ng-dialog":280,"ng-file-upload":282,"ui-select/dist/select":350}],345:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -85458,7 +85957,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":302,"./directives/customValidator":319,"./directives/formio":320,"./directives/formioBindHtml.js":321,"./directives/formioComponent":322,"./directives/formioComponentView":323,"./directives/formioDelete":324,"./directives/formioElement":325,"./directives/formioErrors":326,"./directives/formioScriptEditor":327,"./directives/formioSubmission":328,"./directives/formioSubmissions":329,"./directives/formioWizard":330,"./factories/FormioScope":331,"./factories/FormioUtils":332,"./factories/formioInterceptor":334,"./factories/formioTableView":335,"./filters/flattenComponents":336,"./filters/safehtml":337,"./filters/tableComponents":338,"./filters/tableFieldView":339,"./filters/tableView":340,"./filters/translate":341,"./filters/trusturl":342,"./polyfills/polyfills":346,"./providers/Formio":347}],345:[function(_dereq_,module,exports){
+},{"./components":303,"./directives/customValidator":320,"./directives/formio":321,"./directives/formioBindHtml.js":322,"./directives/formioComponent":323,"./directives/formioComponentView":324,"./directives/formioDelete":325,"./directives/formioElement":326,"./directives/formioErrors":327,"./directives/formioScriptEditor":328,"./directives/formioSubmission":329,"./directives/formioSubmissions":330,"./directives/formioWizard":331,"./factories/FormioScope":332,"./factories/FormioUtils":333,"./factories/formioInterceptor":335,"./factories/formioTableView":336,"./filters/flattenComponents":337,"./filters/safehtml":338,"./filters/tableComponents":339,"./filters/tableFieldView":340,"./filters/tableView":341,"./filters/translate":342,"./filters/trusturl":343,"./polyfills/polyfills":347,"./providers/Formio":348}],346:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -85489,13 +85988,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],346:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":345}],347:[function(_dereq_,module,exports){
+},{"./Object.assign":346}],348:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -85565,7 +86064,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":30}],348:[function(_dereq_,module,exports){
+},{"formiojs":30}],349:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -85602,7 +86101,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],349:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -88030,7 +88529,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],350:[function(_dereq_,module,exports){
+},{}],351:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -88493,7 +88992,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],352:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -88566,7 +89065,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],352:[function(_dereq_,module,exports){
+},{}],353:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -88644,7 +89143,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],353:[function(_dereq_,module,exports){
+},{}],354:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -88736,7 +89235,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],354:[function(_dereq_,module,exports){
+},{}],355:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -88819,7 +89318,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],355:[function(_dereq_,module,exports){
+},{}],356:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -88970,7 +89469,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],356:[function(_dereq_,module,exports){
+},{}],357:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89023,7 +89522,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],357:[function(_dereq_,module,exports){
+},{}],358:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89094,7 +89593,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],358:[function(_dereq_,module,exports){
+},{}],359:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89165,7 +89664,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],359:[function(_dereq_,module,exports){
+},{}],360:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89228,7 +89727,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],361:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89295,7 +89794,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],361:[function(_dereq_,module,exports){
+},{}],362:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89486,7 +89985,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],362:[function(_dereq_,module,exports){
+},{}],363:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89562,7 +90061,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],363:[function(_dereq_,module,exports){
+},{}],364:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -89611,7 +90110,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":223,"lodash/each":226}],364:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":223,"lodash/each":226}],365:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89667,7 +90166,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],365:[function(_dereq_,module,exports){
+},{}],366:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -89753,7 +90252,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":256}],366:[function(_dereq_,module,exports){
+},{"lodash/map":256}],367:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89869,7 +90368,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],367:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89929,7 +90428,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],368:[function(_dereq_,module,exports){
+},{}],369:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -89989,7 +90488,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],369:[function(_dereq_,module,exports){
+},{}],370:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -90033,7 +90532,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":351,"./button":352,"./checkbox":353,"./columns":354,"./components":355,"./container":356,"./content":357,"./currency":358,"./custom":359,"./datagrid":360,"./datetime":361,"./day":362,"./email":363,"./fieldset":364,"./file":365,"./form":366,"./hidden":367,"./htmlelement":368,"./number":370,"./page":371,"./panel":372,"./password":373,"./phonenumber":374,"./radio":375,"./resource":376,"./select":377,"./selectboxes":378,"./signature":379,"./survey":380,"./table":381,"./textarea":382,"./textfield":383,"./time":384,"./well":385}],370:[function(_dereq_,module,exports){
+},{"./address":352,"./button":353,"./checkbox":354,"./columns":355,"./components":356,"./container":357,"./content":358,"./currency":359,"./custom":360,"./datagrid":361,"./datetime":362,"./day":363,"./email":364,"./fieldset":365,"./file":366,"./form":367,"./hidden":368,"./htmlelement":369,"./number":371,"./page":372,"./panel":373,"./password":374,"./phonenumber":375,"./radio":376,"./resource":377,"./select":378,"./selectboxes":379,"./signature":380,"./survey":381,"./table":382,"./textarea":383,"./textfield":384,"./time":385,"./well":386}],371:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90109,7 +90608,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],371:[function(_dereq_,module,exports){
+},{}],372:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90130,7 +90629,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],372:[function(_dereq_,module,exports){
+},{}],373:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90237,7 +90736,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],373:[function(_dereq_,module,exports){
+},{}],374:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90308,7 +90807,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],374:[function(_dereq_,module,exports){
+},{}],375:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90382,7 +90881,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],375:[function(_dereq_,module,exports){
+},{}],376:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90451,7 +90950,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],376:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90544,7 +91043,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],377:[function(_dereq_,module,exports){
+},{}],378:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -90792,7 +91291,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":222}],378:[function(_dereq_,module,exports){
+},{"lodash/clone":222}],379:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90865,7 +91364,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],379:[function(_dereq_,module,exports){
+},{}],380:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90928,7 +91427,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],380:[function(_dereq_,module,exports){
+},{}],381:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90995,7 +91494,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],381:[function(_dereq_,module,exports){
+},{}],382:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91067,7 +91566,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],382:[function(_dereq_,module,exports){
+},{}],383:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91173,7 +91672,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],383:[function(_dereq_,module,exports){
+},{}],384:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91249,7 +91748,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],384:[function(_dereq_,module,exports){
+},{}],385:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -91296,7 +91795,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":223,"lodash/each":226}],385:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":223,"lodash/each":226}],386:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91343,7 +91842,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],386:[function(_dereq_,module,exports){
+},{}],387:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -91596,7 +92095,7 @@ module.exports = {
   }
 };
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],388:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -91667,7 +92166,7 @@ module.exports = {
   ]
 };
 
-},{}],388:[function(_dereq_,module,exports){
+},{}],389:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -92029,7 +92528,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":220,"lodash/cloneDeep":223,"lodash/each":226,"lodash/groupBy":232,"lodash/merge":258,"lodash/omitBy":260,"lodash/upperFirst":276}],389:[function(_dereq_,module,exports){
+},{"lodash/capitalize":220,"lodash/cloneDeep":223,"lodash/each":226,"lodash/groupBy":232,"lodash/merge":258,"lodash/omitBy":260,"lodash/upperFirst":276}],390:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -92045,7 +92544,7 @@ module.exports = [
   }
 ];
 
-},{}],390:[function(_dereq_,module,exports){
+},{}],391:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -92140,7 +92639,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":38,"lodash/get":231,"lodash/reject":264}],391:[function(_dereq_,module,exports){
+},{"formiojs/utils":38,"lodash/get":231,"lodash/reject":264}],392:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -92478,7 +92977,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":216,"lodash/camelCase":219,"lodash/isNumber":247}],392:[function(_dereq_,module,exports){
+},{"lodash/assign":216,"lodash/camelCase":219,"lodash/isNumber":247}],393:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -92503,7 +93002,7 @@ module.exports = [
   }
 ];
 
-},{}],393:[function(_dereq_,module,exports){
+},{}],394:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -92528,7 +93027,7 @@ module.exports = [
   }
 ];
 
-},{}],394:[function(_dereq_,module,exports){
+},{}],395:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -92597,7 +93096,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],395:[function(_dereq_,module,exports){
+},{}],396:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -92638,7 +93137,7 @@ module.exports = function() {
   };
 };
 
-},{}],396:[function(_dereq_,module,exports){
+},{}],397:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -92684,7 +93183,7 @@ module.exports = function() {
   };
 };
 
-},{}],397:[function(_dereq_,module,exports){
+},{}],398:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -92728,7 +93227,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":256}],398:[function(_dereq_,module,exports){
+},{"lodash/map":256}],399:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -92750,7 +93249,7 @@ module.exports = [
   }
 ];
 
-},{}],399:[function(_dereq_,module,exports){
+},{}],400:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -92804,7 +93303,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":258}],400:[function(_dereq_,module,exports){
+},{"lodash/merge":258}],401:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -92845,7 +93344,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],401:[function(_dereq_,module,exports){
+},{}],402:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -92882,7 +93381,7 @@ module.exports = function() {
   };
 };
 
-},{}],402:[function(_dereq_,module,exports){
+},{}],403:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -92949,7 +93448,7 @@ module.exports = function() {
   };
 };
 
-},{}],403:[function(_dereq_,module,exports){
+},{}],404:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -92972,7 +93471,7 @@ module.exports = function() {
   };
 };
 
-},{}],404:[function(_dereq_,module,exports){
+},{}],405:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -93054,7 +93553,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":219,"lodash/map":256}],405:[function(_dereq_,module,exports){
+},{"lodash/camelCase":219,"lodash/map":256}],406:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -93163,7 +93662,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],406:[function(_dereq_,module,exports){
+},{}],407:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -93197,16 +93696,16 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],407:[function(_dereq_,module,exports){
+},{}],408:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-full.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":408,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-full.js":343}],408:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":409,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-full.js":344}],409:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.22.3 | https://unpkg.com/ng-formio-builder@2.22.3/LICENSE.txt */
+/*! ng-formio-builder v2.23.0 | https://unpkg.com/ng-formio-builder@2.23.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -93362,5 +93861,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":369,"./constants/commonOptions":386,"./constants/formOptions":387,"./directives/formBuilder":388,"./directives/formBuilderComponent":389,"./directives/formBuilderConditional":390,"./directives/formBuilderDnd":391,"./directives/formBuilderElement":392,"./directives/formBuilderList":393,"./directives/formBuilderOption":394,"./directives/formBuilderOptionCustomValidation":395,"./directives/formBuilderOptionKey":396,"./directives/formBuilderOptionTags":397,"./directives/formBuilderRow":398,"./directives/formBuilderTable":399,"./directives/formBuilderTooltip":400,"./directives/jsonInput":401,"./directives/objectBuilder":402,"./directives/validApiKey":403,"./directives/valueBuilder":404,"./factories/BuilderUtils":405,"./factories/debounce":406}]},{},[407])(407)
+},{"./components":370,"./constants/commonOptions":387,"./constants/formOptions":388,"./directives/formBuilder":389,"./directives/formBuilderComponent":390,"./directives/formBuilderConditional":391,"./directives/formBuilderDnd":392,"./directives/formBuilderElement":393,"./directives/formBuilderList":394,"./directives/formBuilderOption":395,"./directives/formBuilderOptionCustomValidation":396,"./directives/formBuilderOptionKey":397,"./directives/formBuilderOptionTags":398,"./directives/formBuilderRow":399,"./directives/formBuilderTable":400,"./directives/formBuilderTooltip":401,"./directives/jsonInput":402,"./directives/objectBuilder":403,"./directives/validApiKey":404,"./directives/valueBuilder":405,"./factories/BuilderUtils":406,"./factories/debounce":407}]},{},[408])(408)
 });
