@@ -79519,7 +79519,7 @@ module.exports = function(app) {
           $scope.component.project = $scope.formio.projectId;
           $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
             var data = [];
-            if ($scope.form._id ) {
+            if ($scope.form._id) {
               angular.forEach(forms, function(form) {
                 if (form._id !== $scope.form._id) {
                   data.push(form);
@@ -79552,13 +79552,27 @@ module.exports = function(app) {
             return $controller(formController, {$scope: $scope});
           }
 
-          $scope.form = {};
-          $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
-            angular.forEach(forms, function(form) {
-              if (form._id === $scope.component.form) {
-                $scope.form = form;
-              }
+          var forms = {};
+          $scope.form = {title: 'Unknown form'};
+          $scope.formio.loadForms({params: {limit: 100}}).then(function(formioForms) {
+            angular.forEach(formioForms, function(form) {
+              forms[form._id] = form;
             });
+
+            if (
+              $scope.component.form &&
+              ($scope.form._id !== $scope.component.form) &&
+              forms.hasOwnProperty($scope.component.form)
+            ) {
+              $scope.form = forms[$scope.component.form];
+            }
+          });
+
+          $scope.$watch('component.form', function(formId) {
+            if (!formId || !forms.hasOwnProperty(formId)) {
+              return;
+            }
+            $scope.form = forms[formId];
           });
         }
       ];
@@ -80247,6 +80261,7 @@ module.exports = function(app) {
           '<form-builder-option property="addResource"></form-builder-option>' +
           '<form-builder-option property="addResourceLabel" ng-if="component.addResource"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
