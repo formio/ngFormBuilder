@@ -90063,6 +90063,108 @@ module.exports = function(app) {
 
 },{}],364:[function(_dereq_,module,exports){
 "use strict";
+module.exports = function(app) {
+  app.config([
+    'formioComponentsProvider',
+    function(formioComponentsProvider) {
+      formioComponentsProvider.register('editgrid', {
+        fbtemplate: 'formio/formbuilder/editgrid.html',
+        icon: 'fa fa-tasks',
+        views: [
+          {
+            name: 'Display',
+            template: 'formio/components/editgrid/display.html'
+          },
+          {
+            name: 'Templates',
+            template: 'formio/components/editgrid/templates.html'
+          },
+          {
+            name: 'Validation',
+            template: 'formio/components/editgrid/validate.html'
+          },
+          {
+            name: 'API',
+            template: 'formio/components/common/api.html'
+          },
+          {
+            name: 'Conditional',
+            template: 'formio/components/common/conditional.html'
+          }
+        ],
+        documentation: 'http://help.form.io/userguide/#editgrid',
+        noDndOverlay: true,
+        confirmRemove: true
+      });
+    }
+  ]);
+
+  app.run([
+    '$templateCache',
+    function($templateCache) {
+      $templateCache.put('formio/components/editgrid/display.html',
+        '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="clearOnHide"></form-builder-option>' +
+        '<form-builder-option property="protected"></form-builder-option>' +
+        '<form-builder-option property="persistent"></form-builder-option>' +
+        '<form-builder-option property="hidden"></form-builder-option>' +
+        '<form-builder-option property="disabled"></form-builder-option>' +
+        '<form-builder-option property="tableView"></form-builder-option>' +
+        '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/editgrid/templates.html',
+        '<ng-form>' +
+        '<div class="form-group">' +
+        '  <label for="headerTemplate">Header Template</label>' +
+        '  <textarea class="form-control" rows="3" name="headerTemplate" ng-model="component.templates.header" placeholder="/*** Lodash Template Code ***/"></textarea>' +
+        '  <p class="text-muted">Two available variables. "value" is the array of row data and "components" is the array of components in the grid.</p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '  <label for="rowTemplate">Row Template</label>' +
+        '  <textarea class="form-control" rows="6" name="rowTemplate" ng-model="component.templates.row" placeholder="/*** Lodash Template Code ***/"></textarea>' +
+        '  <p class="text-muted">Two available variables. "row" is an object of one row\'s data and "components" is the array of components in the grid. To add click events, add the classes "editRow" and "removeRow" to elements.</p>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '  <label for="footerTemplate">Footer Template</label>' +
+        '  <textarea class="form-control" rows="3" name="footerTemplate" ng-model="component.templates.footer" placeholder="/*** Lodash Template Code ***/"></textarea>' +
+        '  <p class="text-muted">Two available variables. "value" is the array of row data and "components" is the array of components in the grid.</p>' +
+        '</div>' +
+        '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="rowClass"></form-builder-option>' +
+        '<form-builder-option property="addAnother"></form-builder-option>' +
+        '<form-builder-option property="saveRow"></form-builder-option>' +
+        '<form-builder-option property="removeRow"></form-builder-option>' +
+        '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/editgrid/validate.html',
+        '<ng-form>' +
+        '    <label>Row View Validation</label>' +
+        '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.row" placeholder="/*** Example Code ***/\nvalid = (row.myfield === \'some value\') ? true : \'Must be some value\';">{{ component.validate.row }}</textarea>' +
+        '    <small>' +
+        '      <p>Normal validation does not run when a row is in "View" mode. This validation allows running custom view validation and returning an error per row.</p>' +
+        '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
+        '      <p>The variables <strong>row</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
+        '    </small>' +
+        '    <form-builder-option-custom-validation></form-builder-option-custom-validation>' +
+        '</ng-form>'
+      );
+
+      $templateCache.put('formio/formbuilder/editgrid.html',
+        '<fieldset>' +
+        '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
+        '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
+        '</fieldset>'
+      );
+
+    }
+  ]);
+};
+
+},{}],365:[function(_dereq_,module,exports){
+"use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
 module.exports = function(app) {
@@ -90110,7 +90212,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":223,"lodash/each":226}],365:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":223,"lodash/each":226}],366:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90166,7 +90268,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],367:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -90252,7 +90354,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":256}],367:[function(_dereq_,module,exports){
+},{"lodash/map":256}],368:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90368,7 +90470,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],368:[function(_dereq_,module,exports){
+},{}],369:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90428,7 +90530,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],369:[function(_dereq_,module,exports){
+},{}],370:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90488,7 +90590,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],370:[function(_dereq_,module,exports){
+},{}],371:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -90521,6 +90623,7 @@ _dereq_('./form')(app);
 _dereq_('./signature')(app);
 _dereq_('./custom')(app);
 _dereq_('./datagrid')(app);
+_dereq_('./editgrid')(app);
 _dereq_('./survey')(app);
 
 // Layout
@@ -90532,7 +90635,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":352,"./button":353,"./checkbox":354,"./columns":355,"./components":356,"./container":357,"./content":358,"./currency":359,"./custom":360,"./datagrid":361,"./datetime":362,"./day":363,"./email":364,"./fieldset":365,"./file":366,"./form":367,"./hidden":368,"./htmlelement":369,"./number":371,"./page":372,"./panel":373,"./password":374,"./phonenumber":375,"./radio":376,"./resource":377,"./select":378,"./selectboxes":379,"./signature":380,"./survey":381,"./table":382,"./textarea":383,"./textfield":384,"./time":385,"./well":386}],371:[function(_dereq_,module,exports){
+},{"./address":352,"./button":353,"./checkbox":354,"./columns":355,"./components":356,"./container":357,"./content":358,"./currency":359,"./custom":360,"./datagrid":361,"./datetime":362,"./day":363,"./editgrid":364,"./email":365,"./fieldset":366,"./file":367,"./form":368,"./hidden":369,"./htmlelement":370,"./number":372,"./page":373,"./panel":374,"./password":375,"./phonenumber":376,"./radio":377,"./resource":378,"./select":379,"./selectboxes":380,"./signature":381,"./survey":382,"./table":383,"./textarea":384,"./textfield":385,"./time":386,"./well":387}],372:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90608,7 +90711,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],372:[function(_dereq_,module,exports){
+},{}],373:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90629,7 +90732,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],373:[function(_dereq_,module,exports){
+},{}],374:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90736,7 +90839,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],374:[function(_dereq_,module,exports){
+},{}],375:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90807,7 +90910,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],375:[function(_dereq_,module,exports){
+},{}],376:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90881,7 +90984,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],376:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -90950,7 +91053,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],377:[function(_dereq_,module,exports){
+},{}],378:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91043,7 +91146,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],378:[function(_dereq_,module,exports){
+},{}],379:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -91291,7 +91394,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":222}],379:[function(_dereq_,module,exports){
+},{"lodash/clone":222}],380:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91364,7 +91467,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],380:[function(_dereq_,module,exports){
+},{}],381:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91427,7 +91530,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],381:[function(_dereq_,module,exports){
+},{}],382:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91494,7 +91597,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],382:[function(_dereq_,module,exports){
+},{}],383:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91566,7 +91669,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],383:[function(_dereq_,module,exports){
+},{}],384:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91672,7 +91775,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],384:[function(_dereq_,module,exports){
+},{}],385:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91748,7 +91851,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],385:[function(_dereq_,module,exports){
+},{}],386:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -91795,7 +91898,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":223,"lodash/each":226}],386:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":223,"lodash/each":226}],387:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -91842,7 +91945,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],388:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -92042,6 +92145,11 @@ module.exports = {
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
   },
+  'rowClass': {
+    label: 'Row CSS Class',
+    placeholder: 'Row CSS Class',
+    tooltip: 'CSS class to add to the edit row wrapper.'
+  },
   'customClass': {
     label: 'Custom CSS Class',
     placeholder: 'Custom CSS Class',
@@ -92056,6 +92164,16 @@ module.exports = {
     label: 'Add Another Text',
     placeholder: 'Add Another',
     tooltip: 'Set the text of the Add Another button.'
+  },
+  'saveRow': {
+    label: 'Save Row Text',
+    placeholder: 'Save',
+    tooltip: 'Set the text of the Save Row button.'
+  },
+  'removeRow': {
+    label: 'Remove Row Text',
+    placeholder: 'Remove',
+    tooltip: 'Set the text of the remove Row button.'
   },
   'defaultDate': {
     label: 'Default Value',
@@ -92095,7 +92213,7 @@ module.exports = {
   }
 };
 
-},{}],388:[function(_dereq_,module,exports){
+},{}],389:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -92166,7 +92284,7 @@ module.exports = {
   ]
 };
 
-},{}],389:[function(_dereq_,module,exports){
+},{}],390:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -92528,7 +92646,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":220,"lodash/cloneDeep":223,"lodash/each":226,"lodash/groupBy":232,"lodash/merge":258,"lodash/omitBy":260,"lodash/upperFirst":276}],390:[function(_dereq_,module,exports){
+},{"lodash/capitalize":220,"lodash/cloneDeep":223,"lodash/each":226,"lodash/groupBy":232,"lodash/merge":258,"lodash/omitBy":260,"lodash/upperFirst":276}],391:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -92544,7 +92662,7 @@ module.exports = [
   }
 ];
 
-},{}],391:[function(_dereq_,module,exports){
+},{}],392:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -92639,7 +92757,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":38,"lodash/get":231,"lodash/reject":264}],392:[function(_dereq_,module,exports){
+},{"formiojs/utils":38,"lodash/get":231,"lodash/reject":264}],393:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -92977,7 +93095,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":216,"lodash/camelCase":219,"lodash/isNumber":247}],393:[function(_dereq_,module,exports){
+},{"lodash/assign":216,"lodash/camelCase":219,"lodash/isNumber":247}],394:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -93002,7 +93120,7 @@ module.exports = [
   }
 ];
 
-},{}],394:[function(_dereq_,module,exports){
+},{}],395:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -93027,7 +93145,7 @@ module.exports = [
   }
 ];
 
-},{}],395:[function(_dereq_,module,exports){
+},{}],396:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -93096,7 +93214,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],396:[function(_dereq_,module,exports){
+},{}],397:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -93137,7 +93255,7 @@ module.exports = function() {
   };
 };
 
-},{}],397:[function(_dereq_,module,exports){
+},{}],398:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -93183,7 +93301,7 @@ module.exports = function() {
   };
 };
 
-},{}],398:[function(_dereq_,module,exports){
+},{}],399:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -93227,7 +93345,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":256}],399:[function(_dereq_,module,exports){
+},{"lodash/map":256}],400:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -93249,7 +93367,7 @@ module.exports = [
   }
 ];
 
-},{}],400:[function(_dereq_,module,exports){
+},{}],401:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -93303,7 +93421,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":258}],401:[function(_dereq_,module,exports){
+},{"lodash/merge":258}],402:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -93344,7 +93462,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],402:[function(_dereq_,module,exports){
+},{}],403:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -93381,7 +93499,7 @@ module.exports = function() {
   };
 };
 
-},{}],403:[function(_dereq_,module,exports){
+},{}],404:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -93448,7 +93566,7 @@ module.exports = function() {
   };
 };
 
-},{}],404:[function(_dereq_,module,exports){
+},{}],405:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -93471,7 +93589,7 @@ module.exports = function() {
   };
 };
 
-},{}],405:[function(_dereq_,module,exports){
+},{}],406:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -93553,7 +93671,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":219,"lodash/map":256}],406:[function(_dereq_,module,exports){
+},{"lodash/camelCase":219,"lodash/map":256}],407:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -93662,7 +93780,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{}],407:[function(_dereq_,module,exports){
+},{}],408:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -93696,14 +93814,14 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],408:[function(_dereq_,module,exports){
+},{}],409:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-full.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":409,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-full.js":344}],409:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":410,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-full.js":344}],410:[function(_dereq_,module,exports){
 "use strict";
 /*! ng-formio-builder v2.23.0 | https://unpkg.com/ng-formio-builder@2.23.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
@@ -93861,5 +93979,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":370,"./constants/commonOptions":387,"./constants/formOptions":388,"./directives/formBuilder":389,"./directives/formBuilderComponent":390,"./directives/formBuilderConditional":391,"./directives/formBuilderDnd":392,"./directives/formBuilderElement":393,"./directives/formBuilderList":394,"./directives/formBuilderOption":395,"./directives/formBuilderOptionCustomValidation":396,"./directives/formBuilderOptionKey":397,"./directives/formBuilderOptionTags":398,"./directives/formBuilderRow":399,"./directives/formBuilderTable":400,"./directives/formBuilderTooltip":401,"./directives/jsonInput":402,"./directives/objectBuilder":403,"./directives/validApiKey":404,"./directives/valueBuilder":405,"./factories/BuilderUtils":406,"./factories/debounce":407}]},{},[408])(408)
+},{"./components":371,"./constants/commonOptions":388,"./constants/formOptions":389,"./directives/formBuilder":390,"./directives/formBuilderComponent":391,"./directives/formBuilderConditional":392,"./directives/formBuilderDnd":393,"./directives/formBuilderElement":394,"./directives/formBuilderList":395,"./directives/formBuilderOption":396,"./directives/formBuilderOptionCustomValidation":397,"./directives/formBuilderOptionKey":398,"./directives/formBuilderOptionTags":399,"./directives/formBuilderRow":400,"./directives/formBuilderTable":401,"./directives/formBuilderTooltip":402,"./directives/jsonInput":403,"./directives/objectBuilder":404,"./directives/validApiKey":405,"./directives/valueBuilder":406,"./factories/BuilderUtils":407,"./factories/debounce":408}]},{},[409])(409)
 });
