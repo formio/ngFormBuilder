@@ -92345,10 +92345,8 @@ module.exports = ['debounce', function(debounce) {
         $scope.hideCount = 2;
         $scope.form.page = 0;
         var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
-        $scope.formio = $scope.src ? new Formio($scope.src, {base: baseUrl}) : null;
-        if ($scope.url) {
-          $scope.formio = new Formio($scope.url, {base: baseUrl});
-        }
+        var formSrc = $scope.url || $scope.src || Formio.getProjectUrl();
+        $scope.formio = new Formio(formSrc, {base: baseUrl});
 
         var setNumPages = function() {
           if (!$scope.form) {
@@ -93823,7 +93821,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":410,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-full.js":344}],410:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.23.0 | https://unpkg.com/ng-formio-builder@2.23.0/LICENSE.txt */
+/*! ng-formio-builder v2.23.1 | https://unpkg.com/ng-formio-builder@2.23.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

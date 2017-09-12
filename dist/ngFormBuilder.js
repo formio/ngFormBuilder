@@ -11547,10 +11547,8 @@ module.exports = ['debounce', function(debounce) {
         $scope.hideCount = 2;
         $scope.form.page = 0;
         var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
-        $scope.formio = $scope.src ? new Formio($scope.src, {base: baseUrl}) : null;
-        if ($scope.url) {
-          $scope.formio = new Formio($scope.url, {base: baseUrl});
-        }
+        var formSrc = $scope.url || $scope.src || Formio.getProjectUrl();
+        $scope.formio = new Formio(formSrc, {base: baseUrl});
 
         var setNumPages = function() {
           if (!$scope.form) {
@@ -13018,7 +13016,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],293:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.23.0 | https://unpkg.com/ng-formio-builder@2.23.0/LICENSE.txt */
+/*! ng-formio-builder v2.23.1 | https://unpkg.com/ng-formio-builder@2.23.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.23.1
+### Fixed
+ - Issue where the formio directive may not be set for the form builder.
+
 ## 2.23.0
 ### Added
  - Edit Grid UI
