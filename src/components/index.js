@@ -29,6 +29,7 @@ require('./form')(app);
 require('./signature')(app);
 require('./custom')(app);
 require('./datagrid')(app);
+require('./editgrid')(app);
 require('./survey')(app);
 
 // Layout

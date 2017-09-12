@@ -196,6 +196,11 @@ module.exports = {
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
   },
+  'rowClass': {
+    label: 'Row CSS Class',
+    placeholder: 'Row CSS Class',
+    tooltip: 'CSS class to add to the edit row wrapper.'
+  },
   'customClass': {
     label: 'Custom CSS Class',
     placeholder: 'Custom CSS Class',
@@ -210,6 +215,16 @@ module.exports = {
     label: 'Add Another Text',
     placeholder: 'Add Another',
     tooltip: 'Set the text of the Add Another button.'
+  },
+  'saveRow': {
+    label: 'Save Row Text',
+    placeholder: 'Save',
+    tooltip: 'Set the text of the Save Row button.'
+  },
+  'removeRow': {
+    label: 'Remove Row Text',
+    placeholder: 'Remove',
+    tooltip: 'Set the text of the remove Row button.'
   },
   'defaultDate': {
     label: 'Default Value',
