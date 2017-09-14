@@ -41,6 +41,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/day/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="fields.day.placeholder" label="Day Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.year.placeholder" label="Year Placeholder"></form-builder-option>' +

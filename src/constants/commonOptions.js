@@ -24,6 +24,11 @@ module.exports = {
     placeholder: 'Description for this field.',
     tooltip: 'The description is text that will appear below the input field.'
   },
+  tooltip: {
+    label: 'Tooltip',
+    placeholder: 'Tooltip for this field.',
+    tooltip: 'The tooltip is the text that will be displayed when you hover over the question mark next to the label.'
+  },
   errorLabel: {
     label: 'Error Label',
     placeholder: 'Error Label',

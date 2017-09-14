@@ -65,6 +65,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/panel/display.html',
         '<ng-form>' +
           '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
+          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title for theme in themes" ng-model="component.theme"></select>' +
