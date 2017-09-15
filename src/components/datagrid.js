@@ -36,6 +36,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datagrid/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="addAnother"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +

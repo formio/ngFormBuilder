@@ -40,6 +40,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/editgrid/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
