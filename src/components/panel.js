@@ -54,7 +54,10 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/panel.html',
         '<div class="panel panel-{{ component.theme }}">' +
-          '<div ng-if="component.title" class="panel-heading"><h3 class="panel-title">{{ component.title }}</h3></div>' +
+          '<div ng-if="component.title" class="panel-heading"><h3 class="panel-title">' +
+            '{{ component.title }} ' +
+            '<formio-component-tooltip></formio-component-tooltip>' +
+          '</h3></div>' +
           '<div class="panel-body">' +
             '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
           '</div>' +
