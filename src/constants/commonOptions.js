@@ -114,6 +114,16 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
   },
+  mask: {
+    label: 'Hide Input',
+    type: 'checkbox',
+    tooltip: 'Hide the input in the browser. This does not encrypt on the server. Do not use for passwords.'
+  },
+  encrypted: {
+    label: 'Encrypt',
+    type: 'checkbox',
+    tooltip: 'Encrypt this field on the server. This is two way encryption which may not be suitable for passwords.'
+  },
   reference: {
     label: 'Save as reference',
     type: 'checkbox',
