@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 2.23.5
+### Changed
+ - Upgraded ng-formio to 2.23.5
+
 ### Added
+ - Option for tooltips.
  - Option to mask input like a password to textfield
  - Option to encrypt input on server to textfield
 

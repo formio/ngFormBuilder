@@ -24,6 +24,12 @@ module.exports = {
     placeholder: 'Description for this field.',
     tooltip: 'The description is text that will appear below the input field.'
   },
+  tooltip: {
+    label: 'Tooltip',
+    placeholder: 'To add a tooltip to this field, enter text here.',
+    tooltip: 'Adds a tooltip to the side of this field.',
+    type: 'textarea'
+  },
   errorLabel: {
     label: 'Error Label',
     placeholder: 'Error Label',
