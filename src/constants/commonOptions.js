@@ -30,6 +30,12 @@ module.exports = {
     tooltip: 'Adds a tooltip to the side of this field.',
     type: 'textarea'
   },
+  rows: {
+    label: 'Rows',
+    placeholder: 'Enter the amount of rows',
+    tooltip: 'This allows control over how many rows are visible in the text area.',
+    type: 'number'
+  },
   errorLabel: {
     label: 'Error Label',
     placeholder: 'Error Label',

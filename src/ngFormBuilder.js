@@ -45,11 +45,18 @@ app.directive('formBuilderDroppable', function() {
     link: function(scope, element) {
       var el = element[0];
       el.addEventListener('dragover', function(event) {
-        event.preventDefault();
+        if (event.preventDefault) {
+          event.preventDefault();
+        }
         return false;
       }, false);
       el.addEventListener('drop', function(event) {
-        event.stopPropagation();
+        if (event.preventDefault) {
+          event.preventDefault();
+        }
+        if (event.stopPropagation) {
+          event.stopPropagation();
+        }
         var dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
         var dropOffset = jQuery(el).offset();
         el.style.zIndex = 0;
