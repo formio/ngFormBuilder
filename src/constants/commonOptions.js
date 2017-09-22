@@ -26,8 +26,15 @@ module.exports = {
   },
   tooltip: {
     label: 'Tooltip',
-    placeholder: 'Tooltip for this field.',
-    tooltip: 'The tooltip is the text that will be displayed when you hover over the question mark next to the label.'
+    placeholder: 'To add a tooltip to this field, enter text here.',
+    tooltip: 'Adds a tooltip to the side of this field.',
+    type: 'textarea'
+  },
+  rows: {
+    label: 'Rows',
+    placeholder: 'Enter the amount of rows',
+    tooltip: 'This allows control over how many rows are visible in the text area.',
+    type: 'number'
   },
   errorLabel: {
     label: 'Error Label',
@@ -118,6 +125,16 @@ module.exports = {
     label: 'Hidden',
     type: 'checkbox',
     tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
+  mask: {
+    label: 'Hide Input',
+    type: 'checkbox',
+    tooltip: 'Hide the input in the browser. This does not encrypt on the server. Do not use for passwords.'
+  },
+  encrypted: {
+    label: 'Encrypt',
+    type: 'checkbox',
+    tooltip: 'Encrypt this field on the server. This is two way encryption which may not be suitable for passwords.'
   },
   reference: {
     label: 'Save as reference',

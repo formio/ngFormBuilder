@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.23.6
+### Added
+ - Rows configuration for text areas.
+ 
+### Fixed
+ - Issue where blank input was showing up on textfield edit.
+ 
+### Changed
+ - Upgraded ng-formio to 2.23.6
+
+## 2.23.5
+### Changed
+ - Upgraded ng-formio to 2.23.5
+
+### Added
+ - Option for tooltips.
+ - Option to mask input like a password to textfield
+ - Option to encrypt input on server to textfield
+
 ## 2.23.2
 ### Changed
  - Upgraded ng-formio
