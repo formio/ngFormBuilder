@@ -35,7 +35,10 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/fieldset.html',
         '<fieldset>' +
-          '<legend ng-if="component.legend">{{ component.legend }}</legend>' +
+          '<legend ng-if="component.legend">' +
+            '{{ component.legend }} ' +
+            '<formio-component-tooltip></formio-component-tooltip>' +
+          '</legend>' +
           '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</fieldset>'
       );
@@ -44,6 +47,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/fieldset/display.html',
         '<ng-form>' +
           '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
+          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'

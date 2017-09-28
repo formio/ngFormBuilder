@@ -1,5 +1,8 @@
 <div class="datagrid-dnd dropzone" ng-controller="formBuilderDnd">
-  <label ng-if="component.label" class="control-label">{{ component.label }}</label>
+  <label ng-if="component.label" class="control-label">
+    {{ component.label }}
+    <formio-component-tooltip></formio-component-tooltip>
+  </label>
   <table class="table datagrid-table" ng-class="{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}">
     <tr>
       <th style="padding:30px 0 10px 0" ng-repeat="component in component.components" ng-class="{'field-required': component.validate.required}">

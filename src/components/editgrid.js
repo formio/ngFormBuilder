@@ -40,6 +40,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/editgrid/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
@@ -89,7 +90,10 @@ module.exports = function(app) {
 
       $templateCache.put('formio/formbuilder/editgrid.html',
         '<fieldset>' +
-        '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
+        '<label ng-if="component.label" class="control-label">' +
+          '{{ component.label }} ' +
+          '<formio-component-tooltip></formio-component-tooltip>' +
+        '</label>' +
         '<form-builder-list component="component" form="form" formio="::formio"></form-builder-list>' +
         '</fieldset>'
       );

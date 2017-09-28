@@ -48,6 +48,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="resource" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
             '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
