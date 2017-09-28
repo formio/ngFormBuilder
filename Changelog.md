@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.23.7
+### Added
+ - Translate dropdown items from formOptions.js
+ - Tooltip configurations to most components.
+
+### Changed
+ - Upgraded ng-formio to 2.23.7
+
 ## 2.23.6
 ### Added
  - Rows configuration for text areas.
