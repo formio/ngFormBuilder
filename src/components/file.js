@@ -60,6 +60,8 @@ module.exports = function(app) {
           '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
           '<form-builder-option property="dir"></form-builder-option>' +
           '<form-builder-option property="image"></form-builder-option>' +
+          '<form-builder-option type="checkbox" tooltip="Instead of an unique file name, will have the original file' +
+        ' name" label="Keep File Names" property="keepFileName"></form-builder-option>' +
           '<form-builder-option property="imageSize" ng-if="component.image"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
