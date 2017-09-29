@@ -251,7 +251,17 @@ module.exports = {
   'defaultDate': {
     label: 'Default Value',
     placeholder: 'Default Value',
-    tooltip: 'You can use Moment.js functions to set the default value to a specific date. For example: \n \n moment().subtract(10, \'days\').calendar();'
+    tooltip: 'You can use Moment.js functions to set the default value to a specific date. For example: \n \n moment().subtract(10, \'days\')'
+  },
+  'datePicker.minDate': {
+    label: 'Minimum Date',
+    placeholder: 'yyyy-MM-dd',
+    tooltip: 'The minimum date that can be picked. You can also use Moment.js functions. For example: \n \n moment().subtract(10, \'days\')'
+  },
+  'datePicker.maxDate': {
+    label: 'Maximum Date',
+    placeholder: 'yyyy-MM-dd',
+    tooltip: 'The maximum date that can be picked. You can also use Moment.js functions. For example: \n \n moment().add(10, \'days\')'
   },
   // Need to use array notation to have dash in name
   'style[\'margin-top\']': {
