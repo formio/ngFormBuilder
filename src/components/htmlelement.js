@@ -47,7 +47,7 @@ module.exports = function(app) {
             'no-autocomplete-value="true" ' +
           '></value-builder>' +
           '<div class="form-group">' +
-            '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
+            '<label for="content" form-builder-tooltip="The content of this HTML element.">{{\'Content\' | formioTranslate}}</label>' +
             '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +
           '</div>' +
         '</ng-form>'

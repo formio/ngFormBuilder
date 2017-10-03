@@ -50,7 +50,7 @@ module.exports = function(app) {
         '<ng-form>' +
         '<div class="form-group">' +
         '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
-        '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">Custom Element JSON</label>' +
+        '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">{{\'Custom Element JSON\' | formioTranslate}}</label>' +
         '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="customComponent" placeholder="{}" rows="10"></textarea>' +
         '</div>' +
         '</ng-form>'
