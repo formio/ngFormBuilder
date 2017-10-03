@@ -168,12 +168,12 @@ module.exports = function(app) {
       $templateCache.put('formio/components/select/data.html',
         '<ng-form>' +
           '<div class="form-group">' +
-            '<label for="dataSrc" form-builder-tooltip="The source to use for the select data. Values lets you provide your own values and labels. JSON lets you provide raw JSON data. URL lets you provide a URL to retrieve the JSON data from.">Data Source Type</label>' +
-            '<select class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" ng-options="value as label for (value, label) in dataSources"></select>' +
+            '<label for="dataSrc" form-builder-tooltip="The source to use for the select data. Values lets you provide your own values and labels. JSON lets you provide raw JSON data. URL lets you provide a URL to retrieve the JSON data from.">{{\'Data Source Type\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" ng-options="value as label | formioTranslate for (value, label) in dataSources"></select>' +
           '</div>' +
           '<ng-switch on="component.dataSrc">' +
             '<div class="form-group" ng-switch-when="json">' +
-              '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">Data Source Raw JSON</label>' +
+              '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">{{\'Data Source Raw JSON\' | formioTranslate}}</label>' +
               '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" json-input rows="3">{{ component.data.json }}</textarea>' +
             '</div>' +
             '<div ng-switch-when="url">' +
@@ -182,7 +182,7 @@ module.exports = function(app) {
             '<value-builder ng-switch-when="url" data=component.data.headers label="Request Headers" tooltip-text="Set any headers that should be sent along with the request to the url. This is useful for authentication." label-label="Key" label-property="key" />' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
             '<div class="form-group" ng-switch-when="resource">' +
-            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">{{\'Resource\' | formioTranslate}}</label>' +
             '<ui-select ui-select-required ui-select-open-on-focus ng-model="component.data.resource" theme="bootstrap">' +
               '<ui-select-match class="ui-select-match" placeholder="">' +
                 '{{$select.selected.title}}' +
@@ -196,34 +196,34 @@ module.exports = function(app) {
           '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
           '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\' || component.dataSrc == \'custom\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
           '<div class="form-group" ng-hide="component.dataSrc !== \'resource\' || !component.data.resource || resourceFields.length == 0">' +
-            '<label for="placeholder" form-builder-tooltip="The field to use as the value.">Value</label>' +
+            '<label for="placeholder" form-builder-tooltip="The field to use as the value.">{{\'Value\' | formioTranslate}}</label>' +
             '<select class="form-control" id="valueProperty" name="valueProperty" ng-options="value.property as value.title for value in resourceFields" ng-model="component.valueProperty"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.dataSrc == \'resource\' && component.valueProperty === \'\'">' +
-          '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
+          '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">{{\'Select Fields\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
           '<div ng-show="component.dataSrc == \'url\'">' +
           '<input type="checkbox" ng-model="component.data.disableLimit" name="disableLimit"></input>' +
-          '  <label for="disableLimit" form-builder-tooltip="When enabled the request will not include the limit and skip options in the query string">Disable limiting response</label>' +
+          '  <label for="disableLimit" form-builder-tooltip="When enabled the request will not include the limit and skip options in the query string">{{\'Disable limiting response\' | formioTranslate}}</label>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\' || component.dataSrc == \'json\'" property="limit" label="Limit" placeholder="Maximum number of items to view per page of results." title="Use this to limit the number of items to request or view."></form-builder-option>' +
           '<div class="form-group" ng-show="component.dataSrc == \'json\'">' +
-          '  <label for="filter" form-builder-tooltip="The filter type for search.">Search Filter</label>' +
-          '  <select class="form-control" id="filter" name="filter" ng-model="component.filter" ng-options="value as label for (value, label) in {none: \'No Search\', contains: \'Contains\', startsWith: \'Starts With\'}"></select>' +
+          '  <label for="filter" form-builder-tooltip="The filter type for search.">{{\'Search Filter\' | formioTranslate}}</label>' +
+          '  <select class="form-control" id="filter" name="filter" ng-model="component.filter" ng-options="value as label | formioTranslate for (value, label) in {none: \'No Search\', contains: \'Contains\', startsWith: \'Starts With\'}"></select>' +
           '</div>' +
           '<div class="form-group" ng-show="component.dataSrc == \'custom\'">' +
-          '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">Custom Values</label>' +
+          '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">{{\'Custom Values\' | formioTranslate}}</label>' +
           '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];"></formio-script-editor>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
+            '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">{{\'Item Template\' | formioTranslate}}</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
           '<div class="form-group" ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'json\'">' +
-          '  <label for="placeholder" form-builder-tooltip="Refresh data when another field changes.">Refresh On</label>' +
+          '  <label for="placeholder" form-builder-tooltip="Refresh data when another field changes.">{{\'Refresh On\' | formioTranslate}}</label>' +
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
