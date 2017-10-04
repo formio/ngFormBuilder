@@ -1,7 +1,7 @@
 <div class="row formbuilder">
   <div class="col-xs-4 col-sm-3 col-md-2 formcomponents" ng-if="form && form.display">
     <uib-accordion close-others="true" ng-if="form.display !== 'pdf'">
-      <div uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title | formioTranslate}}" is-open="$first" class="panel panel-default form-builder-panel {{ group.panelClass }}">
+      <div uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title | formioTranslate }}" is-open="$first" class="panel panel-default form-builder-panel {{ group.panelClass }}">
         <uib-accordion close-others="true" ng-if="group.subgroups">
           <div uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title | formioTranslate }}" is-open="$first" class="panel panel-default form-builder-panel subgroup-accordion">
             <div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"
@@ -10,7 +10,7 @@
                 dnd-dragend="dndDragIframeWorkaround.isDragging = false"
                 dnd-effect-allowed="copy"
                 class="formcomponentcontainer">
-              <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">
+              <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{ component.title | formioTranslate }}" style="overflow: hidden; text-overflow: ellipsis;">
                 <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title | formioTranslate }}
               </span>
             </div>
@@ -22,17 +22,17 @@
             dnd-dragend="dndDragIframeWorkaround.isDragging = false"
             dnd-effect-allowed="copy"
             class="formcomponentcontainer">
-          <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">
-            <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title | formioTranslate}}
+          <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{ component.title | formioTranslate }}" style="overflow: hidden; text-overflow: ellipsis;">
+            <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title | formioTranslate }}
           </span>
         </div>
       </div>
     </uib-accordion>
     <uib-accordion close-others="true" ng-if="form.display === 'pdf'">
-      <div uib-accordion-group heading="PDF Fields" is-open="true" class="panel panel-default form-builder-panel">
+      <div uib-accordion-group heading="{{ 'PDF Fields' | formioTranslate }}" is-open="true" class="panel panel-default form-builder-panel">
         <div class="formcomponentcontainer" ng-repeat="pdftype in pdftypes">
-          <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{ pdftype.title }}" style="overflow: hidden; text-overflow: ellipsis;" form-builder-draggable="pdftype">
-            <i ng-if="pdftype.icon" class="{{ pdftype.icon }}"></i> {{ pdftype.title }}
+          <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{ pdftype.title | formioTranslate }}" style="overflow: hidden; text-overflow: ellipsis;" form-builder-draggable="pdftype">
+            <i ng-if="pdftype.icon" class="{{ pdftype.icon }}"></i> {{ pdftype.title | formioTranslate }}
           </span>
         </div>
       </div>
