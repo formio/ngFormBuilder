@@ -1,9 +1,9 @@
 <div class="row formbuilder">
   <div class="col-xs-4 col-sm-3 col-md-2 formcomponents" ng-if="form && form.display">
     <uib-accordion close-others="true" ng-if="form.display !== 'pdf'">
-      <div uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title }}" is-open="$first" class="panel panel-default form-builder-panel {{ group.panelClass }}">
+      <div uib-accordion-group ng-repeat="(groupName, group) in formComponentGroups" heading="{{ group.title | formioTranslate}}" is-open="$first" class="panel panel-default form-builder-panel {{ group.panelClass }}">
         <uib-accordion close-others="true" ng-if="group.subgroups">
-          <div uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title }}" is-open="$first" class="panel panel-default form-builder-panel subgroup-accordion">
+          <div uib-accordion-group ng-repeat="(subgroupName, subgroup) in group.subgroups" heading="{{ subgroup.title | formioTranslate }}" is-open="$first" class="panel panel-default form-builder-panel subgroup-accordion">
             <div ng-repeat="component in formComponentsByGroup[groupName][subgroupName]" ng-if="component.title"
                 dnd-draggable="component.settings"
                 dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
@@ -11,7 +11,7 @@
                 dnd-effect-allowed="copy"
                 class="formcomponentcontainer">
               <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">
-                <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}
+                <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title | formioTranslate }}
               </span>
             </div>
           </div>
@@ -23,7 +23,7 @@
             dnd-effect-allowed="copy"
             class="formcomponentcontainer">
           <span class="btn btn-primary btn-xs btn-block formcomponent" title="{{component.title}}" style="overflow: hidden; text-overflow: ellipsis;">
-            <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title }}
+            <i ng-if="component.icon" class="{{ component.icon }}"></i> {{ component.title | formioTranslate}}
           </span>
         </div>
       </div>
