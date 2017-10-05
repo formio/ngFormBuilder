@@ -113,22 +113,22 @@ module.exports = function(app) {
         '<ng-form>' +
           '<div class="checkbox">' +
             '<label form-builder-tooltip="Enables date input for this field.">' +
-              '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
+              '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> {{\'Enable Date Input\' | formioTranslate}}' +
             '</label>' +
           '</div>' +
           '<form-builder-option property="datePicker.minDate"></form-builder-option>' +
           '<form-builder-option property="datePicker.maxDate"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="startingDay" form-builder-tooltip="The first day of the week.">Starting Day</label>' +
-            '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day for (idx, day) in startingDays"></select>' +
+            '<label for="startingDay" form-builder-tooltip="The first day of the week.">{{\'Starting Day\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day | formioTranslate for (idx, day) in startingDays"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">Minimum Mode</label>' +
-            '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
+            '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">{{\'Minimum Mode\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">Maximum Mode</label>' +
-            '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
+            '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">{{\'Maximum Mode\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
           '</div>' +
           '<form-builder-option property="datePicker.yearRows" label="Number of Years Displayed (Rows)" placeholder="Year Range (Rows)" title="The number of years to display in the years view (Rows)."></form-builder-option>' +
           '<form-builder-option property="datePicker.yearColumns" label="Number of Years Displayed (Columns)" placeholder="Year Range (Columns)" title="The number of years to display in the years view (Columns)."></form-builder-option>' +
@@ -140,7 +140,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<div class="checkbox">' +
             '<label form-builder-tooltip="Enables time input for this field.">' +
-              '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> Enable Time Input' +
+              '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> {{\'Enable Time Input\' | formioTranslate}}' +
             '</label>' +
           '</div>' +
           '<form-builder-option property="timePicker.hourStep" type="number" label="Hour Step Size" title="The number of hours to increment/decrement in the time picker."></form-builder-option>' +

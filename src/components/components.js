@@ -7,7 +7,7 @@ module.exports = function(app) {
         '<form id="component-settings" novalidate>' +
           '<div class="row">' +
             '<div class="col-md-6">' +
-              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} {{\'Component\' | formioTranslate}}</p>' +
+              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title | formioTranslate}} {{\'Component\' | formioTranslate}}</p>' +
             '</div>' +
             '<div class="col-md-6">' +
               '<div class="pull-right" ng-if="::formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +

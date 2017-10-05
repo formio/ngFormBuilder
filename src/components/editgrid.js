@@ -53,17 +53,17 @@ module.exports = function(app) {
       $templateCache.put('formio/components/editgrid/templates.html',
         '<ng-form>' +
         '<div class="form-group">' +
-        '  <label for="headerTemplate">Header Template</label>' +
+        '  <label for="headerTemplate">{{\'Header Template\' | formioTranslate}}</label>' +
         '  <textarea class="form-control" rows="3" name="headerTemplate" ng-model="component.templates.header" placeholder="/*** Lodash Template Code ***/"></textarea>' +
         '  <p class="text-muted">Two available variables. "value" is the array of row data and "components" is the array of components in the grid.</p>' +
         '</div>' +
         '<div class="form-group">' +
-        '  <label for="rowTemplate">Row Template</label>' +
+        '  <label for="rowTemplate">{{\'Row Template\' | formioTranslate}}</label>' +
         '  <textarea class="form-control" rows="6" name="rowTemplate" ng-model="component.templates.row" placeholder="/*** Lodash Template Code ***/"></textarea>' +
         '  <p class="text-muted">Two available variables. "row" is an object of one row\'s data and "components" is the array of components in the grid. To add click events, add the classes "editRow" and "removeRow" to elements.</p>' +
         '</div>' +
         '<div class="form-group">' +
-        '  <label for="footerTemplate">Footer Template</label>' +
+        '  <label for="footerTemplate">{{\'Footer Template\' | formioTranslate}}</label>' +
         '  <textarea class="form-control" rows="3" name="footerTemplate" ng-model="component.templates.footer" placeholder="/*** Lodash Template Code ***/"></textarea>' +
         '  <p class="text-muted">Two available variables. "value" is the array of row data and "components" is the array of components in the grid.</p>' +
         '</div>' +
@@ -77,7 +77,7 @@ module.exports = function(app) {
 
       $templateCache.put('formio/components/editgrid/validate.html',
         '<ng-form>' +
-        '    <label>Row View Validation</label>' +
+        '    <label>{{\'Row View Validation\' | formioTranslate}}</label>' +
         '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.row" placeholder="/*** Example Code ***/\nvalid = (row.myfield === \'some value\') ? true : \'Must be some value\';">{{ component.validate.row }}</textarea>' +
         '    <small>' +
         '      <p>Normal validation does not run when a row is in "View" mode. This validation allows running custom view validation and returning an error per row.</p>' +
