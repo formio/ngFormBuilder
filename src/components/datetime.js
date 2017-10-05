@@ -116,36 +116,8 @@ module.exports = function(app) {
               '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> {{\'Enable Date Input\' | formioTranslate}}' +
             '</label>' +
           '</div>' +
-          '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The minimum date that can be picked.">Minimum Date</label>' +
-            '<div class="input-group">' +
-              '<input type="text" class="form-control" ' +
-                'ng-focus="minDateOpen = true" ' +
-                'ng-init="minDateOpen = false" ' +
-                'is-open="minDateOpen" ' +
-                'datetime-picker="yyyy-MM-dd" ' +
-                'enable-time="false" ' +
-                'ng-model="component.datePicker.minDate" />' +
-              '<span class="input-group-btn">' +
-                '<button type="button" class="btn btn-default" ng-click="minDateOpen = true"><i class="fa fa-calendar"></i></button>' +
-              '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label for="placeholder"  form-builder-tooltip="The maximum date that can be picked.">Maximum Date</label>' +
-            '<div class="input-group">' +
-              '<input type="text" class="form-control" ' +
-                'ng-focus="maxDateOpen = true" ' +
-                'ng-init="maxDateOpen = false" ' +
-                'is-open="maxDateOpen" ' +
-                'datetime-picker="yyyy-MM-dd" ' +
-                'enable-time="false" ' +
-                'ng-model="component.datePicker.maxDate" />' +
-              '<span class="input-group-btn">' +
-                '<button type="button" class="btn btn-default" ng-click="maxDateOpen = true"><i class="fa fa-calendar"></i></button>' +
-              '</span>' +
-            '</div>' +
-          '</div>' +
+          '<form-builder-option property="datePicker.minDate"></form-builder-option>' +
+          '<form-builder-option property="datePicker.maxDate"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="startingDay" form-builder-tooltip="The first day of the week.">{{\'Starting Day\' | formioTranslate}}</label>' +
             '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day | formioTranslate for (idx, day) in startingDays"></select>' +

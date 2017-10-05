@@ -89990,36 +89990,8 @@ module.exports = function(app) {
               '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
             '</label>' +
           '</div>' +
-          '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The minimum date that can be picked.">Minimum Date</label>' +
-            '<div class="input-group">' +
-              '<input type="text" class="form-control" ' +
-                'ng-focus="minDateOpen = true" ' +
-                'ng-init="minDateOpen = false" ' +
-                'is-open="minDateOpen" ' +
-                'datetime-picker="yyyy-MM-dd" ' +
-                'enable-time="false" ' +
-                'ng-model="component.datePicker.minDate" />' +
-              '<span class="input-group-btn">' +
-                '<button type="button" class="btn btn-default" ng-click="minDateOpen = true"><i class="fa fa-calendar"></i></button>' +
-              '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label for="placeholder"  form-builder-tooltip="The maximum date that can be picked.">Maximum Date</label>' +
-            '<div class="input-group">' +
-              '<input type="text" class="form-control" ' +
-                'ng-focus="maxDateOpen = true" ' +
-                'ng-init="maxDateOpen = false" ' +
-                'is-open="maxDateOpen" ' +
-                'datetime-picker="yyyy-MM-dd" ' +
-                'enable-time="false" ' +
-                'ng-model="component.datePicker.maxDate" />' +
-              '<span class="input-group-btn">' +
-                '<button type="button" class="btn btn-default" ng-click="maxDateOpen = true"><i class="fa fa-calendar"></i></button>' +
-              '</span>' +
-            '</div>' +
-          '</div>' +
+          '<form-builder-option property="datePicker.minDate"></form-builder-option>' +
+          '<form-builder-option property="datePicker.maxDate"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="startingDay" form-builder-tooltip="The first day of the week.">Starting Day</label>' +
             '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day for (idx, day) in startingDays"></select>' +
@@ -92311,7 +92283,17 @@ module.exports = {
   'defaultDate': {
     label: 'Default Value',
     placeholder: 'Default Value',
-    tooltip: 'You can use Moment.js functions to set the default value to a specific date. For example: \n \n moment().subtract(10, \'days\').calendar();'
+    tooltip: 'You can use Moment.js functions to set the default value to a specific date. For example: \n \n moment().subtract(10, \'days\')'
+  },
+  'datePicker.minDate': {
+    label: 'Minimum Date',
+    placeholder: 'yyyy-MM-dd',
+    tooltip: 'The minimum date that can be picked. You can also use Moment.js functions. For example: \n \n moment().subtract(10, \'days\')'
+  },
+  'datePicker.maxDate': {
+    label: 'Maximum Date',
+    placeholder: 'yyyy-MM-dd',
+    tooltip: 'The maximum date that can be picked. You can also use Moment.js functions. For example: \n \n moment().add(10, \'days\')'
   },
   // Need to use array notation to have dash in name
   'style[\'margin-top\']': {
