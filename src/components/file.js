@@ -55,8 +55,8 @@ module.exports = function(app) {
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="storage" form-builder-tooltip="Which storage to save the files in.">Storage</label>' +
-            '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title for store in storage" ng-model="component.storage"></select>' +
+            '<label for="storage" form-builder-tooltip="Which storage to save the files in.">{{\'Storage\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title | formioTranslate for store in storage" ng-model="component.storage"></select>' +
           '</div>' +
           '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
           '<form-builder-option property="dir"></form-builder-option>' +

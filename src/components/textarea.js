@@ -81,10 +81,10 @@ module.exports = function(app) {
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<div ng-controller="wysiwygSettings">' +
             '<div class="checkbox">' +
-              '<label><input type="checkbox" ng-model="wysiwygEnabled"> Enable WYSIWYG</label>' +
+              '<label><input type="checkbox" ng-model="wysiwygEnabled"> {{\'Enable WYSIWYG\' | formioTranslate}}</label>' +
             '</div>' +
             '<div class="form-group">' +
-              '<label for="wysiwyg">WYSIWYG Settings</label>' +
+              '<label for="wysiwyg">{{\'WYSIWYG Settings\' | formioTranslate}}</label>' +
               '<textarea class="form-control" rows="5" id="wysiwyg" ng-model="wysiwygSettings" json-input placeholder="Enter the CKEditor JSON configuration to turn this TextArea into a WYSIWYG."></textarea>' +
             '</div>' +
           '</div>' +

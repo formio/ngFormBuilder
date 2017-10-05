@@ -56,15 +56,15 @@ module.exports = function(app) {
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">Input Type</label>' +
-            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title for inputType in inputTypes" ng-model="component.inputType"></select>' +
+            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">{{\'Input Type\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title | formioTranslate for inputType in inputTypes" ng-model="component.inputType"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
-          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">Radio Key</label>' +
+          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">{{\'Radio Key\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="name" name="name" ng-model="component.name" placeholder="{{ component.key }}" />' +
           '</div>' +
           '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
-          '  <label for="value" form-builder-tooltip="The value used with this radio button.">Radio Value</label>' +
+          '  <label for="value" form-builder-tooltip="The value used with this radio button.">{{\'Radio Value\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
           '</div>' +
           '<form-builder-option property="datagridLabel"></form-builder-option>' +

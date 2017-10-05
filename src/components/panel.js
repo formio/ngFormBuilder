@@ -70,7 +70,7 @@ module.exports = function(app) {
           '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+            '<label for="theme" form-builder-tooltip="The color theme of this panel.">{{\'Theme\' | formioTranslate}}</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title | formioTranslate for theme in themes" ng-model="component.theme"></select>' +
           '</div>' +
           '<div class="form-group">' +

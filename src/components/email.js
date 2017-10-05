@@ -25,12 +25,12 @@ module.exports = function(app) {
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="unique"></form-builder-option>' +
           '<div class="panel panel-default">' +
-            '<div class="panel-heading"><h3 class="panel-title">Kickbox</h3></div>' +
+            '<div class="panel-heading"><h3 class="panel-title">{{\'Kickbox\' | formioTranslate}}</h3></div>' +
             '<div class="panel-body">' +
-              '<p>Validate this email using the Kickbox email validation service.</p>' +
+              '<p>{{\'Validate this email using the Kickbox email validation service.\' | formioTranslate}}</p>' +
               '<div class="checkbox">' +
                 '<label for="kickbox-enable" form-builder-tooltip="Enable Kickbox validation for this email field.">' +
-                  '<input type="checkbox" id="kickbox-enable" name="kickbox-enable" ng-model="component.kickbox.enabled"> Enable' +
+                  '<input type="checkbox" id="kickbox-enable" name="kickbox-enable" ng-model="component.kickbox.enabled"> {{\'Enable\' | formioTranslate}}' +
                 '</label>' +
               '</div>' +
             '</div>' +
