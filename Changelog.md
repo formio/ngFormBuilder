@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.23.8
+### Added
+ - Added translation support for many of the strings in builder.
+ 
+### Changed
+ - Upgraded ng-formio to 2.23.8
+
 ## 2.23.7
 ### Added
  - Translate dropdown items from formOptions.js
