@@ -564,6 +564,14 @@ http://ricostacruz.com/cheatsheets/umdjs.html
     "cat": function() {
       return Array.prototype.join.call(arguments, "");
     },
+    "substr":function(source, start, end) {
+      if(end < 0){
+        // JavaScript doesn't support negative end, this emulates PHP behavior
+        var temp = String(source).substr(start);
+        return temp.substr(0, temp.length + end);
+      }
+      return String(source).substr(start, end);
+    },
     "+": function() {
       return Array.prototype.reduce.call(arguments, function(a, b) {
         return parseFloat(a, 10) + parseFloat(b, 10);
@@ -8242,11 +8250,11 @@ module.exports = function(app) {
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="mapRegion" form-builder-tooltip="The region bias to use for this search. See <a href=\'https://developers.google.com/maps/documentation/geocoding/intro#RegionCodes\' target=\'_blank\'>Region Biasing</a> for more information.">Region Bias</label>' +
+            '<label for="mapRegion" form-builder-tooltip="The region bias to use for this search. See <a href=\'https://developers.google.com/maps/documentation/geocoding/intro#RegionCodes\' target=\'_blank\'>Region Biasing</a> for more information.">{{\'Region Bias\' | formioTranslate}}</label>' +
             '<input type="text" class="form-control" id="mapRegion" name="mapRegion" ng-model="component.map.region" placeholder="Dallas" />' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="mapKey" form-builder-tooltip="The API key for Google Maps. See <a href=\'https://developers.google.com/maps/documentation/geocoding/get-api-key\' target=\'_blank\'>Get an API Key</a> for more information.">Google Maps API Key</label>' +
+            '<label for="mapKey" form-builder-tooltip="The API key for Google Maps. See <a href=\'https://developers.google.com/maps/documentation/geocoding/get-api-key\' target=\'_blank\'>Get an API Key</a> for more information.">{{\'Google Maps API Key\' | formioTranslate}}</label>' +
             '<input type="text" class="form-control" id="mapKey" name="mapKey" ng-model="component.map.key" placeholder="xxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxx"/>' +
           '</div>' +
           '<form-builder-option property="multiple" label="Allow Multiple Addresses"></form-builder-option>' +
@@ -8408,15 +8416,15 @@ module.exports = function(app) {
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">Input Type</label>' +
-            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title for inputType in inputTypes" ng-model="component.inputType"></select>' +
+            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">{{\'Input Type\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title | formioTranslate for inputType in inputTypes" ng-model="component.inputType"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
-          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">Radio Key</label>' +
+          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">{{\'Radio Key\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="name" name="name" ng-model="component.name" placeholder="{{ component.key }}" />' +
           '</div>' +
           '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
-          '  <label for="value" form-builder-tooltip="The value used with this radio button.">Radio Value</label>' +
+          '  <label for="value" form-builder-tooltip="The value used with this radio button.">{{\'Radio Value\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
           '</div>' +
           '<form-builder-option property="datagridLabel"></form-builder-option>' +
@@ -8536,7 +8544,7 @@ module.exports = function(app) {
         '<form id="component-settings" novalidate>' +
           '<div class="row">' +
             '<div class="col-md-6">' +
-              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title}} {{\'Component\' | formioTranslate}}</p>' +
+              '<p class="lead" ng-if="::formComponent.title" style="margin-top:10px;">{{::formComponent.title | formioTranslate}} {{\'Component\' | formioTranslate}}</p>' +
             '</div>' +
             '<div class="col-md-6">' +
               '<div class="pull-right" ng-if="::formComponent.documentation" style="margin-top:10px; margin-right:20px;">' +
@@ -8930,7 +8938,7 @@ module.exports = function(app) {
         '<ng-form>' +
         '<div class="form-group">' +
         '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
-        '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">Custom Element JSON</label>' +
+        '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">{{\'Custom Element JSON\' | formioTranslate}}</label>' +
         '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="customComponent" placeholder="{}" rows="10"></textarea>' +
         '</div>' +
         '</ng-form>'
@@ -9124,22 +9132,22 @@ module.exports = function(app) {
         '<ng-form>' +
           '<div class="checkbox">' +
             '<label form-builder-tooltip="Enables date input for this field.">' +
-              '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> Enable Date Input' +
+              '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> {{\'Enable Date Input\' | formioTranslate}}' +
             '</label>' +
           '</div>' +
           '<form-builder-option property="datePicker.minDate"></form-builder-option>' +
           '<form-builder-option property="datePicker.maxDate"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="startingDay" form-builder-tooltip="The first day of the week.">Starting Day</label>' +
-            '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day for (idx, day) in startingDays"></select>' +
+            '<label for="startingDay" form-builder-tooltip="The first day of the week.">{{\'Starting Day\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day | formioTranslate for (idx, day) in startingDays"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">Minimum Mode</label>' +
-            '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
+            '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">{{\'Minimum Mode\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">Maximum Mode</label>' +
-            '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label for mode in modes"></select>' +
+            '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">{{\'Maximum Mode\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
           '</div>' +
           '<form-builder-option property="datePicker.yearRows" label="Number of Years Displayed (Rows)" placeholder="Year Range (Rows)" title="The number of years to display in the years view (Rows)."></form-builder-option>' +
           '<form-builder-option property="datePicker.yearColumns" label="Number of Years Displayed (Columns)" placeholder="Year Range (Columns)" title="The number of years to display in the years view (Columns)."></form-builder-option>' +
@@ -9151,7 +9159,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<div class="checkbox">' +
             '<label form-builder-tooltip="Enables time input for this field.">' +
-              '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> Enable Time Input' +
+              '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> {{\'Enable Time Input\' | formioTranslate}}' +
             '</label>' +
           '</div>' +
           '<form-builder-option property="timePicker.hourStep" type="number" label="Hour Step Size" title="The number of hours to increment/decrement in the time picker."></form-builder-option>' +
@@ -9306,17 +9314,17 @@ module.exports = function(app) {
       $templateCache.put('formio/components/editgrid/templates.html',
         '<ng-form>' +
         '<div class="form-group">' +
-        '  <label for="headerTemplate">Header Template</label>' +
+        '  <label for="headerTemplate">{{\'Header Template\' | formioTranslate}}</label>' +
         '  <textarea class="form-control" rows="3" name="headerTemplate" ng-model="component.templates.header" placeholder="/*** Lodash Template Code ***/"></textarea>' +
         '  <p class="text-muted">Two available variables. "value" is the array of row data and "components" is the array of components in the grid.</p>' +
         '</div>' +
         '<div class="form-group">' +
-        '  <label for="rowTemplate">Row Template</label>' +
+        '  <label for="rowTemplate">{{\'Row Template\' | formioTranslate}}</label>' +
         '  <textarea class="form-control" rows="6" name="rowTemplate" ng-model="component.templates.row" placeholder="/*** Lodash Template Code ***/"></textarea>' +
         '  <p class="text-muted">Two available variables. "row" is an object of one row\'s data and "components" is the array of components in the grid. To add click events, add the classes "editRow" and "removeRow" to elements.</p>' +
         '</div>' +
         '<div class="form-group">' +
-        '  <label for="footerTemplate">Footer Template</label>' +
+        '  <label for="footerTemplate">{{\'Footer Template\' | formioTranslate}}</label>' +
         '  <textarea class="form-control" rows="3" name="footerTemplate" ng-model="component.templates.footer" placeholder="/*** Lodash Template Code ***/"></textarea>' +
         '  <p class="text-muted">Two available variables. "value" is the array of row data and "components" is the array of components in the grid.</p>' +
         '</div>' +
@@ -9330,7 +9338,7 @@ module.exports = function(app) {
 
       $templateCache.put('formio/components/editgrid/validate.html',
         '<ng-form>' +
-        '    <label>Row View Validation</label>' +
+        '    <label>{{\'Row View Validation\' | formioTranslate}}</label>' +
         '    <textarea class="form-control" rows="5" id="custom" name="custom" ng-model="component.validate.row" placeholder="/*** Example Code ***/\nvalid = (row.myfield === \'some value\') ? true : \'Must be some value\';">{{ component.validate.row }}</textarea>' +
         '    <small>' +
         '      <p>Normal validation does not run when a row is in "View" mode. This validation allows running custom view validation and returning an error per row.</p>' +
@@ -9384,12 +9392,12 @@ module.exports = function(app) {
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="unique"></form-builder-option>' +
           '<div class="panel panel-default">' +
-            '<div class="panel-heading"><h3 class="panel-title">Kickbox</h3></div>' +
+            '<div class="panel-heading"><h3 class="panel-title">{{\'Kickbox\' | formioTranslate}}</h3></div>' +
             '<div class="panel-body">' +
-              '<p>Validate this email using the Kickbox email validation service.</p>' +
+              '<p>{{\'Validate this email using the Kickbox email validation service.\' | formioTranslate}}</p>' +
               '<div class="checkbox">' +
                 '<label for="kickbox-enable" form-builder-tooltip="Enable Kickbox validation for this email field.">' +
-                  '<input type="checkbox" id="kickbox-enable" name="kickbox-enable" ng-model="component.kickbox.enabled"> Enable' +
+                  '<input type="checkbox" id="kickbox-enable" name="kickbox-enable" ng-model="component.kickbox.enabled"> {{\'Enable\' | formioTranslate}}' +
                 '</label>' +
               '</div>' +
             '</div>' +
@@ -9523,8 +9531,8 @@ module.exports = function(app) {
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="storage" form-builder-tooltip="Which storage to save the files in.">Storage</label>' +
-            '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title for store in storage" ng-model="component.storage"></select>' +
+            '<label for="storage" form-builder-tooltip="Which storage to save the files in.">{{\'Storage\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="storage" name="storage" ng-options="store.name as store.title | formioTranslate for store in storage" ng-model="component.storage"></select>' +
           '</div>' +
           '<form-builder-option property="url" ng-show="component.storage === \'url\'"></form-builder-option>' +
           '<form-builder-option property="dir"></form-builder-option>' +
@@ -9654,7 +9662,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label" label="Name" placeholder="Enter the name for this form field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="form" form-builder-tooltip="The form to load within this form component..">Form</label>' +
+            '<label for="form" form-builder-tooltip="The form to load within this form component..">{{\'Form\' | formioTranslate}}</label>' +
             '<select class="form-control" id="form" name="form" ng-options="value._id as value.title for value in forms" ng-model="component.form"></select>' +
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -9779,7 +9787,7 @@ module.exports = function(app) {
             'no-autocomplete-value="true" ' +
           '></value-builder>' +
           '<div class="form-group">' +
-            '<label for="content" form-builder-tooltip="The content of this HTML element.">Content</label>' +
+            '<label for="content" form-builder-tooltip="The content of this HTML element.">{{\'Content\' | formioTranslate}}</label>' +
             '<textarea class="form-control" id="content" name="content" ng-model="component.content" placeholder="HTML Content" rows="3">{{ component.content }}</textarea>' +
           '</div>' +
         '</ng-form>'
@@ -10005,7 +10013,7 @@ module.exports = function(app) {
           '<form-builder-option property="title" label="Title" placeholder="Panel Title" title="The title text that appears in the header of this panel."></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="theme" form-builder-tooltip="The color theme of this panel.">Theme</label>' +
+            '<label for="theme" form-builder-tooltip="The color theme of this panel.">{{\'Theme\' | formioTranslate}}</label>' +
             '<select class="form-control" id="theme" name="theme" ng-options="theme.name as theme.title | formioTranslate for theme in themes" ng-model="component.theme"></select>' +
           '</div>' +
           '<div class="form-group">' +
@@ -10314,19 +10322,19 @@ module.exports = function(app) {
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
-            '<label for="resource" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<label for="resource" form-builder-tooltip="The resource to be used with this field.">{{\'Resource\' | formioTranslate}}</label>' +
             '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.resource"></select>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="selectFields" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
+            '<label for="selectFields" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">{{\'Select Fields\' | formioTranslate}}</label>' +
             '<input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="searchFields" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">Search Fields</label>' +
+            '<label for="searchFields" form-builder-tooltip="A list of search filters based on the fields of the resource. See the <a target=\'_blank\' href=\'https://github.com/travist/resourcejs#filtering-the-results\'>Resource.js documentation</a> for the format of these filters.">{{\'Search Fields\' | formioTranslate}}</label>' +
             '<input type="text" class="form-control" id="searchFields" name="searchFields" ng-model="component.searchFields" ng-list placeholder="The fields to query on the server" value="{{ component.searchFields }}">' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="template" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
+            '<label for="template" form-builder-tooltip="The HTML template for the result data items.">{{\'Item Template\' | formioTranslate}}</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -10527,12 +10535,12 @@ module.exports = function(app) {
       $templateCache.put('formio/components/select/data.html',
         '<ng-form>' +
           '<div class="form-group">' +
-            '<label for="dataSrc" form-builder-tooltip="The source to use for the select data. Values lets you provide your own values and labels. JSON lets you provide raw JSON data. URL lets you provide a URL to retrieve the JSON data from.">Data Source Type</label>' +
-            '<select class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" ng-options="value as label for (value, label) in dataSources"></select>' +
+            '<label for="dataSrc" form-builder-tooltip="The source to use for the select data. Values lets you provide your own values and labels. JSON lets you provide raw JSON data. URL lets you provide a URL to retrieve the JSON data from.">{{\'Data Source Type\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="dataSrc" name="dataSrc" ng-model="component.dataSrc" ng-options="value as label | formioTranslate for (value, label) in dataSources"></select>' +
           '</div>' +
           '<ng-switch on="component.dataSrc">' +
             '<div class="form-group" ng-switch-when="json">' +
-              '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">Data Source Raw JSON</label>' +
+              '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">{{\'Data Source Raw JSON\' | formioTranslate}}</label>' +
               '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" json-input rows="3">{{ component.data.json }}</textarea>' +
             '</div>' +
             '<div ng-switch-when="url">' +
@@ -10541,7 +10549,7 @@ module.exports = function(app) {
             '<value-builder ng-switch-when="url" data=component.data.headers label="Request Headers" tooltip-text="Set any headers that should be sent along with the request to the url. This is useful for authentication." label-label="Key" label-property="key" />' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
             '<div class="form-group" ng-switch-when="resource">' +
-            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">{{\'Resource\' | formioTranslate}}</label>' +
             '<ui-select ui-select-required ui-select-open-on-focus ng-model="component.data.resource" theme="bootstrap">' +
               '<ui-select-match class="ui-select-match" placeholder="">' +
                 '{{$select.selected.title}}' +
@@ -10555,34 +10563,34 @@ module.exports = function(app) {
           '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
           '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\' || component.dataSrc == \'custom\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
           '<div class="form-group" ng-hide="component.dataSrc !== \'resource\' || !component.data.resource || resourceFields.length == 0">' +
-            '<label for="placeholder" form-builder-tooltip="The field to use as the value.">Value</label>' +
+            '<label for="placeholder" form-builder-tooltip="The field to use as the value.">{{\'Value\' | formioTranslate}}</label>' +
             '<select class="form-control" id="valueProperty" name="valueProperty" ng-options="value.property as value.title for value in resourceFields" ng-model="component.valueProperty"></select>' +
           '</div>' +
           '<div class="form-group" ng-if="component.dataSrc == \'resource\' && component.valueProperty === \'\'">' +
-          '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
+          '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">{{\'Select Fields\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
           '<div ng-show="component.dataSrc == \'url\'">' +
           '<input type="checkbox" ng-model="component.data.disableLimit" name="disableLimit"></input>' +
-          '  <label for="disableLimit" form-builder-tooltip="When enabled the request will not include the limit and skip options in the query string">Disable limiting response</label>' +
+          '  <label for="disableLimit" form-builder-tooltip="When enabled the request will not include the limit and skip options in the query string">{{\'Disable limiting response\' | formioTranslate}}</label>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\' || component.dataSrc == \'json\'" property="limit" label="Limit" placeholder="Maximum number of items to view per page of results." title="Use this to limit the number of items to request or view."></form-builder-option>' +
           '<div class="form-group" ng-show="component.dataSrc == \'json\'">' +
-          '  <label for="filter" form-builder-tooltip="The filter type for search.">Search Filter</label>' +
-          '  <select class="form-control" id="filter" name="filter" ng-model="component.filter" ng-options="value as label for (value, label) in {none: \'No Search\', contains: \'Contains\', startsWith: \'Starts With\'}"></select>' +
+          '  <label for="filter" form-builder-tooltip="The filter type for search.">{{\'Search Filter\' | formioTranslate}}</label>' +
+          '  <select class="form-control" id="filter" name="filter" ng-model="component.filter" ng-options="value as label | formioTranslate for (value, label) in {none: \'No Search\', contains: \'Contains\', startsWith: \'Starts With\'}"></select>' +
           '</div>' +
           '<div class="form-group" ng-show="component.dataSrc == \'custom\'">' +
-          '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">Custom Values</label>' +
+          '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">{{\'Custom Values\' | formioTranslate}}</label>' +
           '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];"></formio-script-editor>' +
           '</div>' +
           '<div class="form-group">' +
-            '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
+            '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">{{\'Item Template\' | formioTranslate}}</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
           '<div class="form-group" ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'json\'">' +
-          '  <label for="placeholder" form-builder-tooltip="Refresh data when another field changes.">Refresh On</label>' +
+          '  <label for="placeholder" form-builder-tooltip="Refresh data when another field changes.">{{\'Refresh On\' | formioTranslate}}</label>' +
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
@@ -10969,10 +10977,10 @@ module.exports = function(app) {
           '<form-builder-option property="inputMask"></form-builder-option>' +
           '<div ng-controller="wysiwygSettings">' +
             '<div class="checkbox">' +
-              '<label><input type="checkbox" ng-model="wysiwygEnabled"> Enable WYSIWYG</label>' +
+              '<label><input type="checkbox" ng-model="wysiwygEnabled"> {{\'Enable WYSIWYG\' | formioTranslate}}</label>' +
             '</div>' +
             '<div class="form-group">' +
-              '<label for="wysiwyg">WYSIWYG Settings</label>' +
+              '<label for="wysiwyg">{{\'WYSIWYG Settings\' | formioTranslate}}</label>' +
               '<textarea class="form-control" rows="5" id="wysiwyg" ng-model="wysiwygSettings" json-input placeholder="Enter the CKEditor JSON configuration to turn this TextArea into a WYSIWYG."></textarea>' +
             '</div>' +
           '</div>' +
@@ -13066,7 +13074,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],293:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.23.7 | https://unpkg.com/ng-formio-builder@2.23.7/LICENSE.txt */
+/*! ng-formio-builder v2.23.8 | https://unpkg.com/ng-formio-builder@2.23.8/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -13214,7 +13222,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
-      "<div class=\"row formbuilder\">\n  <div class=\"col-xs-4 col-sm-3 col-md-2 formcomponents\" ng-if=\"form && form.display\">\n    <uib-accordion close-others=\"true\" ng-if=\"form.display !== 'pdf'\">\n      <div uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <div uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n              </span>\n            </div>\n          </div>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{component.title}}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n    <uib-accordion close-others=\"true\" ng-if=\"form.display === 'pdf'\">\n      <div uib-accordion-group heading=\"PDF Fields\" is-open=\"true\" class=\"panel panel-default form-builder-panel\">\n        <div class=\"formcomponentcontainer\" ng-repeat=\"pdftype in pdftypes\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ pdftype.title }}\" style=\"overflow: hidden; text-overflow: ellipsis;\" form-builder-draggable=\"pdftype\">\n            <i ng-if=\"pdftype.icon\" class=\"{{ pdftype.icon }}\"></i> {{ pdftype.title }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n  </div>\n  <div class=\"col-xs-8 col-sm-9 col-md-10 formarea\" ng-if=\"form && form.display\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === getPage()), 'label-primary': ($index !== getPage())}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <div ng-if=\"form.display === 'pdf'\" ng-controller=\"formBuilderDnd\">\n        <div form-builder-droppable style=\"width:100%;height:2000px;position:absolute;\" id=\"fb-drop-zone\"></div>\n        <formio form=\"form\" options=\"{building: true}\"></formio>\n      </div>\n      <form-builder-list ng-if=\"form.display !== 'pdf'\" component=\"form\" form=\"form\" formio=\"::formio\" hide-dnd-box-count=\"hideCount\" root-list=\"true\" class=\"rootlist\" options=\"options\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
+      "<div class=\"row formbuilder\">\n  <div class=\"col-xs-4 col-sm-3 col-md-2 formcomponents\" ng-if=\"form && form.display\">\n    <uib-accordion close-others=\"true\" ng-if=\"form.display !== 'pdf'\">\n      <div uib-accordion-group ng-repeat=\"(groupName, group) in formComponentGroups\" heading=\"{{ group.title | formioTranslate }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel {{ group.panelClass }}\">\n        <uib-accordion close-others=\"true\" ng-if=\"group.subgroups\">\n          <div uib-accordion-group ng-repeat=\"(subgroupName, subgroup) in group.subgroups\" heading=\"{{ subgroup.title | formioTranslate }}\" is-open=\"$first\" class=\"panel panel-default form-builder-panel subgroup-accordion\">\n            <div ng-repeat=\"component in formComponentsByGroup[groupName][subgroupName]\" ng-if=\"component.title\"\n                dnd-draggable=\"component.settings\"\n                dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n                dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n                dnd-effect-allowed=\"copy\"\n                class=\"formcomponentcontainer\">\n              <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ component.title | formioTranslate }}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n                <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title | formioTranslate }}\n              </span>\n            </div>\n          </div>\n        </uib-accordion>\n        <div ng-repeat=\"component in formComponentsByGroup[groupName]\" ng-if=\"!group.subgroup && component.title\"\n            dnd-draggable=\"component.settings\"\n            dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n            dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n            dnd-effect-allowed=\"copy\"\n            class=\"formcomponentcontainer\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ component.title | formioTranslate }}\" style=\"overflow: hidden; text-overflow: ellipsis;\">\n            <i ng-if=\"component.icon\" class=\"{{ component.icon }}\"></i> {{ component.title | formioTranslate }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n    <uib-accordion close-others=\"true\" ng-if=\"form.display === 'pdf'\">\n      <div uib-accordion-group heading=\"{{ 'PDF Fields' | formioTranslate }}\" is-open=\"true\" class=\"panel panel-default form-builder-panel\">\n        <div class=\"formcomponentcontainer\" ng-repeat=\"pdftype in pdftypes\">\n          <span class=\"btn btn-primary btn-xs btn-block formcomponent\" title=\"{{ pdftype.title | formioTranslate }}\" style=\"overflow: hidden; text-overflow: ellipsis;\" form-builder-draggable=\"pdftype\">\n            <i ng-if=\"pdftype.icon\" class=\"{{ pdftype.icon }}\"></i> {{ pdftype.title | formioTranslate }}\n          </span>\n        </div>\n      </div>\n    </uib-accordion>\n  </div>\n  <div class=\"col-xs-8 col-sm-9 col-md-10 formarea\" ng-if=\"form && form.display\">\n    <ol class=\"breadcrumb\" ng-if=\"form.display === 'wizard'\">\n      <li ng-repeat=\"title in pages() track by $index\"><a class=\"label\" style=\"font-size:1em;\" ng-class=\"{'label-info': ($index === getPage()), 'label-primary': ($index !== getPage())}\" ng-click=\"showPage($index)\">{{ title }}</a></li>\n      <li><a class=\"label label-success\" style=\"font-size:1em;\" ng-click=\"newPage()\" data-toggle=\"tooltip\" title=\"Create Page\"><span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> page</a></li>\n    </ol>\n    <div class=\"dropzone\">\n      <div ng-if=\"form.display === 'pdf'\" ng-controller=\"formBuilderDnd\">\n        <div form-builder-droppable style=\"width:100%;height:2000px;position:absolute;\" id=\"fb-drop-zone\"></div>\n        <formio form=\"form\" options=\"{building: true}\"></formio>\n      </div>\n      <form-builder-list ng-if=\"form.display !== 'pdf'\" component=\"form\" form=\"form\" formio=\"::formio\" hide-dnd-box-count=\"hideCount\" root-list=\"true\" class=\"rootlist\" options=\"options\"></form-builder-list>\n    </div>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',

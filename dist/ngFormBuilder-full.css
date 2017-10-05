@@ -1031,6 +1031,10 @@ input[type="password"][draggable="true"] {
   margin-right: 10px;
 }
 
+.tooltip-inner {
+  white-space: pre-wrap;
+}
+
 /*Form Wizard*/
 .bs-wizard {border-bottom: solid 1px #e0e0e0; padding: 0 0 10px 0;line-height: 1em;}
 .bs-wizard > .bs-wizard-step {padding: 0; position: relative;}
