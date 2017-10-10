@@ -70,6 +70,15 @@ var FormioUtils = {
   },
 
   /**
+   * Check to see if an ID is a mongoID.
+   * @param text
+   * @return {Array|{index: number, input: string}|Boolean|*}
+   */
+  isMongoId: function isMongoId(text) {
+    return text.toString().match(/^[0-9a-fA-F]{24}$/);
+  },
+
+  /**
    * Determine if a component is a layout component or not.
    *
    * @param {Object} component
@@ -121,7 +130,7 @@ var FormioUtils = {
       }
 
       var subPath = function subPath() {
-        if (component.key && (component.type === 'datagrid' || component.type === 'container')) {
+        if (component.key && (component.type === 'datagrid' || component.type === 'container' || component.type === 'editgrid' || component.tree)) {
           return newPath;
         }
         return path;
@@ -235,7 +244,7 @@ var FormioUtils = {
    * @returns {boolean} - TRUE - This component has a conditional, FALSE - No conditional provided.
    */
   hasCondition: function hasCondition(component) {
-    return component.hasOwnProperty('customConditional') && component.customConditional || component.hasOwnProperty('conditional') && component.conditional && component.conditional.when || component.hasOwnProperty('conditional') && component.conditional && component.conditional.json;
+    return component.hasOwnProperty('customConditional') && component.customConditional || component.hasOwnProperty('conditional') && component.conditional && component.conditional.when || component.hasOwnProperty('conditional') && component.conditional && component.conditional.json ? true : false;
   },
 
   /**
@@ -13074,7 +13083,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],293:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.23.8 | https://unpkg.com/ng-formio-builder@2.23.8/LICENSE.txt */
+/*! ng-formio-builder v2.23.10 | https://unpkg.com/ng-formio-builder@2.23.10/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
