@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:formioapp/ngFormBuilder.git"
+    "url": "git@github.com:phudyshkin/ngFormBuilder.git"
   },
   "author": "Travis Tidwell <travis@form.io>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/formioapp/ngFormBuilder/issues"
   },
-  "homepage": "https://github.com/formioapp/ngFormBuilder",
+  "homepage": "https://github.com/phudyshkin/ngFormBuilder",
   "devDependencies": {
     "babel-preset-es2015": "^6.24.0",
     "babelify": "^7.3.0",
