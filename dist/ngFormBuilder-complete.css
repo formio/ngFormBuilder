@@ -832,6 +832,10 @@ tags-input .autocomplete .suggestion-item em {
 
 /*# sourceMappingURL=ng-tags-input.css.map */
 
+.formio-form {
+  overflow: scroll;
+}
+
 .ngdialog.ngdialog-theme-default .ngdialog-content {
   width: 65%;
 }
