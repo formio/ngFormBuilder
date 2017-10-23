@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.23.13
+### Added
+ - Settings for encrypted fields.
+
 ## 2.23.12
 ### Changed
  - Upgrade ng-formio to 2.23.12
