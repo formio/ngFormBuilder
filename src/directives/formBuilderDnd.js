@@ -245,7 +245,7 @@ module.exports = [
           });
 
           // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
             if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
