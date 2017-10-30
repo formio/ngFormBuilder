@@ -1072,6 +1072,10 @@ input[type="password"][draggable="true"] {
   z-index: 200;
 }
 
+.form-builder-premium {
+  display: none;
+}
+
 .component-form-group {
   position: relative;
 }
