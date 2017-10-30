@@ -134,7 +134,7 @@ module.exports = {
   encrypted: {
     label: 'Encrypt',
     type: 'checkbox',
-    tooltip: 'Encrypt this field on the server. This is two way encryption which may not be suitable for passwords.'
+    tooltip: 'Encrypt this field on the server. This is two way encryption which is not be suitable for passwords.'
   },
   reference: {
     label: 'Save as reference',
