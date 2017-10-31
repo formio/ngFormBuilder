@@ -49726,7 +49726,7 @@ exports.all = function() {
 }();
 
 }).call(this,_dereq_('_process'))
-},{"_process":350}],29:[function(_dereq_,module,exports){
+},{"_process":349}],29:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
@@ -50408,7 +50408,7 @@ var Formio = function () {
       }
 
       // Set up and fetch request
-      var headers = header || new Headers({
+      var headers = header || new Headers(opts.headers || {
         'Accept': 'application/json',
         'Content-type': 'application/json; charset=UTF-8'
       });
@@ -50914,6 +50914,7 @@ var Formio = function () {
 
 
 exports.Formio = Formio;
+Formio.Headers = Headers;
 Formio.baseUrl = 'https://api.form.io';
 Formio.projectUrl = Formio.baseUrl;
 Formio.projectUrlSet = false;
@@ -50928,7 +50929,7 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":30,"browser-cookies":27,"eventemitter2":28,"native-promise-only":279,"shallow-copy":351,"whatwg-fetch":353}],30:[function(_dereq_,module,exports){
+},{"./providers":30,"browser-cookies":27,"eventemitter2":28,"native-promise-only":279,"shallow-copy":350,"whatwg-fetch":353}],30:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -68494,537 +68495,6 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
 },{"./dist/ng-file-upload-all":281}],283:[function(_dereq_,module,exports){
-/*!
- * Signature Pad v1.6.0
- * https://github.com/szimek/signature_pad
- *
- * Copyright 2017 Szymon Nowak
- * Released under the MIT license
- *
- * The main idea and some parts of the code (e.g. drawing variable width Bézier curve) are taken from:
- * http://corner.squareup.com/2012/07/smoother-signatures.html
- *
- * Implementation of interpolation using cubic Bézier curves is taken from:
- * http://benknowscode.wordpress.com/2012/09/14/path-interpolation-using-cubic-bezier-and-control-point-estimation-in-javascript
- *
- * Algorithm for approximated length of a Bézier curve is taken from:
- * http://www.lemoda.net/maths/bezier-length/index.html
- *
- */
-
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(global.SignaturePad = factory());
-}(this, (function () { 'use strict';
-
-function Point(x, y, time) {
-  this.x = x;
-  this.y = y;
-  this.time = time || new Date().getTime();
-}
-
-Point.prototype.velocityFrom = function (start) {
-  return this.time !== start.time ? this.distanceTo(start) / (this.time - start.time) : 1;
-};
-
-Point.prototype.distanceTo = function (start) {
-  return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
-};
-
-function Bezier(startPoint, control1, control2, endPoint) {
-  this.startPoint = startPoint;
-  this.control1 = control1;
-  this.control2 = control2;
-  this.endPoint = endPoint;
-}
-
-// Returns approximated length.
-Bezier.prototype.length = function () {
-  var steps = 10;
-  var length = 0;
-  var px = void 0;
-  var py = void 0;
-
-  for (var i = 0; i <= steps; i += 1) {
-    var t = i / steps;
-    var cx = this._point(t, this.startPoint.x, this.control1.x, this.control2.x, this.endPoint.x);
-    var cy = this._point(t, this.startPoint.y, this.control1.y, this.control2.y, this.endPoint.y);
-    if (i > 0) {
-      var xdiff = cx - px;
-      var ydiff = cy - py;
-      length += Math.sqrt(xdiff * xdiff + ydiff * ydiff);
-    }
-    px = cx;
-    py = cy;
-  }
-
-  return length;
-};
-
-/* eslint-disable no-multi-spaces, space-in-parens */
-Bezier.prototype._point = function (t, start, c1, c2, end) {
-  return start * (1.0 - t) * (1.0 - t) * (1.0 - t) + 3.0 * c1 * (1.0 - t) * (1.0 - t) * t + 3.0 * c2 * (1.0 - t) * t * t + end * t * t * t;
-};
-
-function SignaturePad(canvas, options) {
-  var self = this;
-  var opts = options || {};
-
-  this.velocityFilterWeight = opts.velocityFilterWeight || 0.7;
-  this.minWidth = opts.minWidth || 0.5;
-  this.maxWidth = opts.maxWidth || 2.5;
-  this.dotSize = opts.dotSize || function () {
-    return (this.minWidth + this.maxWidth) / 2;
-  };
-  this.penColor = opts.penColor || 'black';
-  this.backgroundColor = opts.backgroundColor || 'rgba(0,0,0,0)';
-  this.onBegin = opts.onBegin;
-  this.onEnd = opts.onEnd;
-
-  this._canvas = canvas;
-  this._ctx = canvas.getContext('2d');
-  this.clear();
-
-  // We need add these inline so they are available to unbind while still having
-  // access to 'self' we could use _.bind but it's not worth adding a dependency.
-  this._handleMouseDown = function (event) {
-    if (event.which === 1) {
-      self._mouseButtonDown = true;
-      self._strokeBegin(event);
-    }
-  };
-
-  this._handleMouseMove = function (event) {
-    if (self._mouseButtonDown) {
-      self._strokeUpdate(event);
-    }
-  };
-
-  this._handleMouseUp = function (event) {
-    if (event.which === 1 && self._mouseButtonDown) {
-      self._mouseButtonDown = false;
-      self._strokeEnd(event);
-    }
-  };
-
-  this._handleTouchStart = function (event) {
-    if (event.targetTouches.length === 1) {
-      var touch = event.changedTouches[0];
-      self._strokeBegin(touch);
-    }
-  };
-
-  this._handleTouchMove = function (event) {
-    // Prevent scrolling.
-    event.preventDefault();
-
-    var touch = event.targetTouches[0];
-    self._strokeUpdate(touch);
-  };
-
-  this._handleTouchEnd = function (event) {
-    var wasCanvasTouched = event.target === self._canvas;
-    if (wasCanvasTouched) {
-      event.preventDefault();
-      self._strokeEnd(event);
-    }
-  };
-
-  // Enable mouse and touch event handlers
-  this.on();
-}
-
-// Public methods
-SignaturePad.prototype.clear = function () {
-  var ctx = this._ctx;
-  var canvas = this._canvas;
-
-  ctx.fillStyle = this.backgroundColor;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  this._data = [];
-  this._reset();
-  this._isEmpty = true;
-};
-
-SignaturePad.prototype.fromDataURL = function (dataUrl) {
-  var _this = this;
-
-  var image = new Image();
-  var ratio = window.devicePixelRatio || 1;
-  var width = this._canvas.width / ratio;
-  var height = this._canvas.height / ratio;
-
-  this._reset();
-  image.src = dataUrl;
-  image.onload = function () {
-    _this._ctx.drawImage(image, 0, 0, width, height);
-  };
-  this._isEmpty = false;
-};
-
-SignaturePad.prototype.toDataURL = function (type) {
-  var _canvas;
-
-  switch (type) {
-    case 'image/svg+xml':
-      return this._toSVG();
-    default:
-      for (var _len = arguments.length, options = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        options[_key - 1] = arguments[_key];
-      }
-
-      return (_canvas = this._canvas).toDataURL.apply(_canvas, [type].concat(options));
-  }
-};
-
-SignaturePad.prototype.on = function () {
-  this._handleMouseEvents();
-  this._handleTouchEvents();
-};
-
-SignaturePad.prototype.off = function () {
-  this._canvas.removeEventListener('mousedown', this._handleMouseDown);
-  this._canvas.removeEventListener('mousemove', this._handleMouseMove);
-  document.removeEventListener('mouseup', this._handleMouseUp);
-
-  this._canvas.removeEventListener('touchstart', this._handleTouchStart);
-  this._canvas.removeEventListener('touchmove', this._handleTouchMove);
-  this._canvas.removeEventListener('touchend', this._handleTouchEnd);
-};
-
-SignaturePad.prototype.isEmpty = function () {
-  return this._isEmpty;
-};
-
-// Private methods
-SignaturePad.prototype._strokeBegin = function (event) {
-  this._data.push([]);
-  this._reset();
-  this._strokeUpdate(event);
-
-  if (typeof this.onBegin === 'function') {
-    this.onBegin(event);
-  }
-};
-
-SignaturePad.prototype._strokeUpdate = function (event) {
-  var x = event.clientX;
-  var y = event.clientY;
-
-  var point = this._createPoint(x, y);
-
-  var _addPoint = this._addPoint(point),
-      curve = _addPoint.curve,
-      widths = _addPoint.widths;
-
-  if (curve && widths) {
-    this._drawCurve(curve, widths.start, widths.end);
-  }
-
-  this._data[this._data.length - 1].push({
-    x: point.x,
-    y: point.y,
-    time: point.time
-  });
-};
-
-SignaturePad.prototype._strokeEnd = function (event) {
-  var canDrawCurve = this.points.length > 2;
-  var point = this.points[0];
-
-  if (!canDrawCurve && point) {
-    this._drawDot(point);
-  }
-
-  if (typeof this.onEnd === 'function') {
-    this.onEnd(event);
-  }
-};
-
-SignaturePad.prototype._handleMouseEvents = function () {
-  this._mouseButtonDown = false;
-
-  this._canvas.addEventListener('mousedown', this._handleMouseDown);
-  this._canvas.addEventListener('mousemove', this._handleMouseMove);
-  document.addEventListener('mouseup', this._handleMouseUp);
-};
-
-SignaturePad.prototype._handleTouchEvents = function () {
-  // Pass touch events to canvas element on mobile IE11 and Edge.
-  this._canvas.style.msTouchAction = 'none';
-  this._canvas.style.touchAction = 'none';
-
-  this._canvas.addEventListener('touchstart', this._handleTouchStart);
-  this._canvas.addEventListener('touchmove', this._handleTouchMove);
-  this._canvas.addEventListener('touchend', this._handleTouchEnd);
-};
-
-SignaturePad.prototype._reset = function () {
-  this.points = [];
-  this._lastVelocity = 0;
-  this._lastWidth = (this.minWidth + this.maxWidth) / 2;
-  this._ctx.fillStyle = this.penColor;
-};
-
-SignaturePad.prototype._createPoint = function (x, y, time) {
-  var rect = this._canvas.getBoundingClientRect();
-
-  return new Point(x - rect.left, y - rect.top, time || new Date().getTime());
-};
-
-SignaturePad.prototype._addPoint = function (point) {
-  var points = this.points;
-  var tmp = void 0;
-
-  points.push(point);
-
-  if (points.length > 2) {
-    // To reduce the initial lag make it work with 3 points
-    // by copying the first point to the beginning.
-    if (points.length === 3) points.unshift(points[0]);
-
-    tmp = this._calculateCurveControlPoints(points[0], points[1], points[2]);
-    var c2 = tmp.c2;
-    tmp = this._calculateCurveControlPoints(points[1], points[2], points[3]);
-    var c3 = tmp.c1;
-    var curve = new Bezier(points[1], c2, c3, points[2]);
-    var widths = this._calculateCurveWidths(curve);
-
-    // Remove the first element from the list,
-    // so that we always have no more than 4 points in points array.
-    points.shift();
-
-    return { curve: curve, widths: widths };
-  }
-
-  return {};
-};
-
-SignaturePad.prototype._calculateCurveControlPoints = function (s1, s2, s3) {
-  var dx1 = s1.x - s2.x;
-  var dy1 = s1.y - s2.y;
-  var dx2 = s2.x - s3.x;
-  var dy2 = s2.y - s3.y;
-
-  var m1 = { x: (s1.x + s2.x) / 2.0, y: (s1.y + s2.y) / 2.0 };
-  var m2 = { x: (s2.x + s3.x) / 2.0, y: (s2.y + s3.y) / 2.0 };
-
-  var l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-  var l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-  var dxm = m1.x - m2.x;
-  var dym = m1.y - m2.y;
-
-  var k = l2 / (l1 + l2);
-  var cm = { x: m2.x + dxm * k, y: m2.y + dym * k };
-
-  var tx = s2.x - cm.x;
-  var ty = s2.y - cm.y;
-
-  return {
-    c1: new Point(m1.x + tx, m1.y + ty),
-    c2: new Point(m2.x + tx, m2.y + ty)
-  };
-};
-
-SignaturePad.prototype._calculateCurveWidths = function (curve) {
-  var startPoint = curve.startPoint;
-  var endPoint = curve.endPoint;
-  var widths = { start: null, end: null };
-
-  var velocity = this.velocityFilterWeight * endPoint.velocityFrom(startPoint) + (1 - this.velocityFilterWeight) * this._lastVelocity;
-
-  var newWidth = this._strokeWidth(velocity);
-
-  widths.start = this._lastWidth;
-  widths.end = newWidth;
-
-  this._lastVelocity = velocity;
-  this._lastWidth = newWidth;
-
-  return widths;
-};
-
-SignaturePad.prototype._strokeWidth = function (velocity) {
-  return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
-};
-
-SignaturePad.prototype._drawPoint = function (x, y, size) {
-  var ctx = this._ctx;
-
-  ctx.moveTo(x, y);
-  ctx.arc(x, y, size, 0, 2 * Math.PI, false);
-  this._isEmpty = false;
-};
-
-SignaturePad.prototype._drawCurve = function (curve, startWidth, endWidth) {
-  var ctx = this._ctx;
-  var widthDelta = endWidth - startWidth;
-  var drawSteps = Math.floor(curve.length());
-
-  ctx.beginPath();
-
-  for (var i = 0; i < drawSteps; i += 1) {
-    // Calculate the Bezier (x, y) coordinate for this step.
-    var t = i / drawSteps;
-    var tt = t * t;
-    var ttt = tt * t;
-    var u = 1 - t;
-    var uu = u * u;
-    var uuu = uu * u;
-
-    var x = uuu * curve.startPoint.x;
-    x += 3 * uu * t * curve.control1.x;
-    x += 3 * u * tt * curve.control2.x;
-    x += ttt * curve.endPoint.x;
-
-    var y = uuu * curve.startPoint.y;
-    y += 3 * uu * t * curve.control1.y;
-    y += 3 * u * tt * curve.control2.y;
-    y += ttt * curve.endPoint.y;
-
-    var width = startWidth + ttt * widthDelta;
-    this._drawPoint(x, y, width);
-  }
-
-  ctx.closePath();
-  ctx.fill();
-};
-
-SignaturePad.prototype._drawDot = function (point) {
-  var ctx = this._ctx;
-  var width = typeof this.dotSize === 'function' ? this.dotSize() : this.dotSize;
-
-  ctx.beginPath();
-  this._drawPoint(point.x, point.y, width);
-  ctx.closePath();
-  ctx.fill();
-};
-
-SignaturePad.prototype._fromData = function (pointGroups, drawCurve, drawDot) {
-  for (var i = 0; i < pointGroups.length; i += 1) {
-    var group = pointGroups[i];
-
-    if (group.length > 1) {
-      for (var j = 0; j < group.length; j += 1) {
-        var rawPoint = group[j];
-        var point = new Point(rawPoint.x, rawPoint.y, rawPoint.time);
-
-        if (j === 0) {
-          // First point in a group. Nothing to draw yet.
-          this._reset();
-          this._addPoint(point);
-        } else if (j !== group.length - 1) {
-          // Middle point in a group.
-          var _addPoint2 = this._addPoint(point),
-              curve = _addPoint2.curve,
-              widths = _addPoint2.widths;
-
-          if (curve && widths) {
-            drawCurve(curve, widths);
-          }
-        } else {
-          // Last point in a group. Do nothing.
-        }
-      }
-    } else {
-      this._reset();
-      var _rawPoint = group[0];
-      drawDot(_rawPoint);
-    }
-  }
-};
-
-SignaturePad.prototype._toSVG = function () {
-  var _this2 = this;
-
-  var pointGroups = this._data;
-  var canvas = this._canvas;
-  var ratio = Math.max(window.devicePixelRatio || 1, 1);
-  var minX = 0;
-  var minY = 0;
-  var maxX = canvas.width / ratio;
-  var maxY = canvas.height / ratio;
-  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-
-  svg.setAttributeNS(null, 'width', canvas.width);
-  svg.setAttributeNS(null, 'height', canvas.height);
-
-  this._fromData(pointGroups, function (curve, widths) {
-    var path = document.createElement('path');
-
-    // Need to check curve for NaN values, these pop up when drawing
-    // lines on the canvas that are not continuous. E.g. Sharp corners
-    // or stopping mid-stroke and than continuing without lifting mouse.
-    if (!isNaN(curve.control1.x) && !isNaN(curve.control1.y) && !isNaN(curve.control2.x) && !isNaN(curve.control2.y)) {
-      var attr = 'M ' + curve.startPoint.x.toFixed(3) + ',' + curve.startPoint.y.toFixed(3) + ' ' + ('C ' + curve.control1.x.toFixed(3) + ',' + curve.control1.y.toFixed(3) + ' ') + (curve.control2.x.toFixed(3) + ',' + curve.control2.y.toFixed(3) + ' ') + (curve.endPoint.x.toFixed(3) + ',' + curve.endPoint.y.toFixed(3));
-
-      path.setAttribute('d', attr);
-      path.setAttribute('stroke-width', (widths.end * 2.25).toFixed(3));
-      path.setAttribute('stroke', _this2.penColor);
-      path.setAttribute('fill', 'none');
-      path.setAttribute('stroke-linecap', 'round');
-
-      svg.appendChild(path);
-    }
-  }, function (rawPoint) {
-    var circle = document.createElement('circle');
-    var dotSize = typeof _this2.dotSize === 'function' ? _this2.dotSize() : _this2.dotSize;
-    circle.setAttribute('r', dotSize);
-    circle.setAttribute('cx', rawPoint.x);
-    circle.setAttribute('cy', rawPoint.y);
-    circle.setAttribute('fill', _this2.penColor);
-
-    svg.appendChild(circle);
-  });
-
-  var prefix = 'data:image/svg+xml;base64,';
-  var header = '<svg' + ' xmlns="http://www.w3.org/2000/svg"' + ' xmlns:xlink="http://www.w3.org/1999/xlink"' + (' viewBox="' + minX + ' ' + minY + ' ' + maxX + ' ' + maxY + '"') + (' width="' + maxX + '"') + (' height="' + maxY + '"') + '>';
-  var body = svg.innerHTML;
-
-  // IE hack for missing innerHTML property on SVGElement
-  if (body === undefined) {
-    var dummy = document.createElement('dummy');
-    var nodes = svg.childNodes;
-    dummy.innerHTML = '';
-
-    for (var i = 0; i < nodes.length; i += 1) {
-      dummy.appendChild(nodes[i].cloneNode(true));
-    }
-
-    body = dummy.innerHTML;
-  }
-
-  var footer = '</svg>';
-  var data = header + body + footer;
-
-  return prefix + btoa(data);
-};
-
-SignaturePad.prototype.fromData = function (pointGroups) {
-  var _this3 = this;
-
-  this.clear();
-
-  this._fromData(pointGroups, function (curve, widths) {
-    return _this3._drawCurve(curve, widths.start, widths.end);
-  }, function (rawPoint) {
-    return _this3._drawDot(rawPoint);
-  });
-};
-
-SignaturePad.prototype.toData = function () {
-  return this._data;
-};
-
-return SignaturePad;
-
-})));
-
-},{}],284:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69102,7 +68572,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/address.html',
-        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ng-model=\"data[component.key]\" safe-multiple-to-single ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" tabindex=\"{{ component.tabindex || 0 }}\" theme=\"bootstrap\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">{{$item.formatted_address || $select.selected.formatted_address}}</ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"address in addresses\" refresh=\"refreshAddress($select.search)\" refresh-delay=\"500\">\n    <div ng-bind-html=\"address.formatted_address | highlight: $select.search\"></div>\n  </ui-select-choices>\n</ui-select>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ng-model=\"data[component.key]\" safe-multiple-to-single ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" tabindex=\"{{ component.tabindex || 0 }}\" theme=\"bootstrap\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">{{$item.formatted_address || $select.selected.formatted_address}}</ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"address in addresses\" refresh=\"refreshAddress($select.search)\" refresh-delay=\"500\">\n    <div ng-bind-html=\"address.formatted_address | highlight: $select.search\"></div>\n  </ui-select-choices>\n</ui-select>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -69113,7 +68583,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69319,7 +68789,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],285:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69393,13 +68863,13 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/checkbox.html',
-        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      ng-if=\"component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ component.name }}\"\n      value=\"{{ component.value }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.name]\"\n      ng-required=\"component.validate.required\"\n    >\n    <input\n      ng-if=\"!component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n    >\n    <span ng-if=\"!(component.hideLabel && component.datagridLabel === false)\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
+        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      ng-if=\"component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ component.name }}\"\n      value=\"{{ component.value }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.name]\"\n      ng-required=\"component.validate.required\"\n    >\n    <input\n      ng-if=\"!component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n    >\n    <span ng-if=\"options.building || !(component.hideLabel && component.datagridLabel === false)\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],287:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69485,7 +68955,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],288:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],287:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -69545,7 +69015,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],289:[function(_dereq_,module,exports){
+},{}],288:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69611,7 +69081,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],290:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],289:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69640,7 +69110,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],290:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69751,7 +69221,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],292:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69779,7 +69249,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],293:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],292:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -69912,7 +69382,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":37}],294:[function(_dereq_,module,exports){
+},{"formiojs/utils":37}],293:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70070,7 +69540,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],295:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70277,7 +69747,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],296:[function(_dereq_,module,exports){
+},{}],295:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -70656,12 +70126,12 @@ module.exports = function(app) {
     '$templateCache',
     'FormioUtils',
     function($templateCache, FormioUtils) {
-      $templateCache.put('formio/components/editgrid.html', "<div name=\"{{ componentId }}\" ng-model=\"data[component.key]\" custom-validator=\"component.validate.custom\" editgrid-validation ng-controller=\"formioEditGrid\">\n  <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <div class=\"formio-data-grid\" id=\"{{ component.key }}\">\n    <ul class=\"list-group\">\n      <li ng-if=\"component.templates.header\" class=\"list-group-item list-group-header\">\n        <render-template template=\"component.templates.header\" data=\"headerData\" />\n      </li>\n      <li class=\"list-group-item\" ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n        <div name=\"{{ componentId }}-row-{{ $index }}\" ng-model=\"row\" editgrid-row-validation>\n          <edit-grid-row />\n          <p class=\"help-block\" ng-show=\"openRows.indexOf($index) !== -1 && formioForm.$error.editgrid\">{{ 'Please save all rows before proceeding' | formioTranslate }}.</p>\n          <p class=\"help-block\" ng-show=\"formioForm[componentId + '-row-' + $index].$error.editgridrow\">{{ 'Please correct rows before proceeding' | formioTranslate }}.</p>\n        </div>\n      </li>\n      <li ng-if=\"component.templates.footer\" class=\"list-group-item list-group-footer\">\n        <render-template template=\"component.templates.footer\" data=\"headerData\" />\n      </li>\n    </ul>\n    <div class=\"datagrid-add\" ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('maxLength') || rows.length < component.validate.maxLength\">\n      <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n        <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate:null:options.building }}\n      </a>\n    </div>\n  </div>\n</div>\n");
+      $templateCache.put('formio/components/editgrid.html', "<div name=\"{{ componentId }}\" ng-model=\"data[component.key]\" custom-validator=\"component.validate.custom\" editgrid-validation ng-controller=\"formioEditGrid\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <div class=\"formio-data-grid\" id=\"{{ component.key }}\">\n    <ul class=\"list-group\">\n      <li ng-if=\"component.templates.header\" class=\"list-group-item list-group-header\">\n        <render-template template=\"component.templates.header\" data=\"headerData\" />\n      </li>\n      <li class=\"list-group-item\" ng-repeat=\"row in rows track by $index\" ng-init=\"rowIndex = $index\">\n        <div name=\"{{ componentId }}-row-{{ $index }}\" ng-model=\"row\" editgrid-row-validation>\n          <edit-grid-row />\n          <p class=\"help-block\" ng-show=\"openRows.indexOf($index) !== -1 && formioForm.$error.editgrid\">{{ 'Please save all rows before proceeding' | formioTranslate }}.</p>\n          <p class=\"help-block\" ng-show=\"formioForm[componentId + '-row-' + $index].$error.editgridrow\">{{ 'Please correct rows before proceeding' | formioTranslate }}.</p>\n        </div>\n      </li>\n      <li ng-if=\"component.templates.footer\" class=\"list-group-item list-group-footer\">\n        <render-template template=\"component.templates.footer\" data=\"headerData\" />\n      </li>\n    </ul>\n    <div class=\"datagrid-add\" ng-if=\"!component.hasOwnProperty('validate') || !component.validate.hasOwnProperty('maxLength') || rows.length < component.validate.maxLength\">\n      <a ng-click=\"addRow()\" class=\"btn btn-primary\">\n        <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addAnother || \"Add Another\" | formioTranslate:null:options.building }}\n      </a>\n    </div>\n  </div>\n</div>\n");
     }
   ]);
 };
 
-},{"formiojs/utils":37}],297:[function(_dereq_,module,exports){
+},{"formiojs/utils":37}],296:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -70695,7 +70165,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],297:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70750,7 +70220,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],299:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],298:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71006,17 +70476,17 @@ module.exports = function(app) {
       );
 
       $templateCache.put('formio/components/file.html',
-        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<div class=\"formio-errors\"><formio-errors ng-if=\"::!options.building\"></formio-errors></div>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formio.formUrl\" ng-if=\"!component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formio.formUrl\" width=\"component.imageSize\" ng-if=\"component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-image-list>\n  <div ng-if=\"!readOnly && (component.multiple || (!component.multiple && !data[component.key].length))\">\n    <div ngf-drop=\"upload($files)\" class=\"fileSelector\" ngf-drag-over-class=\"'fileDragOver'\" ngf-multiple=\"component.multiple\" id=\"{{ componentId }}\" name=\"{{ componentId }}\"><span class=\"glyphicon glyphicon-cloud-upload\"></span>Drop files to attach, or <a style=\"cursor: pointer;\" ngf-select=\"upload($files)\" tabindex=\"{{ component.tabindex || 0 }}\" ngf-multiple=\"component.multiple\">browse</a>.</div>\n    <div ng-if=\"!component.storage\" class=\"alert alert-warning\">No storage has been set for this field. File uploads are disabled until storage is set up.</div>\n    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>\n  </div>\n  <div ng-repeat=\"fileUpload in fileUploads track by $index\" ng-class=\"{'has-error': fileUpload.status === 'error'}\" class=\"file\">\n    <div class=\"row\">\n      <div class=\"fileName control-label col-sm-10\">{{ fileUpload.name }} <span ng-click=\"removeUpload(fileUpload.name)\" class=\"glyphicon glyphicon-remove\"></span></div>\n      <div class=\"fileSize control-label col-sm-2 text-right\">{{ fileSize(fileUpload.size) }}</div>\n    </div>\n    <div class=\"row\">\n      <div class=\"col-sm-12\">\n        <span ng-if=\"fileUpload.status === 'progress'\">\n          <div class=\"progress\">\n            <div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"{{fileUpload.progress}}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width:{{fileUpload.progress}}%\">\n              <span class=\"sr-only\">{{fileUpload.progress}}% Complete</span>\n            </div>\n          </div>\n        </span>\n        <div ng-if=\"!fileUpload.status !== 'progress'\" class=\"bg-{{ fileUpload.status }} control-label\">{{ fileUpload.message }}</div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<div class=\"formio-errors\"><formio-errors ng-if=\"::!options.building\"></formio-errors></div>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formio.formUrl\" ng-if=\"!component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formio.formUrl\" width=\"component.imageSize\" ng-if=\"component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-image-list>\n  <div ng-if=\"!readOnly && (component.multiple || (!component.multiple && !data[component.key].length))\">\n    <div ngf-drop=\"upload($files)\" class=\"fileSelector\" ngf-drag-over-class=\"'fileDragOver'\" ngf-multiple=\"component.multiple\" id=\"{{ componentId }}\" name=\"{{ componentId }}\"><span class=\"glyphicon glyphicon-cloud-upload\"></span>Drop files to attach, or <a style=\"cursor: pointer;\" ngf-select=\"upload($files)\" tabindex=\"{{ component.tabindex || 0 }}\" ngf-multiple=\"component.multiple\">browse</a>.</div>\n    <div ng-if=\"!component.storage\" class=\"alert alert-warning\">No storage has been set for this field. File uploads are disabled until storage is set up.</div>\n    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>\n  </div>\n  <div ng-repeat=\"fileUpload in fileUploads track by $index\" ng-class=\"{'has-error': fileUpload.status === 'error'}\" class=\"file\">\n    <div class=\"row\">\n      <div class=\"fileName control-label col-sm-10\">{{ fileUpload.name }} <span ng-click=\"removeUpload(fileUpload.name)\" class=\"glyphicon glyphicon-remove\"></span></div>\n      <div class=\"fileSize control-label col-sm-2 text-right\">{{ fileSize(fileUpload.size) }}</div>\n    </div>\n    <div class=\"row\">\n      <div class=\"col-sm-12\">\n        <span ng-if=\"fileUpload.status === 'progress'\">\n          <div class=\"progress\">\n            <div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"{{fileUpload.progress}}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width:{{fileUpload.progress}}%\">\n              <span class=\"sr-only\">{{fileUpload.progress}}% Complete</span>\n            </div>\n          </div>\n        </span>\n        <div ng-if=\"!fileUpload.status !== 'progress'\" class=\"bg-{{ fileUpload.status }} control-label\">{{ fileUpload.message }}</div>\n      </div>\n    </div>\n  </div>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/file.html',
-        "<label ng-if=\"component.label && !component.hideLabel\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">{{ component.label | formioTranslate:null:options.building }}</label>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formUrl\" read-only=\"true\" ng-if=\"!component.image\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formUrl\" read-only=\"true\" width=\"component.imageSize\" ng-if=\"component.image\"></formio-image-list>\n</div>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ component.key }}\" class=\"control-label\" ng-class=\"{'field-required': component.validate.required}\">{{ component.label | formioTranslate:null:options.building }}</label>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formUrl\" read-only=\"true\" ng-if=\"!component.image\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formUrl\" read-only=\"true\" width=\"component.imageSize\" ng-if=\"component.image\"></formio-image-list>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],300:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -71202,7 +70672,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],301:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],300:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -71238,7 +70708,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],302:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],301:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71330,7 +70800,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],303:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -71375,7 +70845,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":284,"./button":285,"./checkbox":286,"./columns":287,"./components":288,"./container":289,"./content":290,"./currency":291,"./custom":292,"./datagrid":293,"./datetime":294,"./day":295,"./editgrid":296,"./email":297,"./fieldset":298,"./file":299,"./form":300,"./hidden":301,"./htmlelement":302,"./number":304,"./page":305,"./panel":306,"./password":307,"./phonenumber":308,"./radio":309,"./resource":310,"./select":311,"./selectboxes":312,"./signature":313,"./survey":314,"./table":315,"./textarea":316,"./textfield":317,"./time":318,"./well":319}],304:[function(_dereq_,module,exports){
+},{"./address":283,"./button":284,"./checkbox":285,"./columns":286,"./components":287,"./container":288,"./content":289,"./currency":290,"./custom":291,"./datagrid":292,"./datetime":293,"./day":294,"./editgrid":295,"./email":296,"./fieldset":297,"./file":298,"./form":299,"./hidden":300,"./htmlelement":301,"./number":303,"./page":304,"./panel":305,"./password":306,"./phonenumber":307,"./radio":308,"./resource":309,"./select":310,"./selectboxes":311,"./signature":312,"./survey":313,"./table":314,"./textarea":315,"./textfield":316,"./time":317,"./well":318}],303:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71440,7 +70910,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71467,7 +70937,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],306:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -71523,7 +70993,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],307:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],306:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -71554,7 +71024,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -71590,7 +71060,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71641,7 +71111,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],310:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71858,7 +71328,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/resource.html',
-        "<div ng-if=\"!component.addResource\">\n  <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n  <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n    <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n      <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n    </ui-select-match>\n    <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n      <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n      <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n    </ui-select-choices>\n  </ui-select>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n<div ng-if=\"component.addResource\">\n  <table class=\"table table-bordered\">\n    <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </label>\n    <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n    <tr>\n      <td>\n        <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n          <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n            <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n          </ui-select-match>\n          <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n            <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n            <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n          </ui-select-choices>\n        </ui-select>\n        <formio-errors ng-if=\"::!options.building\"></formio-errors>\n      </td>\n    </tr>\n    <tr>\n      <td>\n        <a ng-click=\"newResource()\" class=\"btn btn-primary\">\n          <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addResourceLabel || \"Add Resource\" | formioTranslate:null:options.building}}\n        </a>\n      </td>\n    </tr>\n  </table>\n</div>\n"
+        "<div ng-if=\"!component.addResource\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n  <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n    <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n      <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n    </ui-select-match>\n    <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n      <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n      <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n    </ui-select-choices>\n  </ui-select>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n<div ng-if=\"component.addResource\">\n  <table class=\"table table-bordered\">\n    <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </label>\n    <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n    <tr>\n      <td>\n        <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n          <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n            <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n          </ui-select-match>\n          <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n            <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n            <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n          </ui-select-choices>\n        </ui-select>\n        <formio-errors ng-if=\"::!options.building\"></formio-errors>\n      </td>\n    </tr>\n    <tr>\n      <td>\n        <a ng-click=\"newResource()\" class=\"btn btn-primary\">\n          <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addResourceLabel || \"Add Resource\" | formioTranslate:null:options.building}}\n        </a>\n      </td>\n    </tr>\n  </table>\n</div>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -71869,7 +71339,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],311:[function(_dereq_,module,exports){
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -72481,7 +71951,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/select.html',
-        "<label ng-if=\"component.label && !component.hideLabel\"  for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select\n  ui-select-required\n  ui-select-open-on-focus\n  ng-model=\"data[component.key]\"\n  safe-multiple-to-single\n  name=\"{{ componentId }}\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"isRequired(component)\"\n  id=\"{{ componentId }}\"\n  theme=\"bootstrap\"\n  custom-validator=\"component.validate.custom\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n>\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"getSelectItem(item) as item in selectItems | filter: $select.search\" refresh=\"refreshItems($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n    <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"selectLoading\">Load more...</button>\n  </ui-select-choices>\n</ui-select>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\"  for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select\n  ui-select-required\n  ui-select-open-on-focus\n  ng-model=\"data[component.key]\"\n  safe-multiple-to-single\n  name=\"{{ componentId }}\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"isRequired(component)\"\n  id=\"{{ componentId }}\"\n  theme=\"bootstrap\"\n  custom-validator=\"component.validate.custom\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n>\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"getSelectItem(item) as item in selectItems | filter: $select.search\" refresh=\"refreshItems($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n    <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"selectLoading\">Load more...</button>\n  </ui-select-choices>\n</ui-select>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -72492,7 +71962,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":214,"lodash/cloneDeep":221,"lodash/get":229,"lodash/isEqual":239,"lodash/mapValues":256,"lodash/set":266}],312:[function(_dereq_,module,exports){
+},{"lodash/assign":214,"lodash/cloneDeep":221,"lodash/get":229,"lodash/isEqual":239,"lodash/mapValues":256,"lodash/set":266}],311:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -72594,13 +72064,13 @@ module.exports = function(app) {
         "<div class=\"select-boxes\">\n  <div ng-class=\"component.inline ? 'checkbox-inline' : 'checkbox'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n      <input type=\"checkbox\"\n        id=\"{{ componentId }}-{{ v.value }}\"\n        name=\"{{ componentId }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-disabled=\"readOnly\"\n        ng-click=\"toggleCheckbox(v.value)\"\n        ng-checked=\"model[v.value]\"\n        grid-row=\"gridRow\"\n        grid-col=\"gridCol\"\n      >\n      {{ v.label | formioTranslate:null:options.building }}\n    </label>\n  </div>\n</div>\n"
       );
       $templateCache.put('formio/components/selectboxes.html',
-        "<div class=\"select-boxes\">\n  <label ng-if=\"component.label && !component.hideLabel\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <formio-select-boxes\n    name=\"{{componentId}}\"\n    ng-model=\"data[component.key]\"\n    ng-model-options=\"{allowInvalid: true}\"\n    component=\"component\"\n    component-id=\"componentId\"\n    read-only=\"readOnly\"\n    ng-required=\"isRequired(component)\"\n    custom-validator=\"component.validate.custom\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    options=\"options\"\n  ></formio-select-boxes>\n  <div ng-if=\"!!component.description\" class=\"help-block\">\n    <span>{{ component.description }}</span>\n  </div>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n"
+        "<div class=\"select-boxes\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <formio-select-boxes\n    name=\"{{componentId}}\"\n    ng-model=\"data[component.key]\"\n    ng-model-options=\"{allowInvalid: true}\"\n    component=\"component\"\n    component-id=\"componentId\"\n    read-only=\"readOnly\"\n    ng-required=\"isRequired(component)\"\n    custom-validator=\"component.validate.custom\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    options=\"options\"\n  ></formio-select-boxes>\n  <div ng-if=\"!!component.description\" class=\"help-block\">\n    <span>{{ component.description }}</span>\n  </div>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],313:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -72742,7 +72212,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":283}],314:[function(_dereq_,module,exports){
+},{"signature_pad":351}],313:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -72803,7 +72273,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],315:[function(_dereq_,module,exports){
+},{}],314:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -72883,7 +72353,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],316:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],315:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -73009,7 +72479,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],316:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -73070,7 +72540,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],318:[function(_dereq_,module,exports){
+},{}],317:[function(_dereq_,module,exports){
 "use strict";
 
 var moment = _dereq_('moment');
@@ -73142,7 +72612,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"moment":278}],319:[function(_dereq_,module,exports){
+},{"moment":278}],318:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -73195,7 +72665,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":335}],320:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":334}],319:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73273,7 +72743,7 @@ module.exports = function() {
   };
 };
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73680,7 +73150,7 @@ module.exports = function() {
   };
 };
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -73697,7 +73167,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 "use strict";
 var _get = _dereq_('lodash/get');
 
@@ -73965,7 +73435,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/get":229}],324:[function(_dereq_,module,exports){
+},{"lodash/get":229}],323:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73981,7 +73451,7 @@ module.exports = function() {
   };
 };
 
-},{}],325:[function(_dereq_,module,exports){
+},{}],324:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -74054,7 +73524,7 @@ module.exports = [
   }
 ];
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],325:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -74138,7 +73608,7 @@ module.exports = function() {
   };
 };
 
-},{}],327:[function(_dereq_,module,exports){
+},{}],326:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -74157,7 +73627,7 @@ module.exports = [
   }
 ];
 
-},{}],328:[function(_dereq_,module,exports){
+},{}],327:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -74167,7 +73637,7 @@ module.exports = function() {
   };
 };
 
-},{}],329:[function(_dereq_,module,exports){
+},{}],328:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 // Javascript editor directive
@@ -74243,7 +73713,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{"lodash/map":255}],330:[function(_dereq_,module,exports){
+},{"lodash/map":255}],329:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -74275,7 +73745,7 @@ module.exports = function() {
   };
 };
 
-},{}],331:[function(_dereq_,module,exports){
+},{}],330:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -74331,7 +73801,7 @@ module.exports = function() {
   };
 };
 
-},{}],332:[function(_dereq_,module,exports){
+},{}],331:[function(_dereq_,module,exports){
 "use strict";
 var isNaN = _dereq_('lodash/isNAN');
 var isFinite = _dereq_('lodash/isFinite');
@@ -74950,7 +74420,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/isEmpty":238,"lodash/isFinite":241,"lodash/isNAN":244}],333:[function(_dereq_,module,exports){
+},{"lodash/isEmpty":238,"lodash/isFinite":241,"lodash/isNAN":244}],332:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -75134,7 +74604,7 @@ module.exports = [
   }
 ];
 
-},{}],334:[function(_dereq_,module,exports){
+},{}],333:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 var _filter = _dereq_('lodash/filter');
@@ -75466,7 +74936,7 @@ module.exports = function() {
     },
     fieldWrap: function(input) {
       var multiInput = input.replace('data[component.key]', 'data[component.key][$index]');
-      var inputLabel = '<label ng-if="component.label && !component.hideLabel" for="{{ component.key }}" class="control-label" ng-class="{\'field-required\': isRequired(component)}">' +
+      var inputLabel = '<label ng-if="options.building || (component.label && !component.hideLabel)" for="{{ component.key }}" class="control-label" ng-class="{\'field-required\': isRequired(component)}">' +
         '{{ component.label | formioTranslate:null:options.building }} ' +
         '<formio-component-tooltip></formio-component-tooltip>' +
         '</label>';
@@ -75522,7 +74992,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":37,"lodash/filter":227,"lodash/get":229}],335:[function(_dereq_,module,exports){
+},{"formiojs/utils":37,"lodash/filter":227,"lodash/get":229}],334:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -75648,7 +75118,7 @@ module.exports = function() {
   };
 };
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],335:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -75697,7 +75167,7 @@ module.exports = [
   }
 ];
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],336:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -75731,7 +75201,7 @@ module.exports = [
   }
 ];
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],337:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -75740,7 +75210,7 @@ module.exports = [
   }
 ];
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],338:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -75753,7 +75223,7 @@ module.exports = [
   }
 ];
 
-},{}],340:[function(_dereq_,module,exports){
+},{}],339:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -75772,7 +75242,7 @@ module.exports = [
   }
 ];
 
-},{}],341:[function(_dereq_,module,exports){
+},{}],340:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -75785,7 +75255,7 @@ module.exports = [
   }
 ];
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],341:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -75800,7 +75270,7 @@ module.exports = [
   }
 ];
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -75857,7 +75327,7 @@ module.exports = [
   }
 ];
 
-},{}],344:[function(_dereq_,module,exports){
+},{}],343:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -75865,7 +75335,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],345:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -75881,7 +75351,7 @@ _dereq_('ng-dialog');
 _dereq_('angular-ui-ace/src/ui-ace');
 _dereq_('./formio');
 
-},{"./formio":346,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":280,"ng-file-upload":282,"ui-select/dist/select":352}],346:[function(_dereq_,module,exports){
+},{"./formio":345,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":280,"ng-file-upload":282,"ui-select/dist/select":352}],345:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -76039,7 +75509,7 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":303,"./directives/customValidator":320,"./directives/formio":321,"./directives/formioBindHtml.js":322,"./directives/formioComponent":323,"./directives/formioComponentTooltip":324,"./directives/formioComponentView":325,"./directives/formioDelete":326,"./directives/formioElement":327,"./directives/formioErrors":328,"./directives/formioScriptEditor":329,"./directives/formioSubmission":330,"./directives/formioSubmissions":331,"./directives/formioWizard":332,"./factories/FormioScope":333,"./factories/FormioUtils":334,"./factories/formioInterceptor":336,"./factories/formioTableView":337,"./filters/flattenComponents":338,"./filters/safehtml":339,"./filters/tableComponents":340,"./filters/tableFieldView":341,"./filters/tableView":342,"./filters/translate":343,"./filters/trusturl":344,"./polyfills/polyfills":348,"./providers/Formio":349}],347:[function(_dereq_,module,exports){
+},{"./components":302,"./directives/customValidator":319,"./directives/formio":320,"./directives/formioBindHtml.js":321,"./directives/formioComponent":322,"./directives/formioComponentTooltip":323,"./directives/formioComponentView":324,"./directives/formioDelete":325,"./directives/formioElement":326,"./directives/formioErrors":327,"./directives/formioScriptEditor":328,"./directives/formioSubmission":329,"./directives/formioSubmissions":330,"./directives/formioWizard":331,"./factories/FormioScope":332,"./factories/FormioUtils":333,"./factories/formioInterceptor":335,"./factories/formioTableView":336,"./filters/flattenComponents":337,"./filters/safehtml":338,"./filters/tableComponents":339,"./filters/tableFieldView":340,"./filters/tableView":341,"./filters/translate":342,"./filters/trusturl":343,"./polyfills/polyfills":347,"./providers/Formio":348}],346:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -76070,13 +75540,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],348:[function(_dereq_,module,exports){
+},{}],347:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":347}],349:[function(_dereq_,module,exports){
+},{"./Object.assign":346}],348:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -76146,7 +75616,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":29}],350:[function(_dereq_,module,exports){
+},{"formiojs":29}],349:[function(_dereq_,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -76332,7 +75802,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],350:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -76368,6 +75838,618 @@ var objectKeys = Object.keys || function (obj) {
 var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
+
+},{}],351:[function(_dereq_,module,exports){
+/*!
+ * Signature Pad v2.3.2
+ * https://github.com/szimek/signature_pad
+ *
+ * Copyright 2017 Szymon Nowak
+ * Released under the MIT license
+ *
+ * The main idea and some parts of the code (e.g. drawing variable width Bézier curve) are taken from:
+ * http://corner.squareup.com/2012/07/smoother-signatures.html
+ *
+ * Implementation of interpolation using cubic Bézier curves is taken from:
+ * http://benknowscode.wordpress.com/2012/09/14/path-interpolation-using-cubic-bezier-and-control-point-estimation-in-javascript
+ *
+ * Algorithm for approximated length of a Bézier curve is taken from:
+ * http://www.lemoda.net/maths/bezier-length/index.html
+ *
+ */
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(global.SignaturePad = factory());
+}(this, (function () { 'use strict';
+
+function Point(x, y, time) {
+  this.x = x;
+  this.y = y;
+  this.time = time || new Date().getTime();
+}
+
+Point.prototype.velocityFrom = function (start) {
+  return this.time !== start.time ? this.distanceTo(start) / (this.time - start.time) : 1;
+};
+
+Point.prototype.distanceTo = function (start) {
+  return Math.sqrt(Math.pow(this.x - start.x, 2) + Math.pow(this.y - start.y, 2));
+};
+
+Point.prototype.equals = function (other) {
+  return this.x === other.x && this.y === other.y && this.time === other.time;
+};
+
+function Bezier(startPoint, control1, control2, endPoint) {
+  this.startPoint = startPoint;
+  this.control1 = control1;
+  this.control2 = control2;
+  this.endPoint = endPoint;
+}
+
+// Returns approximated length.
+Bezier.prototype.length = function () {
+  var steps = 10;
+  var length = 0;
+  var px = void 0;
+  var py = void 0;
+
+  for (var i = 0; i <= steps; i += 1) {
+    var t = i / steps;
+    var cx = this._point(t, this.startPoint.x, this.control1.x, this.control2.x, this.endPoint.x);
+    var cy = this._point(t, this.startPoint.y, this.control1.y, this.control2.y, this.endPoint.y);
+    if (i > 0) {
+      var xdiff = cx - px;
+      var ydiff = cy - py;
+      length += Math.sqrt(xdiff * xdiff + ydiff * ydiff);
+    }
+    px = cx;
+    py = cy;
+  }
+
+  return length;
+};
+
+/* eslint-disable no-multi-spaces, space-in-parens */
+Bezier.prototype._point = function (t, start, c1, c2, end) {
+  return start * (1.0 - t) * (1.0 - t) * (1.0 - t) + 3.0 * c1 * (1.0 - t) * (1.0 - t) * t + 3.0 * c2 * (1.0 - t) * t * t + end * t * t * t;
+};
+
+/* eslint-disable */
+
+// http://stackoverflow.com/a/27078401/815507
+function throttle(func, wait, options) {
+  var context, args, result;
+  var timeout = null;
+  var previous = 0;
+  if (!options) options = {};
+  var later = function later() {
+    previous = options.leading === false ? 0 : Date.now();
+    timeout = null;
+    result = func.apply(context, args);
+    if (!timeout) context = args = null;
+  };
+  return function () {
+    var now = Date.now();
+    if (!previous && options.leading === false) previous = now;
+    var remaining = wait - (now - previous);
+    context = this;
+    args = arguments;
+    if (remaining <= 0 || remaining > wait) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      previous = now;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    } else if (!timeout && options.trailing !== false) {
+      timeout = setTimeout(later, remaining);
+    }
+    return result;
+  };
+}
+
+function SignaturePad(canvas, options) {
+  var self = this;
+  var opts = options || {};
+
+  this.velocityFilterWeight = opts.velocityFilterWeight || 0.7;
+  this.minWidth = opts.minWidth || 0.5;
+  this.maxWidth = opts.maxWidth || 2.5;
+  this.throttle = 'throttle' in opts ? opts.throttle : 16; // in miliseconds
+  this.minDistance = 'minDistance' in opts ? opts.minDistance : 5;
+
+  if (this.throttle) {
+    this._strokeMoveUpdate = throttle(SignaturePad.prototype._strokeUpdate, this.throttle);
+  } else {
+    this._strokeMoveUpdate = SignaturePad.prototype._strokeUpdate;
+  }
+
+  this.dotSize = opts.dotSize || function () {
+    return (this.minWidth + this.maxWidth) / 2;
+  };
+  this.penColor = opts.penColor || 'black';
+  this.backgroundColor = opts.backgroundColor || 'rgba(0,0,0,0)';
+  this.onBegin = opts.onBegin;
+  this.onEnd = opts.onEnd;
+
+  this._canvas = canvas;
+  this._ctx = canvas.getContext('2d');
+  this.clear();
+
+  // We need add these inline so they are available to unbind while still having
+  // access to 'self' we could use _.bind but it's not worth adding a dependency.
+  this._handleMouseDown = function (event) {
+    if (event.which === 1) {
+      self._mouseButtonDown = true;
+      self._strokeBegin(event);
+    }
+  };
+
+  this._handleMouseMove = function (event) {
+    if (self._mouseButtonDown) {
+      self._strokeMoveUpdate(event);
+    }
+  };
+
+  this._handleMouseUp = function (event) {
+    if (event.which === 1 && self._mouseButtonDown) {
+      self._mouseButtonDown = false;
+      self._strokeEnd(event);
+    }
+  };
+
+  this._handleTouchStart = function (event) {
+    if (event.targetTouches.length === 1) {
+      var touch = event.changedTouches[0];
+      self._strokeBegin(touch);
+    }
+  };
+
+  this._handleTouchMove = function (event) {
+    // Prevent scrolling.
+    event.preventDefault();
+
+    var touch = event.targetTouches[0];
+    self._strokeMoveUpdate(touch);
+  };
+
+  this._handleTouchEnd = function (event) {
+    var wasCanvasTouched = event.target === self._canvas;
+    if (wasCanvasTouched) {
+      event.preventDefault();
+      self._strokeEnd(event);
+    }
+  };
+
+  // Enable mouse and touch event handlers
+  this.on();
+}
+
+// Public methods
+SignaturePad.prototype.clear = function () {
+  var ctx = this._ctx;
+  var canvas = this._canvas;
+
+  ctx.fillStyle = this.backgroundColor;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  this._data = [];
+  this._reset();
+  this._isEmpty = true;
+};
+
+SignaturePad.prototype.fromDataURL = function (dataUrl) {
+  var _this = this;
+
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var image = new Image();
+  var ratio = options.ratio || window.devicePixelRatio || 1;
+  var width = options.width || this._canvas.width / ratio;
+  var height = options.height || this._canvas.height / ratio;
+
+  this._reset();
+  image.src = dataUrl;
+  image.onload = function () {
+    _this._ctx.drawImage(image, 0, 0, width, height);
+  };
+  this._isEmpty = false;
+};
+
+SignaturePad.prototype.toDataURL = function (type) {
+  var _canvas;
+
+  switch (type) {
+    case 'image/svg+xml':
+      return this._toSVG();
+    default:
+      for (var _len = arguments.length, options = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        options[_key - 1] = arguments[_key];
+      }
+
+      return (_canvas = this._canvas).toDataURL.apply(_canvas, [type].concat(options));
+  }
+};
+
+SignaturePad.prototype.on = function () {
+  this._handleMouseEvents();
+  this._handleTouchEvents();
+};
+
+SignaturePad.prototype.off = function () {
+  this._canvas.removeEventListener('mousedown', this._handleMouseDown);
+  this._canvas.removeEventListener('mousemove', this._handleMouseMove);
+  document.removeEventListener('mouseup', this._handleMouseUp);
+
+  this._canvas.removeEventListener('touchstart', this._handleTouchStart);
+  this._canvas.removeEventListener('touchmove', this._handleTouchMove);
+  this._canvas.removeEventListener('touchend', this._handleTouchEnd);
+};
+
+SignaturePad.prototype.isEmpty = function () {
+  return this._isEmpty;
+};
+
+// Private methods
+SignaturePad.prototype._strokeBegin = function (event) {
+  this._data.push([]);
+  this._reset();
+  this._strokeUpdate(event);
+
+  if (typeof this.onBegin === 'function') {
+    this.onBegin(event);
+  }
+};
+
+SignaturePad.prototype._strokeUpdate = function (event) {
+  var x = event.clientX;
+  var y = event.clientY;
+
+  var point = this._createPoint(x, y);
+  var lastPointGroup = this._data[this._data.length - 1];
+  var lastPoint = lastPointGroup && lastPointGroup[lastPointGroup.length - 1];
+  var isLastPointTooClose = lastPoint && point.distanceTo(lastPoint) < this.minDistance;
+
+  // Skip this point if it's too close to the previous one
+  if (!(lastPoint && isLastPointTooClose)) {
+    var _addPoint = this._addPoint(point),
+        curve = _addPoint.curve,
+        widths = _addPoint.widths;
+
+    if (curve && widths) {
+      this._drawCurve(curve, widths.start, widths.end);
+    }
+
+    this._data[this._data.length - 1].push({
+      x: point.x,
+      y: point.y,
+      time: point.time,
+      color: this.penColor
+    });
+  }
+};
+
+SignaturePad.prototype._strokeEnd = function (event) {
+  var canDrawCurve = this.points.length > 2;
+  var point = this.points[0]; // Point instance
+
+  if (!canDrawCurve && point) {
+    this._drawDot(point);
+  }
+
+  if (point) {
+    var lastPointGroup = this._data[this._data.length - 1];
+    var lastPoint = lastPointGroup[lastPointGroup.length - 1]; // plain object
+
+    // When drawing a dot, there's only one point in a group, so without this check
+    // such group would end up with exactly the same 2 points.
+    if (!point.equals(lastPoint)) {
+      lastPointGroup.push({
+        x: point.x,
+        y: point.y,
+        time: point.time,
+        color: this.penColor
+      });
+    }
+  }
+
+  if (typeof this.onEnd === 'function') {
+    this.onEnd(event);
+  }
+};
+
+SignaturePad.prototype._handleMouseEvents = function () {
+  this._mouseButtonDown = false;
+
+  this._canvas.addEventListener('mousedown', this._handleMouseDown);
+  this._canvas.addEventListener('mousemove', this._handleMouseMove);
+  document.addEventListener('mouseup', this._handleMouseUp);
+};
+
+SignaturePad.prototype._handleTouchEvents = function () {
+  // Pass touch events to canvas element on mobile IE11 and Edge.
+  this._canvas.style.msTouchAction = 'none';
+  this._canvas.style.touchAction = 'none';
+
+  this._canvas.addEventListener('touchstart', this._handleTouchStart);
+  this._canvas.addEventListener('touchmove', this._handleTouchMove);
+  this._canvas.addEventListener('touchend', this._handleTouchEnd);
+};
+
+SignaturePad.prototype._reset = function () {
+  this.points = [];
+  this._lastVelocity = 0;
+  this._lastWidth = (this.minWidth + this.maxWidth) / 2;
+  this._ctx.fillStyle = this.penColor;
+};
+
+SignaturePad.prototype._createPoint = function (x, y, time) {
+  var rect = this._canvas.getBoundingClientRect();
+
+  return new Point(x - rect.left, y - rect.top, time || new Date().getTime());
+};
+
+SignaturePad.prototype._addPoint = function (point) {
+  var points = this.points;
+  var tmp = void 0;
+
+  points.push(point);
+
+  if (points.length > 2) {
+    // To reduce the initial lag make it work with 3 points
+    // by copying the first point to the beginning.
+    if (points.length === 3) points.unshift(points[0]);
+
+    tmp = this._calculateCurveControlPoints(points[0], points[1], points[2]);
+    var c2 = tmp.c2;
+    tmp = this._calculateCurveControlPoints(points[1], points[2], points[3]);
+    var c3 = tmp.c1;
+    var curve = new Bezier(points[1], c2, c3, points[2]);
+    var widths = this._calculateCurveWidths(curve);
+
+    // Remove the first element from the list,
+    // so that we always have no more than 4 points in points array.
+    points.shift();
+
+    return { curve: curve, widths: widths };
+  }
+
+  return {};
+};
+
+SignaturePad.prototype._calculateCurveControlPoints = function (s1, s2, s3) {
+  var dx1 = s1.x - s2.x;
+  var dy1 = s1.y - s2.y;
+  var dx2 = s2.x - s3.x;
+  var dy2 = s2.y - s3.y;
+
+  var m1 = { x: (s1.x + s2.x) / 2.0, y: (s1.y + s2.y) / 2.0 };
+  var m2 = { x: (s2.x + s3.x) / 2.0, y: (s2.y + s3.y) / 2.0 };
+
+  var l1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+  var l2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+  var dxm = m1.x - m2.x;
+  var dym = m1.y - m2.y;
+
+  var k = l2 / (l1 + l2);
+  var cm = { x: m2.x + dxm * k, y: m2.y + dym * k };
+
+  var tx = s2.x - cm.x;
+  var ty = s2.y - cm.y;
+
+  return {
+    c1: new Point(m1.x + tx, m1.y + ty),
+    c2: new Point(m2.x + tx, m2.y + ty)
+  };
+};
+
+SignaturePad.prototype._calculateCurveWidths = function (curve) {
+  var startPoint = curve.startPoint;
+  var endPoint = curve.endPoint;
+  var widths = { start: null, end: null };
+
+  var velocity = this.velocityFilterWeight * endPoint.velocityFrom(startPoint) + (1 - this.velocityFilterWeight) * this._lastVelocity;
+
+  var newWidth = this._strokeWidth(velocity);
+
+  widths.start = this._lastWidth;
+  widths.end = newWidth;
+
+  this._lastVelocity = velocity;
+  this._lastWidth = newWidth;
+
+  return widths;
+};
+
+SignaturePad.prototype._strokeWidth = function (velocity) {
+  return Math.max(this.maxWidth / (velocity + 1), this.minWidth);
+};
+
+SignaturePad.prototype._drawPoint = function (x, y, size) {
+  var ctx = this._ctx;
+
+  ctx.moveTo(x, y);
+  ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+  this._isEmpty = false;
+};
+
+SignaturePad.prototype._drawCurve = function (curve, startWidth, endWidth) {
+  var ctx = this._ctx;
+  var widthDelta = endWidth - startWidth;
+  var drawSteps = Math.floor(curve.length());
+
+  ctx.beginPath();
+
+  for (var i = 0; i < drawSteps; i += 1) {
+    // Calculate the Bezier (x, y) coordinate for this step.
+    var t = i / drawSteps;
+    var tt = t * t;
+    var ttt = tt * t;
+    var u = 1 - t;
+    var uu = u * u;
+    var uuu = uu * u;
+
+    var x = uuu * curve.startPoint.x;
+    x += 3 * uu * t * curve.control1.x;
+    x += 3 * u * tt * curve.control2.x;
+    x += ttt * curve.endPoint.x;
+
+    var y = uuu * curve.startPoint.y;
+    y += 3 * uu * t * curve.control1.y;
+    y += 3 * u * tt * curve.control2.y;
+    y += ttt * curve.endPoint.y;
+
+    var width = startWidth + ttt * widthDelta;
+    this._drawPoint(x, y, width);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+};
+
+SignaturePad.prototype._drawDot = function (point) {
+  var ctx = this._ctx;
+  var width = typeof this.dotSize === 'function' ? this.dotSize() : this.dotSize;
+
+  ctx.beginPath();
+  this._drawPoint(point.x, point.y, width);
+  ctx.closePath();
+  ctx.fill();
+};
+
+SignaturePad.prototype._fromData = function (pointGroups, drawCurve, drawDot) {
+  for (var i = 0; i < pointGroups.length; i += 1) {
+    var group = pointGroups[i];
+
+    if (group.length > 1) {
+      for (var j = 0; j < group.length; j += 1) {
+        var rawPoint = group[j];
+        var point = new Point(rawPoint.x, rawPoint.y, rawPoint.time);
+        var color = rawPoint.color;
+
+        if (j === 0) {
+          // First point in a group. Nothing to draw yet.
+
+          // All points in the group have the same color, so it's enough to set
+          // penColor just at the beginning.
+          this.penColor = color;
+          this._reset();
+
+          this._addPoint(point);
+        } else if (j !== group.length - 1) {
+          // Middle point in a group.
+          var _addPoint2 = this._addPoint(point),
+              curve = _addPoint2.curve,
+              widths = _addPoint2.widths;
+
+          if (curve && widths) {
+            drawCurve(curve, widths, color);
+          }
+        } else {
+          // Last point in a group. Do nothing.
+        }
+      }
+    } else {
+      this._reset();
+      var _rawPoint = group[0];
+      drawDot(_rawPoint);
+    }
+  }
+};
+
+SignaturePad.prototype._toSVG = function () {
+  var _this2 = this;
+
+  var pointGroups = this._data;
+  var canvas = this._canvas;
+  var ratio = Math.max(window.devicePixelRatio || 1, 1);
+  var minX = 0;
+  var minY = 0;
+  var maxX = canvas.width / ratio;
+  var maxY = canvas.height / ratio;
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+  svg.setAttributeNS(null, 'width', canvas.width);
+  svg.setAttributeNS(null, 'height', canvas.height);
+
+  this._fromData(pointGroups, function (curve, widths, color) {
+    var path = document.createElement('path');
+
+    // Need to check curve for NaN values, these pop up when drawing
+    // lines on the canvas that are not continuous. E.g. Sharp corners
+    // or stopping mid-stroke and than continuing without lifting mouse.
+    if (!isNaN(curve.control1.x) && !isNaN(curve.control1.y) && !isNaN(curve.control2.x) && !isNaN(curve.control2.y)) {
+      var attr = 'M ' + curve.startPoint.x.toFixed(3) + ',' + curve.startPoint.y.toFixed(3) + ' ' + ('C ' + curve.control1.x.toFixed(3) + ',' + curve.control1.y.toFixed(3) + ' ') + (curve.control2.x.toFixed(3) + ',' + curve.control2.y.toFixed(3) + ' ') + (curve.endPoint.x.toFixed(3) + ',' + curve.endPoint.y.toFixed(3));
+
+      path.setAttribute('d', attr);
+      path.setAttribute('stroke-width', (widths.end * 2.25).toFixed(3));
+      path.setAttribute('stroke', color);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+
+      svg.appendChild(path);
+    }
+  }, function (rawPoint) {
+    var circle = document.createElement('circle');
+    var dotSize = typeof _this2.dotSize === 'function' ? _this2.dotSize() : _this2.dotSize;
+    circle.setAttribute('r', dotSize);
+    circle.setAttribute('cx', rawPoint.x);
+    circle.setAttribute('cy', rawPoint.y);
+    circle.setAttribute('fill', rawPoint.color);
+
+    svg.appendChild(circle);
+  });
+
+  var prefix = 'data:image/svg+xml;base64,';
+  var header = '<svg' + ' xmlns="http://www.w3.org/2000/svg"' + ' xmlns:xlink="http://www.w3.org/1999/xlink"' + (' viewBox="' + minX + ' ' + minY + ' ' + maxX + ' ' + maxY + '"') + (' width="' + maxX + '"') + (' height="' + maxY + '"') + '>';
+  var body = svg.innerHTML;
+
+  // IE hack for missing innerHTML property on SVGElement
+  if (body === undefined) {
+    var dummy = document.createElement('dummy');
+    var nodes = svg.childNodes;
+    dummy.innerHTML = '';
+
+    for (var i = 0; i < nodes.length; i += 1) {
+      dummy.appendChild(nodes[i].cloneNode(true));
+    }
+
+    body = dummy.innerHTML;
+  }
+
+  var footer = '</svg>';
+  var data = header + body + footer;
+
+  return prefix + btoa(data);
+};
+
+SignaturePad.prototype.fromData = function (pointGroups) {
+  var _this3 = this;
+
+  this.clear();
+
+  this._fromData(pointGroups, function (curve, widths) {
+    return _this3._drawCurve(curve, widths.start, widths.end);
+  }, function (rawPoint) {
+    return _this3._drawDot(rawPoint);
+  });
+
+  this._data = pointGroups;
+};
+
+SignaturePad.prototype.toData = function () {
+  return this._data;
+};
+
+return SignaturePad;
+
+})));
 
 },{}],352:[function(_dereq_,module,exports){
 /*!
@@ -79321,6 +79403,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -79495,6 +79578,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -79932,6 +80016,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -80063,6 +80148,7 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -80188,6 +80274,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -80306,6 +80393,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -80373,6 +80461,7 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -80614,6 +80703,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -80971,6 +81061,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -81185,6 +81276,7 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -81253,6 +81345,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -81326,6 +81419,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -81423,6 +81517,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -81602,6 +81697,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -81740,6 +81836,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -81884,6 +81981,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -82072,6 +82170,8 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -82139,6 +82239,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="mask"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -82200,6 +82301,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -82364,6 +82466,11 @@ module.exports = {
     label: 'Protected',
     type: 'checkbox',
     tooltip: 'A protected field will not be returned when queried via API.'
+  },
+  hideLabel: {
+    label: 'Hide Label',
+    type: 'checkbox',
+    tooltip: 'Hide the label of this component. This allows you to show the label in the form builder, but not when it is rendered.'
   },
   image: {
     label: 'Display as images',
@@ -83346,7 +83453,7 @@ module.exports = [
           });
 
           // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
             if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
@@ -83916,7 +84023,7 @@ module.exports = function() {
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
-      var invalidRegex = /^[^A-Za-z]+|[^A-Za-z0-9\-\.]+/g;
+      var invalidRegex = /^[^A-Za-z_]+|[^A-Za-z0-9\-\._]+/g;
       ngModel.$parsers.push(function(inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {
@@ -84161,9 +84268,9 @@ _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":412,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-complete.js":345}],412:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":412,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-complete.js":344}],412:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.23.14 | https://unpkg.com/ng-formio-builder@2.23.14/LICENSE.txt */
+/*! ng-formio-builder v2.24.0 | https://unpkg.com/ng-formio-builder@2.24.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -84303,7 +84410,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/list.html',
-      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
+      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\" ng-init=\"component.hideLabel = false;\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
     );
 
     $templateCache.put('formio/formbuilder/row.html',

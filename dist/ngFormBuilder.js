@@ -8274,6 +8274,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8448,6 +8449,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -8885,6 +8887,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -9016,6 +9019,7 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -9141,6 +9145,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -9259,6 +9264,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -9326,6 +9332,7 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -9567,6 +9574,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -9924,6 +9932,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -10138,6 +10147,7 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -10206,6 +10216,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -10279,6 +10290,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -10376,6 +10388,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -10555,6 +10568,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -10693,6 +10707,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -10837,6 +10852,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -11025,6 +11041,8 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -11092,6 +11110,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="mask"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -11153,6 +11172,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -11317,6 +11337,11 @@ module.exports = {
     label: 'Protected',
     type: 'checkbox',
     tooltip: 'A protected field will not be returned when queried via API.'
+  },
+  hideLabel: {
+    label: 'Hide Label',
+    type: 'checkbox',
+    tooltip: 'Hide the label of this component. This allows you to show the label in the form builder, but not when it is rendered.'
   },
   image: {
     label: 'Display as images',
@@ -12299,7 +12324,7 @@ module.exports = [
           });
 
           // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z]*|[^A-Za-z0-9\-]*/g;
+          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
             if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
               if ($scope.data.hasOwnProperty($scope.component.key)) {
@@ -12869,7 +12894,7 @@ module.exports = function() {
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
-      var invalidRegex = /^[^A-Za-z]+|[^A-Za-z0-9\-\.]+/g;
+      var invalidRegex = /^[^A-Za-z_]+|[^A-Za-z0-9\-\._]+/g;
       ngModel.$parsers.push(function(inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {
@@ -13109,7 +13134,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],293:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.23.14 | https://unpkg.com/ng-formio-builder@2.23.14/LICENSE.txt */
+/*! ng-formio-builder v2.24.0 | https://unpkg.com/ng-formio-builder@2.24.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -13249,7 +13274,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/list.html',
-      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
+      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\" ng-init=\"component.hideLabel = false;\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
     );
 
     $templateCache.put('formio/formbuilder/row.html',

@@ -106,6 +106,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'A protected field will not be returned when queried via API.'
   },
+  hideLabel: {
+    label: 'Hide Label',
+    type: 'checkbox',
+    tooltip: 'Hide the label of this component. This allows you to show the label in the form builder, but not when it is rendered.'
+  },
   image: {
     label: 'Display as images',
     type: 'checkbox',
