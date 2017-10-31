@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.24.0
+### Changed
+ - Upgraded all dependencies.
+
+### Added
+ - A hide label option to all components.
+
 ## 2.23.14
 ### Changed
  - Hide options that are only available with premium service.

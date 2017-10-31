@@ -13,7 +13,7 @@ module.exports = function(gulp, plugins) {
       .pipe(plugins.derequire())
       .pipe(gulp.dest('dist/'))
       .pipe(plugins.rename('ngFormBuilder-full.min.js'))
-      .pipe(plugins.streamify(plugins.uglify({preserveComments: 'license'})))
+      .pipe(plugins.streamify(plugins.uglify({output: {comments: '/^!/'}})))
       .pipe(gulp.dest('dist/'))
       .on('error', function(err){
         console.log(err);
