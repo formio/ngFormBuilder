@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Added
+ - Possibility to add custom validation message.
+
 ## 2.24.0
 ### Changed
  - Upgraded all dependencies.
