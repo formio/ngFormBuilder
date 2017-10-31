@@ -65,6 +65,7 @@ module.exports = function(app) {
           '<form-builder-option property="leftIcon"></form-builder-option>' +
           '<form-builder-option property="rightIcon"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
+          '<form-builder-option-shortcut></form-builder-option-shortcut>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="block"></form-builder-option>' +
