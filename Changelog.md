@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - Possibility to use underscore in API key.
 
+## 2.23.14
+### Changed
+ - Hide options that are only available with premium service.
+
 ## 2.23.13
 ### Added
  - Settings for encrypted fields.
