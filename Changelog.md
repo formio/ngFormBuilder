@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
  - A hide label option to all components.
+ - Possibility to use underscore in API key.
 
 ## 2.23.14
 ### Changed
