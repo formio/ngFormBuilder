@@ -86,6 +86,7 @@ module.exports = function(app) {
         '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
         '      <p>The variables <strong>row</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
         '    </small>' +
+        '    <form-builder-option property="validate.customMessage"></form-builder-option>' +
         '    <form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );

@@ -69,6 +69,7 @@ module.exports = function(app) {
           '<form-builder-option property="fields.day.required" label="Require Day" type="checkbox"></form-builder-option>' +
           '<form-builder-option property="fields.month.required" label="Require Month" type="checkbox"></form-builder-option>' +
           '<form-builder-option property="fields.year.required" label="Require Year" type="checkbox"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
