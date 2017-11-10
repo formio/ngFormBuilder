@@ -91,6 +91,8 @@ app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
 
+app.directive('formBuilderOptionLabelPosition', require('./directives/formBuilderOptionLabelPosition'));
+
 app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
 
 app.directive('validApiKey', require('./directives/validApiKey'));
