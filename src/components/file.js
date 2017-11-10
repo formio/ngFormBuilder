@@ -53,6 +53,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/file/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="storage" form-builder-tooltip="Which storage to save the files in.">{{\'Storage\' | formioTranslate}}</label>' +

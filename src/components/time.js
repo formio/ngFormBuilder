@@ -24,6 +24,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/time/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
