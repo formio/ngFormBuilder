@@ -15,6 +15,29 @@ module.exports = function(app) {
               title: 'Radio'
             }
           ];
+
+          $scope.labelPositions = [
+            {
+              value: 'top',
+              title: 'Top'
+            },
+            {
+              value: 'left',
+              title: 'Left'
+            },
+            {
+              value: 'right',
+              title: 'Right'
+            },
+            {
+              value: 'bottom',
+              title: 'Bottom'
+            }
+          ];
+  
+          if (!$scope.component.labelPosition) {
+            $scope.component.labelPosition = 'right';
+          }
         }],
         views: [
           {
@@ -53,6 +76,10 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="labelPosition" form-builder-tooltip="Position for the label for this field.">{{\'Label Position\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="labelPosition" name="labelPosition" ng-options="position.value as position.title | formioTranslate for position in labelPositions" ng-model="component.labelPosition"></select>' +
+          '</div>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<div class="form-group">' +

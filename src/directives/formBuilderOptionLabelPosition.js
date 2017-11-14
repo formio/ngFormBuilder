@@ -8,8 +8,8 @@ module.exports = function() {
       template: function() {
         return '<div>' +
                   '<div class="form-group">' +
-                    '<label for="labelPosition" form-builder-tooltip="Possition for the label for this field.">{{\'Label Position\' | formioTranslate}}</label>' +
-                    '<select class="form-control" id="labelPosition" name="labelPosition" ng-options="position.value as position.title | formioTranslate for position in positions" ng-model="component.labelPosition"></select>' +
+                    '<label for="labelPosition" form-builder-tooltip="Position for the label for this field.">{{\'Label Position\' | formioTranslate}}</label>' +
+                    '<select class="form-control" id="labelPosition" name="labelPosition" ng-options="position.value as position.title | formioTranslate for position in labelPositions" ng-model="component.labelPosition"></select>' +
                   '</div>' +
                   '<div class="form-group" ng-if="labelAtTheTopOrBottom()">' +
                   '  <label for="labelWidth" form-builder-tooltip="The width of label on line in percentages.">{{\'Label Width\' | formioTranslate}}</label>' +
@@ -22,7 +22,7 @@ module.exports = function() {
                 '</div>';
       },
       controller: ['$scope', function($scope) {
-        $scope.positions = [
+        $scope.labelPositions = [
           {
             value: 'top',
             title: 'Top'

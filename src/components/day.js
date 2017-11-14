@@ -42,6 +42,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
+          '<form-builder-option-inputs-label-position></form-builder-option-inputs-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="fields.day.placeholder" label="Day Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
