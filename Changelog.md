@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
 ### Added
+ - Possibility to add custom validation message.
  - Possibility to add shortcuts.
 
 ## 2.24.0

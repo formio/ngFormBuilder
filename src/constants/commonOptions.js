@@ -238,6 +238,11 @@ module.exports = {
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
   },
+  'validate.customMessage': {
+    label: 'Custom Error Message',
+    placeholder: 'Custom Error Message',
+    tooltip: 'Error message displayed if any error occured.'
+  },
   'rowClass': {
     label: 'Row CSS Class',
     placeholder: 'Row CSS Class',
