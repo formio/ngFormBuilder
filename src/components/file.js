@@ -62,6 +62,9 @@ module.exports = function(app) {
           '<form-builder-option property="dir"></form-builder-option>' +
           '<form-builder-option property="image"></form-builder-option>' +
           '<form-builder-option property="imageSize" ng-if="component.image"></form-builder-option>' +
+          '<form-builder-option property="filePattern"></form-builder-option>' +
+          '<form-builder-option property="fileMinSize"></form-builder-option>' +
+          '<form-builder-option property="fileMaxSize"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
