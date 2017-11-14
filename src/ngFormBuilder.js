@@ -89,7 +89,13 @@ app.directive('formBuilderOption', require('./directives/formBuilderOption'));
 
 app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
+app.directive('formBuilderOptionInputsLabelPosition', require('./directives/formBuilderOptionInputsLabelPosition'));
+
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
+
+app.directive('formBuilderOptionLabelPosition', require('./directives/formBuilderOptionLabelPosition'));
+
+app.directive('formBuilderOptionOptionsLabelPosition', require('./directives/formBuilderOptionOptionsLabelPosition'));
 
 app.directive('formBuilderOptionShortcut', require('./directives/formBuilderOptionShortcut'));
 

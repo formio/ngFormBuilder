@@ -41,6 +41,8 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
+          '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<value-builder-with-shortcuts form="form" component="component" data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder-with-shortcuts>' +
           '<form-builder-option property="customClass"></form-builder-option>' +

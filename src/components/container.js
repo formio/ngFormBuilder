@@ -30,6 +30,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/container/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option-label-position></form-builder-option-label-position>' +
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
@@ -43,11 +44,15 @@ module.exports = function(app) {
 
       $templateCache.put('formio/formbuilder/container.html',
         '<fieldset>' +
-        '<label ng-if="component.label" class="control-label">' +
+        '<label ng-if="component.label && component.labelPosition !== \'bottom\'" class="control-label" ng-style="getLabelStyles(component)">' +
           '{{ component.label }} ' +
           '<formio-component-tooltip></formio-component-tooltip>' +
         '</label>' +
-        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
+        '<form-builder-list component="component" form="form" options="options" formio="::formio" ng-style="getInputGroupStyles(component)"></form-builder-list>' +
+        '<label ng-if="component.label && component.labelPosition === \'bottom\'" class="control-label control-label--bottom" ng-style="getLabelStyles(component)">' +
+          '{{ component.label }} ' +
+          '<formio-component-tooltip></formio-component-tooltip>' +
+        '</label>' +
         '</fieldset>'
       );
     }

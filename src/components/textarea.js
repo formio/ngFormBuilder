@@ -73,6 +73,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textarea/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="rows"></form-builder-option>' +
