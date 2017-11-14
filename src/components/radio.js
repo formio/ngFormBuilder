@@ -44,7 +44,7 @@ module.exports = function(app) {
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
-          '<value-builder data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+          '<value-builder-with-shortcuts form="form" component="component" data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder-with-shortcuts>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
@@ -64,6 +64,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );

@@ -59,6 +59,7 @@ module.exports = function(app) {
         '<ng-form>' +
         '<form-builder-option property="validate.minLength"></form-builder-option>' +
         '<form-builder-option property="validate.maxLength"></form-builder-option>' +
+        '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );

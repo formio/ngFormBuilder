@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [UNRELEASED]
 ### Added
  - Possibility to specify label position for component and for options for Checkboxes and Radio components.
+ - Possibility to add custom validation message.
+ - Possibility to add shortcuts.
 
 ## 2.24.0
 ### Changed

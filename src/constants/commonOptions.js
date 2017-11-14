@@ -166,6 +166,21 @@ module.exports = {
     placeholder: 'Enter the url to post the files to.',
     tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#server-side\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#server-side</a> for how to set up the server.'
   },
+  filePattern: {
+    label: 'File Pattern',
+    placeholder: '.pdf,.jpg',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#full-reference\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#full-reference</a> for how to specify file patterns.'
+  },
+  fileMinSize: {
+    label: 'File Minimum Size',
+    placeholder: '1MB',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#full-reference\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#full-reference</a> for how to specify file sizes.'
+  },
+  fileMaxSize: {
+    label: 'File Maximum Size',
+    placeholder: '10MB',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#full-reference\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#full-reference</a> for how to specify file sizes.'
+  },
   dir: {
     label: 'Directory',
     placeholder: '(optional) Enter a directory for the files',
@@ -222,6 +237,11 @@ module.exports = {
     label: 'Regular Expression Pattern',
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  },
+  'validate.customMessage': {
+    label: 'Custom Error Message',
+    placeholder: 'Custom Error Message',
+    tooltip: 'Error message displayed if any error occured.'
   },
   'rowClass': {
     label: 'Row CSS Class',

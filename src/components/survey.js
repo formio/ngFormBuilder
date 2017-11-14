@@ -61,6 +61,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/survey/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
