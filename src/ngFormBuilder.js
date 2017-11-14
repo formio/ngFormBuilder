@@ -91,6 +91,8 @@ app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
 
+app.directive('formBuilderOptionShortcut', require('./directives/formBuilderOptionShortcut'));
+
 app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
 
 app.directive('validApiKey', require('./directives/validApiKey'));
@@ -100,6 +102,8 @@ app.directive('formBuilderOptionCustomValidation', require('./directives/formBui
 app.directive('formBuilderTooltip', require('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', require('./directives/valueBuilder'));
+
+app.directive('valueBuilderWithShortcuts', require('./directives/valueBuilderWithShortcuts'));
 
 app.directive('objectBuilder', require('./directives/objectBuilder'));
 

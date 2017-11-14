@@ -1,5 +1,8 @@
 'use strict';
 
+var _range = require('lodash/range');
+var _difference = require('lodash/difference');
+
 module.exports = ['FormioUtils', function(FormioUtils) {
   var suffixRegex = /(\d+)$/;
 
@@ -100,7 +103,54 @@ module.exports = ['FormioUtils', function(FormioUtils) {
     return component;
   };
 
+  function getAlphaShortcuts() {
+    return _range('A'.charCodeAt(), 'Z'.charCodeAt() + 1).map(function(charCode) {
+      return String.fromCharCode(charCode);
+    });
+  }
+
+  var additionalShortcuts = {
+    button: [
+      'Enter',
+      'Esc'
+    ]
+  }
+
+  function getAdditionalShortcuts(type) {
+    return additionalShortcuts[type] || [];
+  }
+
+  function getBindedShortcuts(components, input) {
+    var result = [];
+
+    FormioUtils.eachComponent(components, function(component) {
+      if (component === input) {
+        return;
+      }
+
+      if (component.shortcut) {
+        result.push(component.shortcut);
+      }
+      if (component.values) {
+        component.values.forEach(function(value) {
+          if (value.shortcut) {
+            result.push(value.shortcut);
+          }
+        });
+      }
+    }, true);
+
+    return result;
+  }
+
+  function getAvailableShortcuts(form, component) {
+    return _difference(
+      getAlphaShortcuts().concat(getAdditionalShortcuts(component.type)),
+      getBindedShortcuts(form.components, component));
+  }
+
   return {
+    getAvailableShortcuts: getAvailableShortcuts,
     uniquify: uniquify
   };
 }];
