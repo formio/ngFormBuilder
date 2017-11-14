@@ -2149,7 +2149,7 @@ return /******/ (function(modules) { // webpackBootstrap
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"angular":12,"moment":278}],5:[function(_dereq_,module,exports){
+},{"angular":12,"moment":438}],5:[function(_dereq_,module,exports){
 /**
  * @license AngularJS v1.6.6
  * (c) 2010-2017 Google, Inc. http://angularjs.org
@@ -49726,13 +49726,9 @@ exports.all = function() {
 }();
 
 }).call(this,_dereq_('_process'))
-},{"_process":349}],29:[function(_dereq_,module,exports){
+},{"_process":510}],29:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
-
-// Intentionally use native-promise-only here... Other promise libraries (es6-promise)
-// duck-punch the global Promise definition which messes up Angular 2 since it
-// also duck-punches the global Promise definition. For now, keep native-promise-only.
 
 var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -49762,6 +49758,10 @@ function _classCallCheck(instance, Constructor) {
   }
 }
 
+_dereq_('./formio.polyfill');
+// Intentionally use native-promise-only here... Other promise libraries (es6-promise)
+// duck-punch the global Promise definition which messes up Angular 2 since it
+// also duck-punches the global Promise definition. For now, keep native-promise-only.
 var Promise = _dereq_("native-promise-only");
 _dereq_('whatwg-fetch');
 var EventEmitter = _dereq_('eventemitter2').EventEmitter2;
@@ -50573,6 +50573,7 @@ var Formio = function () {
         return this.token;
       } catch (e) {
         this.token = cookies.get('formioToken');
+        return this.token;
       }
     }
   }, {
@@ -50929,14 +50930,48 @@ Formio.events = new EventEmitter({
 module.exports = global.Formio = Formio;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./providers":30,"browser-cookies":27,"eventemitter2":28,"native-promise-only":279,"shallow-copy":350,"whatwg-fetch":353}],30:[function(_dereq_,module,exports){
+},{"./formio.polyfill":30,"./providers":31,"browser-cookies":27,"eventemitter2":28,"native-promise-only":439,"shallow-copy":511,"whatwg-fetch":514}],30:[function(_dereq_,module,exports){
+"use strict";
+
+/**
+ * Taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind
+ *
+ * This is needed for PhantomJS.
+ */
+
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function (oThis) {
+    if (typeof this !== 'function') {
+      // closest thing possible to the ECMAScript 5
+      // internal IsCallable function
+      throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+    }
+
+    var aArgs = Array.prototype.slice.call(arguments, 1),
+        fToBind = this,
+        fNOP = function fNOP() {},
+        fBound = function fBound() {
+      return fToBind.apply(this instanceof fNOP ? this : oThis, aArgs.concat(Array.prototype.slice.call(arguments)));
+    };
+
+    if (this.prototype) {
+      // Function.prototype doesn't have a prototype property
+      fNOP.prototype = this.prototype;
+    }
+    fBound.prototype = new fNOP();
+
+    return fBound;
+  };
+}
+
+},{}],31:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
   storage: _dereq_('./storage')
 };
 
-},{"./storage":33}],31:[function(_dereq_,module,exports){
+},{"./storage":34}],32:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_('native-promise-only');
@@ -50979,7 +51014,7 @@ var base64 = function base64() {
 base64.title = 'Base64';
 module.exports = base64;
 
-},{"native-promise-only":279}],32:[function(_dereq_,module,exports){
+},{"native-promise-only":439}],33:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -51041,7 +51076,7 @@ var dropbox = function dropbox(formio) {
 dropbox.title = 'Dropbox';
 module.exports = dropbox;
 
-},{"native-promise-only":279}],33:[function(_dereq_,module,exports){
+},{"native-promise-only":439}],34:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = {
@@ -51051,7 +51086,7 @@ module.exports = {
   url: _dereq_('./url.js')
 };
 
-},{"./base64":31,"./dropbox.js":32,"./s3.js":34,"./url.js":35}],34:[function(_dereq_,module,exports){
+},{"./base64":32,"./dropbox.js":33,"./s3.js":35,"./url.js":36}],35:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -51161,7 +51196,7 @@ var s3 = function s3(formio) {
 s3.title = 'S3';
 module.exports = s3;
 
-},{"native-promise-only":279}],35:[function(_dereq_,module,exports){
+},{"native-promise-only":439}],36:[function(_dereq_,module,exports){
 'use strict';
 
 var Promise = _dereq_("native-promise-only");
@@ -51240,7 +51275,7 @@ var url = function url(formio) {
 url.title = 'Url';
 module.exports = url;
 
-},{"native-promise-only":279}],36:[function(_dereq_,module,exports){
+},{"native-promise-only":439}],37:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
@@ -51374,6 +51409,8 @@ var FormioUtils = {
       var subPath = function subPath() {
         if (component.key && (component.type === 'datagrid' || component.type === 'container' || component.type === 'editgrid' || component.tree)) {
           return newPath;
+        } else if (component.key && component.type === 'form') {
+          return newPath + '.data';
         }
         return path;
       };
@@ -51728,12 +51765,4995 @@ var FormioUtils = {
 module.exports = global.FormioUtils = FormioUtils;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"json-logic-js":38,"lodash/chunk":219,"lodash/clone":220,"lodash/get":229,"lodash/isNaN":245,"lodash/isString":250,"lodash/pad":261,"lodash/round":265,"lodash/template":269}],37:[function(_dereq_,module,exports){
+},{"json-logic-js":209,"lodash/chunk":173,"lodash/clone":174,"lodash/get":178,"lodash/isNaN":187,"lodash/isString":192,"lodash/pad":198,"lodash/round":199,"lodash/template":202}],38:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative'),
+    root = _dereq_('./_root');
+
+/* Built-in method references that are verified to be native. */
+var DataView = getNative(root, 'DataView');
+
+module.exports = DataView;
+
+},{"./_getNative":111,"./_root":155}],39:[function(_dereq_,module,exports){
+var hashClear = _dereq_('./_hashClear'),
+    hashDelete = _dereq_('./_hashDelete'),
+    hashGet = _dereq_('./_hashGet'),
+    hashHas = _dereq_('./_hashHas'),
+    hashSet = _dereq_('./_hashSet');
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+module.exports = Hash;
+
+},{"./_hashClear":119,"./_hashDelete":120,"./_hashGet":121,"./_hashHas":122,"./_hashSet":123}],40:[function(_dereq_,module,exports){
+var listCacheClear = _dereq_('./_listCacheClear'),
+    listCacheDelete = _dereq_('./_listCacheDelete'),
+    listCacheGet = _dereq_('./_listCacheGet'),
+    listCacheHas = _dereq_('./_listCacheHas'),
+    listCacheSet = _dereq_('./_listCacheSet');
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+module.exports = ListCache;
+
+},{"./_listCacheClear":133,"./_listCacheDelete":134,"./_listCacheGet":135,"./_listCacheHas":136,"./_listCacheSet":137}],41:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative'),
+    root = _dereq_('./_root');
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map');
+
+module.exports = Map;
+
+},{"./_getNative":111,"./_root":155}],42:[function(_dereq_,module,exports){
+var mapCacheClear = _dereq_('./_mapCacheClear'),
+    mapCacheDelete = _dereq_('./_mapCacheDelete'),
+    mapCacheGet = _dereq_('./_mapCacheGet'),
+    mapCacheHas = _dereq_('./_mapCacheHas'),
+    mapCacheSet = _dereq_('./_mapCacheSet');
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+module.exports = MapCache;
+
+},{"./_mapCacheClear":138,"./_mapCacheDelete":139,"./_mapCacheGet":140,"./_mapCacheHas":141,"./_mapCacheSet":142}],43:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative'),
+    root = _dereq_('./_root');
+
+/* Built-in method references that are verified to be native. */
+var Promise = getNative(root, 'Promise');
+
+module.exports = Promise;
+
+},{"./_getNative":111,"./_root":155}],44:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative'),
+    root = _dereq_('./_root');
+
+/* Built-in method references that are verified to be native. */
+var Set = getNative(root, 'Set');
+
+module.exports = Set;
+
+},{"./_getNative":111,"./_root":155}],45:[function(_dereq_,module,exports){
+var ListCache = _dereq_('./_ListCache'),
+    stackClear = _dereq_('./_stackClear'),
+    stackDelete = _dereq_('./_stackDelete'),
+    stackGet = _dereq_('./_stackGet'),
+    stackHas = _dereq_('./_stackHas'),
+    stackSet = _dereq_('./_stackSet');
+
+/**
+ * Creates a stack cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Stack(entries) {
+  var data = this.__data__ = new ListCache(entries);
+  this.size = data.size;
+}
+
+// Add methods to `Stack`.
+Stack.prototype.clear = stackClear;
+Stack.prototype['delete'] = stackDelete;
+Stack.prototype.get = stackGet;
+Stack.prototype.has = stackHas;
+Stack.prototype.set = stackSet;
+
+module.exports = Stack;
+
+},{"./_ListCache":40,"./_stackClear":159,"./_stackDelete":160,"./_stackGet":161,"./_stackHas":162,"./_stackSet":163}],46:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/** Built-in value references. */
+var Symbol = root.Symbol;
+
+module.exports = Symbol;
+
+},{"./_root":155}],47:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/** Built-in value references. */
+var Uint8Array = root.Uint8Array;
+
+module.exports = Uint8Array;
+
+},{"./_root":155}],48:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative'),
+    root = _dereq_('./_root');
+
+/* Built-in method references that are verified to be native. */
+var WeakMap = getNative(root, 'WeakMap');
+
+module.exports = WeakMap;
+
+},{"./_getNative":111,"./_root":155}],49:[function(_dereq_,module,exports){
+/**
+ * Adds the key-value `pair` to `map`.
+ *
+ * @private
+ * @param {Object} map The map to modify.
+ * @param {Array} pair The key-value pair to add.
+ * @returns {Object} Returns `map`.
+ */
+function addMapEntry(map, pair) {
+  // Don't return `map.set` because it's not chainable in IE 11.
+  map.set(pair[0], pair[1]);
+  return map;
+}
+
+module.exports = addMapEntry;
+
+},{}],50:[function(_dereq_,module,exports){
+/**
+ * Adds `value` to `set`.
+ *
+ * @private
+ * @param {Object} set The set to modify.
+ * @param {*} value The value to add.
+ * @returns {Object} Returns `set`.
+ */
+function addSetEntry(set, value) {
+  // Don't return `set.add` because it's not chainable in IE 11.
+  set.add(value);
+  return set;
+}
+
+module.exports = addSetEntry;
+
+},{}],51:[function(_dereq_,module,exports){
+/**
+ * A faster alternative to `Function#apply`, this function invokes `func`
+ * with the `this` binding of `thisArg` and the arguments of `args`.
+ *
+ * @private
+ * @param {Function} func The function to invoke.
+ * @param {*} thisArg The `this` binding of `func`.
+ * @param {Array} args The arguments to invoke `func` with.
+ * @returns {*} Returns the result of `func`.
+ */
+function apply(func, thisArg, args) {
+  switch (args.length) {
+    case 0: return func.call(thisArg);
+    case 1: return func.call(thisArg, args[0]);
+    case 2: return func.call(thisArg, args[0], args[1]);
+    case 3: return func.call(thisArg, args[0], args[1], args[2]);
+  }
+  return func.apply(thisArg, args);
+}
+
+module.exports = apply;
+
+},{}],52:[function(_dereq_,module,exports){
+/**
+ * A specialized version of `_.forEach` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns `array`.
+ */
+function arrayEach(array, iteratee) {
+  var index = -1,
+      length = array == null ? 0 : array.length;
+
+  while (++index < length) {
+    if (iteratee(array[index], index, array) === false) {
+      break;
+    }
+  }
+  return array;
+}
+
+module.exports = arrayEach;
+
+},{}],53:[function(_dereq_,module,exports){
+/**
+ * A specialized version of `_.filter` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} predicate The function invoked per iteration.
+ * @returns {Array} Returns the new filtered array.
+ */
+function arrayFilter(array, predicate) {
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      resIndex = 0,
+      result = [];
+
+  while (++index < length) {
+    var value = array[index];
+    if (predicate(value, index, array)) {
+      result[resIndex++] = value;
+    }
+  }
+  return result;
+}
+
+module.exports = arrayFilter;
+
+},{}],54:[function(_dereq_,module,exports){
+var baseTimes = _dereq_('./_baseTimes'),
+    isArguments = _dereq_('./isArguments'),
+    isArray = _dereq_('./isArray'),
+    isBuffer = _dereq_('./isBuffer'),
+    isIndex = _dereq_('./_isIndex'),
+    isTypedArray = _dereq_('./isTypedArray');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Creates an array of the enumerable property names of the array-like `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @param {boolean} inherited Specify returning inherited property names.
+ * @returns {Array} Returns the array of property names.
+ */
+function arrayLikeKeys(value, inherited) {
+  var isArr = isArray(value),
+      isArg = !isArr && isArguments(value),
+      isBuff = !isArr && !isArg && isBuffer(value),
+      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
+      skipIndexes = isArr || isArg || isBuff || isType,
+      result = skipIndexes ? baseTimes(value.length, String) : [],
+      length = result.length;
+
+  for (var key in value) {
+    if ((inherited || hasOwnProperty.call(value, key)) &&
+        !(skipIndexes && (
+           // Safari 9 has enumerable `arguments.length` in strict mode.
+           key == 'length' ||
+           // Node.js 0.10 has enumerable non-index properties on buffers.
+           (isBuff && (key == 'offset' || key == 'parent')) ||
+           // PhantomJS 2 has enumerable non-index properties on typed arrays.
+           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
+           // Skip index properties.
+           isIndex(key, length)
+        ))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = arrayLikeKeys;
+
+},{"./_baseTimes":81,"./_isIndex":127,"./isArguments":180,"./isArray":181,"./isBuffer":183,"./isTypedArray":194}],55:[function(_dereq_,module,exports){
+/**
+ * A specialized version of `_.map` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the new mapped array.
+ */
+function arrayMap(array, iteratee) {
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      result = Array(length);
+
+  while (++index < length) {
+    result[index] = iteratee(array[index], index, array);
+  }
+  return result;
+}
+
+module.exports = arrayMap;
+
+},{}],56:[function(_dereq_,module,exports){
+/**
+ * Appends the elements of `values` to `array`.
+ *
+ * @private
+ * @param {Array} array The array to modify.
+ * @param {Array} values The values to append.
+ * @returns {Array} Returns `array`.
+ */
+function arrayPush(array, values) {
+  var index = -1,
+      length = values.length,
+      offset = array.length;
+
+  while (++index < length) {
+    array[offset + index] = values[index];
+  }
+  return array;
+}
+
+module.exports = arrayPush;
+
+},{}],57:[function(_dereq_,module,exports){
+/**
+ * A specialized version of `_.reduce` for arrays without support for
+ * iteratee shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @param {*} [accumulator] The initial value.
+ * @param {boolean} [initAccum] Specify using the first element of `array` as
+ *  the initial value.
+ * @returns {*} Returns the accumulated value.
+ */
+function arrayReduce(array, iteratee, accumulator, initAccum) {
+  var index = -1,
+      length = array == null ? 0 : array.length;
+
+  if (initAccum && length) {
+    accumulator = array[++index];
+  }
+  while (++index < length) {
+    accumulator = iteratee(accumulator, array[index], index, array);
+  }
+  return accumulator;
+}
+
+module.exports = arrayReduce;
+
+},{}],58:[function(_dereq_,module,exports){
+var baseProperty = _dereq_('./_baseProperty');
+
+/**
+ * Gets the size of an ASCII `string`.
+ *
+ * @private
+ * @param {string} string The string inspect.
+ * @returns {number} Returns the string size.
+ */
+var asciiSize = baseProperty('length');
+
+module.exports = asciiSize;
+
+},{"./_baseProperty":75}],59:[function(_dereq_,module,exports){
+/**
+ * Converts an ASCII `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */
+function asciiToArray(string) {
+  return string.split('');
+}
+
+module.exports = asciiToArray;
+
+},{}],60:[function(_dereq_,module,exports){
+var baseAssignValue = _dereq_('./_baseAssignValue'),
+    eq = _dereq_('./eq');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Assigns `value` to `key` of `object` if the existing value is not equivalent
+ * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * for equality comparisons.
+ *
+ * @private
+ * @param {Object} object The object to modify.
+ * @param {string} key The key of the property to assign.
+ * @param {*} value The value to assign.
+ */
+function assignValue(object, key, value) {
+  var objValue = object[key];
+  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+      (value === undefined && !(key in object))) {
+    baseAssignValue(object, key, value);
+  }
+}
+
+module.exports = assignValue;
+
+},{"./_baseAssignValue":64,"./eq":176}],61:[function(_dereq_,module,exports){
+var eq = _dereq_('./eq');
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+module.exports = assocIndexOf;
+
+},{"./eq":176}],62:[function(_dereq_,module,exports){
+var copyObject = _dereq_('./_copyObject'),
+    keys = _dereq_('./keys');
+
+/**
+ * The base implementation of `_.assign` without support for multiple sources
+ * or `customizer` functions.
+ *
+ * @private
+ * @param {Object} object The destination object.
+ * @param {Object} source The source object.
+ * @returns {Object} Returns `object`.
+ */
+function baseAssign(object, source) {
+  return object && copyObject(source, keys(source), object);
+}
+
+module.exports = baseAssign;
+
+},{"./_copyObject":96,"./keys":195}],63:[function(_dereq_,module,exports){
+var copyObject = _dereq_('./_copyObject'),
+    keysIn = _dereq_('./keysIn');
+
+/**
+ * The base implementation of `_.assignIn` without support for multiple sources
+ * or `customizer` functions.
+ *
+ * @private
+ * @param {Object} object The destination object.
+ * @param {Object} source The source object.
+ * @returns {Object} Returns `object`.
+ */
+function baseAssignIn(object, source) {
+  return object && copyObject(source, keysIn(source), object);
+}
+
+module.exports = baseAssignIn;
+
+},{"./_copyObject":96,"./keysIn":196}],64:[function(_dereq_,module,exports){
+var defineProperty = _dereq_('./_defineProperty');
+
+/**
+ * The base implementation of `assignValue` and `assignMergeValue` without
+ * value checks.
+ *
+ * @private
+ * @param {Object} object The object to modify.
+ * @param {string} key The key of the property to assign.
+ * @param {*} value The value to assign.
+ */
+function baseAssignValue(object, key, value) {
+  if (key == '__proto__' && defineProperty) {
+    defineProperty(object, key, {
+      'configurable': true,
+      'enumerable': true,
+      'value': value,
+      'writable': true
+    });
+  } else {
+    object[key] = value;
+  }
+}
+
+module.exports = baseAssignValue;
+
+},{"./_defineProperty":104}],65:[function(_dereq_,module,exports){
+var Stack = _dereq_('./_Stack'),
+    arrayEach = _dereq_('./_arrayEach'),
+    assignValue = _dereq_('./_assignValue'),
+    baseAssign = _dereq_('./_baseAssign'),
+    baseAssignIn = _dereq_('./_baseAssignIn'),
+    cloneBuffer = _dereq_('./_cloneBuffer'),
+    copyArray = _dereq_('./_copyArray'),
+    copySymbols = _dereq_('./_copySymbols'),
+    copySymbolsIn = _dereq_('./_copySymbolsIn'),
+    getAllKeys = _dereq_('./_getAllKeys'),
+    getAllKeysIn = _dereq_('./_getAllKeysIn'),
+    getTag = _dereq_('./_getTag'),
+    initCloneArray = _dereq_('./_initCloneArray'),
+    initCloneByTag = _dereq_('./_initCloneByTag'),
+    initCloneObject = _dereq_('./_initCloneObject'),
+    isArray = _dereq_('./isArray'),
+    isBuffer = _dereq_('./isBuffer'),
+    isObject = _dereq_('./isObject'),
+    keys = _dereq_('./keys');
+
+/** Used to compose bitmasks for cloning. */
+var CLONE_DEEP_FLAG = 1,
+    CLONE_FLAT_FLAG = 2,
+    CLONE_SYMBOLS_FLAG = 4;
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    errorTag = '[object Error]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    mapTag = '[object Map]',
+    numberTag = '[object Number]',
+    objectTag = '[object Object]',
+    regexpTag = '[object RegExp]',
+    setTag = '[object Set]',
+    stringTag = '[object String]',
+    symbolTag = '[object Symbol]',
+    weakMapTag = '[object WeakMap]';
+
+var arrayBufferTag = '[object ArrayBuffer]',
+    dataViewTag = '[object DataView]',
+    float32Tag = '[object Float32Array]',
+    float64Tag = '[object Float64Array]',
+    int8Tag = '[object Int8Array]',
+    int16Tag = '[object Int16Array]',
+    int32Tag = '[object Int32Array]',
+    uint8Tag = '[object Uint8Array]',
+    uint8ClampedTag = '[object Uint8ClampedArray]',
+    uint16Tag = '[object Uint16Array]',
+    uint32Tag = '[object Uint32Array]';
+
+/** Used to identify `toStringTag` values supported by `_.clone`. */
+var cloneableTags = {};
+cloneableTags[argsTag] = cloneableTags[arrayTag] =
+cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
+cloneableTags[boolTag] = cloneableTags[dateTag] =
+cloneableTags[float32Tag] = cloneableTags[float64Tag] =
+cloneableTags[int8Tag] = cloneableTags[int16Tag] =
+cloneableTags[int32Tag] = cloneableTags[mapTag] =
+cloneableTags[numberTag] = cloneableTags[objectTag] =
+cloneableTags[regexpTag] = cloneableTags[setTag] =
+cloneableTags[stringTag] = cloneableTags[symbolTag] =
+cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
+cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
+cloneableTags[errorTag] = cloneableTags[funcTag] =
+cloneableTags[weakMapTag] = false;
+
+/**
+ * The base implementation of `_.clone` and `_.cloneDeep` which tracks
+ * traversed objects.
+ *
+ * @private
+ * @param {*} value The value to clone.
+ * @param {boolean} bitmask The bitmask flags.
+ *  1 - Deep clone
+ *  2 - Flatten inherited properties
+ *  4 - Clone symbols
+ * @param {Function} [customizer] The function to customize cloning.
+ * @param {string} [key] The key of `value`.
+ * @param {Object} [object] The parent object of `value`.
+ * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
+ * @returns {*} Returns the cloned value.
+ */
+function baseClone(value, bitmask, customizer, key, object, stack) {
+  var result,
+      isDeep = bitmask & CLONE_DEEP_FLAG,
+      isFlat = bitmask & CLONE_FLAT_FLAG,
+      isFull = bitmask & CLONE_SYMBOLS_FLAG;
+
+  if (customizer) {
+    result = object ? customizer(value, key, object, stack) : customizer(value);
+  }
+  if (result !== undefined) {
+    return result;
+  }
+  if (!isObject(value)) {
+    return value;
+  }
+  var isArr = isArray(value);
+  if (isArr) {
+    result = initCloneArray(value);
+    if (!isDeep) {
+      return copyArray(value, result);
+    }
+  } else {
+    var tag = getTag(value),
+        isFunc = tag == funcTag || tag == genTag;
+
+    if (isBuffer(value)) {
+      return cloneBuffer(value, isDeep);
+    }
+    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
+      result = (isFlat || isFunc) ? {} : initCloneObject(value);
+      if (!isDeep) {
+        return isFlat
+          ? copySymbolsIn(value, baseAssignIn(result, value))
+          : copySymbols(value, baseAssign(result, value));
+      }
+    } else {
+      if (!cloneableTags[tag]) {
+        return object ? value : {};
+      }
+      result = initCloneByTag(value, tag, baseClone, isDeep);
+    }
+  }
+  // Check for circular references and return its corresponding clone.
+  stack || (stack = new Stack);
+  var stacked = stack.get(value);
+  if (stacked) {
+    return stacked;
+  }
+  stack.set(value, result);
+
+  var keysFunc = isFull
+    ? (isFlat ? getAllKeysIn : getAllKeys)
+    : (isFlat ? keysIn : keys);
+
+  var props = isArr ? undefined : keysFunc(value);
+  arrayEach(props || value, function(subValue, key) {
+    if (props) {
+      key = subValue;
+      subValue = value[key];
+    }
+    // Recursively populate clone (susceptible to call stack limits).
+    assignValue(result, key, baseClone(subValue, bitmask, customizer, key, value, stack));
+  });
+  return result;
+}
+
+module.exports = baseClone;
+
+},{"./_Stack":45,"./_arrayEach":52,"./_assignValue":60,"./_baseAssign":62,"./_baseAssignIn":63,"./_cloneBuffer":88,"./_copyArray":95,"./_copySymbols":97,"./_copySymbolsIn":98,"./_getAllKeys":108,"./_getAllKeysIn":109,"./_getTag":116,"./_initCloneArray":124,"./_initCloneByTag":125,"./_initCloneObject":126,"./isArray":181,"./isBuffer":183,"./isObject":189,"./keys":195}],66:[function(_dereq_,module,exports){
+var isObject = _dereq_('./isObject');
+
+/** Built-in value references. */
+var objectCreate = Object.create;
+
+/**
+ * The base implementation of `_.create` without support for assigning
+ * properties to the created object.
+ *
+ * @private
+ * @param {Object} proto The object to inherit from.
+ * @returns {Object} Returns the new object.
+ */
+var baseCreate = (function() {
+  function object() {}
+  return function(proto) {
+    if (!isObject(proto)) {
+      return {};
+    }
+    if (objectCreate) {
+      return objectCreate(proto);
+    }
+    object.prototype = proto;
+    var result = new object;
+    object.prototype = undefined;
+    return result;
+  };
+}());
+
+module.exports = baseCreate;
+
+},{"./isObject":189}],67:[function(_dereq_,module,exports){
+var castPath = _dereq_('./_castPath'),
+    toKey = _dereq_('./_toKey');
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = castPath(path, object);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+module.exports = baseGet;
+
+},{"./_castPath":85,"./_toKey":167}],68:[function(_dereq_,module,exports){
+var arrayPush = _dereq_('./_arrayPush'),
+    isArray = _dereq_('./isArray');
+
+/**
+ * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+ * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+ * symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Function} keysFunc The function to get the keys of `object`.
+ * @param {Function} symbolsFunc The function to get the symbols of `object`.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+  var result = keysFunc(object);
+  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+}
+
+module.exports = baseGetAllKeys;
+
+},{"./_arrayPush":56,"./isArray":181}],69:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol'),
+    getRawTag = _dereq_('./_getRawTag'),
+    objectToString = _dereq_('./_objectToString');
+
+/** `Object#toString` result references. */
+var nullTag = '[object Null]',
+    undefinedTag = '[object Undefined]';
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * The base implementation of `getTag` without fallbacks for buggy environments.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? undefinedTag : nullTag;
+  }
+  return (symToStringTag && symToStringTag in Object(value))
+    ? getRawTag(value)
+    : objectToString(value);
+}
+
+module.exports = baseGetTag;
+
+},{"./_Symbol":46,"./_getRawTag":113,"./_objectToString":149}],70:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]';
+
+/**
+ * The base implementation of `_.isArguments`.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ */
+function baseIsArguments(value) {
+  return isObjectLike(value) && baseGetTag(value) == argsTag;
+}
+
+module.exports = baseIsArguments;
+
+},{"./_baseGetTag":69,"./isObjectLike":190}],71:[function(_dereq_,module,exports){
+var isFunction = _dereq_('./isFunction'),
+    isMasked = _dereq_('./_isMasked'),
+    isObject = _dereq_('./isObject'),
+    toSource = _dereq_('./_toSource');
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Used for built-in method references. */
+var funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+module.exports = baseIsNative;
+
+},{"./_isMasked":131,"./_toSource":168,"./isFunction":185,"./isObject":189}],72:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isLength = _dereq_('./isLength'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    errorTag = '[object Error]',
+    funcTag = '[object Function]',
+    mapTag = '[object Map]',
+    numberTag = '[object Number]',
+    objectTag = '[object Object]',
+    regexpTag = '[object RegExp]',
+    setTag = '[object Set]',
+    stringTag = '[object String]',
+    weakMapTag = '[object WeakMap]';
+
+var arrayBufferTag = '[object ArrayBuffer]',
+    dataViewTag = '[object DataView]',
+    float32Tag = '[object Float32Array]',
+    float64Tag = '[object Float64Array]',
+    int8Tag = '[object Int8Array]',
+    int16Tag = '[object Int16Array]',
+    int32Tag = '[object Int32Array]',
+    uint8Tag = '[object Uint8Array]',
+    uint8ClampedTag = '[object Uint8ClampedArray]',
+    uint16Tag = '[object Uint16Array]',
+    uint32Tag = '[object Uint32Array]';
+
+/** Used to identify `toStringTag` values of typed arrays. */
+var typedArrayTags = {};
+typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+typedArrayTags[uint32Tag] = true;
+typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+typedArrayTags[setTag] = typedArrayTags[stringTag] =
+typedArrayTags[weakMapTag] = false;
+
+/**
+ * The base implementation of `_.isTypedArray` without Node.js optimizations.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ */
+function baseIsTypedArray(value) {
+  return isObjectLike(value) &&
+    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+}
+
+module.exports = baseIsTypedArray;
+
+},{"./_baseGetTag":69,"./isLength":186,"./isObjectLike":190}],73:[function(_dereq_,module,exports){
+var isPrototype = _dereq_('./_isPrototype'),
+    nativeKeys = _dereq_('./_nativeKeys');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeys(object) {
+  if (!isPrototype(object)) {
+    return nativeKeys(object);
+  }
+  var result = [];
+  for (var key in Object(object)) {
+    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = baseKeys;
+
+},{"./_isPrototype":132,"./_nativeKeys":146}],74:[function(_dereq_,module,exports){
+var isObject = _dereq_('./isObject'),
+    isPrototype = _dereq_('./_isPrototype'),
+    nativeKeysIn = _dereq_('./_nativeKeysIn');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function baseKeysIn(object) {
+  if (!isObject(object)) {
+    return nativeKeysIn(object);
+  }
+  var isProto = isPrototype(object),
+      result = [];
+
+  for (var key in object) {
+    if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = baseKeysIn;
+
+},{"./_isPrototype":132,"./_nativeKeysIn":147,"./isObject":189}],75:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.property` without support for deep paths.
+ *
+ * @private
+ * @param {string} key The key of the property to get.
+ * @returns {Function} Returns the new accessor function.
+ */
+function baseProperty(key) {
+  return function(object) {
+    return object == null ? undefined : object[key];
+  };
+}
+
+module.exports = baseProperty;
+
+},{}],76:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.propertyOf` without support for deep paths.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Function} Returns the new accessor function.
+ */
+function basePropertyOf(object) {
+  return function(key) {
+    return object == null ? undefined : object[key];
+  };
+}
+
+module.exports = basePropertyOf;
+
+},{}],77:[function(_dereq_,module,exports){
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeFloor = Math.floor;
+
+/**
+ * The base implementation of `_.repeat` which doesn't coerce arguments.
+ *
+ * @private
+ * @param {string} string The string to repeat.
+ * @param {number} n The number of times to repeat the string.
+ * @returns {string} Returns the repeated string.
+ */
+function baseRepeat(string, n) {
+  var result = '';
+  if (!string || n < 1 || n > MAX_SAFE_INTEGER) {
+    return result;
+  }
+  // Leverage the exponentiation by squaring algorithm for a faster repeat.
+  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
+  do {
+    if (n % 2) {
+      result += string;
+    }
+    n = nativeFloor(n / 2);
+    if (n) {
+      string += string;
+    }
+  } while (n);
+
+  return result;
+}
+
+module.exports = baseRepeat;
+
+},{}],78:[function(_dereq_,module,exports){
+var identity = _dereq_('./identity'),
+    overRest = _dereq_('./_overRest'),
+    setToString = _dereq_('./_setToString');
+
+/**
+ * The base implementation of `_.rest` which doesn't validate or coerce arguments.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @returns {Function} Returns the new function.
+ */
+function baseRest(func, start) {
+  return setToString(overRest(func, start, identity), func + '');
+}
+
+module.exports = baseRest;
+
+},{"./_overRest":151,"./_setToString":157,"./identity":179}],79:[function(_dereq_,module,exports){
+var constant = _dereq_('./constant'),
+    defineProperty = _dereq_('./_defineProperty'),
+    identity = _dereq_('./identity');
+
+/**
+ * The base implementation of `setToString` without support for hot loop shorting.
+ *
+ * @private
+ * @param {Function} func The function to modify.
+ * @param {Function} string The `toString` result.
+ * @returns {Function} Returns `func`.
+ */
+var baseSetToString = !defineProperty ? identity : function(func, string) {
+  return defineProperty(func, 'toString', {
+    'configurable': true,
+    'enumerable': false,
+    'value': constant(string),
+    'writable': true
+  });
+};
+
+module.exports = baseSetToString;
+
+},{"./_defineProperty":104,"./constant":175,"./identity":179}],80:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.slice` without an iteratee call guard.
+ *
+ * @private
+ * @param {Array} array The array to slice.
+ * @param {number} [start=0] The start position.
+ * @param {number} [end=array.length] The end position.
+ * @returns {Array} Returns the slice of `array`.
+ */
+function baseSlice(array, start, end) {
+  var index = -1,
+      length = array.length;
+
+  if (start < 0) {
+    start = -start > length ? 0 : (length + start);
+  }
+  end = end > length ? length : end;
+  if (end < 0) {
+    end += length;
+  }
+  length = start > end ? 0 : ((end - start) >>> 0);
+  start >>>= 0;
+
+  var result = Array(length);
+  while (++index < length) {
+    result[index] = array[index + start];
+  }
+  return result;
+}
+
+module.exports = baseSlice;
+
+},{}],81:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.times` without support for iteratee shorthands
+ * or max array length checks.
+ *
+ * @private
+ * @param {number} n The number of times to invoke `iteratee`.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the array of results.
+ */
+function baseTimes(n, iteratee) {
+  var index = -1,
+      result = Array(n);
+
+  while (++index < n) {
+    result[index] = iteratee(index);
+  }
+  return result;
+}
+
+module.exports = baseTimes;
+
+},{}],82:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol'),
+    arrayMap = _dereq_('./_arrayMap'),
+    isArray = _dereq_('./isArray'),
+    isSymbol = _dereq_('./isSymbol');
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isArray(value)) {
+    // Recursively convert values (susceptible to call stack limits).
+    return arrayMap(value, baseToString) + '';
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+module.exports = baseToString;
+
+},{"./_Symbol":46,"./_arrayMap":55,"./isArray":181,"./isSymbol":193}],83:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.unary` without support for storing metadata.
+ *
+ * @private
+ * @param {Function} func The function to cap arguments for.
+ * @returns {Function} Returns the new capped function.
+ */
+function baseUnary(func) {
+  return function(value) {
+    return func(value);
+  };
+}
+
+module.exports = baseUnary;
+
+},{}],84:[function(_dereq_,module,exports){
+var arrayMap = _dereq_('./_arrayMap');
+
+/**
+ * The base implementation of `_.values` and `_.valuesIn` which creates an
+ * array of `object` property values corresponding to the property names
+ * of `props`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array} props The property names to get values for.
+ * @returns {Object} Returns the array of property values.
+ */
+function baseValues(object, props) {
+  return arrayMap(props, function(key) {
+    return object[key];
+  });
+}
+
+module.exports = baseValues;
+
+},{"./_arrayMap":55}],85:[function(_dereq_,module,exports){
+var isArray = _dereq_('./isArray'),
+    isKey = _dereq_('./_isKey'),
+    stringToPath = _dereq_('./_stringToPath'),
+    toString = _dereq_('./toString');
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value, object) {
+  if (isArray(value)) {
+    return value;
+  }
+  return isKey(value, object) ? [value] : stringToPath(toString(value));
+}
+
+module.exports = castPath;
+
+},{"./_isKey":129,"./_stringToPath":166,"./isArray":181,"./toString":207}],86:[function(_dereq_,module,exports){
+var baseSlice = _dereq_('./_baseSlice');
+
+/**
+ * Casts `array` to a slice if it's needed.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {number} start The start position.
+ * @param {number} [end=array.length] The end position.
+ * @returns {Array} Returns the cast slice.
+ */
+function castSlice(array, start, end) {
+  var length = array.length;
+  end = end === undefined ? length : end;
+  return (!start && end >= length) ? array : baseSlice(array, start, end);
+}
+
+module.exports = castSlice;
+
+},{"./_baseSlice":80}],87:[function(_dereq_,module,exports){
+var Uint8Array = _dereq_('./_Uint8Array');
+
+/**
+ * Creates a clone of `arrayBuffer`.
+ *
+ * @private
+ * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
+ * @returns {ArrayBuffer} Returns the cloned array buffer.
+ */
+function cloneArrayBuffer(arrayBuffer) {
+  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
+  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
+  return result;
+}
+
+module.exports = cloneArrayBuffer;
+
+},{"./_Uint8Array":47}],88:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/** Detect free variable `exports`. */
+var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Built-in value references. */
+var Buffer = moduleExports ? root.Buffer : undefined,
+    allocUnsafe = Buffer ? Buffer.allocUnsafe : undefined;
+
+/**
+ * Creates a clone of  `buffer`.
+ *
+ * @private
+ * @param {Buffer} buffer The buffer to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Buffer} Returns the cloned buffer.
+ */
+function cloneBuffer(buffer, isDeep) {
+  if (isDeep) {
+    return buffer.slice();
+  }
+  var length = buffer.length,
+      result = allocUnsafe ? allocUnsafe(length) : new buffer.constructor(length);
+
+  buffer.copy(result);
+  return result;
+}
+
+module.exports = cloneBuffer;
+
+},{"./_root":155}],89:[function(_dereq_,module,exports){
+var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
+
+/**
+ * Creates a clone of `dataView`.
+ *
+ * @private
+ * @param {Object} dataView The data view to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned data view.
+ */
+function cloneDataView(dataView, isDeep) {
+  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
+  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
+}
+
+module.exports = cloneDataView;
+
+},{"./_cloneArrayBuffer":87}],90:[function(_dereq_,module,exports){
+var addMapEntry = _dereq_('./_addMapEntry'),
+    arrayReduce = _dereq_('./_arrayReduce'),
+    mapToArray = _dereq_('./_mapToArray');
+
+/** Used to compose bitmasks for cloning. */
+var CLONE_DEEP_FLAG = 1;
+
+/**
+ * Creates a clone of `map`.
+ *
+ * @private
+ * @param {Object} map The map to clone.
+ * @param {Function} cloneFunc The function to clone values.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned map.
+ */
+function cloneMap(map, isDeep, cloneFunc) {
+  var array = isDeep ? cloneFunc(mapToArray(map), CLONE_DEEP_FLAG) : mapToArray(map);
+  return arrayReduce(array, addMapEntry, new map.constructor);
+}
+
+module.exports = cloneMap;
+
+},{"./_addMapEntry":49,"./_arrayReduce":57,"./_mapToArray":143}],91:[function(_dereq_,module,exports){
+/** Used to match `RegExp` flags from their coerced string values. */
+var reFlags = /\w*$/;
+
+/**
+ * Creates a clone of `regexp`.
+ *
+ * @private
+ * @param {Object} regexp The regexp to clone.
+ * @returns {Object} Returns the cloned regexp.
+ */
+function cloneRegExp(regexp) {
+  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
+  result.lastIndex = regexp.lastIndex;
+  return result;
+}
+
+module.exports = cloneRegExp;
+
+},{}],92:[function(_dereq_,module,exports){
+var addSetEntry = _dereq_('./_addSetEntry'),
+    arrayReduce = _dereq_('./_arrayReduce'),
+    setToArray = _dereq_('./_setToArray');
+
+/** Used to compose bitmasks for cloning. */
+var CLONE_DEEP_FLAG = 1;
+
+/**
+ * Creates a clone of `set`.
+ *
+ * @private
+ * @param {Object} set The set to clone.
+ * @param {Function} cloneFunc The function to clone values.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned set.
+ */
+function cloneSet(set, isDeep, cloneFunc) {
+  var array = isDeep ? cloneFunc(setToArray(set), CLONE_DEEP_FLAG) : setToArray(set);
+  return arrayReduce(array, addSetEntry, new set.constructor);
+}
+
+module.exports = cloneSet;
+
+},{"./_addSetEntry":50,"./_arrayReduce":57,"./_setToArray":156}],93:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
+
+/**
+ * Creates a clone of the `symbol` object.
+ *
+ * @private
+ * @param {Object} symbol The symbol object to clone.
+ * @returns {Object} Returns the cloned symbol object.
+ */
+function cloneSymbol(symbol) {
+  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
+}
+
+module.exports = cloneSymbol;
+
+},{"./_Symbol":46}],94:[function(_dereq_,module,exports){
+var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
+
+/**
+ * Creates a clone of `typedArray`.
+ *
+ * @private
+ * @param {Object} typedArray The typed array to clone.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the cloned typed array.
+ */
+function cloneTypedArray(typedArray, isDeep) {
+  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
+  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
+}
+
+module.exports = cloneTypedArray;
+
+},{"./_cloneArrayBuffer":87}],95:[function(_dereq_,module,exports){
+/**
+ * Copies the values of `source` to `array`.
+ *
+ * @private
+ * @param {Array} source The array to copy values from.
+ * @param {Array} [array=[]] The array to copy values to.
+ * @returns {Array} Returns `array`.
+ */
+function copyArray(source, array) {
+  var index = -1,
+      length = source.length;
+
+  array || (array = Array(length));
+  while (++index < length) {
+    array[index] = source[index];
+  }
+  return array;
+}
+
+module.exports = copyArray;
+
+},{}],96:[function(_dereq_,module,exports){
+var assignValue = _dereq_('./_assignValue'),
+    baseAssignValue = _dereq_('./_baseAssignValue');
+
+/**
+ * Copies properties of `source` to `object`.
+ *
+ * @private
+ * @param {Object} source The object to copy properties from.
+ * @param {Array} props The property identifiers to copy.
+ * @param {Object} [object={}] The object to copy properties to.
+ * @param {Function} [customizer] The function to customize copied values.
+ * @returns {Object} Returns `object`.
+ */
+function copyObject(source, props, object, customizer) {
+  var isNew = !object;
+  object || (object = {});
+
+  var index = -1,
+      length = props.length;
+
+  while (++index < length) {
+    var key = props[index];
+
+    var newValue = customizer
+      ? customizer(object[key], source[key], key, object, source)
+      : undefined;
+
+    if (newValue === undefined) {
+      newValue = source[key];
+    }
+    if (isNew) {
+      baseAssignValue(object, key, newValue);
+    } else {
+      assignValue(object, key, newValue);
+    }
+  }
+  return object;
+}
+
+module.exports = copyObject;
+
+},{"./_assignValue":60,"./_baseAssignValue":64}],97:[function(_dereq_,module,exports){
+var copyObject = _dereq_('./_copyObject'),
+    getSymbols = _dereq_('./_getSymbols');
+
+/**
+ * Copies own symbols of `source` to `object`.
+ *
+ * @private
+ * @param {Object} source The object to copy symbols from.
+ * @param {Object} [object={}] The object to copy symbols to.
+ * @returns {Object} Returns `object`.
+ */
+function copySymbols(source, object) {
+  return copyObject(source, getSymbols(source), object);
+}
+
+module.exports = copySymbols;
+
+},{"./_copyObject":96,"./_getSymbols":114}],98:[function(_dereq_,module,exports){
+var copyObject = _dereq_('./_copyObject'),
+    getSymbolsIn = _dereq_('./_getSymbolsIn');
+
+/**
+ * Copies own and inherited symbols of `source` to `object`.
+ *
+ * @private
+ * @param {Object} source The object to copy symbols from.
+ * @param {Object} [object={}] The object to copy symbols to.
+ * @returns {Object} Returns `object`.
+ */
+function copySymbolsIn(source, object) {
+  return copyObject(source, getSymbolsIn(source), object);
+}
+
+module.exports = copySymbolsIn;
+
+},{"./_copyObject":96,"./_getSymbolsIn":115}],99:[function(_dereq_,module,exports){
+var root = _dereq_('./_root');
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+module.exports = coreJsData;
+
+},{"./_root":155}],100:[function(_dereq_,module,exports){
+var baseRest = _dereq_('./_baseRest'),
+    isIterateeCall = _dereq_('./_isIterateeCall');
+
+/**
+ * Creates a function like `_.assign`.
+ *
+ * @private
+ * @param {Function} assigner The function to assign values.
+ * @returns {Function} Returns the new assigner function.
+ */
+function createAssigner(assigner) {
+  return baseRest(function(object, sources) {
+    var index = -1,
+        length = sources.length,
+        customizer = length > 1 ? sources[length - 1] : undefined,
+        guard = length > 2 ? sources[2] : undefined;
+
+    customizer = (assigner.length > 3 && typeof customizer == 'function')
+      ? (length--, customizer)
+      : undefined;
+
+    if (guard && isIterateeCall(sources[0], sources[1], guard)) {
+      customizer = length < 3 ? undefined : customizer;
+      length = 1;
+    }
+    object = Object(object);
+    while (++index < length) {
+      var source = sources[index];
+      if (source) {
+        assigner(object, source, index, customizer);
+      }
+    }
+    return object;
+  });
+}
+
+module.exports = createAssigner;
+
+},{"./_baseRest":78,"./_isIterateeCall":128}],101:[function(_dereq_,module,exports){
+var baseRepeat = _dereq_('./_baseRepeat'),
+    baseToString = _dereq_('./_baseToString'),
+    castSlice = _dereq_('./_castSlice'),
+    hasUnicode = _dereq_('./_hasUnicode'),
+    stringSize = _dereq_('./_stringSize'),
+    stringToArray = _dereq_('./_stringToArray');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeCeil = Math.ceil;
+
+/**
+ * Creates the padding for `string` based on `length`. The `chars` string
+ * is truncated if the number of characters exceeds `length`.
+ *
+ * @private
+ * @param {number} length The padding length.
+ * @param {string} [chars=' '] The string used as padding.
+ * @returns {string} Returns the padding for `string`.
+ */
+function createPadding(length, chars) {
+  chars = chars === undefined ? ' ' : baseToString(chars);
+
+  var charsLength = chars.length;
+  if (charsLength < 2) {
+    return charsLength ? baseRepeat(chars, length) : chars;
+  }
+  var result = baseRepeat(chars, nativeCeil(length / stringSize(chars)));
+  return hasUnicode(chars)
+    ? castSlice(stringToArray(result), 0, length).join('')
+    : result.slice(0, length);
+}
+
+module.exports = createPadding;
+
+},{"./_baseRepeat":77,"./_baseToString":82,"./_castSlice":86,"./_hasUnicode":118,"./_stringSize":164,"./_stringToArray":165}],102:[function(_dereq_,module,exports){
+var toInteger = _dereq_('./toInteger'),
+    toNumber = _dereq_('./toNumber'),
+    toString = _dereq_('./toString');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMin = Math.min;
+
+/**
+ * Creates a function like `_.round`.
+ *
+ * @private
+ * @param {string} methodName The name of the `Math` method to use when rounding.
+ * @returns {Function} Returns the new round function.
+ */
+function createRound(methodName) {
+  var func = Math[methodName];
+  return function(number, precision) {
+    number = toNumber(number);
+    precision = precision == null ? 0 : nativeMin(toInteger(precision), 292);
+    if (precision) {
+      // Shift with exponential notation to avoid floating-point issues.
+      // See [MDN](https://mdn.io/round#Examples) for more details.
+      var pair = (toString(number) + 'e').split('e'),
+          value = func(pair[0] + 'e' + (+pair[1] + precision));
+
+      pair = (toString(value) + 'e').split('e');
+      return +(pair[0] + 'e' + (+pair[1] - precision));
+    }
+    return func(number);
+  };
+}
+
+module.exports = createRound;
+
+},{"./toInteger":205,"./toNumber":206,"./toString":207}],103:[function(_dereq_,module,exports){
+var eq = _dereq_('./eq');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used by `_.defaults` to customize its `_.assignIn` use to assign properties
+ * of source objects to the destination object for all destination properties
+ * that resolve to `undefined`.
+ *
+ * @private
+ * @param {*} objValue The destination value.
+ * @param {*} srcValue The source value.
+ * @param {string} key The key of the property to assign.
+ * @param {Object} object The parent object of `objValue`.
+ * @returns {*} Returns the value to assign.
+ */
+function customDefaultsAssignIn(objValue, srcValue, key, object) {
+  if (objValue === undefined ||
+      (eq(objValue, objectProto[key]) && !hasOwnProperty.call(object, key))) {
+    return srcValue;
+  }
+  return objValue;
+}
+
+module.exports = customDefaultsAssignIn;
+
+},{"./eq":176}],104:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative');
+
+var defineProperty = (function() {
+  try {
+    var func = getNative(Object, 'defineProperty');
+    func({}, '', {});
+    return func;
+  } catch (e) {}
+}());
+
+module.exports = defineProperty;
+
+},{"./_getNative":111}],105:[function(_dereq_,module,exports){
+var basePropertyOf = _dereq_('./_basePropertyOf');
+
+/** Used to map characters to HTML entities. */
+var htmlEscapes = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;'
+};
+
+/**
+ * Used by `_.escape` to convert characters to HTML entities.
+ *
+ * @private
+ * @param {string} chr The matched character to escape.
+ * @returns {string} Returns the escaped character.
+ */
+var escapeHtmlChar = basePropertyOf(htmlEscapes);
+
+module.exports = escapeHtmlChar;
+
+},{"./_basePropertyOf":76}],106:[function(_dereq_,module,exports){
+/** Used to escape characters for inclusion in compiled string literals. */
+var stringEscapes = {
+  '\\': '\\',
+  "'": "'",
+  '\n': 'n',
+  '\r': 'r',
+  '\u2028': 'u2028',
+  '\u2029': 'u2029'
+};
+
+/**
+ * Used by `_.template` to escape characters for inclusion in compiled string literals.
+ *
+ * @private
+ * @param {string} chr The matched character to escape.
+ * @returns {string} Returns the escaped character.
+ */
+function escapeStringChar(chr) {
+  return '\\' + stringEscapes[chr];
+}
+
+module.exports = escapeStringChar;
+
+},{}],107:[function(_dereq_,module,exports){
+(function (global){
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+module.exports = freeGlobal;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],108:[function(_dereq_,module,exports){
+var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
+    getSymbols = _dereq_('./_getSymbols'),
+    keys = _dereq_('./keys');
+
+/**
+ * Creates an array of own enumerable property names and symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function getAllKeys(object) {
+  return baseGetAllKeys(object, keys, getSymbols);
+}
+
+module.exports = getAllKeys;
+
+},{"./_baseGetAllKeys":68,"./_getSymbols":114,"./keys":195}],109:[function(_dereq_,module,exports){
+var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
+    getSymbolsIn = _dereq_('./_getSymbolsIn'),
+    keysIn = _dereq_('./keysIn');
+
+/**
+ * Creates an array of own and inherited enumerable property names and
+ * symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names and symbols.
+ */
+function getAllKeysIn(object) {
+  return baseGetAllKeys(object, keysIn, getSymbolsIn);
+}
+
+module.exports = getAllKeysIn;
+
+},{"./_baseGetAllKeys":68,"./_getSymbolsIn":115,"./keysIn":196}],110:[function(_dereq_,module,exports){
+var isKeyable = _dereq_('./_isKeyable');
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+module.exports = getMapData;
+
+},{"./_isKeyable":130}],111:[function(_dereq_,module,exports){
+var baseIsNative = _dereq_('./_baseIsNative'),
+    getValue = _dereq_('./_getValue');
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+module.exports = getNative;
+
+},{"./_baseIsNative":71,"./_getValue":117}],112:[function(_dereq_,module,exports){
+var overArg = _dereq_('./_overArg');
+
+/** Built-in value references. */
+var getPrototype = overArg(Object.getPrototypeOf, Object);
+
+module.exports = getPrototype;
+
+},{"./_overArg":150}],113:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/** Built-in value references. */
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+
+/**
+ * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the raw `toStringTag`.
+ */
+function getRawTag(value) {
+  var isOwn = hasOwnProperty.call(value, symToStringTag),
+      tag = value[symToStringTag];
+
+  try {
+    value[symToStringTag] = undefined;
+    var unmasked = true;
+  } catch (e) {}
+
+  var result = nativeObjectToString.call(value);
+  if (unmasked) {
+    if (isOwn) {
+      value[symToStringTag] = tag;
+    } else {
+      delete value[symToStringTag];
+    }
+  }
+  return result;
+}
+
+module.exports = getRawTag;
+
+},{"./_Symbol":46}],114:[function(_dereq_,module,exports){
+var arrayFilter = _dereq_('./_arrayFilter'),
+    stubArray = _dereq_('./stubArray');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Built-in value references. */
+var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeGetSymbols = Object.getOwnPropertySymbols;
+
+/**
+ * Creates an array of the own enumerable symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of symbols.
+ */
+var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
+  if (object == null) {
+    return [];
+  }
+  object = Object(object);
+  return arrayFilter(nativeGetSymbols(object), function(symbol) {
+    return propertyIsEnumerable.call(object, symbol);
+  });
+};
+
+module.exports = getSymbols;
+
+},{"./_arrayFilter":53,"./stubArray":200}],115:[function(_dereq_,module,exports){
+var arrayPush = _dereq_('./_arrayPush'),
+    getPrototype = _dereq_('./_getPrototype'),
+    getSymbols = _dereq_('./_getSymbols'),
+    stubArray = _dereq_('./stubArray');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeGetSymbols = Object.getOwnPropertySymbols;
+
+/**
+ * Creates an array of the own and inherited enumerable symbols of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of symbols.
+ */
+var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
+  var result = [];
+  while (object) {
+    arrayPush(result, getSymbols(object));
+    object = getPrototype(object);
+  }
+  return result;
+};
+
+module.exports = getSymbolsIn;
+
+},{"./_arrayPush":56,"./_getPrototype":112,"./_getSymbols":114,"./stubArray":200}],116:[function(_dereq_,module,exports){
+var DataView = _dereq_('./_DataView'),
+    Map = _dereq_('./_Map'),
+    Promise = _dereq_('./_Promise'),
+    Set = _dereq_('./_Set'),
+    WeakMap = _dereq_('./_WeakMap'),
+    baseGetTag = _dereq_('./_baseGetTag'),
+    toSource = _dereq_('./_toSource');
+
+/** `Object#toString` result references. */
+var mapTag = '[object Map]',
+    objectTag = '[object Object]',
+    promiseTag = '[object Promise]',
+    setTag = '[object Set]',
+    weakMapTag = '[object WeakMap]';
+
+var dataViewTag = '[object DataView]';
+
+/** Used to detect maps, sets, and weakmaps. */
+var dataViewCtorString = toSource(DataView),
+    mapCtorString = toSource(Map),
+    promiseCtorString = toSource(Promise),
+    setCtorString = toSource(Set),
+    weakMapCtorString = toSource(WeakMap);
+
+/**
+ * Gets the `toStringTag` of `value`.
+ *
+ * @private
+ * @param {*} value The value to query.
+ * @returns {string} Returns the `toStringTag`.
+ */
+var getTag = baseGetTag;
+
+// Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
+if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+    (Map && getTag(new Map) != mapTag) ||
+    (Promise && getTag(Promise.resolve()) != promiseTag) ||
+    (Set && getTag(new Set) != setTag) ||
+    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+  getTag = function(value) {
+    var result = baseGetTag(value),
+        Ctor = result == objectTag ? value.constructor : undefined,
+        ctorString = Ctor ? toSource(Ctor) : '';
+
+    if (ctorString) {
+      switch (ctorString) {
+        case dataViewCtorString: return dataViewTag;
+        case mapCtorString: return mapTag;
+        case promiseCtorString: return promiseTag;
+        case setCtorString: return setTag;
+        case weakMapCtorString: return weakMapTag;
+      }
+    }
+    return result;
+  };
+}
+
+module.exports = getTag;
+
+},{"./_DataView":38,"./_Map":41,"./_Promise":43,"./_Set":44,"./_WeakMap":48,"./_baseGetTag":69,"./_toSource":168}],117:[function(_dereq_,module,exports){
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+module.exports = getValue;
+
+},{}],118:[function(_dereq_,module,exports){
+/** Used to compose unicode character classes. */
+var rsAstralRange = '\\ud800-\\udfff',
+    rsComboMarksRange = '\\u0300-\\u036f',
+    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
+    rsComboSymbolsRange = '\\u20d0-\\u20ff',
+    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
+    rsVarRange = '\\ufe0e\\ufe0f';
+
+/** Used to compose unicode capture groups. */
+var rsZWJ = '\\u200d';
+
+/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
+var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboRange + rsVarRange + ']');
+
+/**
+ * Checks if `string` contains Unicode symbols.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {boolean} Returns `true` if a symbol is found, else `false`.
+ */
+function hasUnicode(string) {
+  return reHasUnicode.test(string);
+}
+
+module.exports = hasUnicode;
+
+},{}],119:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+  this.size = 0;
+}
+
+module.exports = hashClear;
+
+},{"./_nativeCreate":145}],120:[function(_dereq_,module,exports){
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  var result = this.has(key) && delete this.__data__[key];
+  this.size -= result ? 1 : 0;
+  return result;
+}
+
+module.exports = hashDelete;
+
+},{}],121:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+module.exports = hashGet;
+
+},{"./_nativeCreate":145}],122:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
+}
+
+module.exports = hashHas;
+
+},{"./_nativeCreate":145}],123:[function(_dereq_,module,exports){
+var nativeCreate = _dereq_('./_nativeCreate');
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  this.size += this.has(key) ? 0 : 1;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+module.exports = hashSet;
+
+},{"./_nativeCreate":145}],124:[function(_dereq_,module,exports){
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Initializes an array clone.
+ *
+ * @private
+ * @param {Array} array The array to clone.
+ * @returns {Array} Returns the initialized clone.
+ */
+function initCloneArray(array) {
+  var length = array.length,
+      result = array.constructor(length);
+
+  // Add properties assigned by `RegExp#exec`.
+  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
+    result.index = array.index;
+    result.input = array.input;
+  }
+  return result;
+}
+
+module.exports = initCloneArray;
+
+},{}],125:[function(_dereq_,module,exports){
+var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
+    cloneDataView = _dereq_('./_cloneDataView'),
+    cloneMap = _dereq_('./_cloneMap'),
+    cloneRegExp = _dereq_('./_cloneRegExp'),
+    cloneSet = _dereq_('./_cloneSet'),
+    cloneSymbol = _dereq_('./_cloneSymbol'),
+    cloneTypedArray = _dereq_('./_cloneTypedArray');
+
+/** `Object#toString` result references. */
+var boolTag = '[object Boolean]',
+    dateTag = '[object Date]',
+    mapTag = '[object Map]',
+    numberTag = '[object Number]',
+    regexpTag = '[object RegExp]',
+    setTag = '[object Set]',
+    stringTag = '[object String]',
+    symbolTag = '[object Symbol]';
+
+var arrayBufferTag = '[object ArrayBuffer]',
+    dataViewTag = '[object DataView]',
+    float32Tag = '[object Float32Array]',
+    float64Tag = '[object Float64Array]',
+    int8Tag = '[object Int8Array]',
+    int16Tag = '[object Int16Array]',
+    int32Tag = '[object Int32Array]',
+    uint8Tag = '[object Uint8Array]',
+    uint8ClampedTag = '[object Uint8ClampedArray]',
+    uint16Tag = '[object Uint16Array]',
+    uint32Tag = '[object Uint32Array]';
+
+/**
+ * Initializes an object clone based on its `toStringTag`.
+ *
+ * **Note:** This function only supports cloning values with tags of
+ * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+ *
+ * @private
+ * @param {Object} object The object to clone.
+ * @param {string} tag The `toStringTag` of the object to clone.
+ * @param {Function} cloneFunc The function to clone values.
+ * @param {boolean} [isDeep] Specify a deep clone.
+ * @returns {Object} Returns the initialized clone.
+ */
+function initCloneByTag(object, tag, cloneFunc, isDeep) {
+  var Ctor = object.constructor;
+  switch (tag) {
+    case arrayBufferTag:
+      return cloneArrayBuffer(object);
+
+    case boolTag:
+    case dateTag:
+      return new Ctor(+object);
+
+    case dataViewTag:
+      return cloneDataView(object, isDeep);
+
+    case float32Tag: case float64Tag:
+    case int8Tag: case int16Tag: case int32Tag:
+    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
+      return cloneTypedArray(object, isDeep);
+
+    case mapTag:
+      return cloneMap(object, isDeep, cloneFunc);
+
+    case numberTag:
+    case stringTag:
+      return new Ctor(object);
+
+    case regexpTag:
+      return cloneRegExp(object);
+
+    case setTag:
+      return cloneSet(object, isDeep, cloneFunc);
+
+    case symbolTag:
+      return cloneSymbol(object);
+  }
+}
+
+module.exports = initCloneByTag;
+
+},{"./_cloneArrayBuffer":87,"./_cloneDataView":89,"./_cloneMap":90,"./_cloneRegExp":91,"./_cloneSet":92,"./_cloneSymbol":93,"./_cloneTypedArray":94}],126:[function(_dereq_,module,exports){
+var baseCreate = _dereq_('./_baseCreate'),
+    getPrototype = _dereq_('./_getPrototype'),
+    isPrototype = _dereq_('./_isPrototype');
+
+/**
+ * Initializes an object clone.
+ *
+ * @private
+ * @param {Object} object The object to clone.
+ * @returns {Object} Returns the initialized clone.
+ */
+function initCloneObject(object) {
+  return (typeof object.constructor == 'function' && !isPrototype(object))
+    ? baseCreate(getPrototype(object))
+    : {};
+}
+
+module.exports = initCloneObject;
+
+},{"./_baseCreate":66,"./_getPrototype":112,"./_isPrototype":132}],127:[function(_dereq_,module,exports){
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/** Used to detect unsigned integer values. */
+var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+/**
+ * Checks if `value` is a valid array-like index.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+ * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ */
+function isIndex(value, length) {
+  length = length == null ? MAX_SAFE_INTEGER : length;
+  return !!length &&
+    (typeof value == 'number' || reIsUint.test(value)) &&
+    (value > -1 && value % 1 == 0 && value < length);
+}
+
+module.exports = isIndex;
+
+},{}],128:[function(_dereq_,module,exports){
+var eq = _dereq_('./eq'),
+    isArrayLike = _dereq_('./isArrayLike'),
+    isIndex = _dereq_('./_isIndex'),
+    isObject = _dereq_('./isObject');
+
+/**
+ * Checks if the given arguments are from an iteratee call.
+ *
+ * @private
+ * @param {*} value The potential iteratee value argument.
+ * @param {*} index The potential iteratee index or key argument.
+ * @param {*} object The potential iteratee object argument.
+ * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
+ *  else `false`.
+ */
+function isIterateeCall(value, index, object) {
+  if (!isObject(object)) {
+    return false;
+  }
+  var type = typeof index;
+  if (type == 'number'
+        ? (isArrayLike(object) && isIndex(index, object.length))
+        : (type == 'string' && index in object)
+      ) {
+    return eq(object[index], value);
+  }
+  return false;
+}
+
+module.exports = isIterateeCall;
+
+},{"./_isIndex":127,"./eq":176,"./isArrayLike":182,"./isObject":189}],129:[function(_dereq_,module,exports){
+var isArray = _dereq_('./isArray'),
+    isSymbol = _dereq_('./isSymbol');
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/;
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+module.exports = isKey;
+
+},{"./isArray":181,"./isSymbol":193}],130:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+module.exports = isKeyable;
+
+},{}],131:[function(_dereq_,module,exports){
+var coreJsData = _dereq_('./_coreJsData');
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+module.exports = isMasked;
+
+},{"./_coreJsData":99}],132:[function(_dereq_,module,exports){
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Checks if `value` is likely a prototype object.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+ */
+function isPrototype(value) {
+  var Ctor = value && value.constructor,
+      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+  return value === proto;
+}
+
+module.exports = isPrototype;
+
+},{}],133:[function(_dereq_,module,exports){
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+  this.size = 0;
+}
+
+module.exports = listCacheClear;
+
+},{}],134:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype;
+
+/** Built-in value references. */
+var splice = arrayProto.splice;
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  --this.size;
+  return true;
+}
+
+module.exports = listCacheDelete;
+
+},{"./_assocIndexOf":61}],135:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+module.exports = listCacheGet;
+
+},{"./_assocIndexOf":61}],136:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+module.exports = listCacheHas;
+
+},{"./_assocIndexOf":61}],137:[function(_dereq_,module,exports){
+var assocIndexOf = _dereq_('./_assocIndexOf');
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    ++this.size;
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+module.exports = listCacheSet;
+
+},{"./_assocIndexOf":61}],138:[function(_dereq_,module,exports){
+var Hash = _dereq_('./_Hash'),
+    ListCache = _dereq_('./_ListCache'),
+    Map = _dereq_('./_Map');
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.size = 0;
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+module.exports = mapCacheClear;
+
+},{"./_Hash":39,"./_ListCache":40,"./_Map":41}],139:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  var result = getMapData(this, key)['delete'](key);
+  this.size -= result ? 1 : 0;
+  return result;
+}
+
+module.exports = mapCacheDelete;
+
+},{"./_getMapData":110}],140:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+module.exports = mapCacheGet;
+
+},{"./_getMapData":110}],141:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+module.exports = mapCacheHas;
+
+},{"./_getMapData":110}],142:[function(_dereq_,module,exports){
+var getMapData = _dereq_('./_getMapData');
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  var data = getMapData(this, key),
+      size = data.size;
+
+  data.set(key, value);
+  this.size += data.size == size ? 0 : 1;
+  return this;
+}
+
+module.exports = mapCacheSet;
+
+},{"./_getMapData":110}],143:[function(_dereq_,module,exports){
+/**
+ * Converts `map` to its key-value pairs.
+ *
+ * @private
+ * @param {Object} map The map to convert.
+ * @returns {Array} Returns the key-value pairs.
+ */
+function mapToArray(map) {
+  var index = -1,
+      result = Array(map.size);
+
+  map.forEach(function(value, key) {
+    result[++index] = [key, value];
+  });
+  return result;
+}
+
+module.exports = mapToArray;
+
+},{}],144:[function(_dereq_,module,exports){
+var memoize = _dereq_('./memoize');
+
+/** Used as the maximum memoize cache size. */
+var MAX_MEMOIZE_SIZE = 500;
+
+/**
+ * A specialized version of `_.memoize` which clears the memoized function's
+ * cache when it exceeds `MAX_MEMOIZE_SIZE`.
+ *
+ * @private
+ * @param {Function} func The function to have its output memoized.
+ * @returns {Function} Returns the new memoized function.
+ */
+function memoizeCapped(func) {
+  var result = memoize(func, function(key) {
+    if (cache.size === MAX_MEMOIZE_SIZE) {
+      cache.clear();
+    }
+    return key;
+  });
+
+  var cache = result.cache;
+  return result;
+}
+
+module.exports = memoizeCapped;
+
+},{"./memoize":197}],145:[function(_dereq_,module,exports){
+var getNative = _dereq_('./_getNative');
+
+/* Built-in method references that are verified to be native. */
+var nativeCreate = getNative(Object, 'create');
+
+module.exports = nativeCreate;
+
+},{"./_getNative":111}],146:[function(_dereq_,module,exports){
+var overArg = _dereq_('./_overArg');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeKeys = overArg(Object.keys, Object);
+
+module.exports = nativeKeys;
+
+},{"./_overArg":150}],147:[function(_dereq_,module,exports){
+/**
+ * This function is like
+ * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * except that it includes inherited enumerable properties.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ */
+function nativeKeysIn(object) {
+  var result = [];
+  if (object != null) {
+    for (var key in Object(object)) {
+      result.push(key);
+    }
+  }
+  return result;
+}
+
+module.exports = nativeKeysIn;
+
+},{}],148:[function(_dereq_,module,exports){
+var freeGlobal = _dereq_('./_freeGlobal');
+
+/** Detect free variable `exports`. */
+var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Detect free variable `process` from Node.js. */
+var freeProcess = moduleExports && freeGlobal.process;
+
+/** Used to access faster Node.js helpers. */
+var nodeUtil = (function() {
+  try {
+    return freeProcess && freeProcess.binding && freeProcess.binding('util');
+  } catch (e) {}
+}());
+
+module.exports = nodeUtil;
+
+},{"./_freeGlobal":107}],149:[function(_dereq_,module,exports){
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var nativeObjectToString = objectProto.toString;
+
+/**
+ * Converts `value` to a string using `Object.prototype.toString`.
+ *
+ * @private
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ */
+function objectToString(value) {
+  return nativeObjectToString.call(value);
+}
+
+module.exports = objectToString;
+
+},{}],150:[function(_dereq_,module,exports){
+/**
+ * Creates a unary function that invokes `func` with its argument transformed.
+ *
+ * @private
+ * @param {Function} func The function to wrap.
+ * @param {Function} transform The argument transform.
+ * @returns {Function} Returns the new function.
+ */
+function overArg(func, transform) {
+  return function(arg) {
+    return func(transform(arg));
+  };
+}
+
+module.exports = overArg;
+
+},{}],151:[function(_dereq_,module,exports){
+var apply = _dereq_('./_apply');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeMax = Math.max;
+
+/**
+ * A specialized version of `baseRest` which transforms the rest array.
+ *
+ * @private
+ * @param {Function} func The function to apply a rest parameter to.
+ * @param {number} [start=func.length-1] The start position of the rest parameter.
+ * @param {Function} transform The rest array transform.
+ * @returns {Function} Returns the new function.
+ */
+function overRest(func, start, transform) {
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
+
+    while (++index < length) {
+      array[index] = args[start + index];
+    }
+    index = -1;
+    var otherArgs = Array(start + 1);
+    while (++index < start) {
+      otherArgs[index] = args[index];
+    }
+    otherArgs[start] = transform(array);
+    return apply(func, this, otherArgs);
+  };
+}
+
+module.exports = overRest;
+
+},{"./_apply":51}],152:[function(_dereq_,module,exports){
+/** Used to match template delimiters. */
+var reEscape = /<%-([\s\S]+?)%>/g;
+
+module.exports = reEscape;
+
+},{}],153:[function(_dereq_,module,exports){
+/** Used to match template delimiters. */
+var reEvaluate = /<%([\s\S]+?)%>/g;
+
+module.exports = reEvaluate;
+
+},{}],154:[function(_dereq_,module,exports){
+/** Used to match template delimiters. */
+var reInterpolate = /<%=([\s\S]+?)%>/g;
+
+module.exports = reInterpolate;
+
+},{}],155:[function(_dereq_,module,exports){
+var freeGlobal = _dereq_('./_freeGlobal');
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+module.exports = root;
+
+},{"./_freeGlobal":107}],156:[function(_dereq_,module,exports){
+/**
+ * Converts `set` to an array of its values.
+ *
+ * @private
+ * @param {Object} set The set to convert.
+ * @returns {Array} Returns the values.
+ */
+function setToArray(set) {
+  var index = -1,
+      result = Array(set.size);
+
+  set.forEach(function(value) {
+    result[++index] = value;
+  });
+  return result;
+}
+
+module.exports = setToArray;
+
+},{}],157:[function(_dereq_,module,exports){
+var baseSetToString = _dereq_('./_baseSetToString'),
+    shortOut = _dereq_('./_shortOut');
+
+/**
+ * Sets the `toString` method of `func` to return `string`.
+ *
+ * @private
+ * @param {Function} func The function to modify.
+ * @param {Function} string The `toString` result.
+ * @returns {Function} Returns `func`.
+ */
+var setToString = shortOut(baseSetToString);
+
+module.exports = setToString;
+
+},{"./_baseSetToString":79,"./_shortOut":158}],158:[function(_dereq_,module,exports){
+/** Used to detect hot functions by number of calls within a span of milliseconds. */
+var HOT_COUNT = 800,
+    HOT_SPAN = 16;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeNow = Date.now;
+
+/**
+ * Creates a function that'll short out and invoke `identity` instead
+ * of `func` when it's called `HOT_COUNT` or more times in `HOT_SPAN`
+ * milliseconds.
+ *
+ * @private
+ * @param {Function} func The function to restrict.
+ * @returns {Function} Returns the new shortable function.
+ */
+function shortOut(func) {
+  var count = 0,
+      lastCalled = 0;
+
+  return function() {
+    var stamp = nativeNow(),
+        remaining = HOT_SPAN - (stamp - lastCalled);
+
+    lastCalled = stamp;
+    if (remaining > 0) {
+      if (++count >= HOT_COUNT) {
+        return arguments[0];
+      }
+    } else {
+      count = 0;
+    }
+    return func.apply(undefined, arguments);
+  };
+}
+
+module.exports = shortOut;
+
+},{}],159:[function(_dereq_,module,exports){
+var ListCache = _dereq_('./_ListCache');
+
+/**
+ * Removes all key-value entries from the stack.
+ *
+ * @private
+ * @name clear
+ * @memberOf Stack
+ */
+function stackClear() {
+  this.__data__ = new ListCache;
+  this.size = 0;
+}
+
+module.exports = stackClear;
+
+},{"./_ListCache":40}],160:[function(_dereq_,module,exports){
+/**
+ * Removes `key` and its value from the stack.
+ *
+ * @private
+ * @name delete
+ * @memberOf Stack
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function stackDelete(key) {
+  var data = this.__data__,
+      result = data['delete'](key);
+
+  this.size = data.size;
+  return result;
+}
+
+module.exports = stackDelete;
+
+},{}],161:[function(_dereq_,module,exports){
+/**
+ * Gets the stack value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Stack
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function stackGet(key) {
+  return this.__data__.get(key);
+}
+
+module.exports = stackGet;
+
+},{}],162:[function(_dereq_,module,exports){
+/**
+ * Checks if a stack value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Stack
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function stackHas(key) {
+  return this.__data__.has(key);
+}
+
+module.exports = stackHas;
+
+},{}],163:[function(_dereq_,module,exports){
+var ListCache = _dereq_('./_ListCache'),
+    Map = _dereq_('./_Map'),
+    MapCache = _dereq_('./_MapCache');
+
+/** Used as the size to enable large array optimizations. */
+var LARGE_ARRAY_SIZE = 200;
+
+/**
+ * Sets the stack `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Stack
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the stack cache instance.
+ */
+function stackSet(key, value) {
+  var data = this.__data__;
+  if (data instanceof ListCache) {
+    var pairs = data.__data__;
+    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+      pairs.push([key, value]);
+      this.size = ++data.size;
+      return this;
+    }
+    data = this.__data__ = new MapCache(pairs);
+  }
+  data.set(key, value);
+  this.size = data.size;
+  return this;
+}
+
+module.exports = stackSet;
+
+},{"./_ListCache":40,"./_Map":41,"./_MapCache":42}],164:[function(_dereq_,module,exports){
+var asciiSize = _dereq_('./_asciiSize'),
+    hasUnicode = _dereq_('./_hasUnicode'),
+    unicodeSize = _dereq_('./_unicodeSize');
+
+/**
+ * Gets the number of symbols in `string`.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {number} Returns the string size.
+ */
+function stringSize(string) {
+  return hasUnicode(string)
+    ? unicodeSize(string)
+    : asciiSize(string);
+}
+
+module.exports = stringSize;
+
+},{"./_asciiSize":58,"./_hasUnicode":118,"./_unicodeSize":169}],165:[function(_dereq_,module,exports){
+var asciiToArray = _dereq_('./_asciiToArray'),
+    hasUnicode = _dereq_('./_hasUnicode'),
+    unicodeToArray = _dereq_('./_unicodeToArray');
+
+/**
+ * Converts `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */
+function stringToArray(string) {
+  return hasUnicode(string)
+    ? unicodeToArray(string)
+    : asciiToArray(string);
+}
+
+module.exports = stringToArray;
+
+},{"./_asciiToArray":59,"./_hasUnicode":118,"./_unicodeToArray":170}],166:[function(_dereq_,module,exports){
+var memoizeCapped = _dereq_('./_memoizeCapped');
+
+/** Used to match property names within property paths. */
+var reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoizeCapped(function(string) {
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+module.exports = stringToPath;
+
+},{"./_memoizeCapped":144}],167:[function(_dereq_,module,exports){
+var isSymbol = _dereq_('./isSymbol');
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+module.exports = toKey;
+
+},{"./isSymbol":193}],168:[function(_dereq_,module,exports){
+/** Used for built-in method references. */
+var funcProto = Function.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to convert.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+module.exports = toSource;
+
+},{}],169:[function(_dereq_,module,exports){
+/** Used to compose unicode character classes. */
+var rsAstralRange = '\\ud800-\\udfff',
+    rsComboMarksRange = '\\u0300-\\u036f',
+    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
+    rsComboSymbolsRange = '\\u20d0-\\u20ff',
+    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
+    rsVarRange = '\\ufe0e\\ufe0f';
+
+/** Used to compose unicode capture groups. */
+var rsAstral = '[' + rsAstralRange + ']',
+    rsCombo = '[' + rsComboRange + ']',
+    rsFitz = '\\ud83c[\\udffb-\\udfff]',
+    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+    rsNonAstral = '[^' + rsAstralRange + ']',
+    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+    rsZWJ = '\\u200d';
+
+/** Used to compose unicode regexes. */
+var reOptMod = rsModifier + '?',
+    rsOptVar = '[' + rsVarRange + ']?',
+    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+    rsSeq = rsOptVar + reOptMod + rsOptJoin,
+    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
+
+/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
+var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
+
+/**
+ * Gets the size of a Unicode `string`.
+ *
+ * @private
+ * @param {string} string The string inspect.
+ * @returns {number} Returns the string size.
+ */
+function unicodeSize(string) {
+  var result = reUnicode.lastIndex = 0;
+  while (reUnicode.test(string)) {
+    ++result;
+  }
+  return result;
+}
+
+module.exports = unicodeSize;
+
+},{}],170:[function(_dereq_,module,exports){
+/** Used to compose unicode character classes. */
+var rsAstralRange = '\\ud800-\\udfff',
+    rsComboMarksRange = '\\u0300-\\u036f',
+    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
+    rsComboSymbolsRange = '\\u20d0-\\u20ff',
+    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
+    rsVarRange = '\\ufe0e\\ufe0f';
+
+/** Used to compose unicode capture groups. */
+var rsAstral = '[' + rsAstralRange + ']',
+    rsCombo = '[' + rsComboRange + ']',
+    rsFitz = '\\ud83c[\\udffb-\\udfff]',
+    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+    rsNonAstral = '[^' + rsAstralRange + ']',
+    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+    rsZWJ = '\\u200d';
+
+/** Used to compose unicode regexes. */
+var reOptMod = rsModifier + '?',
+    rsOptVar = '[' + rsVarRange + ']?',
+    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+    rsSeq = rsOptVar + reOptMod + rsOptJoin,
+    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
+
+/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
+var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
+
+/**
+ * Converts a Unicode `string` to an array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the converted array.
+ */
+function unicodeToArray(string) {
+  return string.match(reUnicode) || [];
+}
+
+module.exports = unicodeToArray;
+
+},{}],171:[function(_dereq_,module,exports){
+var copyObject = _dereq_('./_copyObject'),
+    createAssigner = _dereq_('./_createAssigner'),
+    keysIn = _dereq_('./keysIn');
+
+/**
+ * This method is like `_.assignIn` except that it accepts `customizer`
+ * which is invoked to produce the assigned values. If `customizer` returns
+ * `undefined`, assignment is handled by the method instead. The `customizer`
+ * is invoked with five arguments: (objValue, srcValue, key, object, source).
+ *
+ * **Note:** This method mutates `object`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @alias extendWith
+ * @category Object
+ * @param {Object} object The destination object.
+ * @param {...Object} sources The source objects.
+ * @param {Function} [customizer] The function to customize assigned values.
+ * @returns {Object} Returns `object`.
+ * @see _.assignWith
+ * @example
+ *
+ * function customizer(objValue, srcValue) {
+ *   return _.isUndefined(objValue) ? srcValue : objValue;
+ * }
+ *
+ * var defaults = _.partialRight(_.assignInWith, customizer);
+ *
+ * defaults({ 'a': 1 }, { 'b': 2 }, { 'a': 3 });
+ * // => { 'a': 1, 'b': 2 }
+ */
+var assignInWith = createAssigner(function(object, source, srcIndex, customizer) {
+  copyObject(source, keysIn(source), object, customizer);
+});
+
+module.exports = assignInWith;
+
+},{"./_copyObject":96,"./_createAssigner":100,"./keysIn":196}],172:[function(_dereq_,module,exports){
+var apply = _dereq_('./_apply'),
+    baseRest = _dereq_('./_baseRest'),
+    isError = _dereq_('./isError');
+
+/**
+ * Attempts to invoke `func`, returning either the result or the caught error
+ * object. Any additional arguments are provided to `func` when it's invoked.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Util
+ * @param {Function} func The function to attempt.
+ * @param {...*} [args] The arguments to invoke `func` with.
+ * @returns {*} Returns the `func` result or error object.
+ * @example
+ *
+ * // Avoid throwing errors for invalid selectors.
+ * var elements = _.attempt(function(selector) {
+ *   return document.querySelectorAll(selector);
+ * }, '>_>');
+ *
+ * if (_.isError(elements)) {
+ *   elements = [];
+ * }
+ */
+var attempt = baseRest(function(func, args) {
+  try {
+    return apply(func, undefined, args);
+  } catch (e) {
+    return isError(e) ? e : new Error(e);
+  }
+});
+
+module.exports = attempt;
+
+},{"./_apply":51,"./_baseRest":78,"./isError":184}],173:[function(_dereq_,module,exports){
+var baseSlice = _dereq_('./_baseSlice'),
+    isIterateeCall = _dereq_('./_isIterateeCall'),
+    toInteger = _dereq_('./toInteger');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeCeil = Math.ceil,
+    nativeMax = Math.max;
+
+/**
+ * Creates an array of elements split into groups the length of `size`.
+ * If `array` can't be split evenly, the final chunk will be the remaining
+ * elements.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Array
+ * @param {Array} array The array to process.
+ * @param {number} [size=1] The length of each chunk
+ * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
+ * @returns {Array} Returns the new array of chunks.
+ * @example
+ *
+ * _.chunk(['a', 'b', 'c', 'd'], 2);
+ * // => [['a', 'b'], ['c', 'd']]
+ *
+ * _.chunk(['a', 'b', 'c', 'd'], 3);
+ * // => [['a', 'b', 'c'], ['d']]
+ */
+function chunk(array, size, guard) {
+  if ((guard ? isIterateeCall(array, size, guard) : size === undefined)) {
+    size = 1;
+  } else {
+    size = nativeMax(toInteger(size), 0);
+  }
+  var length = array == null ? 0 : array.length;
+  if (!length || size < 1) {
+    return [];
+  }
+  var index = 0,
+      resIndex = 0,
+      result = Array(nativeCeil(length / size));
+
+  while (index < length) {
+    result[resIndex++] = baseSlice(array, index, (index += size));
+  }
+  return result;
+}
+
+module.exports = chunk;
+
+},{"./_baseSlice":80,"./_isIterateeCall":128,"./toInteger":205}],174:[function(_dereq_,module,exports){
+var baseClone = _dereq_('./_baseClone');
+
+/** Used to compose bitmasks for cloning. */
+var CLONE_SYMBOLS_FLAG = 4;
+
+/**
+ * Creates a shallow clone of `value`.
+ *
+ * **Note:** This method is loosely based on the
+ * [structured clone algorithm](https://mdn.io/Structured_clone_algorithm)
+ * and supports cloning arrays, array buffers, booleans, date objects, maps,
+ * numbers, `Object` objects, regexes, sets, strings, symbols, and typed
+ * arrays. The own enumerable properties of `arguments` objects are cloned
+ * as plain objects. An empty object is returned for uncloneable values such
+ * as error objects, functions, DOM nodes, and WeakMaps.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to clone.
+ * @returns {*} Returns the cloned value.
+ * @see _.cloneDeep
+ * @example
+ *
+ * var objects = [{ 'a': 1 }, { 'b': 2 }];
+ *
+ * var shallow = _.clone(objects);
+ * console.log(shallow[0] === objects[0]);
+ * // => true
+ */
+function clone(value) {
+  return baseClone(value, CLONE_SYMBOLS_FLAG);
+}
+
+module.exports = clone;
+
+},{"./_baseClone":65}],175:[function(_dereq_,module,exports){
+/**
+ * Creates a function that returns `value`.
+ *
+ * @static
+ * @memberOf _
+ * @since 2.4.0
+ * @category Util
+ * @param {*} value The value to return from the new function.
+ * @returns {Function} Returns the new constant function.
+ * @example
+ *
+ * var objects = _.times(2, _.constant({ 'a': 1 }));
+ *
+ * console.log(objects);
+ * // => [{ 'a': 1 }, { 'a': 1 }]
+ *
+ * console.log(objects[0] === objects[1]);
+ * // => true
+ */
+function constant(value) {
+  return function() {
+    return value;
+  };
+}
+
+module.exports = constant;
+
+},{}],176:[function(_dereq_,module,exports){
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+module.exports = eq;
+
+},{}],177:[function(_dereq_,module,exports){
+var escapeHtmlChar = _dereq_('./_escapeHtmlChar'),
+    toString = _dereq_('./toString');
+
+/** Used to match HTML entities and HTML characters. */
+var reUnescapedHtml = /[&<>"']/g,
+    reHasUnescapedHtml = RegExp(reUnescapedHtml.source);
+
+/**
+ * Converts the characters "&", "<", ">", '"', and "'" in `string` to their
+ * corresponding HTML entities.
+ *
+ * **Note:** No other characters are escaped. To escape additional
+ * characters use a third-party library like [_he_](https://mths.be/he).
+ *
+ * Though the ">" character is escaped for symmetry, characters like
+ * ">" and "/" don't need escaping in HTML and have no special meaning
+ * unless they're part of a tag or unquoted attribute value. See
+ * [Mathias Bynens's article](https://mathiasbynens.be/notes/ambiguous-ampersands)
+ * (under "semi-related fun fact") for more details.
+ *
+ * When working with HTML you should always
+ * [quote attribute values](http://wonko.com/post/html-escaping) to reduce
+ * XSS vectors.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category String
+ * @param {string} [string=''] The string to escape.
+ * @returns {string} Returns the escaped string.
+ * @example
+ *
+ * _.escape('fred, barney, & pebbles');
+ * // => 'fred, barney, &amp; pebbles'
+ */
+function escape(string) {
+  string = toString(string);
+  return (string && reHasUnescapedHtml.test(string))
+    ? string.replace(reUnescapedHtml, escapeHtmlChar)
+    : string;
+}
+
+module.exports = escape;
+
+},{"./_escapeHtmlChar":105,"./toString":207}],178:[function(_dereq_,module,exports){
+var baseGet = _dereq_('./_baseGet');
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+},{"./_baseGet":67}],179:[function(_dereq_,module,exports){
+/**
+ * This method returns the first argument it receives.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Util
+ * @param {*} value Any value.
+ * @returns {*} Returns `value`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ *
+ * console.log(_.identity(object) === object);
+ * // => true
+ */
+function identity(value) {
+  return value;
+}
+
+module.exports = identity;
+
+},{}],180:[function(_dereq_,module,exports){
+var baseIsArguments = _dereq_('./_baseIsArguments'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** Used for built-in method references. */
+var objectProto = Object.prototype;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Built-in value references. */
+var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+/**
+ * Checks if `value` is likely an `arguments` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ *  else `false`.
+ * @example
+ *
+ * _.isArguments(function() { return arguments; }());
+ * // => true
+ *
+ * _.isArguments([1, 2, 3]);
+ * // => false
+ */
+var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
+    !propertyIsEnumerable.call(value, 'callee');
+};
+
+module.exports = isArguments;
+
+},{"./_baseIsArguments":70,"./isObjectLike":190}],181:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+module.exports = isArray;
+
+},{}],182:[function(_dereq_,module,exports){
+var isFunction = _dereq_('./isFunction'),
+    isLength = _dereq_('./isLength');
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(value.length) && !isFunction(value);
+}
+
+module.exports = isArrayLike;
+
+},{"./isFunction":185,"./isLength":186}],183:[function(_dereq_,module,exports){
+var root = _dereq_('./_root'),
+    stubFalse = _dereq_('./stubFalse');
+
+/** Detect free variable `exports`. */
+var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+
+/** Detect free variable `module`. */
+var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+
+/** Detect the popular CommonJS extension `module.exports`. */
+var moduleExports = freeModule && freeModule.exports === freeExports;
+
+/** Built-in value references. */
+var Buffer = moduleExports ? root.Buffer : undefined;
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
+
+/**
+ * Checks if `value` is a buffer.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.3.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+ * @example
+ *
+ * _.isBuffer(new Buffer(2));
+ * // => true
+ *
+ * _.isBuffer(new Uint8Array(2));
+ * // => false
+ */
+var isBuffer = nativeIsBuffer || stubFalse;
+
+module.exports = isBuffer;
+
+},{"./_root":155,"./stubFalse":201}],184:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObjectLike = _dereq_('./isObjectLike'),
+    isPlainObject = _dereq_('./isPlainObject');
+
+/** `Object#toString` result references. */
+var domExcTag = '[object DOMException]',
+    errorTag = '[object Error]';
+
+/**
+ * Checks if `value` is an `Error`, `EvalError`, `RangeError`, `ReferenceError`,
+ * `SyntaxError`, `TypeError`, or `URIError` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an error object, else `false`.
+ * @example
+ *
+ * _.isError(new Error);
+ * // => true
+ *
+ * _.isError(Error);
+ * // => false
+ */
+function isError(value) {
+  if (!isObjectLike(value)) {
+    return false;
+  }
+  var tag = baseGetTag(value);
+  return tag == errorTag || tag == domExcTag ||
+    (typeof value.message == 'string' && typeof value.name == 'string' && !isPlainObject(value));
+}
+
+module.exports = isError;
+
+},{"./_baseGetTag":69,"./isObjectLike":190,"./isPlainObject":191}],185:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObject = _dereq_('./isObject');
+
+/** `Object#toString` result references. */
+var asyncTag = '[object AsyncFunction]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    proxyTag = '[object Proxy]';
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  if (!isObject(value)) {
+    return false;
+  }
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+  var tag = baseGetTag(value);
+  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+}
+
+module.exports = isFunction;
+
+},{"./_baseGetTag":69,"./isObject":189}],186:[function(_dereq_,module,exports){
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+module.exports = isLength;
+
+},{}],187:[function(_dereq_,module,exports){
+var isNumber = _dereq_('./isNumber');
+
+/**
+ * Checks if `value` is `NaN`.
+ *
+ * **Note:** This method is based on
+ * [`Number.isNaN`](https://mdn.io/Number/isNaN) and is not the same as
+ * global [`isNaN`](https://mdn.io/isNaN) which returns `true` for
+ * `undefined` and other non-number values.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+ * @example
+ *
+ * _.isNaN(NaN);
+ * // => true
+ *
+ * _.isNaN(new Number(NaN));
+ * // => true
+ *
+ * isNaN(undefined);
+ * // => true
+ *
+ * _.isNaN(undefined);
+ * // => false
+ */
+function isNaN(value) {
+  // An `NaN` primitive is the only value that is not equal to itself.
+  // Perform the `toStringTag` check first to avoid errors with some
+  // ActiveX objects in IE.
+  return isNumber(value) && value != +value;
+}
+
+module.exports = isNaN;
+
+},{"./isNumber":188}],188:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var numberTag = '[object Number]';
+
+/**
+ * Checks if `value` is classified as a `Number` primitive or object.
+ *
+ * **Note:** To exclude `Infinity`, `-Infinity`, and `NaN`, which are
+ * classified as numbers, use the `_.isFinite` method.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a number, else `false`.
+ * @example
+ *
+ * _.isNumber(3);
+ * // => true
+ *
+ * _.isNumber(Number.MIN_VALUE);
+ * // => true
+ *
+ * _.isNumber(Infinity);
+ * // => true
+ *
+ * _.isNumber('3');
+ * // => false
+ */
+function isNumber(value) {
+  return typeof value == 'number' ||
+    (isObjectLike(value) && baseGetTag(value) == numberTag);
+}
+
+module.exports = isNumber;
+
+},{"./_baseGetTag":69,"./isObjectLike":190}],189:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
+}
+
+module.exports = isObject;
+
+},{}],190:[function(_dereq_,module,exports){
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return value != null && typeof value == 'object';
+}
+
+module.exports = isObjectLike;
+
+},{}],191:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    getPrototype = _dereq_('./_getPrototype'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var objectTag = '[object Object]';
+
+/** Used for built-in method references. */
+var funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/** Used to infer the `Object` constructor. */
+var objectCtorString = funcToString.call(Object);
+
+/**
+ * Checks if `value` is a plain object, that is, an object created by the
+ * `Object` constructor or one with a `[[Prototype]]` of `null`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.8.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ * }
+ *
+ * _.isPlainObject(new Foo);
+ * // => false
+ *
+ * _.isPlainObject([1, 2, 3]);
+ * // => false
+ *
+ * _.isPlainObject({ 'x': 0, 'y': 0 });
+ * // => true
+ *
+ * _.isPlainObject(Object.create(null));
+ * // => true
+ */
+function isPlainObject(value) {
+  if (!isObjectLike(value) || baseGetTag(value) != objectTag) {
+    return false;
+  }
+  var proto = getPrototype(value);
+  if (proto === null) {
+    return true;
+  }
+  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
+  return typeof Ctor == 'function' && Ctor instanceof Ctor &&
+    funcToString.call(Ctor) == objectCtorString;
+}
+
+module.exports = isPlainObject;
+
+},{"./_baseGetTag":69,"./_getPrototype":112,"./isObjectLike":190}],192:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isArray = _dereq_('./isArray'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var stringTag = '[object String]';
+
+/**
+ * Checks if `value` is classified as a `String` primitive or object.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a string, else `false`.
+ * @example
+ *
+ * _.isString('abc');
+ * // => true
+ *
+ * _.isString(1);
+ * // => false
+ */
+function isString(value) {
+  return typeof value == 'string' ||
+    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag);
+}
+
+module.exports = isString;
+
+},{"./_baseGetTag":69,"./isArray":181,"./isObjectLike":190}],193:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var symbolTag = '[object Symbol]';
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && baseGetTag(value) == symbolTag);
+}
+
+module.exports = isSymbol;
+
+},{"./_baseGetTag":69,"./isObjectLike":190}],194:[function(_dereq_,module,exports){
+var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
+    baseUnary = _dereq_('./_baseUnary'),
+    nodeUtil = _dereq_('./_nodeUtil');
+
+/* Node.js helper references. */
+var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
+
+/**
+ * Checks if `value` is classified as a typed array.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+ * @example
+ *
+ * _.isTypedArray(new Uint8Array);
+ * // => true
+ *
+ * _.isTypedArray([]);
+ * // => false
+ */
+var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+
+module.exports = isTypedArray;
+
+},{"./_baseIsTypedArray":72,"./_baseUnary":83,"./_nodeUtil":148}],195:[function(_dereq_,module,exports){
+var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
+    baseKeys = _dereq_('./_baseKeys'),
+    isArrayLike = _dereq_('./isArrayLike');
+
+/**
+ * Creates an array of the own enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects. See the
+ * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+ * for more details.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keys(new Foo);
+ * // => ['a', 'b'] (iteration order is not guaranteed)
+ *
+ * _.keys('hi');
+ * // => ['0', '1']
+ */
+function keys(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+}
+
+module.exports = keys;
+
+},{"./_arrayLikeKeys":54,"./_baseKeys":73,"./isArrayLike":182}],196:[function(_dereq_,module,exports){
+var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
+    baseKeysIn = _dereq_('./_baseKeysIn'),
+    isArrayLike = _dereq_('./isArrayLike');
+
+/**
+ * Creates an array of the own and inherited enumerable property names of `object`.
+ *
+ * **Note:** Non-object values are coerced to objects.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @returns {Array} Returns the array of property names.
+ * @example
+ *
+ * function Foo() {
+ *   this.a = 1;
+ *   this.b = 2;
+ * }
+ *
+ * Foo.prototype.c = 3;
+ *
+ * _.keysIn(new Foo);
+ * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
+ */
+function keysIn(object) {
+  return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
+}
+
+module.exports = keysIn;
+
+},{"./_arrayLikeKeys":54,"./_baseKeysIn":74,"./isArrayLike":182}],197:[function(_dereq_,module,exports){
+var MapCache = _dereq_('./_MapCache');
+
+/** Error message constants. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `clear`, `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result) || cache;
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Expose `MapCache`.
+memoize.Cache = MapCache;
+
+module.exports = memoize;
+
+},{"./_MapCache":42}],198:[function(_dereq_,module,exports){
+var createPadding = _dereq_('./_createPadding'),
+    stringSize = _dereq_('./_stringSize'),
+    toInteger = _dereq_('./toInteger'),
+    toString = _dereq_('./toString');
+
+/* Built-in method references for those with the same name as other `lodash` methods. */
+var nativeCeil = Math.ceil,
+    nativeFloor = Math.floor;
+
+/**
+ * Pads `string` on the left and right sides if it's shorter than `length`.
+ * Padding characters are truncated if they can't be evenly divided by `length`.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.0.0
+ * @category String
+ * @param {string} [string=''] The string to pad.
+ * @param {number} [length=0] The padding length.
+ * @param {string} [chars=' '] The string used as padding.
+ * @returns {string} Returns the padded string.
+ * @example
+ *
+ * _.pad('abc', 8);
+ * // => '  abc   '
+ *
+ * _.pad('abc', 8, '_-');
+ * // => '_-abc_-_'
+ *
+ * _.pad('abc', 3);
+ * // => 'abc'
+ */
+function pad(string, length, chars) {
+  string = toString(string);
+  length = toInteger(length);
+
+  var strLength = length ? stringSize(string) : 0;
+  if (!length || strLength >= length) {
+    return string;
+  }
+  var mid = (length - strLength) / 2;
+  return (
+    createPadding(nativeFloor(mid), chars) +
+    string +
+    createPadding(nativeCeil(mid), chars)
+  );
+}
+
+module.exports = pad;
+
+},{"./_createPadding":101,"./_stringSize":164,"./toInteger":205,"./toString":207}],199:[function(_dereq_,module,exports){
+var createRound = _dereq_('./_createRound');
+
+/**
+ * Computes `number` rounded to `precision`.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.10.0
+ * @category Math
+ * @param {number} number The number to round.
+ * @param {number} [precision=0] The precision to round to.
+ * @returns {number} Returns the rounded number.
+ * @example
+ *
+ * _.round(4.006);
+ * // => 4
+ *
+ * _.round(4.006, 2);
+ * // => 4.01
+ *
+ * _.round(4060, -2);
+ * // => 4100
+ */
+var round = createRound('round');
+
+module.exports = round;
+
+},{"./_createRound":102}],200:[function(_dereq_,module,exports){
+/**
+ * This method returns a new empty array.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {Array} Returns the new empty array.
+ * @example
+ *
+ * var arrays = _.times(2, _.stubArray);
+ *
+ * console.log(arrays);
+ * // => [[], []]
+ *
+ * console.log(arrays[0] === arrays[1]);
+ * // => false
+ */
+function stubArray() {
+  return [];
+}
+
+module.exports = stubArray;
+
+},{}],201:[function(_dereq_,module,exports){
+/**
+ * This method returns `false`.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.13.0
+ * @category Util
+ * @returns {boolean} Returns `false`.
+ * @example
+ *
+ * _.times(2, _.stubFalse);
+ * // => [false, false]
+ */
+function stubFalse() {
+  return false;
+}
+
+module.exports = stubFalse;
+
+},{}],202:[function(_dereq_,module,exports){
+var assignInWith = _dereq_('./assignInWith'),
+    attempt = _dereq_('./attempt'),
+    baseValues = _dereq_('./_baseValues'),
+    customDefaultsAssignIn = _dereq_('./_customDefaultsAssignIn'),
+    escapeStringChar = _dereq_('./_escapeStringChar'),
+    isError = _dereq_('./isError'),
+    isIterateeCall = _dereq_('./_isIterateeCall'),
+    keys = _dereq_('./keys'),
+    reInterpolate = _dereq_('./_reInterpolate'),
+    templateSettings = _dereq_('./templateSettings'),
+    toString = _dereq_('./toString');
+
+/** Used to match empty string literals in compiled template source. */
+var reEmptyStringLeading = /\b__p \+= '';/g,
+    reEmptyStringMiddle = /\b(__p \+=) '' \+/g,
+    reEmptyStringTrailing = /(__e\(.*?\)|\b__t\)) \+\n'';/g;
+
+/**
+ * Used to match
+ * [ES template delimiters](http://ecma-international.org/ecma-262/7.0/#sec-template-literal-lexical-components).
+ */
+var reEsTemplate = /\$\{([^\\}]*(?:\\.[^\\}]*)*)\}/g;
+
+/** Used to ensure capturing order of template delimiters. */
+var reNoMatch = /($^)/;
+
+/** Used to match unescaped characters in compiled string literals. */
+var reUnescapedString = /['\n\r\u2028\u2029\\]/g;
+
+/**
+ * Creates a compiled template function that can interpolate data properties
+ * in "interpolate" delimiters, HTML-escape interpolated data properties in
+ * "escape" delimiters, and execute JavaScript in "evaluate" delimiters. Data
+ * properties may be accessed as free variables in the template. If a setting
+ * object is given, it takes precedence over `_.templateSettings` values.
+ *
+ * **Note:** In the development build `_.template` utilizes
+ * [sourceURLs](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl)
+ * for easier debugging.
+ *
+ * For more information on precompiling templates see
+ * [lodash's custom builds documentation](https://lodash.com/custom-builds).
+ *
+ * For more information on Chrome extension sandboxes see
+ * [Chrome's extensions documentation](https://developer.chrome.com/extensions/sandboxingEval).
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category String
+ * @param {string} [string=''] The template string.
+ * @param {Object} [options={}] The options object.
+ * @param {RegExp} [options.escape=_.templateSettings.escape]
+ *  The HTML "escape" delimiter.
+ * @param {RegExp} [options.evaluate=_.templateSettings.evaluate]
+ *  The "evaluate" delimiter.
+ * @param {Object} [options.imports=_.templateSettings.imports]
+ *  An object to import into the template as free variables.
+ * @param {RegExp} [options.interpolate=_.templateSettings.interpolate]
+ *  The "interpolate" delimiter.
+ * @param {string} [options.sourceURL='templateSources[n]']
+ *  The sourceURL of the compiled template.
+ * @param {string} [options.variable='obj']
+ *  The data object variable name.
+ * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
+ * @returns {Function} Returns the compiled template function.
+ * @example
+ *
+ * // Use the "interpolate" delimiter to create a compiled template.
+ * var compiled = _.template('hello <%= user %>!');
+ * compiled({ 'user': 'fred' });
+ * // => 'hello fred!'
+ *
+ * // Use the HTML "escape" delimiter to escape data property values.
+ * var compiled = _.template('<b><%- value %></b>');
+ * compiled({ 'value': '<script>' });
+ * // => '<b>&lt;script&gt;</b>'
+ *
+ * // Use the "evaluate" delimiter to execute JavaScript and generate HTML.
+ * var compiled = _.template('<% _.forEach(users, function(user) { %><li><%- user %></li><% }); %>');
+ * compiled({ 'users': ['fred', 'barney'] });
+ * // => '<li>fred</li><li>barney</li>'
+ *
+ * // Use the internal `print` function in "evaluate" delimiters.
+ * var compiled = _.template('<% print("hello " + user); %>!');
+ * compiled({ 'user': 'barney' });
+ * // => 'hello barney!'
+ *
+ * // Use the ES template literal delimiter as an "interpolate" delimiter.
+ * // Disable support by replacing the "interpolate" delimiter.
+ * var compiled = _.template('hello ${ user }!');
+ * compiled({ 'user': 'pebbles' });
+ * // => 'hello pebbles!'
+ *
+ * // Use backslashes to treat delimiters as plain text.
+ * var compiled = _.template('<%= "\\<%- value %\\>" %>');
+ * compiled({ 'value': 'ignored' });
+ * // => '<%- value %>'
+ *
+ * // Use the `imports` option to import `jQuery` as `jq`.
+ * var text = '<% jq.each(users, function(user) { %><li><%- user %></li><% }); %>';
+ * var compiled = _.template(text, { 'imports': { 'jq': jQuery } });
+ * compiled({ 'users': ['fred', 'barney'] });
+ * // => '<li>fred</li><li>barney</li>'
+ *
+ * // Use the `sourceURL` option to specify a custom sourceURL for the template.
+ * var compiled = _.template('hello <%= user %>!', { 'sourceURL': '/basic/greeting.jst' });
+ * compiled(data);
+ * // => Find the source of "greeting.jst" under the Sources tab or Resources panel of the web inspector.
+ *
+ * // Use the `variable` option to ensure a with-statement isn't used in the compiled template.
+ * var compiled = _.template('hi <%= data.user %>!', { 'variable': 'data' });
+ * compiled.source;
+ * // => function(data) {
+ * //   var __t, __p = '';
+ * //   __p += 'hi ' + ((__t = ( data.user )) == null ? '' : __t) + '!';
+ * //   return __p;
+ * // }
+ *
+ * // Use custom template delimiters.
+ * _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
+ * var compiled = _.template('hello {{ user }}!');
+ * compiled({ 'user': 'mustache' });
+ * // => 'hello mustache!'
+ *
+ * // Use the `source` property to inline compiled templates for meaningful
+ * // line numbers in error messages and stack traces.
+ * fs.writeFileSync(path.join(process.cwd(), 'jst.js'), '\
+ *   var JST = {\
+ *     "main": ' + _.template(mainText).source + '\
+ *   };\
+ * ');
+ */
+function template(string, options, guard) {
+  // Based on John Resig's `tmpl` implementation
+  // (http://ejohn.org/blog/javascript-micro-templating/)
+  // and Laura Doktorova's doT.js (https://github.com/olado/doT).
+  var settings = templateSettings.imports._.templateSettings || templateSettings;
+
+  if (guard && isIterateeCall(string, options, guard)) {
+    options = undefined;
+  }
+  string = toString(string);
+  options = assignInWith({}, options, settings, customDefaultsAssignIn);
+
+  var imports = assignInWith({}, options.imports, settings.imports, customDefaultsAssignIn),
+      importsKeys = keys(imports),
+      importsValues = baseValues(imports, importsKeys);
+
+  var isEscaping,
+      isEvaluating,
+      index = 0,
+      interpolate = options.interpolate || reNoMatch,
+      source = "__p += '";
+
+  // Compile the regexp to match each delimiter.
+  var reDelimiters = RegExp(
+    (options.escape || reNoMatch).source + '|' +
+    interpolate.source + '|' +
+    (interpolate === reInterpolate ? reEsTemplate : reNoMatch).source + '|' +
+    (options.evaluate || reNoMatch).source + '|$'
+  , 'g');
+
+  // Use a sourceURL for easier debugging.
+  var sourceURL = 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\n' : '';
+
+  string.replace(reDelimiters, function(match, escapeValue, interpolateValue, esTemplateValue, evaluateValue, offset) {
+    interpolateValue || (interpolateValue = esTemplateValue);
+
+    // Escape characters that can't be included in string literals.
+    source += string.slice(index, offset).replace(reUnescapedString, escapeStringChar);
+
+    // Replace delimiters with snippets.
+    if (escapeValue) {
+      isEscaping = true;
+      source += "' +\n__e(" + escapeValue + ") +\n'";
+    }
+    if (evaluateValue) {
+      isEvaluating = true;
+      source += "';\n" + evaluateValue + ";\n__p += '";
+    }
+    if (interpolateValue) {
+      source += "' +\n((__t = (" + interpolateValue + ")) == null ? '' : __t) +\n'";
+    }
+    index = offset + match.length;
+
+    // The JS engine embedded in Adobe products needs `match` returned in
+    // order to produce the correct `offset` value.
+    return match;
+  });
+
+  source += "';\n";
+
+  // If `variable` is not specified wrap a with-statement around the generated
+  // code to add the data object to the top of the scope chain.
+  var variable = options.variable;
+  if (!variable) {
+    source = 'with (obj) {\n' + source + '\n}\n';
+  }
+  // Cleanup code by stripping empty strings.
+  source = (isEvaluating ? source.replace(reEmptyStringLeading, '') : source)
+    .replace(reEmptyStringMiddle, '$1')
+    .replace(reEmptyStringTrailing, '$1;');
+
+  // Frame code as the function body.
+  source = 'function(' + (variable || 'obj') + ') {\n' +
+    (variable
+      ? ''
+      : 'obj || (obj = {});\n'
+    ) +
+    "var __t, __p = ''" +
+    (isEscaping
+       ? ', __e = _.escape'
+       : ''
+    ) +
+    (isEvaluating
+      ? ', __j = Array.prototype.join;\n' +
+        "function print() { __p += __j.call(arguments, '') }\n"
+      : ';\n'
+    ) +
+    source +
+    'return __p\n}';
+
+  var result = attempt(function() {
+    return Function(importsKeys, sourceURL + 'return ' + source)
+      .apply(undefined, importsValues);
+  });
+
+  // Provide the compiled function's source by its `toString` method or
+  // the `source` property as a convenience for inlining compiled templates.
+  result.source = source;
+  if (isError(result)) {
+    throw result;
+  }
+  return result;
+}
+
+module.exports = template;
+
+},{"./_baseValues":84,"./_customDefaultsAssignIn":103,"./_escapeStringChar":106,"./_isIterateeCall":128,"./_reInterpolate":154,"./assignInWith":171,"./attempt":172,"./isError":184,"./keys":195,"./templateSettings":203,"./toString":207}],203:[function(_dereq_,module,exports){
+var escape = _dereq_('./escape'),
+    reEscape = _dereq_('./_reEscape'),
+    reEvaluate = _dereq_('./_reEvaluate'),
+    reInterpolate = _dereq_('./_reInterpolate');
+
+/**
+ * By default, the template delimiters used by lodash are like those in
+ * embedded Ruby (ERB) as well as ES2015 template strings. Change the
+ * following template settings to use alternative delimiters.
+ *
+ * @static
+ * @memberOf _
+ * @type {Object}
+ */
+var templateSettings = {
+
+  /**
+   * Used to detect `data` property values to be HTML-escaped.
+   *
+   * @memberOf _.templateSettings
+   * @type {RegExp}
+   */
+  'escape': reEscape,
+
+  /**
+   * Used to detect code to be evaluated.
+   *
+   * @memberOf _.templateSettings
+   * @type {RegExp}
+   */
+  'evaluate': reEvaluate,
+
+  /**
+   * Used to detect `data` property values to inject.
+   *
+   * @memberOf _.templateSettings
+   * @type {RegExp}
+   */
+  'interpolate': reInterpolate,
+
+  /**
+   * Used to reference the data object in the template text.
+   *
+   * @memberOf _.templateSettings
+   * @type {string}
+   */
+  'variable': '',
+
+  /**
+   * Used to import variables into the compiled template.
+   *
+   * @memberOf _.templateSettings
+   * @type {Object}
+   */
+  'imports': {
+
+    /**
+     * A reference to the `lodash` function.
+     *
+     * @memberOf _.templateSettings.imports
+     * @type {Function}
+     */
+    '_': { 'escape': escape }
+  }
+};
+
+module.exports = templateSettings;
+
+},{"./_reEscape":152,"./_reEvaluate":153,"./_reInterpolate":154,"./escape":177}],204:[function(_dereq_,module,exports){
+var toNumber = _dereq_('./toNumber');
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0,
+    MAX_INTEGER = 1.7976931348623157e+308;
+
+/**
+ * Converts `value` to a finite number.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.12.0
+ * @category Lang
+ * @param {*} value The value to convert.
+ * @returns {number} Returns the converted number.
+ * @example
+ *
+ * _.toFinite(3.2);
+ * // => 3.2
+ *
+ * _.toFinite(Number.MIN_VALUE);
+ * // => 5e-324
+ *
+ * _.toFinite(Infinity);
+ * // => 1.7976931348623157e+308
+ *
+ * _.toFinite('3.2');
+ * // => 3.2
+ */
+function toFinite(value) {
+  if (!value) {
+    return value === 0 ? value : 0;
+  }
+  value = toNumber(value);
+  if (value === INFINITY || value === -INFINITY) {
+    var sign = (value < 0 ? -1 : 1);
+    return sign * MAX_INTEGER;
+  }
+  return value === value ? value : 0;
+}
+
+module.exports = toFinite;
+
+},{"./toNumber":206}],205:[function(_dereq_,module,exports){
+var toFinite = _dereq_('./toFinite');
+
+/**
+ * Converts `value` to an integer.
+ *
+ * **Note:** This method is loosely based on
+ * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to convert.
+ * @returns {number} Returns the converted integer.
+ * @example
+ *
+ * _.toInteger(3.2);
+ * // => 3
+ *
+ * _.toInteger(Number.MIN_VALUE);
+ * // => 0
+ *
+ * _.toInteger(Infinity);
+ * // => 1.7976931348623157e+308
+ *
+ * _.toInteger('3.2');
+ * // => 3
+ */
+function toInteger(value) {
+  var result = toFinite(value),
+      remainder = result % 1;
+
+  return result === result ? (remainder ? result - remainder : result) : 0;
+}
+
+module.exports = toInteger;
+
+},{"./toFinite":204}],206:[function(_dereq_,module,exports){
+var isObject = _dereq_('./isObject'),
+    isSymbol = _dereq_('./isSymbol');
+
+/** Used as references for various `Number` constants. */
+var NAN = 0 / 0;
+
+/** Used to match leading and trailing whitespace. */
+var reTrim = /^\s+|\s+$/g;
+
+/** Used to detect bad signed hexadecimal string values. */
+var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+
+/** Used to detect binary string values. */
+var reIsBinary = /^0b[01]+$/i;
+
+/** Used to detect octal string values. */
+var reIsOctal = /^0o[0-7]+$/i;
+
+/** Built-in method references without a dependency on `root`. */
+var freeParseInt = parseInt;
+
+/**
+ * Converts `value` to a number.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {number} Returns the number.
+ * @example
+ *
+ * _.toNumber(3.2);
+ * // => 3.2
+ *
+ * _.toNumber(Number.MIN_VALUE);
+ * // => 5e-324
+ *
+ * _.toNumber(Infinity);
+ * // => Infinity
+ *
+ * _.toNumber('3.2');
+ * // => 3.2
+ */
+function toNumber(value) {
+  if (typeof value == 'number') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return NAN;
+  }
+  if (isObject(value)) {
+    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
+    value = isObject(other) ? (other + '') : other;
+  }
+  if (typeof value != 'string') {
+    return value === 0 ? value : +value;
+  }
+  value = value.replace(reTrim, '');
+  var isBinary = reIsBinary.test(value);
+  return (isBinary || reIsOctal.test(value))
+    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
+    : (reIsBadHex.test(value) ? NAN : +value);
+}
+
+module.exports = toNumber;
+
+},{"./isObject":189,"./isSymbol":193}],207:[function(_dereq_,module,exports){
+var baseToString = _dereq_('./_baseToString');
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+module.exports = toString;
+
+},{"./_baseToString":82}],208:[function(_dereq_,module,exports){
 'use strict';
 
 module.exports = _dereq_('./build/utils');
 
-},{"./build/utils":36}],38:[function(_dereq_,module,exports){
+},{"./build/utils":37}],209:[function(_dereq_,module,exports){
 /* globals define,module */
 /*
 Using a Universal Module Loader that should be browser, require, and AMD friendly
@@ -52199,145 +57219,21 @@ http://ricostacruz.com/cheatsheets/umdjs.html
   return jsonLogic;
 }));
 
-},{}],39:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative'),
-    root = _dereq_('./_root');
-
-/* Built-in method references that are verified to be native. */
-var DataView = getNative(root, 'DataView');
-
-module.exports = DataView;
-
-},{"./_getNative":147,"./_root":195}],40:[function(_dereq_,module,exports){
-var hashClear = _dereq_('./_hashClear'),
-    hashDelete = _dereq_('./_hashDelete'),
-    hashGet = _dereq_('./_hashGet'),
-    hashHas = _dereq_('./_hashHas'),
-    hashSet = _dereq_('./_hashSet');
-
-/**
- * Creates a hash object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Hash(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `Hash`.
-Hash.prototype.clear = hashClear;
-Hash.prototype['delete'] = hashDelete;
-Hash.prototype.get = hashGet;
-Hash.prototype.has = hashHas;
-Hash.prototype.set = hashSet;
-
-module.exports = Hash;
-
-},{"./_hashClear":157,"./_hashDelete":158,"./_hashGet":159,"./_hashHas":160,"./_hashSet":161}],41:[function(_dereq_,module,exports){
-var listCacheClear = _dereq_('./_listCacheClear'),
-    listCacheDelete = _dereq_('./_listCacheDelete'),
-    listCacheGet = _dereq_('./_listCacheGet'),
-    listCacheHas = _dereq_('./_listCacheHas'),
-    listCacheSet = _dereq_('./_listCacheSet');
-
-/**
- * Creates an list cache object.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function ListCache(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `ListCache`.
-ListCache.prototype.clear = listCacheClear;
-ListCache.prototype['delete'] = listCacheDelete;
-ListCache.prototype.get = listCacheGet;
-ListCache.prototype.has = listCacheHas;
-ListCache.prototype.set = listCacheSet;
-
-module.exports = ListCache;
-
-},{"./_listCacheClear":172,"./_listCacheDelete":173,"./_listCacheGet":174,"./_listCacheHas":175,"./_listCacheSet":176}],42:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative'),
-    root = _dereq_('./_root');
-
-/* Built-in method references that are verified to be native. */
-var Map = getNative(root, 'Map');
-
-module.exports = Map;
-
-},{"./_getNative":147,"./_root":195}],43:[function(_dereq_,module,exports){
-var mapCacheClear = _dereq_('./_mapCacheClear'),
-    mapCacheDelete = _dereq_('./_mapCacheDelete'),
-    mapCacheGet = _dereq_('./_mapCacheGet'),
-    mapCacheHas = _dereq_('./_mapCacheHas'),
-    mapCacheSet = _dereq_('./_mapCacheSet');
-
-/**
- * Creates a map cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function MapCache(entries) {
-  var index = -1,
-      length = entries == null ? 0 : entries.length;
-
-  this.clear();
-  while (++index < length) {
-    var entry = entries[index];
-    this.set(entry[0], entry[1]);
-  }
-}
-
-// Add methods to `MapCache`.
-MapCache.prototype.clear = mapCacheClear;
-MapCache.prototype['delete'] = mapCacheDelete;
-MapCache.prototype.get = mapCacheGet;
-MapCache.prototype.has = mapCacheHas;
-MapCache.prototype.set = mapCacheSet;
-
-module.exports = MapCache;
-
-},{"./_mapCacheClear":177,"./_mapCacheDelete":178,"./_mapCacheGet":179,"./_mapCacheHas":180,"./_mapCacheSet":181}],44:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative'),
-    root = _dereq_('./_root');
-
-/* Built-in method references that are verified to be native. */
-var Promise = getNative(root, 'Promise');
-
-module.exports = Promise;
-
-},{"./_getNative":147,"./_root":195}],45:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative'),
-    root = _dereq_('./_root');
-
-/* Built-in method references that are verified to be native. */
-var Set = getNative(root, 'Set');
-
-module.exports = Set;
-
-},{"./_getNative":147,"./_root":195}],46:[function(_dereq_,module,exports){
+},{}],210:[function(_dereq_,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"./_getNative":319,"./_root":365,"dup":38}],211:[function(_dereq_,module,exports){
+arguments[4][39][0].apply(exports,arguments)
+},{"./_hashClear":329,"./_hashDelete":330,"./_hashGet":331,"./_hashHas":332,"./_hashSet":333,"dup":39}],212:[function(_dereq_,module,exports){
+arguments[4][40][0].apply(exports,arguments)
+},{"./_listCacheClear":345,"./_listCacheDelete":346,"./_listCacheGet":347,"./_listCacheHas":348,"./_listCacheSet":349,"dup":40}],213:[function(_dereq_,module,exports){
+arguments[4][41][0].apply(exports,arguments)
+},{"./_getNative":319,"./_root":365,"dup":41}],214:[function(_dereq_,module,exports){
+arguments[4][42][0].apply(exports,arguments)
+},{"./_mapCacheClear":350,"./_mapCacheDelete":351,"./_mapCacheGet":352,"./_mapCacheHas":353,"./_mapCacheSet":354,"dup":42}],215:[function(_dereq_,module,exports){
+arguments[4][43][0].apply(exports,arguments)
+},{"./_getNative":319,"./_root":365,"dup":43}],216:[function(_dereq_,module,exports){
+arguments[4][44][0].apply(exports,arguments)
+},{"./_getNative":319,"./_root":365,"dup":44}],217:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -52366,118 +57262,21 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":43,"./_setCacheAdd":196,"./_setCacheHas":197}],47:[function(_dereq_,module,exports){
-var ListCache = _dereq_('./_ListCache'),
-    stackClear = _dereq_('./_stackClear'),
-    stackDelete = _dereq_('./_stackDelete'),
-    stackGet = _dereq_('./_stackGet'),
-    stackHas = _dereq_('./_stackHas'),
-    stackSet = _dereq_('./_stackSet');
-
-/**
- * Creates a stack cache object to store key-value pairs.
- *
- * @private
- * @constructor
- * @param {Array} [entries] The key-value pairs to cache.
- */
-function Stack(entries) {
-  var data = this.__data__ = new ListCache(entries);
-  this.size = data.size;
-}
-
-// Add methods to `Stack`.
-Stack.prototype.clear = stackClear;
-Stack.prototype['delete'] = stackDelete;
-Stack.prototype.get = stackGet;
-Stack.prototype.has = stackHas;
-Stack.prototype.set = stackSet;
-
-module.exports = Stack;
-
-},{"./_ListCache":41,"./_stackClear":201,"./_stackDelete":202,"./_stackGet":203,"./_stackHas":204,"./_stackSet":205}],48:[function(_dereq_,module,exports){
-var root = _dereq_('./_root');
-
-/** Built-in value references. */
-var Symbol = root.Symbol;
-
-module.exports = Symbol;
-
-},{"./_root":195}],49:[function(_dereq_,module,exports){
-var root = _dereq_('./_root');
-
-/** Built-in value references. */
-var Uint8Array = root.Uint8Array;
-
-module.exports = Uint8Array;
-
-},{"./_root":195}],50:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative'),
-    root = _dereq_('./_root');
-
-/* Built-in method references that are verified to be native. */
-var WeakMap = getNative(root, 'WeakMap');
-
-module.exports = WeakMap;
-
-},{"./_getNative":147,"./_root":195}],51:[function(_dereq_,module,exports){
-/**
- * Adds the key-value `pair` to `map`.
- *
- * @private
- * @param {Object} map The map to modify.
- * @param {Array} pair The key-value pair to add.
- * @returns {Object} Returns `map`.
- */
-function addMapEntry(map, pair) {
-  // Don't return `map.set` because it's not chainable in IE 11.
-  map.set(pair[0], pair[1]);
-  return map;
-}
-
-module.exports = addMapEntry;
-
-},{}],52:[function(_dereq_,module,exports){
-/**
- * Adds `value` to `set`.
- *
- * @private
- * @param {Object} set The set to modify.
- * @param {*} value The value to add.
- * @returns {Object} Returns `set`.
- */
-function addSetEntry(set, value) {
-  // Don't return `set.add` because it's not chainable in IE 11.
-  set.add(value);
-  return set;
-}
-
-module.exports = addSetEntry;
-
-},{}],53:[function(_dereq_,module,exports){
-/**
- * A faster alternative to `Function#apply`, this function invokes `func`
- * with the `this` binding of `thisArg` and the arguments of `args`.
- *
- * @private
- * @param {Function} func The function to invoke.
- * @param {*} thisArg The `this` binding of `func`.
- * @param {Array} args The arguments to invoke `func` with.
- * @returns {*} Returns the result of `func`.
- */
-function apply(func, thisArg, args) {
-  switch (args.length) {
-    case 0: return func.call(thisArg);
-    case 1: return func.call(thisArg, args[0]);
-    case 2: return func.call(thisArg, args[0], args[1]);
-    case 3: return func.call(thisArg, args[0], args[1], args[2]);
-  }
-  return func.apply(thisArg, args);
-}
-
-module.exports = apply;
-
-},{}],54:[function(_dereq_,module,exports){
+},{"./_MapCache":214,"./_setCacheAdd":366,"./_setCacheHas":367}],218:[function(_dereq_,module,exports){
+arguments[4][45][0].apply(exports,arguments)
+},{"./_ListCache":212,"./_stackClear":371,"./_stackDelete":372,"./_stackGet":373,"./_stackHas":374,"./_stackSet":375,"dup":45}],219:[function(_dereq_,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"./_root":365,"dup":46}],220:[function(_dereq_,module,exports){
+arguments[4][47][0].apply(exports,arguments)
+},{"./_root":365,"dup":47}],221:[function(_dereq_,module,exports){
+arguments[4][48][0].apply(exports,arguments)
+},{"./_getNative":319,"./_root":365,"dup":48}],222:[function(_dereq_,module,exports){
+arguments[4][49][0].apply(exports,arguments)
+},{"dup":49}],223:[function(_dereq_,module,exports){
+arguments[4][50][0].apply(exports,arguments)
+},{"dup":50}],224:[function(_dereq_,module,exports){
+arguments[4][51][0].apply(exports,arguments)
+},{"dup":51}],225:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseAggregator` for arrays.
  *
@@ -52501,182 +57300,62 @@ function arrayAggregator(array, setter, iteratee, accumulator) {
 
 module.exports = arrayAggregator;
 
-},{}],55:[function(_dereq_,module,exports){
+},{}],226:[function(_dereq_,module,exports){
+arguments[4][52][0].apply(exports,arguments)
+},{"dup":52}],227:[function(_dereq_,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"dup":53}],228:[function(_dereq_,module,exports){
+var baseIndexOf = _dereq_('./_baseIndexOf');
+
 /**
- * A specialized version of `_.forEach` for arrays without support for
- * iteratee shorthands.
+ * A specialized version of `_.includes` for arrays without support for
+ * specifying an index to search from.
  *
  * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns `array`.
+ * @param {Array} [array] The array to inspect.
+ * @param {*} target The value to search for.
+ * @returns {boolean} Returns `true` if `target` is found, else `false`.
  */
-function arrayEach(array, iteratee) {
+function arrayIncludes(array, value) {
+  var length = array == null ? 0 : array.length;
+  return !!length && baseIndexOf(array, value, 0) > -1;
+}
+
+module.exports = arrayIncludes;
+
+},{"./_baseIndexOf":257}],229:[function(_dereq_,module,exports){
+/**
+ * This function is like `arrayIncludes` except that it accepts a comparator.
+ *
+ * @private
+ * @param {Array} [array] The array to inspect.
+ * @param {*} target The value to search for.
+ * @param {Function} comparator The comparator invoked per element.
+ * @returns {boolean} Returns `true` if `target` is found, else `false`.
+ */
+function arrayIncludesWith(array, value, comparator) {
   var index = -1,
       length = array == null ? 0 : array.length;
 
   while (++index < length) {
-    if (iteratee(array[index], index, array) === false) {
-      break;
+    if (comparator(value, array[index])) {
+      return true;
     }
   }
-  return array;
+  return false;
 }
 
-module.exports = arrayEach;
+module.exports = arrayIncludesWith;
 
-},{}],56:[function(_dereq_,module,exports){
-/**
- * A specialized version of `_.filter` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} predicate The function invoked per iteration.
- * @returns {Array} Returns the new filtered array.
- */
-function arrayFilter(array, predicate) {
-  var index = -1,
-      length = array == null ? 0 : array.length,
-      resIndex = 0,
-      result = [];
-
-  while (++index < length) {
-    var value = array[index];
-    if (predicate(value, index, array)) {
-      result[resIndex++] = value;
-    }
-  }
-  return result;
-}
-
-module.exports = arrayFilter;
-
-},{}],57:[function(_dereq_,module,exports){
-var baseTimes = _dereq_('./_baseTimes'),
-    isArguments = _dereq_('./isArguments'),
-    isArray = _dereq_('./isArray'),
-    isBuffer = _dereq_('./isBuffer'),
-    isIndex = _dereq_('./_isIndex'),
-    isTypedArray = _dereq_('./isTypedArray');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Creates an array of the enumerable property names of the array-like `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @param {boolean} inherited Specify returning inherited property names.
- * @returns {Array} Returns the array of property names.
- */
-function arrayLikeKeys(value, inherited) {
-  var isArr = isArray(value),
-      isArg = !isArr && isArguments(value),
-      isBuff = !isArr && !isArg && isBuffer(value),
-      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
-      skipIndexes = isArr || isArg || isBuff || isType,
-      result = skipIndexes ? baseTimes(value.length, String) : [],
-      length = result.length;
-
-  for (var key in value) {
-    if ((inherited || hasOwnProperty.call(value, key)) &&
-        !(skipIndexes && (
-           // Safari 9 has enumerable `arguments.length` in strict mode.
-           key == 'length' ||
-           // Node.js 0.10 has enumerable non-index properties on buffers.
-           (isBuff && (key == 'offset' || key == 'parent')) ||
-           // PhantomJS 2 has enumerable non-index properties on typed arrays.
-           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
-           // Skip index properties.
-           isIndex(key, length)
-        ))) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = arrayLikeKeys;
-
-},{"./_baseTimes":105,"./_isIndex":165,"./isArguments":233,"./isArray":234,"./isBuffer":237,"./isTypedArray":252}],58:[function(_dereq_,module,exports){
-/**
- * A specialized version of `_.map` for arrays without support for iteratee
- * shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the new mapped array.
- */
-function arrayMap(array, iteratee) {
-  var index = -1,
-      length = array == null ? 0 : array.length,
-      result = Array(length);
-
-  while (++index < length) {
-    result[index] = iteratee(array[index], index, array);
-  }
-  return result;
-}
-
-module.exports = arrayMap;
-
-},{}],59:[function(_dereq_,module,exports){
-/**
- * Appends the elements of `values` to `array`.
- *
- * @private
- * @param {Array} array The array to modify.
- * @param {Array} values The values to append.
- * @returns {Array} Returns `array`.
- */
-function arrayPush(array, values) {
-  var index = -1,
-      length = values.length,
-      offset = array.length;
-
-  while (++index < length) {
-    array[offset + index] = values[index];
-  }
-  return array;
-}
-
-module.exports = arrayPush;
-
-},{}],60:[function(_dereq_,module,exports){
-/**
- * A specialized version of `_.reduce` for arrays without support for
- * iteratee shorthands.
- *
- * @private
- * @param {Array} [array] The array to iterate over.
- * @param {Function} iteratee The function invoked per iteration.
- * @param {*} [accumulator] The initial value.
- * @param {boolean} [initAccum] Specify using the first element of `array` as
- *  the initial value.
- * @returns {*} Returns the accumulated value.
- */
-function arrayReduce(array, iteratee, accumulator, initAccum) {
-  var index = -1,
-      length = array == null ? 0 : array.length;
-
-  if (initAccum && length) {
-    accumulator = array[++index];
-  }
-  while (++index < length) {
-    accumulator = iteratee(accumulator, array[index], index, array);
-  }
-  return accumulator;
-}
-
-module.exports = arrayReduce;
-
-},{}],61:[function(_dereq_,module,exports){
+},{}],230:[function(_dereq_,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"./_baseTimes":282,"./_isIndex":338,"./isArguments":399,"./isArray":400,"./isBuffer":403,"./isTypedArray":415,"dup":54}],231:[function(_dereq_,module,exports){
+arguments[4][55][0].apply(exports,arguments)
+},{"dup":55}],232:[function(_dereq_,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],233:[function(_dereq_,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"dup":57}],234:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for iteratee
  * shorthands.
@@ -52701,35 +57380,9 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],62:[function(_dereq_,module,exports){
-var baseProperty = _dereq_('./_baseProperty');
-
-/**
- * Gets the size of an ASCII `string`.
- *
- * @private
- * @param {string} string The string inspect.
- * @returns {number} Returns the string size.
- */
-var asciiSize = baseProperty('length');
-
-module.exports = asciiSize;
-
-},{"./_baseProperty":97}],63:[function(_dereq_,module,exports){
-/**
- * Converts an ASCII `string` to an array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the converted array.
- */
-function asciiToArray(string) {
-  return string.split('');
-}
-
-module.exports = asciiToArray;
-
-},{}],64:[function(_dereq_,module,exports){
+},{}],235:[function(_dereq_,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"dup":59}],236:[function(_dereq_,module,exports){
 /** Used to match words composed of alphanumeric characters. */
 var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
 
@@ -52746,7 +57399,7 @@ function asciiWords(string) {
 
 module.exports = asciiWords;
 
-},{}],65:[function(_dereq_,module,exports){
+},{}],237:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -52768,60 +57421,11 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":71,"./eq":225}],66:[function(_dereq_,module,exports){
-var baseAssignValue = _dereq_('./_baseAssignValue'),
-    eq = _dereq_('./eq');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Assigns `value` to `key` of `object` if the existing value is not equivalent
- * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * for equality comparisons.
- *
- * @private
- * @param {Object} object The object to modify.
- * @param {string} key The key of the property to assign.
- * @param {*} value The value to assign.
- */
-function assignValue(object, key, value) {
-  var objValue = object[key];
-  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
-      (value === undefined && !(key in object))) {
-    baseAssignValue(object, key, value);
-  }
-}
-
-module.exports = assignValue;
-
-},{"./_baseAssignValue":71,"./eq":225}],67:[function(_dereq_,module,exports){
-var eq = _dereq_('./eq');
-
-/**
- * Gets the index at which the `key` is found in `array` of key-value pairs.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {*} key The key to search for.
- * @returns {number} Returns the index of the matched value, else `-1`.
- */
-function assocIndexOf(array, key) {
-  var length = array.length;
-  while (length--) {
-    if (eq(array[length][0], key)) {
-      return length;
-    }
-  }
-  return -1;
-}
-
-module.exports = assocIndexOf;
-
-},{"./eq":225}],68:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":243,"./eq":392}],238:[function(_dereq_,module,exports){
+arguments[4][60][0].apply(exports,arguments)
+},{"./_baseAssignValue":243,"./eq":392,"dup":60}],239:[function(_dereq_,module,exports){
+arguments[4][61][0].apply(exports,arguments)
+},{"./eq":392,"dup":61}],240:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -52844,259 +57448,86 @@ function baseAggregator(collection, setter, iteratee, accumulator) {
 
 module.exports = baseAggregator;
 
-},{"./_baseEach":74}],69:[function(_dereq_,module,exports){
-var copyObject = _dereq_('./_copyObject'),
-    keys = _dereq_('./keys');
+},{"./_baseEach":247}],241:[function(_dereq_,module,exports){
+arguments[4][62][0].apply(exports,arguments)
+},{"./_copyObject":298,"./keys":416,"dup":62}],242:[function(_dereq_,module,exports){
+arguments[4][63][0].apply(exports,arguments)
+},{"./_copyObject":298,"./keysIn":417,"dup":63}],243:[function(_dereq_,module,exports){
+arguments[4][64][0].apply(exports,arguments)
+},{"./_defineProperty":310,"dup":64}],244:[function(_dereq_,module,exports){
+arguments[4][65][0].apply(exports,arguments)
+},{"./_Stack":218,"./_arrayEach":226,"./_assignValue":238,"./_baseAssign":241,"./_baseAssignIn":242,"./_cloneBuffer":290,"./_copyArray":297,"./_copySymbols":299,"./_copySymbolsIn":300,"./_getAllKeys":315,"./_getAllKeysIn":316,"./_getTag":324,"./_initCloneArray":334,"./_initCloneByTag":335,"./_initCloneObject":336,"./isArray":400,"./isBuffer":403,"./isObject":411,"./keys":416,"dup":65}],245:[function(_dereq_,module,exports){
+arguments[4][66][0].apply(exports,arguments)
+},{"./isObject":411,"dup":66}],246:[function(_dereq_,module,exports){
+var SetCache = _dereq_('./_SetCache'),
+    arrayIncludes = _dereq_('./_arrayIncludes'),
+    arrayIncludesWith = _dereq_('./_arrayIncludesWith'),
+    arrayMap = _dereq_('./_arrayMap'),
+    baseUnary = _dereq_('./_baseUnary'),
+    cacheHas = _dereq_('./_cacheHas');
+
+/** Used as the size to enable large array optimizations. */
+var LARGE_ARRAY_SIZE = 200;
 
 /**
- * The base implementation of `_.assign` without support for multiple sources
- * or `customizer` functions.
+ * The base implementation of methods like `_.difference` without support
+ * for excluding multiple arrays or iteratee shorthands.
  *
  * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @returns {Object} Returns `object`.
+ * @param {Array} array The array to inspect.
+ * @param {Array} values The values to exclude.
+ * @param {Function} [iteratee] The iteratee invoked per element.
+ * @param {Function} [comparator] The comparator invoked per element.
+ * @returns {Array} Returns the new array of filtered values.
  */
-function baseAssign(object, source) {
-  return object && copyObject(source, keys(source), object);
-}
+function baseDifference(array, values, iteratee, comparator) {
+  var index = -1,
+      includes = arrayIncludes,
+      isCommon = true,
+      length = array.length,
+      result = [],
+      valuesLength = values.length;
 
-module.exports = baseAssign;
-
-},{"./_copyObject":122,"./keys":253}],70:[function(_dereq_,module,exports){
-var copyObject = _dereq_('./_copyObject'),
-    keysIn = _dereq_('./keysIn');
-
-/**
- * The base implementation of `_.assignIn` without support for multiple sources
- * or `customizer` functions.
- *
- * @private
- * @param {Object} object The destination object.
- * @param {Object} source The source object.
- * @returns {Object} Returns `object`.
- */
-function baseAssignIn(object, source) {
-  return object && copyObject(source, keysIn(source), object);
-}
-
-module.exports = baseAssignIn;
-
-},{"./_copyObject":122,"./keysIn":254}],71:[function(_dereq_,module,exports){
-var defineProperty = _dereq_('./_defineProperty');
-
-/**
- * The base implementation of `assignValue` and `assignMergeValue` without
- * value checks.
- *
- * @private
- * @param {Object} object The object to modify.
- * @param {string} key The key of the property to assign.
- * @param {*} value The value to assign.
- */
-function baseAssignValue(object, key, value) {
-  if (key == '__proto__' && defineProperty) {
-    defineProperty(object, key, {
-      'configurable': true,
-      'enumerable': true,
-      'value': value,
-      'writable': true
-    });
-  } else {
-    object[key] = value;
-  }
-}
-
-module.exports = baseAssignValue;
-
-},{"./_defineProperty":136}],72:[function(_dereq_,module,exports){
-var Stack = _dereq_('./_Stack'),
-    arrayEach = _dereq_('./_arrayEach'),
-    assignValue = _dereq_('./_assignValue'),
-    baseAssign = _dereq_('./_baseAssign'),
-    baseAssignIn = _dereq_('./_baseAssignIn'),
-    cloneBuffer = _dereq_('./_cloneBuffer'),
-    copyArray = _dereq_('./_copyArray'),
-    copySymbols = _dereq_('./_copySymbols'),
-    copySymbolsIn = _dereq_('./_copySymbolsIn'),
-    getAllKeys = _dereq_('./_getAllKeys'),
-    getAllKeysIn = _dereq_('./_getAllKeysIn'),
-    getTag = _dereq_('./_getTag'),
-    initCloneArray = _dereq_('./_initCloneArray'),
-    initCloneByTag = _dereq_('./_initCloneByTag'),
-    initCloneObject = _dereq_('./_initCloneObject'),
-    isArray = _dereq_('./isArray'),
-    isBuffer = _dereq_('./isBuffer'),
-    isObject = _dereq_('./isObject'),
-    keys = _dereq_('./keys');
-
-/** Used to compose bitmasks for cloning. */
-var CLONE_DEEP_FLAG = 1,
-    CLONE_FLAT_FLAG = 2,
-    CLONE_SYMBOLS_FLAG = 4;
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]',
-    arrayTag = '[object Array]',
-    boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    errorTag = '[object Error]',
-    funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    objectTag = '[object Object]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    symbolTag = '[object Symbol]',
-    weakMapTag = '[object WeakMap]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/** Used to identify `toStringTag` values supported by `_.clone`. */
-var cloneableTags = {};
-cloneableTags[argsTag] = cloneableTags[arrayTag] =
-cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
-cloneableTags[boolTag] = cloneableTags[dateTag] =
-cloneableTags[float32Tag] = cloneableTags[float64Tag] =
-cloneableTags[int8Tag] = cloneableTags[int16Tag] =
-cloneableTags[int32Tag] = cloneableTags[mapTag] =
-cloneableTags[numberTag] = cloneableTags[objectTag] =
-cloneableTags[regexpTag] = cloneableTags[setTag] =
-cloneableTags[stringTag] = cloneableTags[symbolTag] =
-cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
-cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
-cloneableTags[errorTag] = cloneableTags[funcTag] =
-cloneableTags[weakMapTag] = false;
-
-/**
- * The base implementation of `_.clone` and `_.cloneDeep` which tracks
- * traversed objects.
- *
- * @private
- * @param {*} value The value to clone.
- * @param {boolean} bitmask The bitmask flags.
- *  1 - Deep clone
- *  2 - Flatten inherited properties
- *  4 - Clone symbols
- * @param {Function} [customizer] The function to customize cloning.
- * @param {string} [key] The key of `value`.
- * @param {Object} [object] The parent object of `value`.
- * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
- * @returns {*} Returns the cloned value.
- */
-function baseClone(value, bitmask, customizer, key, object, stack) {
-  var result,
-      isDeep = bitmask & CLONE_DEEP_FLAG,
-      isFlat = bitmask & CLONE_FLAT_FLAG,
-      isFull = bitmask & CLONE_SYMBOLS_FLAG;
-
-  if (customizer) {
-    result = object ? customizer(value, key, object, stack) : customizer(value);
-  }
-  if (result !== undefined) {
+  if (!length) {
     return result;
   }
-  if (!isObject(value)) {
-    return value;
+  if (iteratee) {
+    values = arrayMap(values, baseUnary(iteratee));
   }
-  var isArr = isArray(value);
-  if (isArr) {
-    result = initCloneArray(value);
-    if (!isDeep) {
-      return copyArray(value, result);
-    }
-  } else {
-    var tag = getTag(value),
-        isFunc = tag == funcTag || tag == genTag;
+  if (comparator) {
+    includes = arrayIncludesWith;
+    isCommon = false;
+  }
+  else if (values.length >= LARGE_ARRAY_SIZE) {
+    includes = cacheHas;
+    isCommon = false;
+    values = new SetCache(values);
+  }
+  outer:
+  while (++index < length) {
+    var value = array[index],
+        computed = iteratee == null ? value : iteratee(value);
 
-    if (isBuffer(value)) {
-      return cloneBuffer(value, isDeep);
-    }
-    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
-      result = (isFlat || isFunc) ? {} : initCloneObject(value);
-      if (!isDeep) {
-        return isFlat
-          ? copySymbolsIn(value, baseAssignIn(result, value))
-          : copySymbols(value, baseAssign(result, value));
+    value = (comparator || value !== 0) ? value : 0;
+    if (isCommon && computed === computed) {
+      var valuesIndex = valuesLength;
+      while (valuesIndex--) {
+        if (values[valuesIndex] === computed) {
+          continue outer;
+        }
       }
-    } else {
-      if (!cloneableTags[tag]) {
-        return object ? value : {};
-      }
-      result = initCloneByTag(value, tag, baseClone, isDeep);
+      result.push(value);
+    }
+    else if (!includes(values, computed, comparator)) {
+      result.push(value);
     }
   }
-  // Check for circular references and return its corresponding clone.
-  stack || (stack = new Stack);
-  var stacked = stack.get(value);
-  if (stacked) {
-    return stacked;
-  }
-  stack.set(value, result);
-
-  var keysFunc = isFull
-    ? (isFlat ? getAllKeysIn : getAllKeys)
-    : (isFlat ? keysIn : keys);
-
-  var props = isArr ? undefined : keysFunc(value);
-  arrayEach(props || value, function(subValue, key) {
-    if (props) {
-      key = subValue;
-      subValue = value[key];
-    }
-    // Recursively populate clone (susceptible to call stack limits).
-    assignValue(result, key, baseClone(subValue, bitmask, customizer, key, value, stack));
-  });
   return result;
 }
 
-module.exports = baseClone;
+module.exports = baseDifference;
 
-},{"./_Stack":47,"./_arrayEach":55,"./_assignValue":66,"./_baseAssign":69,"./_baseAssignIn":70,"./_cloneBuffer":114,"./_copyArray":121,"./_copySymbols":123,"./_copySymbolsIn":124,"./_getAllKeys":143,"./_getAllKeysIn":144,"./_getTag":152,"./_initCloneArray":162,"./_initCloneByTag":163,"./_initCloneObject":164,"./isArray":234,"./isBuffer":237,"./isObject":247,"./keys":253}],73:[function(_dereq_,module,exports){
-var isObject = _dereq_('./isObject');
-
-/** Built-in value references. */
-var objectCreate = Object.create;
-
-/**
- * The base implementation of `_.create` without support for assigning
- * properties to the created object.
- *
- * @private
- * @param {Object} proto The object to inherit from.
- * @returns {Object} Returns the new object.
- */
-var baseCreate = (function() {
-  function object() {}
-  return function(proto) {
-    if (!isObject(proto)) {
-      return {};
-    }
-    if (objectCreate) {
-      return objectCreate(proto);
-    }
-    object.prototype = proto;
-    var result = new object;
-    object.prototype = undefined;
-    return result;
-  };
-}());
-
-module.exports = baseCreate;
-
-},{"./isObject":247}],74:[function(_dereq_,module,exports){
+},{"./_SetCache":217,"./_arrayIncludes":228,"./_arrayIncludesWith":229,"./_arrayMap":231,"./_baseUnary":284,"./_cacheHas":285}],247:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -53112,7 +57543,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":77,"./_createBaseEach":128}],75:[function(_dereq_,module,exports){
+},{"./_baseForOwn":252,"./_createBaseEach":304}],248:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -53135,7 +57566,73 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./_baseEach":74}],76:[function(_dereq_,module,exports){
+},{"./_baseEach":247}],249:[function(_dereq_,module,exports){
+/**
+ * The base implementation of `_.findIndex` and `_.findLastIndex` without
+ * support for iteratee shorthands.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {Function} predicate The function invoked per iteration.
+ * @param {number} fromIndex The index to search from.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function baseFindIndex(array, predicate, fromIndex, fromRight) {
+  var length = array.length,
+      index = fromIndex + (fromRight ? 1 : -1);
+
+  while ((fromRight ? index-- : ++index < length)) {
+    if (predicate(array[index], index, array)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+module.exports = baseFindIndex;
+
+},{}],250:[function(_dereq_,module,exports){
+var arrayPush = _dereq_('./_arrayPush'),
+    isFlattenable = _dereq_('./_isFlattenable');
+
+/**
+ * The base implementation of `_.flatten` with support for restricting flattening.
+ *
+ * @private
+ * @param {Array} array The array to flatten.
+ * @param {number} depth The maximum recursion depth.
+ * @param {boolean} [predicate=isFlattenable] The function invoked per iteration.
+ * @param {boolean} [isStrict] Restrict to values that pass `predicate` checks.
+ * @param {Array} [result=[]] The initial result value.
+ * @returns {Array} Returns the new flattened array.
+ */
+function baseFlatten(array, depth, predicate, isStrict, result) {
+  var index = -1,
+      length = array.length;
+
+  predicate || (predicate = isFlattenable);
+  result || (result = []);
+
+  while (++index < length) {
+    var value = array[index];
+    if (depth > 0 && predicate(value)) {
+      if (depth > 1) {
+        // Recursively flatten arrays (susceptible to call stack limits).
+        baseFlatten(value, depth - 1, predicate, isStrict, result);
+      } else {
+        arrayPush(result, value);
+      }
+    } else if (!isStrict) {
+      result[result.length] = value;
+    }
+  }
+  return result;
+}
+
+module.exports = baseFlatten;
+
+},{"./_arrayPush":232,"./_isFlattenable":337}],251:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -53153,7 +57650,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":129}],77:[function(_dereq_,module,exports){
+},{"./_createBaseFor":305}],252:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -53171,85 +57668,13 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":76,"./keys":253}],78:[function(_dereq_,module,exports){
-var castPath = _dereq_('./_castPath'),
-    toKey = _dereq_('./_toKey');
-
-/**
- * The base implementation of `_.get` without support for default values.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @returns {*} Returns the resolved value.
- */
-function baseGet(object, path) {
-  path = castPath(path, object);
-
-  var index = 0,
-      length = path.length;
-
-  while (object != null && index < length) {
-    object = object[toKey(path[index++])];
-  }
-  return (index && index == length) ? object : undefined;
-}
-
-module.exports = baseGet;
-
-},{"./_castPath":111,"./_toKey":209}],79:[function(_dereq_,module,exports){
-var arrayPush = _dereq_('./_arrayPush'),
-    isArray = _dereq_('./isArray');
-
-/**
- * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
- * `keysFunc` and `symbolsFunc` to get the enumerable property names and
- * symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Function} keysFunc The function to get the keys of `object`.
- * @param {Function} symbolsFunc The function to get the symbols of `object`.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function baseGetAllKeys(object, keysFunc, symbolsFunc) {
-  var result = keysFunc(object);
-  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
-}
-
-module.exports = baseGetAllKeys;
-
-},{"./_arrayPush":59,"./isArray":234}],80:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol'),
-    getRawTag = _dereq_('./_getRawTag'),
-    objectToString = _dereq_('./_objectToString');
-
-/** `Object#toString` result references. */
-var nullTag = '[object Null]',
-    undefinedTag = '[object Undefined]';
-
-/** Built-in value references. */
-var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-
-/**
- * The base implementation of `getTag` without fallbacks for buggy environments.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  if (value == null) {
-    return value === undefined ? undefinedTag : nullTag;
-  }
-  return (symToStringTag && symToStringTag in Object(value))
-    ? getRawTag(value)
-    : objectToString(value);
-}
-
-module.exports = baseGetTag;
-
-},{"./_Symbol":48,"./_getRawTag":149,"./_objectToString":189}],81:[function(_dereq_,module,exports){
+},{"./_baseFor":251,"./keys":416}],253:[function(_dereq_,module,exports){
+arguments[4][67][0].apply(exports,arguments)
+},{"./_castPath":287,"./_toKey":379,"dup":67}],254:[function(_dereq_,module,exports){
+arguments[4][68][0].apply(exports,arguments)
+},{"./_arrayPush":232,"./isArray":400,"dup":68}],255:[function(_dereq_,module,exports){
+arguments[4][69][0].apply(exports,arguments)
+},{"./_Symbol":219,"./_getRawTag":321,"./_objectToString":362,"dup":69}],256:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -53264,27 +57689,31 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],82:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]';
+},{}],257:[function(_dereq_,module,exports){
+var baseFindIndex = _dereq_('./_baseFindIndex'),
+    baseIsNaN = _dereq_('./_baseIsNaN'),
+    strictIndexOf = _dereq_('./_strictIndexOf');
 
 /**
- * The base implementation of `_.isArguments`.
+ * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
  *
  * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+ * @param {Array} array The array to inspect.
+ * @param {*} value The value to search for.
+ * @param {number} fromIndex The index to search from.
+ * @returns {number} Returns the index of the matched value, else `-1`.
  */
-function baseIsArguments(value) {
-  return isObjectLike(value) && baseGetTag(value) == argsTag;
+function baseIndexOf(array, value, fromIndex) {
+  return value === value
+    ? strictIndexOf(array, value, fromIndex)
+    : baseFindIndex(array, baseIsNaN, fromIndex);
 }
 
-module.exports = baseIsArguments;
+module.exports = baseIndexOf;
 
-},{"./_baseGetTag":80,"./isObjectLike":248}],83:[function(_dereq_,module,exports){
+},{"./_baseFindIndex":249,"./_baseIsNaN":262,"./_strictIndexOf":376}],258:[function(_dereq_,module,exports){
+arguments[4][70][0].apply(exports,arguments)
+},{"./_baseGetTag":255,"./isObjectLike":412,"dup":70}],259:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -53314,7 +57743,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":84,"./isObjectLike":248}],84:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":260,"./isObjectLike":412}],260:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -53399,7 +57828,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":47,"./_equalArrays":137,"./_equalByTag":138,"./_equalObjects":139,"./_getTag":152,"./isArray":234,"./isBuffer":237,"./isTypedArray":252}],85:[function(_dereq_,module,exports){
+},{"./_Stack":218,"./_equalArrays":311,"./_equalByTag":312,"./_equalObjects":313,"./_getTag":324,"./isArray":400,"./isBuffer":403,"./isTypedArray":415}],261:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -53463,118 +57892,25 @@ function baseIsMatch(object, source, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./_Stack":47,"./_baseIsEqual":83}],86:[function(_dereq_,module,exports){
-var isFunction = _dereq_('./isFunction'),
-    isMasked = _dereq_('./_isMasked'),
-    isObject = _dereq_('./isObject'),
-    toSource = _dereq_('./_toSource');
-
+},{"./_Stack":218,"./_baseIsEqual":259}],262:[function(_dereq_,module,exports){
 /**
- * Used to match `RegExp`
- * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
- */
-var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-/** Used to detect host constructors (Safari). */
-var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-/** Used for built-in method references. */
-var funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/** Used to detect if a method is native. */
-var reIsNative = RegExp('^' +
-  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-);
-
-/**
- * The base implementation of `_.isNative` without bad shim checks.
+ * The base implementation of `_.isNaN` without support for number objects.
  *
  * @private
  * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a native function,
- *  else `false`.
+ * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
  */
-function baseIsNative(value) {
-  if (!isObject(value) || isMasked(value)) {
-    return false;
-  }
-  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
-  return pattern.test(toSource(value));
+function baseIsNaN(value) {
+  return value !== value;
 }
 
-module.exports = baseIsNative;
+module.exports = baseIsNaN;
 
-},{"./_isMasked":169,"./_toSource":210,"./isFunction":242,"./isObject":247}],87:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isLength = _dereq_('./isLength'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var argsTag = '[object Arguments]',
-    arrayTag = '[object Array]',
-    boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    errorTag = '[object Error]',
-    funcTag = '[object Function]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    objectTag = '[object Object]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    weakMapTag = '[object WeakMap]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/** Used to identify `toStringTag` values of typed arrays. */
-var typedArrayTags = {};
-typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
-typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
-typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
-typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
-typedArrayTags[uint32Tag] = true;
-typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
-typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
-typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
-typedArrayTags[errorTag] = typedArrayTags[funcTag] =
-typedArrayTags[mapTag] = typedArrayTags[numberTag] =
-typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
-typedArrayTags[setTag] = typedArrayTags[stringTag] =
-typedArrayTags[weakMapTag] = false;
-
-/**
- * The base implementation of `_.isTypedArray` without Node.js optimizations.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
- */
-function baseIsTypedArray(value) {
-  return isObjectLike(value) &&
-    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
-}
-
-module.exports = baseIsTypedArray;
-
-},{"./_baseGetTag":80,"./isLength":243,"./isObjectLike":248}],88:[function(_dereq_,module,exports){
+},{}],263:[function(_dereq_,module,exports){
+arguments[4][71][0].apply(exports,arguments)
+},{"./_isMasked":342,"./_toSource":380,"./isFunction":407,"./isObject":411,"dup":71}],264:[function(_dereq_,module,exports){
+arguments[4][72][0].apply(exports,arguments)
+},{"./_baseGetTag":255,"./isLength":408,"./isObjectLike":412,"dup":72}],265:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -53607,74 +57943,11 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":92,"./_baseMatchesProperty":93,"./identity":232,"./isArray":234,"./property":263}],89:[function(_dereq_,module,exports){
-var isPrototype = _dereq_('./_isPrototype'),
-    nativeKeys = _dereq_('./_nativeKeys');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function baseKeys(object) {
-  if (!isPrototype(object)) {
-    return nativeKeys(object);
-  }
-  var result = [];
-  for (var key in Object(object)) {
-    if (hasOwnProperty.call(object, key) && key != 'constructor') {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = baseKeys;
-
-},{"./_isPrototype":170,"./_nativeKeys":186}],90:[function(_dereq_,module,exports){
-var isObject = _dereq_('./isObject'),
-    isPrototype = _dereq_('./_isPrototype'),
-    nativeKeysIn = _dereq_('./_nativeKeysIn');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function baseKeysIn(object) {
-  if (!isObject(object)) {
-    return nativeKeysIn(object);
-  }
-  var isProto = isPrototype(object),
-      result = [];
-
-  for (var key in object) {
-    if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = baseKeysIn;
-
-},{"./_isPrototype":170,"./_nativeKeysIn":187,"./isObject":247}],91:[function(_dereq_,module,exports){
+},{"./_baseMatches":269,"./_baseMatchesProperty":270,"./identity":398,"./isArray":400,"./property":425}],266:[function(_dereq_,module,exports){
+arguments[4][73][0].apply(exports,arguments)
+},{"./_isPrototype":343,"./_nativeKeys":359,"dup":73}],267:[function(_dereq_,module,exports){
+arguments[4][74][0].apply(exports,arguments)
+},{"./_isPrototype":343,"./_nativeKeysIn":360,"./isObject":411,"dup":74}],268:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -53698,7 +57971,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":74,"./isArrayLike":235}],92:[function(_dereq_,module,exports){
+},{"./_baseEach":247,"./isArrayLike":401}],269:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -53722,7 +57995,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":85,"./_getMatchData":146,"./_matchesStrictComparable":183}],93:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":261,"./_getMatchData":318,"./_matchesStrictComparable":356}],270:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -53757,7 +58030,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":83,"./_isKey":167,"./_isStrictComparable":171,"./_matchesStrictComparable":183,"./_toKey":209,"./get":229,"./hasIn":231}],94:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":259,"./_isKey":340,"./_isStrictComparable":344,"./_matchesStrictComparable":356,"./_toKey":379,"./get":395,"./hasIn":397}],271:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -53800,7 +58073,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":47,"./_assignMergeValue":65,"./_baseFor":76,"./_baseMergeDeep":95,"./isObject":247,"./keysIn":254}],95:[function(_dereq_,module,exports){
+},{"./_Stack":218,"./_assignMergeValue":237,"./_baseFor":251,"./_baseMergeDeep":272,"./isObject":411,"./keysIn":417}],272:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -53895,7 +58168,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":65,"./_cloneBuffer":114,"./_cloneTypedArray":120,"./_copyArray":121,"./_initCloneObject":164,"./isArguments":233,"./isArray":234,"./isArrayLikeObject":236,"./isBuffer":237,"./isFunction":242,"./isObject":247,"./isPlainObject":249,"./isTypedArray":252,"./toPlainObject":274}],96:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":237,"./_cloneBuffer":290,"./_cloneTypedArray":296,"./_copyArray":297,"./_initCloneObject":336,"./isArguments":399,"./isArray":400,"./isArrayLikeObject":402,"./isBuffer":403,"./isFunction":407,"./isObject":411,"./isPlainObject":413,"./isTypedArray":415,"./toPlainObject":433}],273:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -53927,23 +58200,9 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":78,"./_baseSet":102,"./_castPath":111}],97:[function(_dereq_,module,exports){
-/**
- * The base implementation of `_.property` without support for deep paths.
- *
- * @private
- * @param {string} key The key of the property to get.
- * @returns {Function} Returns the new accessor function.
- */
-function baseProperty(key) {
-  return function(object) {
-    return object == null ? undefined : object[key];
-  };
-}
-
-module.exports = baseProperty;
-
-},{}],98:[function(_dereq_,module,exports){
+},{"./_baseGet":253,"./_baseSet":279,"./_castPath":287}],274:[function(_dereq_,module,exports){
+arguments[4][75][0].apply(exports,arguments)
+},{"dup":75}],275:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -53961,79 +58220,41 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":78}],99:[function(_dereq_,module,exports){
-/**
- * The base implementation of `_.propertyOf` without support for deep paths.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Function} Returns the new accessor function.
- */
-function basePropertyOf(object) {
-  return function(key) {
-    return object == null ? undefined : object[key];
-  };
-}
-
-module.exports = basePropertyOf;
-
-},{}],100:[function(_dereq_,module,exports){
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
+},{"./_baseGet":253}],276:[function(_dereq_,module,exports){
+arguments[4][76][0].apply(exports,arguments)
+},{"dup":76}],277:[function(_dereq_,module,exports){
 /* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeFloor = Math.floor;
+var nativeCeil = Math.ceil,
+    nativeMax = Math.max;
 
 /**
- * The base implementation of `_.repeat` which doesn't coerce arguments.
+ * The base implementation of `_.range` and `_.rangeRight` which doesn't
+ * coerce arguments.
  *
  * @private
- * @param {string} string The string to repeat.
- * @param {number} n The number of times to repeat the string.
- * @returns {string} Returns the repeated string.
+ * @param {number} start The start of the range.
+ * @param {number} end The end of the range.
+ * @param {number} step The value to increment or decrement by.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Array} Returns the range of numbers.
  */
-function baseRepeat(string, n) {
-  var result = '';
-  if (!string || n < 1 || n > MAX_SAFE_INTEGER) {
-    return result;
-  }
-  // Leverage the exponentiation by squaring algorithm for a faster repeat.
-  // See https://en.wikipedia.org/wiki/Exponentiation_by_squaring for more details.
-  do {
-    if (n % 2) {
-      result += string;
-    }
-    n = nativeFloor(n / 2);
-    if (n) {
-      string += string;
-    }
-  } while (n);
+function baseRange(start, end, step, fromRight) {
+  var index = -1,
+      length = nativeMax(nativeCeil((end - start) / (step || 1)), 0),
+      result = Array(length);
 
+  while (length--) {
+    result[fromRight ? length : ++index] = start;
+    start += step;
+  }
   return result;
 }
 
-module.exports = baseRepeat;
+module.exports = baseRange;
 
-},{}],101:[function(_dereq_,module,exports){
-var identity = _dereq_('./identity'),
-    overRest = _dereq_('./_overRest'),
-    setToString = _dereq_('./_setToString');
-
-/**
- * The base implementation of `_.rest` which doesn't validate or coerce arguments.
- *
- * @private
- * @param {Function} func The function to apply a rest parameter to.
- * @param {number} [start=func.length-1] The start position of the rest parameter.
- * @returns {Function} Returns the new function.
- */
-function baseRest(func, start) {
-  return setToString(overRest(func, start, identity), func + '');
-}
-
-module.exports = baseRest;
-
-},{"./_overRest":191,"./_setToString":199,"./identity":232}],102:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
+arguments[4][78][0].apply(exports,arguments)
+},{"./_overRest":364,"./_setToString":369,"./identity":398,"dup":78}],279:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -54082,162 +58303,17 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":66,"./_castPath":111,"./_isIndex":165,"./_toKey":209,"./isObject":247}],103:[function(_dereq_,module,exports){
-var constant = _dereq_('./constant'),
-    defineProperty = _dereq_('./_defineProperty'),
-    identity = _dereq_('./identity');
-
-/**
- * The base implementation of `setToString` without support for hot loop shorting.
- *
- * @private
- * @param {Function} func The function to modify.
- * @param {Function} string The `toString` result.
- * @returns {Function} Returns `func`.
- */
-var baseSetToString = !defineProperty ? identity : function(func, string) {
-  return defineProperty(func, 'toString', {
-    'configurable': true,
-    'enumerable': false,
-    'value': constant(string),
-    'writable': true
-  });
-};
-
-module.exports = baseSetToString;
-
-},{"./_defineProperty":136,"./constant":222,"./identity":232}],104:[function(_dereq_,module,exports){
-/**
- * The base implementation of `_.slice` without an iteratee call guard.
- *
- * @private
- * @param {Array} array The array to slice.
- * @param {number} [start=0] The start position.
- * @param {number} [end=array.length] The end position.
- * @returns {Array} Returns the slice of `array`.
- */
-function baseSlice(array, start, end) {
-  var index = -1,
-      length = array.length;
-
-  if (start < 0) {
-    start = -start > length ? 0 : (length + start);
-  }
-  end = end > length ? length : end;
-  if (end < 0) {
-    end += length;
-  }
-  length = start > end ? 0 : ((end - start) >>> 0);
-  start >>>= 0;
-
-  var result = Array(length);
-  while (++index < length) {
-    result[index] = array[index + start];
-  }
-  return result;
-}
-
-module.exports = baseSlice;
-
-},{}],105:[function(_dereq_,module,exports){
-/**
- * The base implementation of `_.times` without support for iteratee shorthands
- * or max array length checks.
- *
- * @private
- * @param {number} n The number of times to invoke `iteratee`.
- * @param {Function} iteratee The function invoked per iteration.
- * @returns {Array} Returns the array of results.
- */
-function baseTimes(n, iteratee) {
-  var index = -1,
-      result = Array(n);
-
-  while (++index < n) {
-    result[index] = iteratee(index);
-  }
-  return result;
-}
-
-module.exports = baseTimes;
-
-},{}],106:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol'),
-    arrayMap = _dereq_('./_arrayMap'),
-    isArray = _dereq_('./isArray'),
-    isSymbol = _dereq_('./isSymbol');
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolToString = symbolProto ? symbolProto.toString : undefined;
-
-/**
- * The base implementation of `_.toString` which doesn't convert nullish
- * values to empty strings.
- *
- * @private
- * @param {*} value The value to process.
- * @returns {string} Returns the string.
- */
-function baseToString(value) {
-  // Exit early for strings to avoid a performance hit in some environments.
-  if (typeof value == 'string') {
-    return value;
-  }
-  if (isArray(value)) {
-    // Recursively convert values (susceptible to call stack limits).
-    return arrayMap(value, baseToString) + '';
-  }
-  if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : '';
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-module.exports = baseToString;
-
-},{"./_Symbol":48,"./_arrayMap":58,"./isArray":234,"./isSymbol":251}],107:[function(_dereq_,module,exports){
-/**
- * The base implementation of `_.unary` without support for storing metadata.
- *
- * @private
- * @param {Function} func The function to cap arguments for.
- * @returns {Function} Returns the new capped function.
- */
-function baseUnary(func) {
-  return function(value) {
-    return func(value);
-  };
-}
-
-module.exports = baseUnary;
-
-},{}],108:[function(_dereq_,module,exports){
-var arrayMap = _dereq_('./_arrayMap');
-
-/**
- * The base implementation of `_.values` and `_.valuesIn` which creates an
- * array of `object` property values corresponding to the property names
- * of `props`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {Array} props The property names to get values for.
- * @returns {Object} Returns the array of property values.
- */
-function baseValues(object, props) {
-  return arrayMap(props, function(key) {
-    return object[key];
-  });
-}
-
-module.exports = baseValues;
-
-},{"./_arrayMap":58}],109:[function(_dereq_,module,exports){
+},{"./_assignValue":238,"./_castPath":287,"./_isIndex":338,"./_toKey":379,"./isObject":411}],280:[function(_dereq_,module,exports){
+arguments[4][79][0].apply(exports,arguments)
+},{"./_defineProperty":310,"./constant":388,"./identity":398,"dup":79}],281:[function(_dereq_,module,exports){
+arguments[4][80][0].apply(exports,arguments)
+},{"dup":80}],282:[function(_dereq_,module,exports){
+arguments[4][81][0].apply(exports,arguments)
+},{"dup":81}],283:[function(_dereq_,module,exports){
+arguments[4][82][0].apply(exports,arguments)
+},{"./_Symbol":219,"./_arrayMap":231,"./isArray":400,"./isSymbol":414,"dup":82}],284:[function(_dereq_,module,exports){
+arguments[4][83][0].apply(exports,arguments)
+},{"dup":83}],285:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -54252,7 +58328,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],110:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -54268,336 +58344,37 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":232}],111:[function(_dereq_,module,exports){
-var isArray = _dereq_('./isArray'),
-    isKey = _dereq_('./_isKey'),
-    stringToPath = _dereq_('./_stringToPath'),
-    toString = _dereq_('./toString');
-
-/**
- * Casts `value` to a path array if it's not one.
- *
- * @private
- * @param {*} value The value to inspect.
- * @param {Object} [object] The object to query keys on.
- * @returns {Array} Returns the cast property path array.
- */
-function castPath(value, object) {
-  if (isArray(value)) {
-    return value;
-  }
-  return isKey(value, object) ? [value] : stringToPath(toString(value));
-}
-
-module.exports = castPath;
-
-},{"./_isKey":167,"./_stringToPath":208,"./isArray":234,"./toString":275}],112:[function(_dereq_,module,exports){
-var baseSlice = _dereq_('./_baseSlice');
-
-/**
- * Casts `array` to a slice if it's needed.
- *
- * @private
- * @param {Array} array The array to inspect.
- * @param {number} start The start position.
- * @param {number} [end=array.length] The end position.
- * @returns {Array} Returns the cast slice.
- */
-function castSlice(array, start, end) {
-  var length = array.length;
-  end = end === undefined ? length : end;
-  return (!start && end >= length) ? array : baseSlice(array, start, end);
-}
-
-module.exports = castSlice;
-
-},{"./_baseSlice":104}],113:[function(_dereq_,module,exports){
-var Uint8Array = _dereq_('./_Uint8Array');
-
-/**
- * Creates a clone of `arrayBuffer`.
- *
- * @private
- * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
- * @returns {ArrayBuffer} Returns the cloned array buffer.
- */
-function cloneArrayBuffer(arrayBuffer) {
-  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
-  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
-  return result;
-}
-
-module.exports = cloneArrayBuffer;
-
-},{"./_Uint8Array":49}],114:[function(_dereq_,module,exports){
-var root = _dereq_('./_root');
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/** Built-in value references. */
-var Buffer = moduleExports ? root.Buffer : undefined,
-    allocUnsafe = Buffer ? Buffer.allocUnsafe : undefined;
-
-/**
- * Creates a clone of  `buffer`.
- *
- * @private
- * @param {Buffer} buffer The buffer to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Buffer} Returns the cloned buffer.
- */
-function cloneBuffer(buffer, isDeep) {
-  if (isDeep) {
-    return buffer.slice();
-  }
-  var length = buffer.length,
-      result = allocUnsafe ? allocUnsafe(length) : new buffer.constructor(length);
-
-  buffer.copy(result);
-  return result;
-}
-
-module.exports = cloneBuffer;
-
-},{"./_root":195}],115:[function(_dereq_,module,exports){
-var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
-
-/**
- * Creates a clone of `dataView`.
- *
- * @private
- * @param {Object} dataView The data view to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned data view.
- */
-function cloneDataView(dataView, isDeep) {
-  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
-  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
-}
-
-module.exports = cloneDataView;
-
-},{"./_cloneArrayBuffer":113}],116:[function(_dereq_,module,exports){
-var addMapEntry = _dereq_('./_addMapEntry'),
-    arrayReduce = _dereq_('./_arrayReduce'),
-    mapToArray = _dereq_('./_mapToArray');
-
-/** Used to compose bitmasks for cloning. */
-var CLONE_DEEP_FLAG = 1;
-
-/**
- * Creates a clone of `map`.
- *
- * @private
- * @param {Object} map The map to clone.
- * @param {Function} cloneFunc The function to clone values.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned map.
- */
-function cloneMap(map, isDeep, cloneFunc) {
-  var array = isDeep ? cloneFunc(mapToArray(map), CLONE_DEEP_FLAG) : mapToArray(map);
-  return arrayReduce(array, addMapEntry, new map.constructor);
-}
-
-module.exports = cloneMap;
-
-},{"./_addMapEntry":51,"./_arrayReduce":60,"./_mapToArray":182}],117:[function(_dereq_,module,exports){
-/** Used to match `RegExp` flags from their coerced string values. */
-var reFlags = /\w*$/;
-
-/**
- * Creates a clone of `regexp`.
- *
- * @private
- * @param {Object} regexp The regexp to clone.
- * @returns {Object} Returns the cloned regexp.
- */
-function cloneRegExp(regexp) {
-  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
-  result.lastIndex = regexp.lastIndex;
-  return result;
-}
-
-module.exports = cloneRegExp;
-
-},{}],118:[function(_dereq_,module,exports){
-var addSetEntry = _dereq_('./_addSetEntry'),
-    arrayReduce = _dereq_('./_arrayReduce'),
-    setToArray = _dereq_('./_setToArray');
-
-/** Used to compose bitmasks for cloning. */
-var CLONE_DEEP_FLAG = 1;
-
-/**
- * Creates a clone of `set`.
- *
- * @private
- * @param {Object} set The set to clone.
- * @param {Function} cloneFunc The function to clone values.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned set.
- */
-function cloneSet(set, isDeep, cloneFunc) {
-  var array = isDeep ? cloneFunc(setToArray(set), CLONE_DEEP_FLAG) : setToArray(set);
-  return arrayReduce(array, addSetEntry, new set.constructor);
-}
-
-module.exports = cloneSet;
-
-},{"./_addSetEntry":52,"./_arrayReduce":60,"./_setToArray":198}],119:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol');
-
-/** Used to convert symbols to primitives and strings. */
-var symbolProto = Symbol ? Symbol.prototype : undefined,
-    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
-
-/**
- * Creates a clone of the `symbol` object.
- *
- * @private
- * @param {Object} symbol The symbol object to clone.
- * @returns {Object} Returns the cloned symbol object.
- */
-function cloneSymbol(symbol) {
-  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
-}
-
-module.exports = cloneSymbol;
-
-},{"./_Symbol":48}],120:[function(_dereq_,module,exports){
-var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
-
-/**
- * Creates a clone of `typedArray`.
- *
- * @private
- * @param {Object} typedArray The typed array to clone.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the cloned typed array.
- */
-function cloneTypedArray(typedArray, isDeep) {
-  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
-  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
-}
-
-module.exports = cloneTypedArray;
-
-},{"./_cloneArrayBuffer":113}],121:[function(_dereq_,module,exports){
-/**
- * Copies the values of `source` to `array`.
- *
- * @private
- * @param {Array} source The array to copy values from.
- * @param {Array} [array=[]] The array to copy values to.
- * @returns {Array} Returns `array`.
- */
-function copyArray(source, array) {
-  var index = -1,
-      length = source.length;
-
-  array || (array = Array(length));
-  while (++index < length) {
-    array[index] = source[index];
-  }
-  return array;
-}
-
-module.exports = copyArray;
-
-},{}],122:[function(_dereq_,module,exports){
-var assignValue = _dereq_('./_assignValue'),
-    baseAssignValue = _dereq_('./_baseAssignValue');
-
-/**
- * Copies properties of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy properties from.
- * @param {Array} props The property identifiers to copy.
- * @param {Object} [object={}] The object to copy properties to.
- * @param {Function} [customizer] The function to customize copied values.
- * @returns {Object} Returns `object`.
- */
-function copyObject(source, props, object, customizer) {
-  var isNew = !object;
-  object || (object = {});
-
-  var index = -1,
-      length = props.length;
-
-  while (++index < length) {
-    var key = props[index];
-
-    var newValue = customizer
-      ? customizer(object[key], source[key], key, object, source)
-      : undefined;
-
-    if (newValue === undefined) {
-      newValue = source[key];
-    }
-    if (isNew) {
-      baseAssignValue(object, key, newValue);
-    } else {
-      assignValue(object, key, newValue);
-    }
-  }
-  return object;
-}
-
-module.exports = copyObject;
-
-},{"./_assignValue":66,"./_baseAssignValue":71}],123:[function(_dereq_,module,exports){
-var copyObject = _dereq_('./_copyObject'),
-    getSymbols = _dereq_('./_getSymbols');
-
-/**
- * Copies own symbols of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy symbols from.
- * @param {Object} [object={}] The object to copy symbols to.
- * @returns {Object} Returns `object`.
- */
-function copySymbols(source, object) {
-  return copyObject(source, getSymbols(source), object);
-}
-
-module.exports = copySymbols;
-
-},{"./_copyObject":122,"./_getSymbols":150}],124:[function(_dereq_,module,exports){
-var copyObject = _dereq_('./_copyObject'),
-    getSymbolsIn = _dereq_('./_getSymbolsIn');
-
-/**
- * Copies own and inherited symbols of `source` to `object`.
- *
- * @private
- * @param {Object} source The object to copy symbols from.
- * @param {Object} [object={}] The object to copy symbols to.
- * @returns {Object} Returns `object`.
- */
-function copySymbolsIn(source, object) {
-  return copyObject(source, getSymbolsIn(source), object);
-}
-
-module.exports = copySymbolsIn;
-
-},{"./_copyObject":122,"./_getSymbolsIn":151}],125:[function(_dereq_,module,exports){
-var root = _dereq_('./_root');
-
-/** Used to detect overreaching core-js shims. */
-var coreJsData = root['__core-js_shared__'];
-
-module.exports = coreJsData;
-
-},{"./_root":195}],126:[function(_dereq_,module,exports){
+},{"./identity":398}],287:[function(_dereq_,module,exports){
+arguments[4][85][0].apply(exports,arguments)
+},{"./_isKey":340,"./_stringToPath":378,"./isArray":400,"./toString":434,"dup":85}],288:[function(_dereq_,module,exports){
+arguments[4][86][0].apply(exports,arguments)
+},{"./_baseSlice":281,"dup":86}],289:[function(_dereq_,module,exports){
+arguments[4][87][0].apply(exports,arguments)
+},{"./_Uint8Array":220,"dup":87}],290:[function(_dereq_,module,exports){
+arguments[4][88][0].apply(exports,arguments)
+},{"./_root":365,"dup":88}],291:[function(_dereq_,module,exports){
+arguments[4][89][0].apply(exports,arguments)
+},{"./_cloneArrayBuffer":289,"dup":89}],292:[function(_dereq_,module,exports){
+arguments[4][90][0].apply(exports,arguments)
+},{"./_addMapEntry":222,"./_arrayReduce":233,"./_mapToArray":355,"dup":90}],293:[function(_dereq_,module,exports){
+arguments[4][91][0].apply(exports,arguments)
+},{"dup":91}],294:[function(_dereq_,module,exports){
+arguments[4][92][0].apply(exports,arguments)
+},{"./_addSetEntry":223,"./_arrayReduce":233,"./_setToArray":368,"dup":92}],295:[function(_dereq_,module,exports){
+arguments[4][93][0].apply(exports,arguments)
+},{"./_Symbol":219,"dup":93}],296:[function(_dereq_,module,exports){
+arguments[4][94][0].apply(exports,arguments)
+},{"./_cloneArrayBuffer":289,"dup":94}],297:[function(_dereq_,module,exports){
+arguments[4][95][0].apply(exports,arguments)
+},{"dup":95}],298:[function(_dereq_,module,exports){
+arguments[4][96][0].apply(exports,arguments)
+},{"./_assignValue":238,"./_baseAssignValue":243,"dup":96}],299:[function(_dereq_,module,exports){
+arguments[4][97][0].apply(exports,arguments)
+},{"./_copyObject":298,"./_getSymbols":322,"dup":97}],300:[function(_dereq_,module,exports){
+arguments[4][98][0].apply(exports,arguments)
+},{"./_copyObject":298,"./_getSymbolsIn":323,"dup":98}],301:[function(_dereq_,module,exports){
+arguments[4][99][0].apply(exports,arguments)
+},{"./_root":365,"dup":99}],302:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -54622,46 +58399,9 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":54,"./_baseAggregator":68,"./_baseIteratee":88,"./isArray":234}],127:[function(_dereq_,module,exports){
-var baseRest = _dereq_('./_baseRest'),
-    isIterateeCall = _dereq_('./_isIterateeCall');
-
-/**
- * Creates a function like `_.assign`.
- *
- * @private
- * @param {Function} assigner The function to assign values.
- * @returns {Function} Returns the new assigner function.
- */
-function createAssigner(assigner) {
-  return baseRest(function(object, sources) {
-    var index = -1,
-        length = sources.length,
-        customizer = length > 1 ? sources[length - 1] : undefined,
-        guard = length > 2 ? sources[2] : undefined;
-
-    customizer = (assigner.length > 3 && typeof customizer == 'function')
-      ? (length--, customizer)
-      : undefined;
-
-    if (guard && isIterateeCall(sources[0], sources[1], guard)) {
-      customizer = length < 3 ? undefined : customizer;
-      length = 1;
-    }
-    object = Object(object);
-    while (++index < length) {
-      var source = sources[index];
-      if (source) {
-        assigner(object, source, index, customizer);
-      }
-    }
-    return object;
-  });
-}
-
-module.exports = createAssigner;
-
-},{"./_baseRest":101,"./_isIterateeCall":166}],128:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":225,"./_baseAggregator":240,"./_baseIteratee":265,"./isArray":400}],303:[function(_dereq_,module,exports){
+arguments[4][100][0].apply(exports,arguments)
+},{"./_baseRest":278,"./_isIterateeCall":339,"dup":100}],304:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -54695,7 +58435,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":235}],129:[function(_dereq_,module,exports){
+},{"./isArrayLike":401}],305:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -54722,7 +58462,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],130:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -54757,7 +58497,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":112,"./_hasUnicode":155,"./_stringToArray":207,"./toString":275}],131:[function(_dereq_,module,exports){
+},{"./_castSlice":288,"./_hasUnicode":327,"./_stringToArray":377,"./toString":434}],307:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -54783,108 +58523,39 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":60,"./deburr":223,"./words":277}],132:[function(_dereq_,module,exports){
-var baseRepeat = _dereq_('./_baseRepeat'),
-    baseToString = _dereq_('./_baseToString'),
-    castSlice = _dereq_('./_castSlice'),
-    hasUnicode = _dereq_('./_hasUnicode'),
-    stringSize = _dereq_('./_stringSize'),
-    stringToArray = _dereq_('./_stringToArray');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil;
+},{"./_arrayReduce":233,"./deburr":389,"./words":437}],308:[function(_dereq_,module,exports){
+var baseRange = _dereq_('./_baseRange'),
+    isIterateeCall = _dereq_('./_isIterateeCall'),
+    toFinite = _dereq_('./toFinite');
 
 /**
- * Creates the padding for `string` based on `length`. The `chars` string
- * is truncated if the number of characters exceeds `length`.
+ * Creates a `_.range` or `_.rangeRight` function.
  *
  * @private
- * @param {number} length The padding length.
- * @param {string} [chars=' '] The string used as padding.
- * @returns {string} Returns the padding for `string`.
+ * @param {boolean} [fromRight] Specify iterating from right to left.
+ * @returns {Function} Returns the new range function.
  */
-function createPadding(length, chars) {
-  chars = chars === undefined ? ' ' : baseToString(chars);
-
-  var charsLength = chars.length;
-  if (charsLength < 2) {
-    return charsLength ? baseRepeat(chars, length) : chars;
-  }
-  var result = baseRepeat(chars, nativeCeil(length / stringSize(chars)));
-  return hasUnicode(chars)
-    ? castSlice(stringToArray(result), 0, length).join('')
-    : result.slice(0, length);
-}
-
-module.exports = createPadding;
-
-},{"./_baseRepeat":100,"./_baseToString":106,"./_castSlice":112,"./_hasUnicode":155,"./_stringSize":206,"./_stringToArray":207}],133:[function(_dereq_,module,exports){
-var toInteger = _dereq_('./toInteger'),
-    toNumber = _dereq_('./toNumber'),
-    toString = _dereq_('./toString');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMin = Math.min;
-
-/**
- * Creates a function like `_.round`.
- *
- * @private
- * @param {string} methodName The name of the `Math` method to use when rounding.
- * @returns {Function} Returns the new round function.
- */
-function createRound(methodName) {
-  var func = Math[methodName];
-  return function(number, precision) {
-    number = toNumber(number);
-    precision = precision == null ? 0 : nativeMin(toInteger(precision), 292);
-    if (precision) {
-      // Shift with exponential notation to avoid floating-point issues.
-      // See [MDN](https://mdn.io/round#Examples) for more details.
-      var pair = (toString(number) + 'e').split('e'),
-          value = func(pair[0] + 'e' + (+pair[1] + precision));
-
-      pair = (toString(value) + 'e').split('e');
-      return +(pair[0] + 'e' + (+pair[1] - precision));
+function createRange(fromRight) {
+  return function(start, end, step) {
+    if (step && typeof step != 'number' && isIterateeCall(start, end, step)) {
+      end = step = undefined;
     }
-    return func(number);
+    // Ensure the sign of `-0` is preserved.
+    start = toFinite(start);
+    if (end === undefined) {
+      end = start;
+      start = 0;
+    } else {
+      end = toFinite(end);
+    }
+    step = step === undefined ? (start < end ? 1 : -1) : toFinite(step);
+    return baseRange(start, end, step, fromRight);
   };
 }
 
-module.exports = createRound;
+module.exports = createRange;
 
-},{"./toInteger":272,"./toNumber":273,"./toString":275}],134:[function(_dereq_,module,exports){
-var eq = _dereq_('./eq');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used by `_.defaults` to customize its `_.assignIn` use to assign properties
- * of source objects to the destination object for all destination properties
- * that resolve to `undefined`.
- *
- * @private
- * @param {*} objValue The destination value.
- * @param {*} srcValue The source value.
- * @param {string} key The key of the property to assign.
- * @param {Object} object The parent object of `objValue`.
- * @returns {*} Returns the value to assign.
- */
-function customDefaultsAssignIn(objValue, srcValue, key, object) {
-  if (objValue === undefined ||
-      (eq(objValue, objectProto[key]) && !hasOwnProperty.call(object, key))) {
-    return srcValue;
-  }
-  return objValue;
-}
-
-module.exports = customDefaultsAssignIn;
-
-},{"./eq":225}],135:[function(_dereq_,module,exports){
+},{"./_baseRange":277,"./_isIterateeCall":339,"./toFinite":431}],309:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -54957,20 +58628,9 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":99}],136:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative');
-
-var defineProperty = (function() {
-  try {
-    var func = getNative(Object, 'defineProperty');
-    func({}, '', {});
-    return func;
-  } catch (e) {}
-}());
-
-module.exports = defineProperty;
-
-},{"./_getNative":147}],137:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":276}],310:[function(_dereq_,module,exports){
+arguments[4][104][0].apply(exports,arguments)
+},{"./_getNative":319,"dup":104}],311:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -55055,7 +58715,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":46,"./_arraySome":61,"./_cacheHas":109}],138:[function(_dereq_,module,exports){
+},{"./_SetCache":217,"./_arraySome":234,"./_cacheHas":285}],312:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -55169,7 +58829,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":48,"./_Uint8Array":49,"./_equalArrays":137,"./_mapToArray":182,"./_setToArray":198,"./eq":225}],139:[function(_dereq_,module,exports){
+},{"./_Symbol":219,"./_Uint8Array":220,"./_equalArrays":311,"./_mapToArray":355,"./_setToArray":368,"./eq":392}],313:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -55260,119 +58920,15 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":143}],140:[function(_dereq_,module,exports){
-var basePropertyOf = _dereq_('./_basePropertyOf');
-
-/** Used to map characters to HTML entities. */
-var htmlEscapes = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;'
-};
-
-/**
- * Used by `_.escape` to convert characters to HTML entities.
- *
- * @private
- * @param {string} chr The matched character to escape.
- * @returns {string} Returns the escaped character.
- */
-var escapeHtmlChar = basePropertyOf(htmlEscapes);
-
-module.exports = escapeHtmlChar;
-
-},{"./_basePropertyOf":99}],141:[function(_dereq_,module,exports){
-/** Used to escape characters for inclusion in compiled string literals. */
-var stringEscapes = {
-  '\\': '\\',
-  "'": "'",
-  '\n': 'n',
-  '\r': 'r',
-  '\u2028': 'u2028',
-  '\u2029': 'u2029'
-};
-
-/**
- * Used by `_.template` to escape characters for inclusion in compiled string literals.
- *
- * @private
- * @param {string} chr The matched character to escape.
- * @returns {string} Returns the escaped character.
- */
-function escapeStringChar(chr) {
-  return '\\' + stringEscapes[chr];
-}
-
-module.exports = escapeStringChar;
-
-},{}],142:[function(_dereq_,module,exports){
-(function (global){
-/** Detect free variable `global` from Node.js. */
-var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
-
-module.exports = freeGlobal;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],143:[function(_dereq_,module,exports){
-var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
-    getSymbols = _dereq_('./_getSymbols'),
-    keys = _dereq_('./keys');
-
-/**
- * Creates an array of own enumerable property names and symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function getAllKeys(object) {
-  return baseGetAllKeys(object, keys, getSymbols);
-}
-
-module.exports = getAllKeys;
-
-},{"./_baseGetAllKeys":79,"./_getSymbols":150,"./keys":253}],144:[function(_dereq_,module,exports){
-var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
-    getSymbolsIn = _dereq_('./_getSymbolsIn'),
-    keysIn = _dereq_('./keysIn');
-
-/**
- * Creates an array of own and inherited enumerable property names and
- * symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names and symbols.
- */
-function getAllKeysIn(object) {
-  return baseGetAllKeys(object, keysIn, getSymbolsIn);
-}
-
-module.exports = getAllKeysIn;
-
-},{"./_baseGetAllKeys":79,"./_getSymbolsIn":151,"./keysIn":254}],145:[function(_dereq_,module,exports){
-var isKeyable = _dereq_('./_isKeyable');
-
-/**
- * Gets the data for `map`.
- *
- * @private
- * @param {Object} map The map to query.
- * @param {string} key The reference key.
- * @returns {*} Returns the map data.
- */
-function getMapData(map, key) {
-  var data = map.__data__;
-  return isKeyable(key)
-    ? data[typeof key == 'string' ? 'string' : 'hash']
-    : data.map;
-}
-
-module.exports = getMapData;
-
-},{"./_isKeyable":168}],146:[function(_dereq_,module,exports){
+},{"./_getAllKeys":315}],314:[function(_dereq_,module,exports){
+arguments[4][107][0].apply(exports,arguments)
+},{"dup":107}],315:[function(_dereq_,module,exports){
+arguments[4][108][0].apply(exports,arguments)
+},{"./_baseGetAllKeys":254,"./_getSymbols":322,"./keys":416,"dup":108}],316:[function(_dereq_,module,exports){
+arguments[4][109][0].apply(exports,arguments)
+},{"./_baseGetAllKeys":254,"./_getSymbolsIn":323,"./keysIn":417,"dup":109}],317:[function(_dereq_,module,exports){
+arguments[4][110][0].apply(exports,arguments)
+},{"./_isKeyable":341,"dup":110}],318:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -55398,216 +58954,21 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":171,"./keys":253}],147:[function(_dereq_,module,exports){
-var baseIsNative = _dereq_('./_baseIsNative'),
-    getValue = _dereq_('./_getValue');
-
-/**
- * Gets the native function at `key` of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @param {string} key The key of the method to get.
- * @returns {*} Returns the function if it's native, else `undefined`.
- */
-function getNative(object, key) {
-  var value = getValue(object, key);
-  return baseIsNative(value) ? value : undefined;
-}
-
-module.exports = getNative;
-
-},{"./_baseIsNative":86,"./_getValue":153}],148:[function(_dereq_,module,exports){
-var overArg = _dereq_('./_overArg');
-
-/** Built-in value references. */
-var getPrototype = overArg(Object.getPrototypeOf, Object);
-
-module.exports = getPrototype;
-
-},{"./_overArg":190}],149:[function(_dereq_,module,exports){
-var Symbol = _dereq_('./_Symbol');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString = objectProto.toString;
-
-/** Built-in value references. */
-var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
-
-/**
- * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the raw `toStringTag`.
- */
-function getRawTag(value) {
-  var isOwn = hasOwnProperty.call(value, symToStringTag),
-      tag = value[symToStringTag];
-
-  try {
-    value[symToStringTag] = undefined;
-    var unmasked = true;
-  } catch (e) {}
-
-  var result = nativeObjectToString.call(value);
-  if (unmasked) {
-    if (isOwn) {
-      value[symToStringTag] = tag;
-    } else {
-      delete value[symToStringTag];
-    }
-  }
-  return result;
-}
-
-module.exports = getRawTag;
-
-},{"./_Symbol":48}],150:[function(_dereq_,module,exports){
-var arrayFilter = _dereq_('./_arrayFilter'),
-    stubArray = _dereq_('./stubArray');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Built-in value references. */
-var propertyIsEnumerable = objectProto.propertyIsEnumerable;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeGetSymbols = Object.getOwnPropertySymbols;
-
-/**
- * Creates an array of the own enumerable symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of symbols.
- */
-var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
-  if (object == null) {
-    return [];
-  }
-  object = Object(object);
-  return arrayFilter(nativeGetSymbols(object), function(symbol) {
-    return propertyIsEnumerable.call(object, symbol);
-  });
-};
-
-module.exports = getSymbols;
-
-},{"./_arrayFilter":56,"./stubArray":267}],151:[function(_dereq_,module,exports){
-var arrayPush = _dereq_('./_arrayPush'),
-    getPrototype = _dereq_('./_getPrototype'),
-    getSymbols = _dereq_('./_getSymbols'),
-    stubArray = _dereq_('./stubArray');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeGetSymbols = Object.getOwnPropertySymbols;
-
-/**
- * Creates an array of the own and inherited enumerable symbols of `object`.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of symbols.
- */
-var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
-  var result = [];
-  while (object) {
-    arrayPush(result, getSymbols(object));
-    object = getPrototype(object);
-  }
-  return result;
-};
-
-module.exports = getSymbolsIn;
-
-},{"./_arrayPush":59,"./_getPrototype":148,"./_getSymbols":150,"./stubArray":267}],152:[function(_dereq_,module,exports){
-var DataView = _dereq_('./_DataView'),
-    Map = _dereq_('./_Map'),
-    Promise = _dereq_('./_Promise'),
-    Set = _dereq_('./_Set'),
-    WeakMap = _dereq_('./_WeakMap'),
-    baseGetTag = _dereq_('./_baseGetTag'),
-    toSource = _dereq_('./_toSource');
-
-/** `Object#toString` result references. */
-var mapTag = '[object Map]',
-    objectTag = '[object Object]',
-    promiseTag = '[object Promise]',
-    setTag = '[object Set]',
-    weakMapTag = '[object WeakMap]';
-
-var dataViewTag = '[object DataView]';
-
-/** Used to detect maps, sets, and weakmaps. */
-var dataViewCtorString = toSource(DataView),
-    mapCtorString = toSource(Map),
-    promiseCtorString = toSource(Promise),
-    setCtorString = toSource(Set),
-    weakMapCtorString = toSource(WeakMap);
-
-/**
- * Gets the `toStringTag` of `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-var getTag = baseGetTag;
-
-// Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
-if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
-    (Map && getTag(new Map) != mapTag) ||
-    (Promise && getTag(Promise.resolve()) != promiseTag) ||
-    (Set && getTag(new Set) != setTag) ||
-    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
-  getTag = function(value) {
-    var result = baseGetTag(value),
-        Ctor = result == objectTag ? value.constructor : undefined,
-        ctorString = Ctor ? toSource(Ctor) : '';
-
-    if (ctorString) {
-      switch (ctorString) {
-        case dataViewCtorString: return dataViewTag;
-        case mapCtorString: return mapTag;
-        case promiseCtorString: return promiseTag;
-        case setCtorString: return setTag;
-        case weakMapCtorString: return weakMapTag;
-      }
-    }
-    return result;
-  };
-}
-
-module.exports = getTag;
-
-},{"./_DataView":39,"./_Map":42,"./_Promise":44,"./_Set":45,"./_WeakMap":50,"./_baseGetTag":80,"./_toSource":210}],153:[function(_dereq_,module,exports){
-/**
- * Gets the value at `key` of `object`.
- *
- * @private
- * @param {Object} [object] The object to query.
- * @param {string} key The key of the property to get.
- * @returns {*} Returns the property value.
- */
-function getValue(object, key) {
-  return object == null ? undefined : object[key];
-}
-
-module.exports = getValue;
-
-},{}],154:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":344,"./keys":416}],319:[function(_dereq_,module,exports){
+arguments[4][111][0].apply(exports,arguments)
+},{"./_baseIsNative":263,"./_getValue":325,"dup":111}],320:[function(_dereq_,module,exports){
+arguments[4][112][0].apply(exports,arguments)
+},{"./_overArg":363,"dup":112}],321:[function(_dereq_,module,exports){
+arguments[4][113][0].apply(exports,arguments)
+},{"./_Symbol":219,"dup":113}],322:[function(_dereq_,module,exports){
+arguments[4][114][0].apply(exports,arguments)
+},{"./_arrayFilter":227,"./stubArray":429,"dup":114}],323:[function(_dereq_,module,exports){
+arguments[4][115][0].apply(exports,arguments)
+},{"./_arrayPush":232,"./_getPrototype":320,"./_getSymbols":322,"./stubArray":429,"dup":115}],324:[function(_dereq_,module,exports){
+arguments[4][116][0].apply(exports,arguments)
+},{"./_DataView":210,"./_Map":213,"./_Promise":215,"./_Set":216,"./_WeakMap":221,"./_baseGetTag":255,"./_toSource":380,"dup":116}],325:[function(_dereq_,module,exports){
+arguments[4][117][0].apply(exports,arguments)
+},{"dup":117}],326:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -55648,35 +59009,9 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":111,"./_isIndex":165,"./_toKey":209,"./isArguments":233,"./isArray":234,"./isLength":243}],155:[function(_dereq_,module,exports){
-/** Used to compose unicode character classes. */
-var rsAstralRange = '\\ud800-\\udfff',
-    rsComboMarksRange = '\\u0300-\\u036f',
-    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
-    rsVarRange = '\\ufe0e\\ufe0f';
-
-/** Used to compose unicode capture groups. */
-var rsZWJ = '\\u200d';
-
-/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboRange + rsVarRange + ']');
-
-/**
- * Checks if `string` contains Unicode symbols.
- *
- * @private
- * @param {string} string The string to inspect.
- * @returns {boolean} Returns `true` if a symbol is found, else `false`.
- */
-function hasUnicode(string) {
-  return reHasUnicode.test(string);
-}
-
-module.exports = hasUnicode;
-
-},{}],156:[function(_dereq_,module,exports){
+},{"./_castPath":287,"./_isIndex":338,"./_toKey":379,"./isArguments":399,"./isArray":400,"./isLength":408}],327:[function(_dereq_,module,exports){
+arguments[4][118][0].apply(exports,arguments)
+},{"dup":118}],328:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -55693,401 +59028,57 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],157:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
+},{}],329:[function(_dereq_,module,exports){
+arguments[4][119][0].apply(exports,arguments)
+},{"./_nativeCreate":358,"dup":119}],330:[function(_dereq_,module,exports){
+arguments[4][120][0].apply(exports,arguments)
+},{"dup":120}],331:[function(_dereq_,module,exports){
+arguments[4][121][0].apply(exports,arguments)
+},{"./_nativeCreate":358,"dup":121}],332:[function(_dereq_,module,exports){
+arguments[4][122][0].apply(exports,arguments)
+},{"./_nativeCreate":358,"dup":122}],333:[function(_dereq_,module,exports){
+arguments[4][123][0].apply(exports,arguments)
+},{"./_nativeCreate":358,"dup":123}],334:[function(_dereq_,module,exports){
+arguments[4][124][0].apply(exports,arguments)
+},{"dup":124}],335:[function(_dereq_,module,exports){
+arguments[4][125][0].apply(exports,arguments)
+},{"./_cloneArrayBuffer":289,"./_cloneDataView":291,"./_cloneMap":292,"./_cloneRegExp":293,"./_cloneSet":294,"./_cloneSymbol":295,"./_cloneTypedArray":296,"dup":125}],336:[function(_dereq_,module,exports){
+arguments[4][126][0].apply(exports,arguments)
+},{"./_baseCreate":245,"./_getPrototype":320,"./_isPrototype":343,"dup":126}],337:[function(_dereq_,module,exports){
+var Symbol = _dereq_('./_Symbol'),
+    isArguments = _dereq_('./isArguments'),
+    isArray = _dereq_('./isArray');
+
+/** Built-in value references. */
+var spreadableSymbol = Symbol ? Symbol.isConcatSpreadable : undefined;
 
 /**
- * Removes all key-value entries from the hash.
- *
- * @private
- * @name clear
- * @memberOf Hash
- */
-function hashClear() {
-  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-  this.size = 0;
-}
-
-module.exports = hashClear;
-
-},{"./_nativeCreate":185}],158:[function(_dereq_,module,exports){
-/**
- * Removes `key` and its value from the hash.
- *
- * @private
- * @name delete
- * @memberOf Hash
- * @param {Object} hash The hash to modify.
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function hashDelete(key) {
-  var result = this.has(key) && delete this.__data__[key];
-  this.size -= result ? 1 : 0;
-  return result;
-}
-
-module.exports = hashDelete;
-
-},{}],159:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Gets the hash value for `key`.
- *
- * @private
- * @name get
- * @memberOf Hash
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function hashGet(key) {
-  var data = this.__data__;
-  if (nativeCreate) {
-    var result = data[key];
-    return result === HASH_UNDEFINED ? undefined : result;
-  }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-}
-
-module.exports = hashGet;
-
-},{"./_nativeCreate":185}],160:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Checks if a hash value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Hash
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
-}
-
-module.exports = hashHas;
-
-},{"./_nativeCreate":185}],161:[function(_dereq_,module,exports){
-var nativeCreate = _dereq_('./_nativeCreate');
-
-/** Used to stand-in for `undefined` hash values. */
-var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-/**
- * Sets the hash `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Hash
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the hash instance.
- */
-function hashSet(key, value) {
-  var data = this.__data__;
-  this.size += this.has(key) ? 0 : 1;
-  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-  return this;
-}
-
-module.exports = hashSet;
-
-},{"./_nativeCreate":185}],162:[function(_dereq_,module,exports){
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Initializes an array clone.
- *
- * @private
- * @param {Array} array The array to clone.
- * @returns {Array} Returns the initialized clone.
- */
-function initCloneArray(array) {
-  var length = array.length,
-      result = array.constructor(length);
-
-  // Add properties assigned by `RegExp#exec`.
-  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
-    result.index = array.index;
-    result.input = array.input;
-  }
-  return result;
-}
-
-module.exports = initCloneArray;
-
-},{}],163:[function(_dereq_,module,exports){
-var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
-    cloneDataView = _dereq_('./_cloneDataView'),
-    cloneMap = _dereq_('./_cloneMap'),
-    cloneRegExp = _dereq_('./_cloneRegExp'),
-    cloneSet = _dereq_('./_cloneSet'),
-    cloneSymbol = _dereq_('./_cloneSymbol'),
-    cloneTypedArray = _dereq_('./_cloneTypedArray');
-
-/** `Object#toString` result references. */
-var boolTag = '[object Boolean]',
-    dateTag = '[object Date]',
-    mapTag = '[object Map]',
-    numberTag = '[object Number]',
-    regexpTag = '[object RegExp]',
-    setTag = '[object Set]',
-    stringTag = '[object String]',
-    symbolTag = '[object Symbol]';
-
-var arrayBufferTag = '[object ArrayBuffer]',
-    dataViewTag = '[object DataView]',
-    float32Tag = '[object Float32Array]',
-    float64Tag = '[object Float64Array]',
-    int8Tag = '[object Int8Array]',
-    int16Tag = '[object Int16Array]',
-    int32Tag = '[object Int32Array]',
-    uint8Tag = '[object Uint8Array]',
-    uint8ClampedTag = '[object Uint8ClampedArray]',
-    uint16Tag = '[object Uint16Array]',
-    uint32Tag = '[object Uint32Array]';
-
-/**
- * Initializes an object clone based on its `toStringTag`.
- *
- * **Note:** This function only supports cloning values with tags of
- * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
- *
- * @private
- * @param {Object} object The object to clone.
- * @param {string} tag The `toStringTag` of the object to clone.
- * @param {Function} cloneFunc The function to clone values.
- * @param {boolean} [isDeep] Specify a deep clone.
- * @returns {Object} Returns the initialized clone.
- */
-function initCloneByTag(object, tag, cloneFunc, isDeep) {
-  var Ctor = object.constructor;
-  switch (tag) {
-    case arrayBufferTag:
-      return cloneArrayBuffer(object);
-
-    case boolTag:
-    case dateTag:
-      return new Ctor(+object);
-
-    case dataViewTag:
-      return cloneDataView(object, isDeep);
-
-    case float32Tag: case float64Tag:
-    case int8Tag: case int16Tag: case int32Tag:
-    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
-      return cloneTypedArray(object, isDeep);
-
-    case mapTag:
-      return cloneMap(object, isDeep, cloneFunc);
-
-    case numberTag:
-    case stringTag:
-      return new Ctor(object);
-
-    case regexpTag:
-      return cloneRegExp(object);
-
-    case setTag:
-      return cloneSet(object, isDeep, cloneFunc);
-
-    case symbolTag:
-      return cloneSymbol(object);
-  }
-}
-
-module.exports = initCloneByTag;
-
-},{"./_cloneArrayBuffer":113,"./_cloneDataView":115,"./_cloneMap":116,"./_cloneRegExp":117,"./_cloneSet":118,"./_cloneSymbol":119,"./_cloneTypedArray":120}],164:[function(_dereq_,module,exports){
-var baseCreate = _dereq_('./_baseCreate'),
-    getPrototype = _dereq_('./_getPrototype'),
-    isPrototype = _dereq_('./_isPrototype');
-
-/**
- * Initializes an object clone.
- *
- * @private
- * @param {Object} object The object to clone.
- * @returns {Object} Returns the initialized clone.
- */
-function initCloneObject(object) {
-  return (typeof object.constructor == 'function' && !isPrototype(object))
-    ? baseCreate(getPrototype(object))
-    : {};
-}
-
-module.exports = initCloneObject;
-
-},{"./_baseCreate":73,"./_getPrototype":148,"./_isPrototype":170}],165:[function(_dereq_,module,exports){
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
-/** Used to detect unsigned integer values. */
-var reIsUint = /^(?:0|[1-9]\d*)$/;
-
-/**
- * Checks if `value` is a valid array-like index.
+ * Checks if `value` is a flattenable `arguments` object or array.
  *
  * @private
  * @param {*} value The value to check.
- * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
- * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+ * @returns {boolean} Returns `true` if `value` is flattenable, else `false`.
  */
-function isIndex(value, length) {
-  length = length == null ? MAX_SAFE_INTEGER : length;
-  return !!length &&
-    (typeof value == 'number' || reIsUint.test(value)) &&
-    (value > -1 && value % 1 == 0 && value < length);
+function isFlattenable(value) {
+  return isArray(value) || isArguments(value) ||
+    !!(spreadableSymbol && value && value[spreadableSymbol]);
 }
 
-module.exports = isIndex;
+module.exports = isFlattenable;
 
-},{}],166:[function(_dereq_,module,exports){
-var eq = _dereq_('./eq'),
-    isArrayLike = _dereq_('./isArrayLike'),
-    isIndex = _dereq_('./_isIndex'),
-    isObject = _dereq_('./isObject');
-
-/**
- * Checks if the given arguments are from an iteratee call.
- *
- * @private
- * @param {*} value The potential iteratee value argument.
- * @param {*} index The potential iteratee index or key argument.
- * @param {*} object The potential iteratee object argument.
- * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
- *  else `false`.
- */
-function isIterateeCall(value, index, object) {
-  if (!isObject(object)) {
-    return false;
-  }
-  var type = typeof index;
-  if (type == 'number'
-        ? (isArrayLike(object) && isIndex(index, object.length))
-        : (type == 'string' && index in object)
-      ) {
-    return eq(object[index], value);
-  }
-  return false;
-}
-
-module.exports = isIterateeCall;
-
-},{"./_isIndex":165,"./eq":225,"./isArrayLike":235,"./isObject":247}],167:[function(_dereq_,module,exports){
-var isArray = _dereq_('./isArray'),
-    isSymbol = _dereq_('./isSymbol');
-
-/** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
-    reIsPlainProp = /^\w*$/;
-
-/**
- * Checks if `value` is a property name and not a property path.
- *
- * @private
- * @param {*} value The value to check.
- * @param {Object} [object] The object to query keys on.
- * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
- */
-function isKey(value, object) {
-  if (isArray(value)) {
-    return false;
-  }
-  var type = typeof value;
-  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
-      value == null || isSymbol(value)) {
-    return true;
-  }
-  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object));
-}
-
-module.exports = isKey;
-
-},{"./isArray":234,"./isSymbol":251}],168:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is suitable for use as unique object key.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
- */
-function isKeyable(value) {
-  var type = typeof value;
-  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-    ? (value !== '__proto__')
-    : (value === null);
-}
-
-module.exports = isKeyable;
-
-},{}],169:[function(_dereq_,module,exports){
-var coreJsData = _dereq_('./_coreJsData');
-
-/** Used to detect methods masquerading as native. */
-var maskSrcKey = (function() {
-  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-  return uid ? ('Symbol(src)_1.' + uid) : '';
-}());
-
-/**
- * Checks if `func` has its source masked.
- *
- * @private
- * @param {Function} func The function to check.
- * @returns {boolean} Returns `true` if `func` is masked, else `false`.
- */
-function isMasked(func) {
-  return !!maskSrcKey && (maskSrcKey in func);
-}
-
-module.exports = isMasked;
-
-},{"./_coreJsData":125}],170:[function(_dereq_,module,exports){
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/**
- * Checks if `value` is likely a prototype object.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
- */
-function isPrototype(value) {
-  var Ctor = value && value.constructor,
-      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
-
-  return value === proto;
-}
-
-module.exports = isPrototype;
-
-},{}],171:[function(_dereq_,module,exports){
+},{"./_Symbol":219,"./isArguments":399,"./isArray":400}],338:[function(_dereq_,module,exports){
+arguments[4][127][0].apply(exports,arguments)
+},{"dup":127}],339:[function(_dereq_,module,exports){
+arguments[4][128][0].apply(exports,arguments)
+},{"./_isIndex":338,"./eq":392,"./isArrayLike":401,"./isObject":411,"dup":128}],340:[function(_dereq_,module,exports){
+arguments[4][129][0].apply(exports,arguments)
+},{"./isArray":400,"./isSymbol":414,"dup":129}],341:[function(_dereq_,module,exports){
+arguments[4][130][0].apply(exports,arguments)
+},{"dup":130}],342:[function(_dereq_,module,exports){
+arguments[4][131][0].apply(exports,arguments)
+},{"./_coreJsData":301,"dup":131}],343:[function(_dereq_,module,exports){
+arguments[4][132][0].apply(exports,arguments)
+},{"dup":132}],344:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -56104,249 +59095,29 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":247}],172:[function(_dereq_,module,exports){
-/**
- * Removes all key-value entries from the list cache.
- *
- * @private
- * @name clear
- * @memberOf ListCache
- */
-function listCacheClear() {
-  this.__data__ = [];
-  this.size = 0;
-}
-
-module.exports = listCacheClear;
-
-},{}],173:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/** Used for built-in method references. */
-var arrayProto = Array.prototype;
-
-/** Built-in value references. */
-var splice = arrayProto.splice;
-
-/**
- * Removes `key` and its value from the list cache.
- *
- * @private
- * @name delete
- * @memberOf ListCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function listCacheDelete(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    return false;
-  }
-  var lastIndex = data.length - 1;
-  if (index == lastIndex) {
-    data.pop();
-  } else {
-    splice.call(data, index, 1);
-  }
-  --this.size;
-  return true;
-}
-
-module.exports = listCacheDelete;
-
-},{"./_assocIndexOf":67}],174:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/**
- * Gets the list cache value for `key`.
- *
- * @private
- * @name get
- * @memberOf ListCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function listCacheGet(key) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  return index < 0 ? undefined : data[index][1];
-}
-
-module.exports = listCacheGet;
-
-},{"./_assocIndexOf":67}],175:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/**
- * Checks if a list cache value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf ListCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1;
-}
-
-module.exports = listCacheHas;
-
-},{"./_assocIndexOf":67}],176:[function(_dereq_,module,exports){
-var assocIndexOf = _dereq_('./_assocIndexOf');
-
-/**
- * Sets the list cache `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf ListCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the list cache instance.
- */
-function listCacheSet(key, value) {
-  var data = this.__data__,
-      index = assocIndexOf(data, key);
-
-  if (index < 0) {
-    ++this.size;
-    data.push([key, value]);
-  } else {
-    data[index][1] = value;
-  }
-  return this;
-}
-
-module.exports = listCacheSet;
-
-},{"./_assocIndexOf":67}],177:[function(_dereq_,module,exports){
-var Hash = _dereq_('./_Hash'),
-    ListCache = _dereq_('./_ListCache'),
-    Map = _dereq_('./_Map');
-
-/**
- * Removes all key-value entries from the map.
- *
- * @private
- * @name clear
- * @memberOf MapCache
- */
-function mapCacheClear() {
-  this.size = 0;
-  this.__data__ = {
-    'hash': new Hash,
-    'map': new (Map || ListCache),
-    'string': new Hash
-  };
-}
-
-module.exports = mapCacheClear;
-
-},{"./_Hash":40,"./_ListCache":41,"./_Map":42}],178:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Removes `key` and its value from the map.
- *
- * @private
- * @name delete
- * @memberOf MapCache
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function mapCacheDelete(key) {
-  var result = getMapData(this, key)['delete'](key);
-  this.size -= result ? 1 : 0;
-  return result;
-}
-
-module.exports = mapCacheDelete;
-
-},{"./_getMapData":145}],179:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Gets the map value for `key`.
- *
- * @private
- * @name get
- * @memberOf MapCache
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function mapCacheGet(key) {
-  return getMapData(this, key).get(key);
-}
-
-module.exports = mapCacheGet;
-
-},{"./_getMapData":145}],180:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Checks if a map value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf MapCache
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function mapCacheHas(key) {
-  return getMapData(this, key).has(key);
-}
-
-module.exports = mapCacheHas;
-
-},{"./_getMapData":145}],181:[function(_dereq_,module,exports){
-var getMapData = _dereq_('./_getMapData');
-
-/**
- * Sets the map `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf MapCache
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the map cache instance.
- */
-function mapCacheSet(key, value) {
-  var data = getMapData(this, key),
-      size = data.size;
-
-  data.set(key, value);
-  this.size += data.size == size ? 0 : 1;
-  return this;
-}
-
-module.exports = mapCacheSet;
-
-},{"./_getMapData":145}],182:[function(_dereq_,module,exports){
-/**
- * Converts `map` to its key-value pairs.
- *
- * @private
- * @param {Object} map The map to convert.
- * @returns {Array} Returns the key-value pairs.
- */
-function mapToArray(map) {
-  var index = -1,
-      result = Array(map.size);
-
-  map.forEach(function(value, key) {
-    result[++index] = [key, value];
-  });
-  return result;
-}
-
-module.exports = mapToArray;
-
-},{}],183:[function(_dereq_,module,exports){
+},{"./isObject":411}],345:[function(_dereq_,module,exports){
+arguments[4][133][0].apply(exports,arguments)
+},{"dup":133}],346:[function(_dereq_,module,exports){
+arguments[4][134][0].apply(exports,arguments)
+},{"./_assocIndexOf":239,"dup":134}],347:[function(_dereq_,module,exports){
+arguments[4][135][0].apply(exports,arguments)
+},{"./_assocIndexOf":239,"dup":135}],348:[function(_dereq_,module,exports){
+arguments[4][136][0].apply(exports,arguments)
+},{"./_assocIndexOf":239,"dup":136}],349:[function(_dereq_,module,exports){
+arguments[4][137][0].apply(exports,arguments)
+},{"./_assocIndexOf":239,"dup":137}],350:[function(_dereq_,module,exports){
+arguments[4][138][0].apply(exports,arguments)
+},{"./_Hash":211,"./_ListCache":212,"./_Map":213,"dup":138}],351:[function(_dereq_,module,exports){
+arguments[4][139][0].apply(exports,arguments)
+},{"./_getMapData":317,"dup":139}],352:[function(_dereq_,module,exports){
+arguments[4][140][0].apply(exports,arguments)
+},{"./_getMapData":317,"dup":140}],353:[function(_dereq_,module,exports){
+arguments[4][141][0].apply(exports,arguments)
+},{"./_getMapData":317,"dup":141}],354:[function(_dereq_,module,exports){
+arguments[4][142][0].apply(exports,arguments)
+},{"./_getMapData":317,"dup":142}],355:[function(_dereq_,module,exports){
+arguments[4][143][0].apply(exports,arguments)
+},{"dup":143}],356:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -56368,205 +59139,25 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],184:[function(_dereq_,module,exports){
-var memoize = _dereq_('./memoize');
-
-/** Used as the maximum memoize cache size. */
-var MAX_MEMOIZE_SIZE = 500;
-
-/**
- * A specialized version of `_.memoize` which clears the memoized function's
- * cache when it exceeds `MAX_MEMOIZE_SIZE`.
- *
- * @private
- * @param {Function} func The function to have its output memoized.
- * @returns {Function} Returns the new memoized function.
- */
-function memoizeCapped(func) {
-  var result = memoize(func, function(key) {
-    if (cache.size === MAX_MEMOIZE_SIZE) {
-      cache.clear();
-    }
-    return key;
-  });
-
-  var cache = result.cache;
-  return result;
-}
-
-module.exports = memoizeCapped;
-
-},{"./memoize":257}],185:[function(_dereq_,module,exports){
-var getNative = _dereq_('./_getNative');
-
-/* Built-in method references that are verified to be native. */
-var nativeCreate = getNative(Object, 'create');
-
-module.exports = nativeCreate;
-
-},{"./_getNative":147}],186:[function(_dereq_,module,exports){
-var overArg = _dereq_('./_overArg');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeKeys = overArg(Object.keys, Object);
-
-module.exports = nativeKeys;
-
-},{"./_overArg":190}],187:[function(_dereq_,module,exports){
-/**
- * This function is like
- * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
- * except that it includes inherited enumerable properties.
- *
- * @private
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- */
-function nativeKeysIn(object) {
-  var result = [];
-  if (object != null) {
-    for (var key in Object(object)) {
-      result.push(key);
-    }
-  }
-  return result;
-}
-
-module.exports = nativeKeysIn;
-
-},{}],188:[function(_dereq_,module,exports){
-var freeGlobal = _dereq_('./_freeGlobal');
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/** Detect free variable `process` from Node.js. */
-var freeProcess = moduleExports && freeGlobal.process;
-
-/** Used to access faster Node.js helpers. */
-var nodeUtil = (function() {
-  try {
-    return freeProcess && freeProcess.binding && freeProcess.binding('util');
-  } catch (e) {}
-}());
-
-module.exports = nodeUtil;
-
-},{"./_freeGlobal":142}],189:[function(_dereq_,module,exports){
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString = objectProto.toString;
-
-/**
- * Converts `value` to a string using `Object.prototype.toString`.
- *
- * @private
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- */
-function objectToString(value) {
-  return nativeObjectToString.call(value);
-}
-
-module.exports = objectToString;
-
-},{}],190:[function(_dereq_,module,exports){
-/**
- * Creates a unary function that invokes `func` with its argument transformed.
- *
- * @private
- * @param {Function} func The function to wrap.
- * @param {Function} transform The argument transform.
- * @returns {Function} Returns the new function.
- */
-function overArg(func, transform) {
-  return function(arg) {
-    return func(transform(arg));
-  };
-}
-
-module.exports = overArg;
-
-},{}],191:[function(_dereq_,module,exports){
-var apply = _dereq_('./_apply');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
-
-/**
- * A specialized version of `baseRest` which transforms the rest array.
- *
- * @private
- * @param {Function} func The function to apply a rest parameter to.
- * @param {number} [start=func.length-1] The start position of the rest parameter.
- * @param {Function} transform The rest array transform.
- * @returns {Function} Returns the new function.
- */
-function overRest(func, start, transform) {
-  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
-  return function() {
-    var args = arguments,
-        index = -1,
-        length = nativeMax(args.length - start, 0),
-        array = Array(length);
-
-    while (++index < length) {
-      array[index] = args[start + index];
-    }
-    index = -1;
-    var otherArgs = Array(start + 1);
-    while (++index < start) {
-      otherArgs[index] = args[index];
-    }
-    otherArgs[start] = transform(array);
-    return apply(func, this, otherArgs);
-  };
-}
-
-module.exports = overRest;
-
-},{"./_apply":53}],192:[function(_dereq_,module,exports){
-/** Used to match template delimiters. */
-var reEscape = /<%-([\s\S]+?)%>/g;
-
-module.exports = reEscape;
-
-},{}],193:[function(_dereq_,module,exports){
-/** Used to match template delimiters. */
-var reEvaluate = /<%([\s\S]+?)%>/g;
-
-module.exports = reEvaluate;
-
-},{}],194:[function(_dereq_,module,exports){
-/** Used to match template delimiters. */
-var reInterpolate = /<%=([\s\S]+?)%>/g;
-
-module.exports = reInterpolate;
-
-},{}],195:[function(_dereq_,module,exports){
-var freeGlobal = _dereq_('./_freeGlobal');
-
-/** Detect free variable `self`. */
-var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-/** Used as a reference to the global object. */
-var root = freeGlobal || freeSelf || Function('return this')();
-
-module.exports = root;
-
-},{"./_freeGlobal":142}],196:[function(_dereq_,module,exports){
+},{}],357:[function(_dereq_,module,exports){
+arguments[4][144][0].apply(exports,arguments)
+},{"./memoize":420,"dup":144}],358:[function(_dereq_,module,exports){
+arguments[4][145][0].apply(exports,arguments)
+},{"./_getNative":319,"dup":145}],359:[function(_dereq_,module,exports){
+arguments[4][146][0].apply(exports,arguments)
+},{"./_overArg":363,"dup":146}],360:[function(_dereq_,module,exports){
+arguments[4][147][0].apply(exports,arguments)
+},{"dup":147}],361:[function(_dereq_,module,exports){
+arguments[4][148][0].apply(exports,arguments)
+},{"./_freeGlobal":314,"dup":148}],362:[function(_dereq_,module,exports){
+arguments[4][149][0].apply(exports,arguments)
+},{"dup":149}],363:[function(_dereq_,module,exports){
+arguments[4][150][0].apply(exports,arguments)
+},{"dup":150}],364:[function(_dereq_,module,exports){
+arguments[4][151][0].apply(exports,arguments)
+},{"./_apply":224,"dup":151}],365:[function(_dereq_,module,exports){
+arguments[4][155][0].apply(exports,arguments)
+},{"./_freeGlobal":314,"dup":155}],366:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -56587,7 +59178,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],197:[function(_dereq_,module,exports){
+},{}],367:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -56603,396 +59194,58 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],198:[function(_dereq_,module,exports){
+},{}],368:[function(_dereq_,module,exports){
+arguments[4][156][0].apply(exports,arguments)
+},{"dup":156}],369:[function(_dereq_,module,exports){
+arguments[4][157][0].apply(exports,arguments)
+},{"./_baseSetToString":280,"./_shortOut":370,"dup":157}],370:[function(_dereq_,module,exports){
+arguments[4][158][0].apply(exports,arguments)
+},{"dup":158}],371:[function(_dereq_,module,exports){
+arguments[4][159][0].apply(exports,arguments)
+},{"./_ListCache":212,"dup":159}],372:[function(_dereq_,module,exports){
+arguments[4][160][0].apply(exports,arguments)
+},{"dup":160}],373:[function(_dereq_,module,exports){
+arguments[4][161][0].apply(exports,arguments)
+},{"dup":161}],374:[function(_dereq_,module,exports){
+arguments[4][162][0].apply(exports,arguments)
+},{"dup":162}],375:[function(_dereq_,module,exports){
+arguments[4][163][0].apply(exports,arguments)
+},{"./_ListCache":212,"./_Map":213,"./_MapCache":214,"dup":163}],376:[function(_dereq_,module,exports){
 /**
- * Converts `set` to an array of its values.
+ * A specialized version of `_.indexOf` which performs strict equality
+ * comparisons of values, i.e. `===`.
  *
  * @private
- * @param {Object} set The set to convert.
- * @returns {Array} Returns the values.
+ * @param {Array} array The array to inspect.
+ * @param {*} value The value to search for.
+ * @param {number} fromIndex The index to search from.
+ * @returns {number} Returns the index of the matched value, else `-1`.
  */
-function setToArray(set) {
-  var index = -1,
-      result = Array(set.size);
+function strictIndexOf(array, value, fromIndex) {
+  var index = fromIndex - 1,
+      length = array.length;
 
-  set.forEach(function(value) {
-    result[++index] = value;
-  });
-  return result;
-}
-
-module.exports = setToArray;
-
-},{}],199:[function(_dereq_,module,exports){
-var baseSetToString = _dereq_('./_baseSetToString'),
-    shortOut = _dereq_('./_shortOut');
-
-/**
- * Sets the `toString` method of `func` to return `string`.
- *
- * @private
- * @param {Function} func The function to modify.
- * @param {Function} string The `toString` result.
- * @returns {Function} Returns `func`.
- */
-var setToString = shortOut(baseSetToString);
-
-module.exports = setToString;
-
-},{"./_baseSetToString":103,"./_shortOut":200}],200:[function(_dereq_,module,exports){
-/** Used to detect hot functions by number of calls within a span of milliseconds. */
-var HOT_COUNT = 800,
-    HOT_SPAN = 16;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeNow = Date.now;
-
-/**
- * Creates a function that'll short out and invoke `identity` instead
- * of `func` when it's called `HOT_COUNT` or more times in `HOT_SPAN`
- * milliseconds.
- *
- * @private
- * @param {Function} func The function to restrict.
- * @returns {Function} Returns the new shortable function.
- */
-function shortOut(func) {
-  var count = 0,
-      lastCalled = 0;
-
-  return function() {
-    var stamp = nativeNow(),
-        remaining = HOT_SPAN - (stamp - lastCalled);
-
-    lastCalled = stamp;
-    if (remaining > 0) {
-      if (++count >= HOT_COUNT) {
-        return arguments[0];
-      }
-    } else {
-      count = 0;
+  while (++index < length) {
+    if (array[index] === value) {
+      return index;
     }
-    return func.apply(undefined, arguments);
-  };
-}
-
-module.exports = shortOut;
-
-},{}],201:[function(_dereq_,module,exports){
-var ListCache = _dereq_('./_ListCache');
-
-/**
- * Removes all key-value entries from the stack.
- *
- * @private
- * @name clear
- * @memberOf Stack
- */
-function stackClear() {
-  this.__data__ = new ListCache;
-  this.size = 0;
-}
-
-module.exports = stackClear;
-
-},{"./_ListCache":41}],202:[function(_dereq_,module,exports){
-/**
- * Removes `key` and its value from the stack.
- *
- * @private
- * @name delete
- * @memberOf Stack
- * @param {string} key The key of the value to remove.
- * @returns {boolean} Returns `true` if the entry was removed, else `false`.
- */
-function stackDelete(key) {
-  var data = this.__data__,
-      result = data['delete'](key);
-
-  this.size = data.size;
-  return result;
-}
-
-module.exports = stackDelete;
-
-},{}],203:[function(_dereq_,module,exports){
-/**
- * Gets the stack value for `key`.
- *
- * @private
- * @name get
- * @memberOf Stack
- * @param {string} key The key of the value to get.
- * @returns {*} Returns the entry value.
- */
-function stackGet(key) {
-  return this.__data__.get(key);
-}
-
-module.exports = stackGet;
-
-},{}],204:[function(_dereq_,module,exports){
-/**
- * Checks if a stack value for `key` exists.
- *
- * @private
- * @name has
- * @memberOf Stack
- * @param {string} key The key of the entry to check.
- * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
- */
-function stackHas(key) {
-  return this.__data__.has(key);
-}
-
-module.exports = stackHas;
-
-},{}],205:[function(_dereq_,module,exports){
-var ListCache = _dereq_('./_ListCache'),
-    Map = _dereq_('./_Map'),
-    MapCache = _dereq_('./_MapCache');
-
-/** Used as the size to enable large array optimizations. */
-var LARGE_ARRAY_SIZE = 200;
-
-/**
- * Sets the stack `key` to `value`.
- *
- * @private
- * @name set
- * @memberOf Stack
- * @param {string} key The key of the value to set.
- * @param {*} value The value to set.
- * @returns {Object} Returns the stack cache instance.
- */
-function stackSet(key, value) {
-  var data = this.__data__;
-  if (data instanceof ListCache) {
-    var pairs = data.__data__;
-    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
-      pairs.push([key, value]);
-      this.size = ++data.size;
-      return this;
-    }
-    data = this.__data__ = new MapCache(pairs);
   }
-  data.set(key, value);
-  this.size = data.size;
-  return this;
+  return -1;
 }
 
-module.exports = stackSet;
+module.exports = strictIndexOf;
 
-},{"./_ListCache":41,"./_Map":42,"./_MapCache":43}],206:[function(_dereq_,module,exports){
-var asciiSize = _dereq_('./_asciiSize'),
-    hasUnicode = _dereq_('./_hasUnicode'),
-    unicodeSize = _dereq_('./_unicodeSize');
-
-/**
- * Gets the number of symbols in `string`.
- *
- * @private
- * @param {string} string The string to inspect.
- * @returns {number} Returns the string size.
- */
-function stringSize(string) {
-  return hasUnicode(string)
-    ? unicodeSize(string)
-    : asciiSize(string);
-}
-
-module.exports = stringSize;
-
-},{"./_asciiSize":62,"./_hasUnicode":155,"./_unicodeSize":211}],207:[function(_dereq_,module,exports){
-var asciiToArray = _dereq_('./_asciiToArray'),
-    hasUnicode = _dereq_('./_hasUnicode'),
-    unicodeToArray = _dereq_('./_unicodeToArray');
-
-/**
- * Converts `string` to an array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the converted array.
- */
-function stringToArray(string) {
-  return hasUnicode(string)
-    ? unicodeToArray(string)
-    : asciiToArray(string);
-}
-
-module.exports = stringToArray;
-
-},{"./_asciiToArray":63,"./_hasUnicode":155,"./_unicodeToArray":212}],208:[function(_dereq_,module,exports){
-var memoizeCapped = _dereq_('./_memoizeCapped');
-
-/** Used to match property names within property paths. */
-var reLeadingDot = /^\./,
-    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
-
-/** Used to match backslashes in property paths. */
-var reEscapeChar = /\\(\\)?/g;
-
-/**
- * Converts `string` to a property path array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the property path array.
- */
-var stringToPath = memoizeCapped(function(string) {
-  var result = [];
-  if (reLeadingDot.test(string)) {
-    result.push('');
-  }
-  string.replace(rePropName, function(match, number, quote, string) {
-    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
-  });
-  return result;
-});
-
-module.exports = stringToPath;
-
-},{"./_memoizeCapped":184}],209:[function(_dereq_,module,exports){
-var isSymbol = _dereq_('./isSymbol');
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
-
-/**
- * Converts `value` to a string key if it's not a string or symbol.
- *
- * @private
- * @param {*} value The value to inspect.
- * @returns {string|symbol} Returns the key.
- */
-function toKey(value) {
-  if (typeof value == 'string' || isSymbol(value)) {
-    return value;
-  }
-  var result = (value + '');
-  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
-}
-
-module.exports = toKey;
-
-},{"./isSymbol":251}],210:[function(_dereq_,module,exports){
-/** Used for built-in method references. */
-var funcProto = Function.prototype;
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/**
- * Converts `func` to its source code.
- *
- * @private
- * @param {Function} func The function to convert.
- * @returns {string} Returns the source code.
- */
-function toSource(func) {
-  if (func != null) {
-    try {
-      return funcToString.call(func);
-    } catch (e) {}
-    try {
-      return (func + '');
-    } catch (e) {}
-  }
-  return '';
-}
-
-module.exports = toSource;
-
-},{}],211:[function(_dereq_,module,exports){
-/** Used to compose unicode character classes. */
-var rsAstralRange = '\\ud800-\\udfff',
-    rsComboMarksRange = '\\u0300-\\u036f',
-    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
-    rsVarRange = '\\ufe0e\\ufe0f';
-
-/** Used to compose unicode capture groups. */
-var rsAstral = '[' + rsAstralRange + ']',
-    rsCombo = '[' + rsComboRange + ']',
-    rsFitz = '\\ud83c[\\udffb-\\udfff]',
-    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
-    rsNonAstral = '[^' + rsAstralRange + ']',
-    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-    rsZWJ = '\\u200d';
-
-/** Used to compose unicode regexes. */
-var reOptMod = rsModifier + '?',
-    rsOptVar = '[' + rsVarRange + ']?',
-    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
-    rsSeq = rsOptVar + reOptMod + rsOptJoin,
-    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
-
-/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
-
-/**
- * Gets the size of a Unicode `string`.
- *
- * @private
- * @param {string} string The string inspect.
- * @returns {number} Returns the string size.
- */
-function unicodeSize(string) {
-  var result = reUnicode.lastIndex = 0;
-  while (reUnicode.test(string)) {
-    ++result;
-  }
-  return result;
-}
-
-module.exports = unicodeSize;
-
-},{}],212:[function(_dereq_,module,exports){
-/** Used to compose unicode character classes. */
-var rsAstralRange = '\\ud800-\\udfff',
-    rsComboMarksRange = '\\u0300-\\u036f',
-    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
-    rsVarRange = '\\ufe0e\\ufe0f';
-
-/** Used to compose unicode capture groups. */
-var rsAstral = '[' + rsAstralRange + ']',
-    rsCombo = '[' + rsComboRange + ']',
-    rsFitz = '\\ud83c[\\udffb-\\udfff]',
-    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
-    rsNonAstral = '[^' + rsAstralRange + ']',
-    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-    rsZWJ = '\\u200d';
-
-/** Used to compose unicode regexes. */
-var reOptMod = rsModifier + '?',
-    rsOptVar = '[' + rsVarRange + ']?',
-    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
-    rsSeq = rsOptVar + reOptMod + rsOptJoin,
-    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
-
-/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
-
-/**
- * Converts a Unicode `string` to an array.
- *
- * @private
- * @param {string} string The string to convert.
- * @returns {Array} Returns the converted array.
- */
-function unicodeToArray(string) {
-  return string.match(reUnicode) || [];
-}
-
-module.exports = unicodeToArray;
-
-},{}],213:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
+arguments[4][165][0].apply(exports,arguments)
+},{"./_asciiToArray":235,"./_hasUnicode":327,"./_unicodeToArray":381,"dup":165}],378:[function(_dereq_,module,exports){
+arguments[4][166][0].apply(exports,arguments)
+},{"./_memoizeCapped":357,"dup":166}],379:[function(_dereq_,module,exports){
+arguments[4][167][0].apply(exports,arguments)
+},{"./isSymbol":414,"dup":167}],380:[function(_dereq_,module,exports){
+arguments[4][168][0].apply(exports,arguments)
+},{"dup":168}],381:[function(_dereq_,module,exports){
+arguments[4][170][0].apply(exports,arguments)
+},{"dup":170}],382:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -57063,7 +59316,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],214:[function(_dereq_,module,exports){
+},{}],383:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -57123,84 +59376,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":66,"./_copyObject":122,"./_createAssigner":127,"./_isPrototype":170,"./isArrayLike":235,"./keys":253}],215:[function(_dereq_,module,exports){
-var copyObject = _dereq_('./_copyObject'),
-    createAssigner = _dereq_('./_createAssigner'),
-    keysIn = _dereq_('./keysIn');
-
-/**
- * This method is like `_.assignIn` except that it accepts `customizer`
- * which is invoked to produce the assigned values. If `customizer` returns
- * `undefined`, assignment is handled by the method instead. The `customizer`
- * is invoked with five arguments: (objValue, srcValue, key, object, source).
- *
- * **Note:** This method mutates `object`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @alias extendWith
- * @category Object
- * @param {Object} object The destination object.
- * @param {...Object} sources The source objects.
- * @param {Function} [customizer] The function to customize assigned values.
- * @returns {Object} Returns `object`.
- * @see _.assignWith
- * @example
- *
- * function customizer(objValue, srcValue) {
- *   return _.isUndefined(objValue) ? srcValue : objValue;
- * }
- *
- * var defaults = _.partialRight(_.assignInWith, customizer);
- *
- * defaults({ 'a': 1 }, { 'b': 2 }, { 'a': 3 });
- * // => { 'a': 1, 'b': 2 }
- */
-var assignInWith = createAssigner(function(object, source, srcIndex, customizer) {
-  copyObject(source, keysIn(source), object, customizer);
-});
-
-module.exports = assignInWith;
-
-},{"./_copyObject":122,"./_createAssigner":127,"./keysIn":254}],216:[function(_dereq_,module,exports){
-var apply = _dereq_('./_apply'),
-    baseRest = _dereq_('./_baseRest'),
-    isError = _dereq_('./isError');
-
-/**
- * Attempts to invoke `func`, returning either the result or the caught error
- * object. Any additional arguments are provided to `func` when it's invoked.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Util
- * @param {Function} func The function to attempt.
- * @param {...*} [args] The arguments to invoke `func` with.
- * @returns {*} Returns the `func` result or error object.
- * @example
- *
- * // Avoid throwing errors for invalid selectors.
- * var elements = _.attempt(function(selector) {
- *   return document.querySelectorAll(selector);
- * }, '>_>');
- *
- * if (_.isError(elements)) {
- *   elements = [];
- * }
- */
-var attempt = baseRest(function(func, args) {
-  try {
-    return apply(func, undefined, args);
-  } catch (e) {
-    return isError(e) ? e : new Error(e);
-  }
-});
-
-module.exports = attempt;
-
-},{"./_apply":53,"./_baseRest":101,"./isError":240}],217:[function(_dereq_,module,exports){
+},{"./_assignValue":238,"./_copyObject":298,"./_createAssigner":303,"./_isPrototype":343,"./isArrayLike":401,"./keys":416}],384:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -57231,7 +59407,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":131,"./capitalize":218}],218:[function(_dereq_,module,exports){
+},{"./_createCompounder":307,"./capitalize":385}],385:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -57256,97 +59432,9 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":275,"./upperFirst":276}],219:[function(_dereq_,module,exports){
-var baseSlice = _dereq_('./_baseSlice'),
-    isIterateeCall = _dereq_('./_isIterateeCall'),
-    toInteger = _dereq_('./toInteger');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil,
-    nativeMax = Math.max;
-
-/**
- * Creates an array of elements split into groups the length of `size`.
- * If `array` can't be split evenly, the final chunk will be the remaining
- * elements.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Array
- * @param {Array} array The array to process.
- * @param {number} [size=1] The length of each chunk
- * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
- * @returns {Array} Returns the new array of chunks.
- * @example
- *
- * _.chunk(['a', 'b', 'c', 'd'], 2);
- * // => [['a', 'b'], ['c', 'd']]
- *
- * _.chunk(['a', 'b', 'c', 'd'], 3);
- * // => [['a', 'b', 'c'], ['d']]
- */
-function chunk(array, size, guard) {
-  if ((guard ? isIterateeCall(array, size, guard) : size === undefined)) {
-    size = 1;
-  } else {
-    size = nativeMax(toInteger(size), 0);
-  }
-  var length = array == null ? 0 : array.length;
-  if (!length || size < 1) {
-    return [];
-  }
-  var index = 0,
-      resIndex = 0,
-      result = Array(nativeCeil(length / size));
-
-  while (index < length) {
-    result[resIndex++] = baseSlice(array, index, (index += size));
-  }
-  return result;
-}
-
-module.exports = chunk;
-
-},{"./_baseSlice":104,"./_isIterateeCall":166,"./toInteger":272}],220:[function(_dereq_,module,exports){
-var baseClone = _dereq_('./_baseClone');
-
-/** Used to compose bitmasks for cloning. */
-var CLONE_SYMBOLS_FLAG = 4;
-
-/**
- * Creates a shallow clone of `value`.
- *
- * **Note:** This method is loosely based on the
- * [structured clone algorithm](https://mdn.io/Structured_clone_algorithm)
- * and supports cloning arrays, array buffers, booleans, date objects, maps,
- * numbers, `Object` objects, regexes, sets, strings, symbols, and typed
- * arrays. The own enumerable properties of `arguments` objects are cloned
- * as plain objects. An empty object is returned for uncloneable values such
- * as error objects, functions, DOM nodes, and WeakMaps.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to clone.
- * @returns {*} Returns the cloned value.
- * @see _.cloneDeep
- * @example
- *
- * var objects = [{ 'a': 1 }, { 'b': 2 }];
- *
- * var shallow = _.clone(objects);
- * console.log(shallow[0] === objects[0]);
- * // => true
- */
-function clone(value) {
-  return baseClone(value, CLONE_SYMBOLS_FLAG);
-}
-
-module.exports = clone;
-
-},{"./_baseClone":72}],221:[function(_dereq_,module,exports){
+},{"./toString":434,"./upperFirst":435}],386:[function(_dereq_,module,exports){
+arguments[4][174][0].apply(exports,arguments)
+},{"./_baseClone":244,"dup":174}],387:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -57377,35 +59465,9 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":72}],222:[function(_dereq_,module,exports){
-/**
- * Creates a function that returns `value`.
- *
- * @static
- * @memberOf _
- * @since 2.4.0
- * @category Util
- * @param {*} value The value to return from the new function.
- * @returns {Function} Returns the new constant function.
- * @example
- *
- * var objects = _.times(2, _.constant({ 'a': 1 }));
- *
- * console.log(objects);
- * // => [{ 'a': 1 }, { 'a': 1 }]
- *
- * console.log(objects[0] === objects[1]);
- * // => true
- */
-function constant(value) {
-  return function() {
-    return value;
-  };
-}
-
-module.exports = constant;
-
-},{}],223:[function(_dereq_,module,exports){
+},{"./_baseClone":244}],388:[function(_dereq_,module,exports){
+arguments[4][175][0].apply(exports,arguments)
+},{"dup":175}],389:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -57452,94 +59514,47 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":135,"./toString":275}],224:[function(_dereq_,module,exports){
+},{"./_deburrLetter":309,"./toString":434}],390:[function(_dereq_,module,exports){
+var baseDifference = _dereq_('./_baseDifference'),
+    baseFlatten = _dereq_('./_baseFlatten'),
+    baseRest = _dereq_('./_baseRest'),
+    isArrayLikeObject = _dereq_('./isArrayLikeObject');
+
+/**
+ * Creates an array of `array` values not included in the other given arrays
+ * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * for equality comparisons. The order and references of result values are
+ * determined by the first array.
+ *
+ * **Note:** Unlike `_.pullAll`, this method returns a new array.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Array
+ * @param {Array} array The array to inspect.
+ * @param {...Array} [values] The values to exclude.
+ * @returns {Array} Returns the new array of filtered values.
+ * @see _.without, _.xor
+ * @example
+ *
+ * _.difference([2, 1], [2, 3]);
+ * // => [1]
+ */
+var difference = baseRest(function(array, values) {
+  return isArrayLikeObject(array)
+    ? baseDifference(array, baseFlatten(values, 1, isArrayLikeObject, true))
+    : [];
+});
+
+module.exports = difference;
+
+},{"./_baseDifference":246,"./_baseFlatten":250,"./_baseRest":278,"./isArrayLikeObject":402}],391:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":228}],225:[function(_dereq_,module,exports){
-/**
- * Performs a
- * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
- * comparison between two values to determine if they are equivalent.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to compare.
- * @param {*} other The other value to compare.
- * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
- * @example
- *
- * var object = { 'a': 1 };
- * var other = { 'a': 1 };
- *
- * _.eq(object, object);
- * // => true
- *
- * _.eq(object, other);
- * // => false
- *
- * _.eq('a', 'a');
- * // => true
- *
- * _.eq('a', Object('a'));
- * // => false
- *
- * _.eq(NaN, NaN);
- * // => true
- */
-function eq(value, other) {
-  return value === other || (value !== value && other !== other);
-}
-
-module.exports = eq;
-
-},{}],226:[function(_dereq_,module,exports){
-var escapeHtmlChar = _dereq_('./_escapeHtmlChar'),
-    toString = _dereq_('./toString');
-
-/** Used to match HTML entities and HTML characters. */
-var reUnescapedHtml = /[&<>"']/g,
-    reHasUnescapedHtml = RegExp(reUnescapedHtml.source);
-
-/**
- * Converts the characters "&", "<", ">", '"', and "'" in `string` to their
- * corresponding HTML entities.
- *
- * **Note:** No other characters are escaped. To escape additional
- * characters use a third-party library like [_he_](https://mths.be/he).
- *
- * Though the ">" character is escaped for symmetry, characters like
- * ">" and "/" don't need escaping in HTML and have no special meaning
- * unless they're part of a tag or unquoted attribute value. See
- * [Mathias Bynens's article](https://mathiasbynens.be/notes/ambiguous-ampersands)
- * (under "semi-related fun fact") for more details.
- *
- * When working with HTML you should always
- * [quote attribute values](http://wonko.com/post/html-escaping) to reduce
- * XSS vectors.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category String
- * @param {string} [string=''] The string to escape.
- * @returns {string} Returns the escaped string.
- * @example
- *
- * _.escape('fred, barney, & pebbles');
- * // => 'fred, barney, &amp; pebbles'
- */
-function escape(string) {
-  string = toString(string);
-  return (string && reHasUnescapedHtml.test(string))
-    ? string.replace(reUnescapedHtml, escapeHtmlChar)
-    : string;
-}
-
-module.exports = escape;
-
-},{"./_escapeHtmlChar":140,"./toString":275}],227:[function(_dereq_,module,exports){
+},{"./forEach":394}],392:[function(_dereq_,module,exports){
+arguments[4][176][0].apply(exports,arguments)
+},{"dup":176}],393:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -57589,7 +59604,7 @@ function filter(collection, predicate) {
 
 module.exports = filter;
 
-},{"./_arrayFilter":56,"./_baseFilter":75,"./_baseIteratee":88,"./isArray":234}],228:[function(_dereq_,module,exports){
+},{"./_arrayFilter":227,"./_baseFilter":248,"./_baseIteratee":265,"./isArray":400}],394:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -57632,42 +59647,9 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":55,"./_baseEach":74,"./_castFunction":110,"./isArray":234}],229:[function(_dereq_,module,exports){
-var baseGet = _dereq_('./_baseGet');
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-module.exports = get;
-
-},{"./_baseGet":78}],230:[function(_dereq_,module,exports){
+},{"./_arrayEach":226,"./_baseEach":247,"./_castFunction":286,"./isArray":400}],395:[function(_dereq_,module,exports){
+arguments[4][178][0].apply(exports,arguments)
+},{"./_baseGet":253,"dup":178}],396:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -57710,7 +59692,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":71,"./_createAggregator":126}],231:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":243,"./_createAggregator":302}],397:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -57746,131 +59728,15 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":81,"./_hasPath":154}],232:[function(_dereq_,module,exports){
-/**
- * This method returns the first argument it receives.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Util
- * @param {*} value Any value.
- * @returns {*} Returns `value`.
- * @example
- *
- * var object = { 'a': 1 };
- *
- * console.log(_.identity(object) === object);
- * // => true
- */
-function identity(value) {
-  return value;
-}
-
-module.exports = identity;
-
-},{}],233:[function(_dereq_,module,exports){
-var baseIsArguments = _dereq_('./_baseIsArguments'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/** Built-in value references. */
-var propertyIsEnumerable = objectProto.propertyIsEnumerable;
-
-/**
- * Checks if `value` is likely an `arguments` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an `arguments` object,
- *  else `false`.
- * @example
- *
- * _.isArguments(function() { return arguments; }());
- * // => true
- *
- * _.isArguments([1, 2, 3]);
- * // => false
- */
-var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
-  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
-    !propertyIsEnumerable.call(value, 'callee');
-};
-
-module.exports = isArguments;
-
-},{"./_baseIsArguments":82,"./isObjectLike":248}],234:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is classified as an `Array` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an array, else `false`.
- * @example
- *
- * _.isArray([1, 2, 3]);
- * // => true
- *
- * _.isArray(document.body.children);
- * // => false
- *
- * _.isArray('abc');
- * // => false
- *
- * _.isArray(_.noop);
- * // => false
- */
-var isArray = Array.isArray;
-
-module.exports = isArray;
-
-},{}],235:[function(_dereq_,module,exports){
-var isFunction = _dereq_('./isFunction'),
-    isLength = _dereq_('./isLength');
-
-/**
- * Checks if `value` is array-like. A value is considered array-like if it's
- * not a function and has a `value.length` that's an integer greater than or
- * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- * @example
- *
- * _.isArrayLike([1, 2, 3]);
- * // => true
- *
- * _.isArrayLike(document.body.children);
- * // => true
- *
- * _.isArrayLike('abc');
- * // => true
- *
- * _.isArrayLike(_.noop);
- * // => false
- */
-function isArrayLike(value) {
-  return value != null && isLength(value.length) && !isFunction(value);
-}
-
-module.exports = isArrayLike;
-
-},{"./isFunction":242,"./isLength":243}],236:[function(_dereq_,module,exports){
+},{"./_baseHasIn":256,"./_hasPath":326}],398:[function(_dereq_,module,exports){
+arguments[4][179][0].apply(exports,arguments)
+},{"dup":179}],399:[function(_dereq_,module,exports){
+arguments[4][180][0].apply(exports,arguments)
+},{"./_baseIsArguments":258,"./isObjectLike":412,"dup":180}],400:[function(_dereq_,module,exports){
+arguments[4][181][0].apply(exports,arguments)
+},{"dup":181}],401:[function(_dereq_,module,exports){
+arguments[4][182][0].apply(exports,arguments)
+},{"./isFunction":407,"./isLength":408,"dup":182}],402:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -57905,47 +59771,9 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":235,"./isObjectLike":248}],237:[function(_dereq_,module,exports){
-var root = _dereq_('./_root'),
-    stubFalse = _dereq_('./stubFalse');
-
-/** Detect free variable `exports`. */
-var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
-
-/** Detect free variable `module`. */
-var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
-
-/** Detect the popular CommonJS extension `module.exports`. */
-var moduleExports = freeModule && freeModule.exports === freeExports;
-
-/** Built-in value references. */
-var Buffer = moduleExports ? root.Buffer : undefined;
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
-
-/**
- * Checks if `value` is a buffer.
- *
- * @static
- * @memberOf _
- * @since 4.3.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
- * @example
- *
- * _.isBuffer(new Buffer(2));
- * // => true
- *
- * _.isBuffer(new Uint8Array(2));
- * // => false
- */
-var isBuffer = nativeIsBuffer || stubFalse;
-
-module.exports = isBuffer;
-
-},{"./_root":195,"./stubFalse":268}],238:[function(_dereq_,module,exports){
+},{"./isArrayLike":401,"./isObjectLike":412}],403:[function(_dereq_,module,exports){
+arguments[4][183][0].apply(exports,arguments)
+},{"./_root":365,"./stubFalse":430,"dup":183}],404:[function(_dereq_,module,exports){
 var baseKeys = _dereq_('./_baseKeys'),
     getTag = _dereq_('./_getTag'),
     isArguments = _dereq_('./isArguments'),
@@ -58024,7 +59852,7 @@ function isEmpty(value) {
 
 module.exports = isEmpty;
 
-},{"./_baseKeys":89,"./_getTag":152,"./_isPrototype":170,"./isArguments":233,"./isArray":234,"./isArrayLike":235,"./isBuffer":237,"./isTypedArray":252}],239:[function(_dereq_,module,exports){
+},{"./_baseKeys":266,"./_getTag":324,"./_isPrototype":343,"./isArguments":399,"./isArray":400,"./isArrayLike":401,"./isBuffer":403,"./isTypedArray":415}],405:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual');
 
 /**
@@ -58061,45 +59889,7 @@ function isEqual(value, other) {
 
 module.exports = isEqual;
 
-},{"./_baseIsEqual":83}],240:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObjectLike = _dereq_('./isObjectLike'),
-    isPlainObject = _dereq_('./isPlainObject');
-
-/** `Object#toString` result references. */
-var domExcTag = '[object DOMException]',
-    errorTag = '[object Error]';
-
-/**
- * Checks if `value` is an `Error`, `EvalError`, `RangeError`, `ReferenceError`,
- * `SyntaxError`, `TypeError`, or `URIError` object.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an error object, else `false`.
- * @example
- *
- * _.isError(new Error);
- * // => true
- *
- * _.isError(Error);
- * // => false
- */
-function isError(value) {
-  if (!isObjectLike(value)) {
-    return false;
-  }
-  var tag = baseGetTag(value);
-  return tag == errorTag || tag == domExcTag ||
-    (typeof value.message == 'string' && typeof value.name == 'string' && !isPlainObject(value));
-}
-
-module.exports = isError;
-
-},{"./_baseGetTag":80,"./isObjectLike":248,"./isPlainObject":249}],241:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":259}],406:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -58137,458 +59927,29 @@ function isFinite(value) {
 
 module.exports = isFinite;
 
-},{"./_root":195}],242:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObject = _dereq_('./isObject');
-
-/** `Object#toString` result references. */
-var asyncTag = '[object AsyncFunction]',
-    funcTag = '[object Function]',
-    genTag = '[object GeneratorFunction]',
-    proxyTag = '[object Proxy]';
-
-/**
- * Checks if `value` is classified as a `Function` object.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a function, else `false`.
- * @example
- *
- * _.isFunction(_);
- * // => true
- *
- * _.isFunction(/abc/);
- * // => false
- */
-function isFunction(value) {
-  if (!isObject(value)) {
-    return false;
-  }
-  // The use of `Object#toString` avoids issues with the `typeof` operator
-  // in Safari 9 which returns 'object' for typed arrays and other constructors.
-  var tag = baseGetTag(value);
-  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
-}
-
-module.exports = isFunction;
-
-},{"./_baseGetTag":80,"./isObject":247}],243:[function(_dereq_,module,exports){
-/** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
-
-/**
- * Checks if `value` is a valid array-like length.
- *
- * **Note:** This method is loosely based on
- * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
- * @example
- *
- * _.isLength(3);
- * // => true
- *
- * _.isLength(Number.MIN_VALUE);
- * // => false
- *
- * _.isLength(Infinity);
- * // => false
- *
- * _.isLength('3');
- * // => false
- */
-function isLength(value) {
-  return typeof value == 'number' &&
-    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-}
-
-module.exports = isLength;
-
-},{}],244:[function(_dereq_,module,exports){
-var isNumber = _dereq_('./isNumber');
-
-/**
- * Checks if `value` is `NaN`.
- *
- * **Note:** This method is based on
- * [`Number.isNaN`](https://mdn.io/Number/isNaN) and is not the same as
- * global [`isNaN`](https://mdn.io/isNaN) which returns `true` for
- * `undefined` and other non-number values.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
- * @example
- *
- * _.isNaN(NaN);
- * // => true
- *
- * _.isNaN(new Number(NaN));
- * // => true
- *
- * isNaN(undefined);
- * // => true
- *
- * _.isNaN(undefined);
- * // => false
- */
-function isNaN(value) {
-  // An `NaN` primitive is the only value that is not equal to itself.
-  // Perform the `toStringTag` check first to avoid errors with some
-  // ActiveX objects in IE.
-  return isNumber(value) && value != +value;
-}
-
-module.exports = isNaN;
-
-},{"./isNumber":246}],245:[function(_dereq_,module,exports){
-arguments[4][244][0].apply(exports,arguments)
-},{"./isNumber":246,"dup":244}],246:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var numberTag = '[object Number]';
-
-/**
- * Checks if `value` is classified as a `Number` primitive or object.
- *
- * **Note:** To exclude `Infinity`, `-Infinity`, and `NaN`, which are
- * classified as numbers, use the `_.isFinite` method.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a number, else `false`.
- * @example
- *
- * _.isNumber(3);
- * // => true
- *
- * _.isNumber(Number.MIN_VALUE);
- * // => true
- *
- * _.isNumber(Infinity);
- * // => true
- *
- * _.isNumber('3');
- * // => false
- */
-function isNumber(value) {
-  return typeof value == 'number' ||
-    (isObjectLike(value) && baseGetTag(value) == numberTag);
-}
-
-module.exports = isNumber;
-
-},{"./_baseGetTag":80,"./isObjectLike":248}],247:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is the
- * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
- * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is an object, else `false`.
- * @example
- *
- * _.isObject({});
- * // => true
- *
- * _.isObject([1, 2, 3]);
- * // => true
- *
- * _.isObject(_.noop);
- * // => true
- *
- * _.isObject(null);
- * // => false
- */
-function isObject(value) {
-  var type = typeof value;
-  return value != null && (type == 'object' || type == 'function');
-}
-
-module.exports = isObject;
-
-},{}],248:[function(_dereq_,module,exports){
-/**
- * Checks if `value` is object-like. A value is object-like if it's not `null`
- * and has a `typeof` result of "object".
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- * @example
- *
- * _.isObjectLike({});
- * // => true
- *
- * _.isObjectLike([1, 2, 3]);
- * // => true
- *
- * _.isObjectLike(_.noop);
- * // => false
- *
- * _.isObjectLike(null);
- * // => false
- */
-function isObjectLike(value) {
-  return value != null && typeof value == 'object';
-}
-
-module.exports = isObjectLike;
-
-},{}],249:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    getPrototype = _dereq_('./_getPrototype'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var objectTag = '[object Object]';
-
-/** Used for built-in method references. */
-var funcProto = Function.prototype,
-    objectProto = Object.prototype;
-
-/** Used to resolve the decompiled source of functions. */
-var funcToString = funcProto.toString;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/** Used to infer the `Object` constructor. */
-var objectCtorString = funcToString.call(Object);
-
-/**
- * Checks if `value` is a plain object, that is, an object created by the
- * `Object` constructor or one with a `[[Prototype]]` of `null`.
- *
- * @static
- * @memberOf _
- * @since 0.8.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- * }
- *
- * _.isPlainObject(new Foo);
- * // => false
- *
- * _.isPlainObject([1, 2, 3]);
- * // => false
- *
- * _.isPlainObject({ 'x': 0, 'y': 0 });
- * // => true
- *
- * _.isPlainObject(Object.create(null));
- * // => true
- */
-function isPlainObject(value) {
-  if (!isObjectLike(value) || baseGetTag(value) != objectTag) {
-    return false;
-  }
-  var proto = getPrototype(value);
-  if (proto === null) {
-    return true;
-  }
-  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
-  return typeof Ctor == 'function' && Ctor instanceof Ctor &&
-    funcToString.call(Ctor) == objectCtorString;
-}
-
-module.exports = isPlainObject;
-
-},{"./_baseGetTag":80,"./_getPrototype":148,"./isObjectLike":248}],250:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isArray = _dereq_('./isArray'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var stringTag = '[object String]';
-
-/**
- * Checks if `value` is classified as a `String` primitive or object.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a string, else `false`.
- * @example
- *
- * _.isString('abc');
- * // => true
- *
- * _.isString(1);
- * // => false
- */
-function isString(value) {
-  return typeof value == 'string' ||
-    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag);
-}
-
-module.exports = isString;
-
-},{"./_baseGetTag":80,"./isArray":234,"./isObjectLike":248}],251:[function(_dereq_,module,exports){
-var baseGetTag = _dereq_('./_baseGetTag'),
-    isObjectLike = _dereq_('./isObjectLike');
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike(value) && baseGetTag(value) == symbolTag);
-}
-
-module.exports = isSymbol;
-
-},{"./_baseGetTag":80,"./isObjectLike":248}],252:[function(_dereq_,module,exports){
-var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
-    baseUnary = _dereq_('./_baseUnary'),
-    nodeUtil = _dereq_('./_nodeUtil');
-
-/* Node.js helper references. */
-var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
-
-/**
- * Checks if `value` is classified as a typed array.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
- * @example
- *
- * _.isTypedArray(new Uint8Array);
- * // => true
- *
- * _.isTypedArray([]);
- * // => false
- */
-var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
-
-module.exports = isTypedArray;
-
-},{"./_baseIsTypedArray":87,"./_baseUnary":107,"./_nodeUtil":188}],253:[function(_dereq_,module,exports){
-var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
-    baseKeys = _dereq_('./_baseKeys'),
-    isArrayLike = _dereq_('./isArrayLike');
-
-/**
- * Creates an array of the own enumerable property names of `object`.
- *
- * **Note:** Non-object values are coerced to objects. See the
- * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
- * for more details.
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category Object
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.keys(new Foo);
- * // => ['a', 'b'] (iteration order is not guaranteed)
- *
- * _.keys('hi');
- * // => ['0', '1']
- */
-function keys(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
-}
-
-module.exports = keys;
-
-},{"./_arrayLikeKeys":57,"./_baseKeys":89,"./isArrayLike":235}],254:[function(_dereq_,module,exports){
-var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
-    baseKeysIn = _dereq_('./_baseKeysIn'),
-    isArrayLike = _dereq_('./isArrayLike');
-
-/**
- * Creates an array of the own and inherited enumerable property names of `object`.
- *
- * **Note:** Non-object values are coerced to objects.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category Object
- * @param {Object} object The object to query.
- * @returns {Array} Returns the array of property names.
- * @example
- *
- * function Foo() {
- *   this.a = 1;
- *   this.b = 2;
- * }
- *
- * Foo.prototype.c = 3;
- *
- * _.keysIn(new Foo);
- * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
- */
-function keysIn(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
-}
-
-module.exports = keysIn;
-
-},{"./_arrayLikeKeys":57,"./_baseKeysIn":90,"./isArrayLike":235}],255:[function(_dereq_,module,exports){
+},{"./_root":365}],407:[function(_dereq_,module,exports){
+arguments[4][185][0].apply(exports,arguments)
+},{"./_baseGetTag":255,"./isObject":411,"dup":185}],408:[function(_dereq_,module,exports){
+arguments[4][186][0].apply(exports,arguments)
+},{"dup":186}],409:[function(_dereq_,module,exports){
+arguments[4][187][0].apply(exports,arguments)
+},{"./isNumber":410,"dup":187}],410:[function(_dereq_,module,exports){
+arguments[4][188][0].apply(exports,arguments)
+},{"./_baseGetTag":255,"./isObjectLike":412,"dup":188}],411:[function(_dereq_,module,exports){
+arguments[4][189][0].apply(exports,arguments)
+},{"dup":189}],412:[function(_dereq_,module,exports){
+arguments[4][190][0].apply(exports,arguments)
+},{"dup":190}],413:[function(_dereq_,module,exports){
+arguments[4][191][0].apply(exports,arguments)
+},{"./_baseGetTag":255,"./_getPrototype":320,"./isObjectLike":412,"dup":191}],414:[function(_dereq_,module,exports){
+arguments[4][193][0].apply(exports,arguments)
+},{"./_baseGetTag":255,"./isObjectLike":412,"dup":193}],415:[function(_dereq_,module,exports){
+arguments[4][194][0].apply(exports,arguments)
+},{"./_baseIsTypedArray":264,"./_baseUnary":284,"./_nodeUtil":361,"dup":194}],416:[function(_dereq_,module,exports){
+arguments[4][195][0].apply(exports,arguments)
+},{"./_arrayLikeKeys":230,"./_baseKeys":266,"./isArrayLike":401,"dup":195}],417:[function(_dereq_,module,exports){
+arguments[4][196][0].apply(exports,arguments)
+},{"./_arrayLikeKeys":230,"./_baseKeysIn":267,"./isArrayLike":401,"dup":196}],418:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -58643,7 +60004,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":58,"./_baseIteratee":88,"./_baseMap":91,"./isArray":234}],256:[function(_dereq_,module,exports){
+},{"./_arrayMap":231,"./_baseIteratee":265,"./_baseMap":268,"./isArray":400}],419:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     baseForOwn = _dereq_('./_baseForOwn'),
     baseIteratee = _dereq_('./_baseIteratee');
@@ -58688,82 +60049,9 @@ function mapValues(object, iteratee) {
 
 module.exports = mapValues;
 
-},{"./_baseAssignValue":71,"./_baseForOwn":77,"./_baseIteratee":88}],257:[function(_dereq_,module,exports){
-var MapCache = _dereq_('./_MapCache');
-
-/** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/**
- * Creates a function that memoizes the result of `func`. If `resolver` is
- * provided, it determines the cache key for storing the result based on the
- * arguments provided to the memoized function. By default, the first argument
- * provided to the memoized function is used as the map cache key. The `func`
- * is invoked with the `this` binding of the memoized function.
- *
- * **Note:** The cache is exposed as the `cache` property on the memoized
- * function. Its creation may be customized by replacing the `_.memoize.Cache`
- * constructor with one whose instances implement the
- * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
- * method interface of `clear`, `delete`, `get`, `has`, and `set`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to have its output memoized.
- * @param {Function} [resolver] The function to resolve the cache key.
- * @returns {Function} Returns the new memoized function.
- * @example
- *
- * var object = { 'a': 1, 'b': 2 };
- * var other = { 'c': 3, 'd': 4 };
- *
- * var values = _.memoize(_.values);
- * values(object);
- * // => [1, 2]
- *
- * values(other);
- * // => [3, 4]
- *
- * object.a = 2;
- * values(object);
- * // => [1, 2]
- *
- * // Modify the result cache.
- * values.cache.set(object, ['a', 'b']);
- * values(object);
- * // => ['a', 'b']
- *
- * // Replace `_.memoize.Cache`.
- * _.memoize.Cache = WeakMap;
- */
-function memoize(func, resolver) {
-  if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  var memoized = function() {
-    var args = arguments,
-        key = resolver ? resolver.apply(this, args) : args[0],
-        cache = memoized.cache;
-
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    var result = func.apply(this, args);
-    memoized.cache = cache.set(key, result) || cache;
-    return result;
-  };
-  memoized.cache = new (memoize.Cache || MapCache);
-  return memoized;
-}
-
-// Expose `MapCache`.
-memoize.Cache = MapCache;
-
-module.exports = memoize;
-
-},{"./_MapCache":43}],258:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":243,"./_baseForOwn":252,"./_baseIteratee":265}],420:[function(_dereq_,module,exports){
+arguments[4][197][0].apply(exports,arguments)
+},{"./_MapCache":214,"dup":197}],421:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -58804,7 +60092,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":94,"./_createAssigner":127}],259:[function(_dereq_,module,exports){
+},{"./_baseMerge":271,"./_createAssigner":303}],422:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -58846,7 +60134,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],260:[function(_dereq_,module,exports){
+},{}],423:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -58877,58 +60165,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":88,"./negate":259,"./pickBy":262}],261:[function(_dereq_,module,exports){
-var createPadding = _dereq_('./_createPadding'),
-    stringSize = _dereq_('./_stringSize'),
-    toInteger = _dereq_('./toInteger'),
-    toString = _dereq_('./toString');
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeCeil = Math.ceil,
-    nativeFloor = Math.floor;
-
-/**
- * Pads `string` on the left and right sides if it's shorter than `length`.
- * Padding characters are truncated if they can't be evenly divided by `length`.
- *
- * @static
- * @memberOf _
- * @since 3.0.0
- * @category String
- * @param {string} [string=''] The string to pad.
- * @param {number} [length=0] The padding length.
- * @param {string} [chars=' '] The string used as padding.
- * @returns {string} Returns the padded string.
- * @example
- *
- * _.pad('abc', 8);
- * // => '  abc   '
- *
- * _.pad('abc', 8, '_-');
- * // => '_-abc_-_'
- *
- * _.pad('abc', 3);
- * // => 'abc'
- */
-function pad(string, length, chars) {
-  string = toString(string);
-  length = toInteger(length);
-
-  var strLength = length ? stringSize(string) : 0;
-  if (!length || strLength >= length) {
-    return string;
-  }
-  var mid = (length - strLength) / 2;
-  return (
-    createPadding(nativeFloor(mid), chars) +
-    string +
-    createPadding(nativeCeil(mid), chars)
-  );
-}
-
-module.exports = pad;
-
-},{"./_createPadding":132,"./_stringSize":206,"./toInteger":272,"./toString":275}],262:[function(_dereq_,module,exports){
+},{"./_baseIteratee":265,"./negate":422,"./pickBy":424}],424:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -58967,7 +60204,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":58,"./_baseIteratee":88,"./_basePickBy":96,"./_getAllKeysIn":144}],263:[function(_dereq_,module,exports){
+},{"./_arrayMap":231,"./_baseIteratee":265,"./_basePickBy":273,"./_getAllKeysIn":316}],425:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -59001,7 +60238,55 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":97,"./_basePropertyDeep":98,"./_isKey":167,"./_toKey":209}],264:[function(_dereq_,module,exports){
+},{"./_baseProperty":274,"./_basePropertyDeep":275,"./_isKey":340,"./_toKey":379}],426:[function(_dereq_,module,exports){
+var createRange = _dereq_('./_createRange');
+
+/**
+ * Creates an array of numbers (positive and/or negative) progressing from
+ * `start` up to, but not including, `end`. A step of `-1` is used if a negative
+ * `start` is specified without an `end` or `step`. If `end` is not specified,
+ * it's set to `start` with `start` then set to `0`.
+ *
+ * **Note:** JavaScript follows the IEEE-754 standard for resolving
+ * floating-point values which can produce unexpected results.
+ *
+ * @static
+ * @since 0.1.0
+ * @memberOf _
+ * @category Util
+ * @param {number} [start=0] The start of the range.
+ * @param {number} end The end of the range.
+ * @param {number} [step=1] The value to increment or decrement by.
+ * @returns {Array} Returns the range of numbers.
+ * @see _.inRange, _.rangeRight
+ * @example
+ *
+ * _.range(4);
+ * // => [0, 1, 2, 3]
+ *
+ * _.range(-4);
+ * // => [0, -1, -2, -3]
+ *
+ * _.range(1, 5);
+ * // => [1, 2, 3, 4]
+ *
+ * _.range(0, 20, 5);
+ * // => [0, 5, 10, 15]
+ *
+ * _.range(0, -4, -1);
+ * // => [0, -1, -2, -3]
+ *
+ * _.range(1, 4, 0);
+ * // => [1, 1, 1]
+ *
+ * _.range(0);
+ * // => []
+ */
+var range = createRange();
+
+module.exports = range;
+
+},{"./_createRange":308}],427:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -59049,35 +60334,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":56,"./_baseFilter":75,"./_baseIteratee":88,"./isArray":234,"./negate":259}],265:[function(_dereq_,module,exports){
-var createRound = _dereq_('./_createRound');
-
-/**
- * Computes `number` rounded to `precision`.
- *
- * @static
- * @memberOf _
- * @since 3.10.0
- * @category Math
- * @param {number} number The number to round.
- * @param {number} [precision=0] The precision to round to.
- * @returns {number} Returns the rounded number.
- * @example
- *
- * _.round(4.006);
- * // => 4
- *
- * _.round(4.006, 2);
- * // => 4.01
- *
- * _.round(4060, -2);
- * // => 4100
- */
-var round = createRound('round');
-
-module.exports = round;
-
-},{"./_createRound":133}],266:[function(_dereq_,module,exports){
+},{"./_arrayFilter":227,"./_baseFilter":248,"./_baseIteratee":265,"./isArray":400,"./negate":422}],428:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -59114,511 +60371,15 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":102}],267:[function(_dereq_,module,exports){
-/**
- * This method returns a new empty array.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {Array} Returns the new empty array.
- * @example
- *
- * var arrays = _.times(2, _.stubArray);
- *
- * console.log(arrays);
- * // => [[], []]
- *
- * console.log(arrays[0] === arrays[1]);
- * // => false
- */
-function stubArray() {
-  return [];
-}
-
-module.exports = stubArray;
-
-},{}],268:[function(_dereq_,module,exports){
-/**
- * This method returns `false`.
- *
- * @static
- * @memberOf _
- * @since 4.13.0
- * @category Util
- * @returns {boolean} Returns `false`.
- * @example
- *
- * _.times(2, _.stubFalse);
- * // => [false, false]
- */
-function stubFalse() {
-  return false;
-}
-
-module.exports = stubFalse;
-
-},{}],269:[function(_dereq_,module,exports){
-var assignInWith = _dereq_('./assignInWith'),
-    attempt = _dereq_('./attempt'),
-    baseValues = _dereq_('./_baseValues'),
-    customDefaultsAssignIn = _dereq_('./_customDefaultsAssignIn'),
-    escapeStringChar = _dereq_('./_escapeStringChar'),
-    isError = _dereq_('./isError'),
-    isIterateeCall = _dereq_('./_isIterateeCall'),
-    keys = _dereq_('./keys'),
-    reInterpolate = _dereq_('./_reInterpolate'),
-    templateSettings = _dereq_('./templateSettings'),
-    toString = _dereq_('./toString');
-
-/** Used to match empty string literals in compiled template source. */
-var reEmptyStringLeading = /\b__p \+= '';/g,
-    reEmptyStringMiddle = /\b(__p \+=) '' \+/g,
-    reEmptyStringTrailing = /(__e\(.*?\)|\b__t\)) \+\n'';/g;
-
-/**
- * Used to match
- * [ES template delimiters](http://ecma-international.org/ecma-262/7.0/#sec-template-literal-lexical-components).
- */
-var reEsTemplate = /\$\{([^\\}]*(?:\\.[^\\}]*)*)\}/g;
-
-/** Used to ensure capturing order of template delimiters. */
-var reNoMatch = /($^)/;
-
-/** Used to match unescaped characters in compiled string literals. */
-var reUnescapedString = /['\n\r\u2028\u2029\\]/g;
-
-/**
- * Creates a compiled template function that can interpolate data properties
- * in "interpolate" delimiters, HTML-escape interpolated data properties in
- * "escape" delimiters, and execute JavaScript in "evaluate" delimiters. Data
- * properties may be accessed as free variables in the template. If a setting
- * object is given, it takes precedence over `_.templateSettings` values.
- *
- * **Note:** In the development build `_.template` utilizes
- * [sourceURLs](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/#toc-sourceurl)
- * for easier debugging.
- *
- * For more information on precompiling templates see
- * [lodash's custom builds documentation](https://lodash.com/custom-builds).
- *
- * For more information on Chrome extension sandboxes see
- * [Chrome's extensions documentation](https://developer.chrome.com/extensions/sandboxingEval).
- *
- * @static
- * @since 0.1.0
- * @memberOf _
- * @category String
- * @param {string} [string=''] The template string.
- * @param {Object} [options={}] The options object.
- * @param {RegExp} [options.escape=_.templateSettings.escape]
- *  The HTML "escape" delimiter.
- * @param {RegExp} [options.evaluate=_.templateSettings.evaluate]
- *  The "evaluate" delimiter.
- * @param {Object} [options.imports=_.templateSettings.imports]
- *  An object to import into the template as free variables.
- * @param {RegExp} [options.interpolate=_.templateSettings.interpolate]
- *  The "interpolate" delimiter.
- * @param {string} [options.sourceURL='templateSources[n]']
- *  The sourceURL of the compiled template.
- * @param {string} [options.variable='obj']
- *  The data object variable name.
- * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
- * @returns {Function} Returns the compiled template function.
- * @example
- *
- * // Use the "interpolate" delimiter to create a compiled template.
- * var compiled = _.template('hello <%= user %>!');
- * compiled({ 'user': 'fred' });
- * // => 'hello fred!'
- *
- * // Use the HTML "escape" delimiter to escape data property values.
- * var compiled = _.template('<b><%- value %></b>');
- * compiled({ 'value': '<script>' });
- * // => '<b>&lt;script&gt;</b>'
- *
- * // Use the "evaluate" delimiter to execute JavaScript and generate HTML.
- * var compiled = _.template('<% _.forEach(users, function(user) { %><li><%- user %></li><% }); %>');
- * compiled({ 'users': ['fred', 'barney'] });
- * // => '<li>fred</li><li>barney</li>'
- *
- * // Use the internal `print` function in "evaluate" delimiters.
- * var compiled = _.template('<% print("hello " + user); %>!');
- * compiled({ 'user': 'barney' });
- * // => 'hello barney!'
- *
- * // Use the ES template literal delimiter as an "interpolate" delimiter.
- * // Disable support by replacing the "interpolate" delimiter.
- * var compiled = _.template('hello ${ user }!');
- * compiled({ 'user': 'pebbles' });
- * // => 'hello pebbles!'
- *
- * // Use backslashes to treat delimiters as plain text.
- * var compiled = _.template('<%= "\\<%- value %\\>" %>');
- * compiled({ 'value': 'ignored' });
- * // => '<%- value %>'
- *
- * // Use the `imports` option to import `jQuery` as `jq`.
- * var text = '<% jq.each(users, function(user) { %><li><%- user %></li><% }); %>';
- * var compiled = _.template(text, { 'imports': { 'jq': jQuery } });
- * compiled({ 'users': ['fred', 'barney'] });
- * // => '<li>fred</li><li>barney</li>'
- *
- * // Use the `sourceURL` option to specify a custom sourceURL for the template.
- * var compiled = _.template('hello <%= user %>!', { 'sourceURL': '/basic/greeting.jst' });
- * compiled(data);
- * // => Find the source of "greeting.jst" under the Sources tab or Resources panel of the web inspector.
- *
- * // Use the `variable` option to ensure a with-statement isn't used in the compiled template.
- * var compiled = _.template('hi <%= data.user %>!', { 'variable': 'data' });
- * compiled.source;
- * // => function(data) {
- * //   var __t, __p = '';
- * //   __p += 'hi ' + ((__t = ( data.user )) == null ? '' : __t) + '!';
- * //   return __p;
- * // }
- *
- * // Use custom template delimiters.
- * _.templateSettings.interpolate = /{{([\s\S]+?)}}/g;
- * var compiled = _.template('hello {{ user }}!');
- * compiled({ 'user': 'mustache' });
- * // => 'hello mustache!'
- *
- * // Use the `source` property to inline compiled templates for meaningful
- * // line numbers in error messages and stack traces.
- * fs.writeFileSync(path.join(process.cwd(), 'jst.js'), '\
- *   var JST = {\
- *     "main": ' + _.template(mainText).source + '\
- *   };\
- * ');
- */
-function template(string, options, guard) {
-  // Based on John Resig's `tmpl` implementation
-  // (http://ejohn.org/blog/javascript-micro-templating/)
-  // and Laura Doktorova's doT.js (https://github.com/olado/doT).
-  var settings = templateSettings.imports._.templateSettings || templateSettings;
-
-  if (guard && isIterateeCall(string, options, guard)) {
-    options = undefined;
-  }
-  string = toString(string);
-  options = assignInWith({}, options, settings, customDefaultsAssignIn);
-
-  var imports = assignInWith({}, options.imports, settings.imports, customDefaultsAssignIn),
-      importsKeys = keys(imports),
-      importsValues = baseValues(imports, importsKeys);
-
-  var isEscaping,
-      isEvaluating,
-      index = 0,
-      interpolate = options.interpolate || reNoMatch,
-      source = "__p += '";
-
-  // Compile the regexp to match each delimiter.
-  var reDelimiters = RegExp(
-    (options.escape || reNoMatch).source + '|' +
-    interpolate.source + '|' +
-    (interpolate === reInterpolate ? reEsTemplate : reNoMatch).source + '|' +
-    (options.evaluate || reNoMatch).source + '|$'
-  , 'g');
-
-  // Use a sourceURL for easier debugging.
-  var sourceURL = 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\n' : '';
-
-  string.replace(reDelimiters, function(match, escapeValue, interpolateValue, esTemplateValue, evaluateValue, offset) {
-    interpolateValue || (interpolateValue = esTemplateValue);
-
-    // Escape characters that can't be included in string literals.
-    source += string.slice(index, offset).replace(reUnescapedString, escapeStringChar);
-
-    // Replace delimiters with snippets.
-    if (escapeValue) {
-      isEscaping = true;
-      source += "' +\n__e(" + escapeValue + ") +\n'";
-    }
-    if (evaluateValue) {
-      isEvaluating = true;
-      source += "';\n" + evaluateValue + ";\n__p += '";
-    }
-    if (interpolateValue) {
-      source += "' +\n((__t = (" + interpolateValue + ")) == null ? '' : __t) +\n'";
-    }
-    index = offset + match.length;
-
-    // The JS engine embedded in Adobe products needs `match` returned in
-    // order to produce the correct `offset` value.
-    return match;
-  });
-
-  source += "';\n";
-
-  // If `variable` is not specified wrap a with-statement around the generated
-  // code to add the data object to the top of the scope chain.
-  var variable = options.variable;
-  if (!variable) {
-    source = 'with (obj) {\n' + source + '\n}\n';
-  }
-  // Cleanup code by stripping empty strings.
-  source = (isEvaluating ? source.replace(reEmptyStringLeading, '') : source)
-    .replace(reEmptyStringMiddle, '$1')
-    .replace(reEmptyStringTrailing, '$1;');
-
-  // Frame code as the function body.
-  source = 'function(' + (variable || 'obj') + ') {\n' +
-    (variable
-      ? ''
-      : 'obj || (obj = {});\n'
-    ) +
-    "var __t, __p = ''" +
-    (isEscaping
-       ? ', __e = _.escape'
-       : ''
-    ) +
-    (isEvaluating
-      ? ', __j = Array.prototype.join;\n' +
-        "function print() { __p += __j.call(arguments, '') }\n"
-      : ';\n'
-    ) +
-    source +
-    'return __p\n}';
-
-  var result = attempt(function() {
-    return Function(importsKeys, sourceURL + 'return ' + source)
-      .apply(undefined, importsValues);
-  });
-
-  // Provide the compiled function's source by its `toString` method or
-  // the `source` property as a convenience for inlining compiled templates.
-  result.source = source;
-  if (isError(result)) {
-    throw result;
-  }
-  return result;
-}
-
-module.exports = template;
-
-},{"./_baseValues":108,"./_customDefaultsAssignIn":134,"./_escapeStringChar":141,"./_isIterateeCall":166,"./_reInterpolate":194,"./assignInWith":215,"./attempt":216,"./isError":240,"./keys":253,"./templateSettings":270,"./toString":275}],270:[function(_dereq_,module,exports){
-var escape = _dereq_('./escape'),
-    reEscape = _dereq_('./_reEscape'),
-    reEvaluate = _dereq_('./_reEvaluate'),
-    reInterpolate = _dereq_('./_reInterpolate');
-
-/**
- * By default, the template delimiters used by lodash are like those in
- * embedded Ruby (ERB) as well as ES2015 template strings. Change the
- * following template settings to use alternative delimiters.
- *
- * @static
- * @memberOf _
- * @type {Object}
- */
-var templateSettings = {
-
-  /**
-   * Used to detect `data` property values to be HTML-escaped.
-   *
-   * @memberOf _.templateSettings
-   * @type {RegExp}
-   */
-  'escape': reEscape,
-
-  /**
-   * Used to detect code to be evaluated.
-   *
-   * @memberOf _.templateSettings
-   * @type {RegExp}
-   */
-  'evaluate': reEvaluate,
-
-  /**
-   * Used to detect `data` property values to inject.
-   *
-   * @memberOf _.templateSettings
-   * @type {RegExp}
-   */
-  'interpolate': reInterpolate,
-
-  /**
-   * Used to reference the data object in the template text.
-   *
-   * @memberOf _.templateSettings
-   * @type {string}
-   */
-  'variable': '',
-
-  /**
-   * Used to import variables into the compiled template.
-   *
-   * @memberOf _.templateSettings
-   * @type {Object}
-   */
-  'imports': {
-
-    /**
-     * A reference to the `lodash` function.
-     *
-     * @memberOf _.templateSettings.imports
-     * @type {Function}
-     */
-    '_': { 'escape': escape }
-  }
-};
-
-module.exports = templateSettings;
-
-},{"./_reEscape":192,"./_reEvaluate":193,"./_reInterpolate":194,"./escape":226}],271:[function(_dereq_,module,exports){
-var toNumber = _dereq_('./toNumber');
-
-/** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0,
-    MAX_INTEGER = 1.7976931348623157e+308;
-
-/**
- * Converts `value` to a finite number.
- *
- * @static
- * @memberOf _
- * @since 4.12.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {number} Returns the converted number.
- * @example
- *
- * _.toFinite(3.2);
- * // => 3.2
- *
- * _.toFinite(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toFinite(Infinity);
- * // => 1.7976931348623157e+308
- *
- * _.toFinite('3.2');
- * // => 3.2
- */
-function toFinite(value) {
-  if (!value) {
-    return value === 0 ? value : 0;
-  }
-  value = toNumber(value);
-  if (value === INFINITY || value === -INFINITY) {
-    var sign = (value < 0 ? -1 : 1);
-    return sign * MAX_INTEGER;
-  }
-  return value === value ? value : 0;
-}
-
-module.exports = toFinite;
-
-},{"./toNumber":273}],272:[function(_dereq_,module,exports){
-var toFinite = _dereq_('./toFinite');
-
-/**
- * Converts `value` to an integer.
- *
- * **Note:** This method is loosely based on
- * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {number} Returns the converted integer.
- * @example
- *
- * _.toInteger(3.2);
- * // => 3
- *
- * _.toInteger(Number.MIN_VALUE);
- * // => 0
- *
- * _.toInteger(Infinity);
- * // => 1.7976931348623157e+308
- *
- * _.toInteger('3.2');
- * // => 3
- */
-function toInteger(value) {
-  var result = toFinite(value),
-      remainder = result % 1;
-
-  return result === result ? (remainder ? result - remainder : result) : 0;
-}
-
-module.exports = toInteger;
-
-},{"./toFinite":271}],273:[function(_dereq_,module,exports){
-var isObject = _dereq_('./isObject'),
-    isSymbol = _dereq_('./isSymbol');
-
-/** Used as references for various `Number` constants. */
-var NAN = 0 / 0;
-
-/** Used to match leading and trailing whitespace. */
-var reTrim = /^\s+|\s+$/g;
-
-/** Used to detect bad signed hexadecimal string values. */
-var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-
-/** Used to detect binary string values. */
-var reIsBinary = /^0b[01]+$/i;
-
-/** Used to detect octal string values. */
-var reIsOctal = /^0o[0-7]+$/i;
-
-/** Built-in method references without a dependency on `root`. */
-var freeParseInt = parseInt;
-
-/**
- * Converts `value` to a number.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {number} Returns the number.
- * @example
- *
- * _.toNumber(3.2);
- * // => 3.2
- *
- * _.toNumber(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toNumber(Infinity);
- * // => Infinity
- *
- * _.toNumber('3.2');
- * // => 3.2
- */
-function toNumber(value) {
-  if (typeof value == 'number') {
-    return value;
-  }
-  if (isSymbol(value)) {
-    return NAN;
-  }
-  if (isObject(value)) {
-    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-    value = isObject(other) ? (other + '') : other;
-  }
-  if (typeof value != 'string') {
-    return value === 0 ? value : +value;
-  }
-  value = value.replace(reTrim, '');
-  var isBinary = reIsBinary.test(value);
-  return (isBinary || reIsOctal.test(value))
-    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
-    : (reIsBadHex.test(value) ? NAN : +value);
-}
-
-module.exports = toNumber;
-
-},{"./isObject":247,"./isSymbol":251}],274:[function(_dereq_,module,exports){
+},{"./_baseSet":279}],429:[function(_dereq_,module,exports){
+arguments[4][200][0].apply(exports,arguments)
+},{"dup":200}],430:[function(_dereq_,module,exports){
+arguments[4][201][0].apply(exports,arguments)
+},{"dup":201}],431:[function(_dereq_,module,exports){
+arguments[4][204][0].apply(exports,arguments)
+},{"./toNumber":432,"dup":204}],432:[function(_dereq_,module,exports){
+arguments[4][206][0].apply(exports,arguments)
+},{"./isObject":411,"./isSymbol":414,"dup":206}],433:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -59652,37 +60413,9 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":122,"./keysIn":254}],275:[function(_dereq_,module,exports){
-var baseToString = _dereq_('./_baseToString');
-
-/**
- * Converts `value` to a string. An empty string is returned for `null`
- * and `undefined` values. The sign of `-0` is preserved.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- * @example
- *
- * _.toString(null);
- * // => ''
- *
- * _.toString(-0);
- * // => '-0'
- *
- * _.toString([1, 2, 3]);
- * // => '1,2,3'
- */
-function toString(value) {
-  return value == null ? '' : baseToString(value);
-}
-
-module.exports = toString;
-
-},{"./_baseToString":106}],276:[function(_dereq_,module,exports){
+},{"./_copyObject":298,"./keysIn":417}],434:[function(_dereq_,module,exports){
+arguments[4][207][0].apply(exports,arguments)
+},{"./_baseToString":283,"dup":207}],435:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -59706,7 +60439,40 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":130}],277:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":306}],436:[function(_dereq_,module,exports){
+var baseDifference = _dereq_('./_baseDifference'),
+    baseRest = _dereq_('./_baseRest'),
+    isArrayLikeObject = _dereq_('./isArrayLikeObject');
+
+/**
+ * Creates an array excluding all given values using
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * for equality comparisons.
+ *
+ * **Note:** Unlike `_.pull`, this method returns a new array.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Array
+ * @param {Array} array The array to inspect.
+ * @param {...*} [values] The values to exclude.
+ * @returns {Array} Returns the new array of filtered values.
+ * @see _.difference, _.xor
+ * @example
+ *
+ * _.without([2, 1, 2, 3], 1, 2);
+ * // => [3]
+ */
+var without = baseRest(function(array, values) {
+  return isArrayLikeObject(array)
+    ? baseDifference(array, values)
+    : [];
+});
+
+module.exports = without;
+
+},{"./_baseDifference":246,"./_baseRest":278,"./isArrayLikeObject":402}],437:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -59743,9 +60509,9 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":64,"./_hasUnicodeWord":156,"./_unicodeWords":213,"./toString":275}],278:[function(_dereq_,module,exports){
+},{"./_asciiWords":236,"./_hasUnicodeWord":328,"./_unicodeWords":382,"./toString":434}],438:[function(_dereq_,module,exports){
 //! moment.js
-//! version : 2.19.1
+//! version : 2.19.2
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -60560,7 +61326,7 @@ function get (mom, unit) {
 
 function set$1 (mom, unit, value) {
     if (mom.isValid() && !isNaN(value)) {
-        if (unit === 'FullYear' && isLeapYear(mom.year())) {
+        if (unit === 'FullYear' && isLeapYear(mom.year()) && mom.month() === 1 && mom.date() === 29) {
             mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value, mom.month(), daysInMonth(value, mom.month()));
         }
         else {
@@ -61666,10 +62432,11 @@ function defineLocale (name, config) {
 
 function updateLocale(name, config) {
     if (config != null) {
-        var locale, parentConfig = baseConfig;
+        var locale, tmpLocale, parentConfig = baseConfig;
         // MERGE
-        if (locales[name] != null) {
-            parentConfig = locales[name]._config;
+        tmpLocale = loadLocale(name);
+        if (tmpLocale != null) {
+            parentConfig = tmpLocale._config;
         }
         config = mergeConfigs(parentConfig, config);
         locale = new Locale(config);
@@ -64223,7 +64990,7 @@ addParseToken('x', function (input, array, config) {
 // Side effect imports
 
 
-hooks.version = '2.19.1';
+hooks.version = '2.19.2';
 
 setHookCallback(createLocal);
 
@@ -64259,7 +65026,7 @@ return hooks;
 
 })));
 
-},{}],279:[function(_dereq_,module,exports){
+},{}],439:[function(_dereq_,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -64636,7 +65403,7 @@ return hooks;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],280:[function(_dereq_,module,exports){
+},{}],440:[function(_dereq_,module,exports){
 /*
  * ngDialog - easy modals and popup windows
  * http://github.com/likeastore/ngDialog
@@ -65591,7 +66358,7 @@ return hooks;
     return m;
 }));
 
-},{"angular":12}],281:[function(_dereq_,module,exports){
+},{"angular":12}],441:[function(_dereq_,module,exports){
 /**!
  * AngularJS file upload directives and services. Supports: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
@@ -68491,10 +69258,10 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
-},{}],282:[function(_dereq_,module,exports){
+},{}],442:[function(_dereq_,module,exports){
 _dereq_('./dist/ng-file-upload-all');
 module.exports = 'ngFileUpload';
-},{"./dist/ng-file-upload-all":281}],283:[function(_dereq_,module,exports){
+},{"./dist/ng-file-upload-all":441}],443:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68572,7 +69339,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/address.html',
-        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ng-model=\"data[component.key]\" safe-multiple-to-single ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" tabindex=\"{{ component.tabindex || 0 }}\" theme=\"bootstrap\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">{{$item.formatted_address || $select.selected.formatted_address}}</ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"address in addresses\" refresh=\"refreshAddress($select.search)\" refresh-delay=\"500\">\n    <div ng-bind-html=\"address.formatted_address | highlight: $select.search\"></div>\n  </ui-select-choices>\n</ui-select>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition !== 'bottom')\" for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\" ng-style=\"getLabelStyles(component)\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select ng-model=\"data[component.key]\" safe-multiple-to-single ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" tabindex=\"{{ component.tabindex || 0 }}\" theme=\"bootstrap\" ng-style=\"getInputGroupStyles(component)\">\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">{{$item.formatted_address || $select.selected.formatted_address}}</ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"address in addresses\" refresh=\"refreshAddress($select.search)\" refresh-delay=\"500\">\n    <div ng-bind-html=\"address.formatted_address | highlight: $select.search\"></div>\n  </ui-select-choices>\n</ui-select>\n<label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition === 'bottom')\" for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\" class=\"control-label--bottom\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -68583,7 +69350,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],444:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68779,7 +69546,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/button.html',
-        "<button ng-attr-type=\"{{ getButtonType() }}\"\n    id=\"{{ componentId }}\"\n    name=\"{{ componentId }}\"\n    ng-class=\"{'btn-block': component.block}\"\n    class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n    ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid) || hasError()\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-click=\"$emit('buttonClick', component, componentId)\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate:null:options.building }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n  <formio-component-tooltip></formio-component-tooltip>\n  <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n<div ng-if=\"hasError()\" class=\"has-error\">\n  <p class=\"help-block\" onclick=\"scroll=window.scrollTo(0,0)\">\n    Please correct all errors before submitting.\n  </p>\n</div>\n"
+        "<button ng-attr-type=\"{{ getButtonType() }}\"\n    id=\"{{ componentId }}\"\n    name=\"{{ componentId }}\"\n    ng-class=\"{'btn-block': component.block}\"\n    class=\"btn btn-{{ component.theme }} btn-{{ component.size }}\"\n    ng-disabled=\"readOnly || formioForm.submitting || (component.disableOnInvalid && formioForm.$invalid) || hasError()\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    ng-click=\"$emit('buttonClick', component, componentId)\">\n  <span ng-if=\"component.leftIcon\" class=\"{{ component.leftIcon }}\" aria-hidden=\"true\"></span>\n  <span ng-if=\"component.leftIcon && component.label\">&nbsp;</span>{{ component.label | formioTranslate:null:options.building | shortcut:component.shortcut }}<span ng-if=\"component.rightIcon && component.label\">&nbsp;</span>\n  <span ng-if=\"component.rightIcon\" class=\"{{ component.rightIcon }}\" aria-hidden=\"true\"></span>\n  <formio-component-tooltip></formio-component-tooltip>\n  <i ng-if=\"component.action == 'submit' && formioForm.submitting\" class=\"glyphicon glyphicon-refresh glyphicon-spin\"></i>\n</button>\n<div ng-if=\"hasError()\" class=\"has-error\">\n  <p class=\"help-block\" onclick=\"scroll=window.scrollTo(0,0)\">\n    Please correct all errors before submitting.\n  </p>\n</div>\n"
       );
 
       $templateCache.put('formio/componentsView/button.html',
@@ -68789,7 +69556,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],445:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -68802,7 +69569,7 @@ module.exports = function(app) {
         tableView: function(data) {
           return data ? 'Yes' : 'No';
         },
-        controller: ['$scope', '$timeout', function($scope, $timeout) {
+        controller: ['$scope', '$timeout', 'FormioUtils', function($scope, $timeout, FormioUtils) {
           if ($scope.options && $scope.options.building) return;
           var boolean = {
             true: true,
@@ -68835,6 +69602,10 @@ module.exports = function(app) {
               }
             });
           }
+
+          $scope.topOrLeftOptionLabel = FormioUtils.labelPositionWrapper(FormioUtils.topOrLeftOptionLabel);
+          $scope.getOptionLabelStyles = FormioUtils.labelPositionWrapper(FormioUtils.getOptionLabelStyles);
+          $scope.getOptionInputStyles = FormioUtils.labelPositionWrapper(FormioUtils.getOptionInputStyles);
         }],
         settings: {
           input: true,
@@ -68863,13 +69634,13 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/checkbox.html',
-        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\">\n    <input\n      ng-if=\"component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ component.name }}\"\n      value=\"{{ component.value }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.name]\"\n      ng-required=\"component.validate.required\"\n    >\n    <input\n      ng-if=\"!component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n    >\n    <span ng-if=\"options.building || !(component.hideLabel && component.datagridLabel === false)\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
+        "<div class=\"checkbox\">\n  <label for=\"{{ componentId }}\" ng-class=\"{'field-required': isRequired(component)}\" ng-style=\"getOptionLabelStyles(component)\">\n    <span ng-if=\"options.building || !(component.hideLabel && component.datagridLabel === false) && topOrLeftOptionLabel(component)\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </span>\n    <input\n      ng-if=\"component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ component.name }}\"\n      value=\"{{ component.value }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.name]\"\n      ng-required=\"component.validate.required\"\n      ng-style=\"getOptionInputStyles(component)\"\n    >\n    <input\n      ng-if=\"!component.name\"\n      type=\"{{ component.inputType }}\"\n      id=\"{{ componentId }}\"\n      name=\"{{ componentId }}\"\n      tabindex=\"{{ component.tabindex || 0 }}\"\n      ng-disabled=\"readOnly\"\n      ng-model=\"data[component.key]\"\n      ng-required=\"isRequired(component)\"\n      custom-validator=\"component.validate.custom\"\n      ng-style=\"getOptionInputStyles(component)\"\n    >\n    <span ng-if=\"options.building || !(component.hideLabel && component.datagridLabel === false) && !topOrLeftOptionLabel(component)\">\n      {{ component.label | formioTranslate:null:options.building | shortcut:component.shortcut }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </span>\n  </label>\n</div>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],446:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -68955,7 +69726,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],287:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],447:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.provider('formioComponents', function() {
@@ -69015,7 +69786,7 @@ module.exports = function(app) {
   }]);
 };
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],448:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69081,7 +69852,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],289:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],449:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69110,7 +69881,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],450:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -69221,7 +69992,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],451:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -69249,7 +70020,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],292:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],452:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -69382,7 +70153,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":37}],293:[function(_dereq_,module,exports){
+},{"formiojs/utils":208}],453:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69540,7 +70311,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],294:[function(_dereq_,module,exports){
+},{}],454:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -69578,7 +70349,7 @@ module.exports = function(app) {
         ];
 
         function isLeapYear(year) {
-          // Year is leap if it evenly divisible by 400 or evenly divisible by 4 and not evenly divisible by 100.
+          // Year is leap if it is evenly divisible by 400 or evenly divisible by 4 and not evenly divisible by 100.
           return !(year % 400) || (!!(year % 100) && !(year % 4));
         }
 
@@ -69689,6 +70460,50 @@ module.exports = function(app) {
           }
           return true;
         };
+
+        scope.getLabelStyles = function(component) {
+          var labelPosition = component.inputsLabelPosition;
+
+          if (labelPosition === 'left') {
+            return {
+              float: 'left',
+              width: '30%',
+              'margin-right': '3%',
+              'text-align': 'left'
+            };
+          }
+
+          if (labelPosition === 'right') {
+            return {
+              float: 'right',
+              width: '30%',
+              'margin-left': '3%',
+              'text-align': 'right'
+            };
+          }
+        };
+
+        scope.getInputStyles = function(component) {
+          var labelPosition = component.inputsLabelPosition;
+
+          if ([
+            'left',
+            'right'
+          ].indexOf(labelPosition) !== -1) {
+            var styles = {
+              width: '67%'
+            };
+
+            if (labelPosition === 'left') {
+              styles['margin-left'] = '33%';
+            }
+            else {
+              styles['margin-right'] = '33%';
+            }
+
+            return styles;
+          }
+        };
       }
     };
   });
@@ -69741,13 +70556,13 @@ module.exports = function(app) {
         "<div class=\"day-input\">\n  <day-input\n    name=\"{{componentId}}\"\n    component-id=\"componentId\"\n    read-only=\"isDisabled(component, data)\"\n    component=\"component\"\n    ng-required=\"isRequired(component)\"\n    custom-validator=\"component.validate.custom\"\n    ng-model=\"data[component.key]\"\n    tabindex=\"{{ component.tabindex || 0 }}\"\n    options=\"options\"\n  ></day-input>\n</div>\n"
       ));
       $templateCache.put('formio/components/day-input.html',
-        "<div class=\"daySelect form row\">\n  <div class=\"form-group col-xs-3\" ng-if=\"component.dayFirst && !component.fields.day.hide\">\n    <label for=\"{{componentId}}-day\" ng-class=\"{'field-required': component.fields.day.required}\">{{ \"Day\" | formioTranslate:null:options.building }}</label>\n    <input\n      class=\"form-control\"\n      type=\"number\"\n      id=\"{{componentId}}-day\"\n      ng-model=\"date.day\"\n      ng-change=\"onChange()\"\n      style=\"padding-right: 10px;\"\n      ng-attr-placeholder=\"{{component.fields.day.placeholder}}\"\n      day-part\n      characters=\"2\"\n      min=\"1\"\n      max=\"{{maxDay}}\"\n      ng-disabled=\"readOnly\"\n    />\n  </div>\n  <div class=\"form-group col-xs-4\" ng-if=\"!component.fields.month.hide\">\n    <label for=\"{{componentId}}-month\" ng-class=\"{'field-required': component.fields.month.required}\">{{ \"Month\" | formioTranslate:null:options.building }}</label>\n    <select\n      class=\"form-control\"\n      type=\"text\"\n      id=\"{{componentId}}-month\"\n      ng-model=\"date.month\"\n      ng-change=\"onChange()\"\n      ng-disabled=\"readOnly\"\n      ng-options=\"month.value as month.label | formioTranslate:null:options.building for month in months\"\n    ></select>\n  </div>\n  <div class=\"form-group col-xs-3\" ng-if=\"!component.dayFirst && !component.fields.day.hide\">\n    <label for=\"{{componentId}}-day\" ng-class=\"{'field-required': component.fields.day.required}\">{{ \"Day\" | formioTranslate:null:options.building }}</label>\n    <input\n      class=\"form-control\"\n      type=\"number\"\n      id=\"{{componentId}}-day1\"\n      ng-model=\"date.day\"\n      ng-change=\"onChange()\"\n      style=\"padding-right: 10px;\"\n      ng-attr-placeholder=\"{{component.fields.day.placeholder}}\"\n      day-part\n      characters=\"2\"\n      min=\"1\"\n      max=\"{{maxDay}}\"\n      ng-disabled=\"readOnly\"\n    />\n  </div>\n  <div class=\"form-group col-xs-5\" ng-if=\"!component.fields.year.hide\">\n    <label for=\"{{componentId}}-year\" ng-class=\"{'field-required': component.fields.year.required}\">{{ \"Year\" | formioTranslate:null:options.building }}</label>\n    <input\n      class=\"form-control\"\n      type=\"number\"\n      id=\"{{componentId}}-year\"\n      ng-model=\"date.year\"\n      ng-change=\"onChange()\"\n      style=\"padding-right: 10px;\"\n      ng-attr-placeholder=\"{{component.fields.year.placeholder}}\"\n      characters=\"4\"\n      min=\"0\"\n      max=\"2100\"\n      ng-disabled=\"readOnly\"\n    />\n  </div>\n</div>\n"
+        "<div class=\"daySelect form row\">\n  <div class=\"form-group col-xs-3\" ng-if=\"component.dayFirst && !component.fields.day.hide\">\n    <label for=\"{{componentId}}-day\" ng-if=\"component.inputsLabelPosition !== 'bottom'\" ng-class=\"{'field-required': component.fields.day.required}\" ng-style=\"getLabelStyles(component)\">{{ \"Day\" | formioTranslate:null:options.building }}</label>\n    <div ng-style=\"getInputStyles(component)\">\n        <input\n        class=\"form-control\"\n        type=\"number\"\n        id=\"{{componentId}}-day\"\n        ng-model=\"date.day\"\n        ng-change=\"onChange()\"\n        style=\"padding-right: 10px;\"\n        ng-attr-placeholder=\"{{component.fields.day.placeholder}}\"\n        day-part\n        characters=\"2\"\n        min=\"1\"\n        max=\"{{maxDay}}\"\n        ng-disabled=\"readOnly\"\n      />\n    </div>\n    <label for=\"{{componentId}}-day\" ng-if=\"component.inputsLabelPosition === 'bottom'\" ng-class=\"{'field-required': component.fields.day.required}\" class=\"control-label--bottom\">{{ \"Day\" | formioTranslate:null:options.building }}</label>\n  </div>\n  <div class=\"form-group col-xs-4\" ng-if=\"!component.fields.month.hide\">\n    <label for=\"{{componentId}}-month\" ng-if=\"component.inputsLabelPosition !== 'bottom'\" ng-class=\"{'field-required': component.fields.month.required}\" ng-style=\"getLabelStyles(component)\">{{ \"Month\" | formioTranslate:null:options.building }}</label>\n    <div ng-style=\"getInputStyles(component)\">\n      <select\n        class=\"form-control\"\n        type=\"text\"\n        id=\"{{componentId}}-month\"\n        ng-model=\"date.month\"\n        ng-change=\"onChange()\"\n        ng-disabled=\"readOnly\"\n        ng-options=\"month.value as month.label | formioTranslate:null:options.building for month in months\"\n      ></select>\n    </div>\n    <label for=\"{{componentId}}-month\" ng-if=\"component.inputsLabelPosition === 'bottom'\" ng-class=\"{'field-required': component.fields.month.required}\" class=\"control-label--bottom\">{{ \"Month\" | formioTranslate:null:options.building }}</label>\n  </div>\n  <div class=\"form-group col-xs-3\" ng-if=\"!component.dayFirst && !component.fields.day.hide\">\n    <label for=\"{{componentId}}-day\" ng-if=\"component.inputsLabelPosition !== 'bottom'\" ng-class=\"{'field-required': component.fields.day.required}\" ng-style=\"getLabelStyles(component)\">{{ \"Day\" | formioTranslate:null:options.building }}</label>\n    <div ng-style=\"getInputStyles(component)\">\n      <input\n        class=\"form-control\"\n        type=\"number\"\n        id=\"{{componentId}}-day1\"\n        ng-model=\"date.day\"\n        ng-change=\"onChange()\"\n        style=\"padding-right: 10px;\"\n        ng-attr-placeholder=\"{{component.fields.day.placeholder}}\"\n        day-part\n        characters=\"2\"\n        min=\"1\"\n        max=\"{{maxDay}}\"\n        ng-disabled=\"readOnly\"\n      />\n    </div>\n    <label for=\"{{componentId}}-day\" ng-if=\"component.inputsLabelPosition === 'bottom'\" ng-class=\"{'field-required': component.fields.day.required}\" class=\"control-label--bottom\">{{ \"Day\" | formioTranslate:null:options.building }}</label>\n  </div>\n  <div class=\"form-group col-xs-5\" ng-if=\"!component.fields.year.hide\">\n    <label for=\"{{componentId}}-year\" ng-if=\"component.inputsLabelPosition !== 'bottom'\" ng-class=\"{'field-required': component.fields.year.required}\" ng-style=\"getLabelStyles(component)\">{{ \"Year\" | formioTranslate:null:options.building }}</label>\n    <div ng-style=\"getInputStyles(component)\">\n      <input\n        class=\"form-control\"\n        type=\"number\"\n        id=\"{{componentId}}-year\"\n        ng-model=\"date.year\"\n        ng-change=\"onChange()\"\n        style=\"padding-right: 10px;\"\n        ng-attr-placeholder=\"{{component.fields.year.placeholder}}\"\n        characters=\"4\"\n        min=\"0\"\n        max=\"2100\"\n        ng-disabled=\"readOnly\"\n      />\n    </div>\n    <label for=\"{{componentId}}-year\" ng-if=\"component.inputsLabelPosition === 'bottom'\" ng-class=\"{'field-required': component.fields.year.required}\" class=\"control-label--bottom\">{{ \"Year\" | formioTranslate:null:options.building }}</label>\n  </div>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],295:[function(_dereq_,module,exports){
+},{}],455:[function(_dereq_,module,exports){
 "use strict";
 
 var formioUtils = _dereq_('formiojs/utils');
@@ -70131,7 +70946,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"formiojs/utils":37}],296:[function(_dereq_,module,exports){
+},{"formiojs/utils":208}],456:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -70165,7 +70980,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],457:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70220,7 +71035,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],298:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],458:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70244,7 +71059,10 @@ module.exports = function(app) {
           protected: false,
           persistent: true,
           hidden: false,
-          clearOnHide: true
+          clearOnHide: true,
+          filePattern: '*',
+          fileMinSize: '0KB',
+          fileMaxSize: '1GB'
         },
         viewTemplate: 'formio/componentsView/file.html'
       });
@@ -70403,6 +71221,17 @@ module.exports = function(app) {
         delete $scope.fileUploads[index];
       };
 
+      // Defaults for unlimited components
+      if (!$scope.component.filePattern) {
+        $scope.component.filePattern = '*';
+      }
+      if (!$scope.component.fileMinSize) {
+        $scope.component.fileMinSize = '0KB';
+      }
+      if (!$scope.component.fileMaxSize) {
+        $scope.component.fileMaxSize = '1GB';
+      }
+
       $scope.upload = function(files) {
         if ($scope.component.storage && files && files.length) {
           angular.forEach(files, function(file) {
@@ -70476,7 +71305,7 @@ module.exports = function(app) {
       );
 
       $templateCache.put('formio/components/file.html',
-        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<div class=\"formio-errors\"><formio-errors ng-if=\"::!options.building\"></formio-errors></div>\n<div ng-controller=\"formioFileUpload\">\n  <formio-file-list files=\"data[component.key]\" form=\"formio.formUrl\" ng-if=\"!component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formio.formUrl\" width=\"component.imageSize\" ng-if=\"component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-image-list>\n  <div ng-if=\"!readOnly && (component.multiple || (!component.multiple && !data[component.key].length))\">\n    <div ngf-drop=\"upload($files)\" class=\"fileSelector\" ngf-drag-over-class=\"'fileDragOver'\" ngf-multiple=\"component.multiple\" id=\"{{ componentId }}\" name=\"{{ componentId }}\"><span class=\"glyphicon glyphicon-cloud-upload\"></span>Drop files to attach, or <a style=\"cursor: pointer;\" ngf-select=\"upload($files)\" tabindex=\"{{ component.tabindex || 0 }}\" ngf-multiple=\"component.multiple\">browse</a>.</div>\n    <div ng-if=\"!component.storage\" class=\"alert alert-warning\">No storage has been set for this field. File uploads are disabled until storage is set up.</div>\n    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>\n  </div>\n  <div ng-repeat=\"fileUpload in fileUploads track by $index\" ng-class=\"{'has-error': fileUpload.status === 'error'}\" class=\"file\">\n    <div class=\"row\">\n      <div class=\"fileName control-label col-sm-10\">{{ fileUpload.name }} <span ng-click=\"removeUpload(fileUpload.name)\" class=\"glyphicon glyphicon-remove\"></span></div>\n      <div class=\"fileSize control-label col-sm-2 text-right\">{{ fileSize(fileUpload.size) }}</div>\n    </div>\n    <div class=\"row\">\n      <div class=\"col-sm-12\">\n        <span ng-if=\"fileUpload.status === 'progress'\">\n          <div class=\"progress\">\n            <div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"{{fileUpload.progress}}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width:{{fileUpload.progress}}%\">\n              <span class=\"sr-only\">{{fileUpload.progress}}% Complete</span>\n            </div>\n          </div>\n        </span>\n        <div ng-if=\"!fileUpload.status !== 'progress'\" class=\"bg-{{ fileUpload.status }} control-label\">{{ fileUpload.message }}</div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition !== 'bottom')\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\" ng-style=\"getLabelStyles(component)\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<div class=\"formio-errors\"><formio-errors ng-if=\"::!options.building\"></formio-errors></div>\n<div ng-controller=\"formioFileUpload\" ng-style=\"getInputGroupStyles(component)\">\n  <formio-file-list files=\"data[component.key]\" form=\"formio.formUrl\" ng-if=\"!component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-file-list>\n  <formio-image-list files=\"data[component.key]\" form=\"formio.formUrl\" width=\"component.imageSize\" ng-if=\"component.image\" ng-required=\"isRequired(component)\" ng-model=\"data[component.key]\" name=\"{{ componentId }}\"></formio-image-list>\n  <div ng-if=\"!readOnly && (component.multiple || (!component.multiple && !data[component.key].length))\">\n    <div ngf-drop=\"upload($files)\" \n      class=\"fileSelector\"\n      ngf-drag-over-class=\"'fileDragOver'\"\n      ngf-pattern=\"component.filePattern\" \n      ngf-min-size=\"component.fileMinSize\"\n      ngf-max-size=\"component.fileMaxSize\"\n      ngf-multiple=\"component.multiple\"\n      id=\"{{ componentId }}\"\n      name=\"{{ componentId }}\">\n      <span class=\"glyphicon glyphicon-cloud-upload\"></span>Drop files to attach, or \n      <a style=\"cursor: pointer;\"\n        ngf-select=\"upload($files)\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ngf-pattern=\"component.filePattern\" \n        ngf-min-size=\"component.fileMinSize\"\n        ngf-max-size=\"component.fileMaxSize\"\n        ngf-multiple=\"component.multiple\">browse</a>.\n    </div>\n    <div ng-if=\"!component.storage\" class=\"alert alert-warning\">No storage has been set for this field. File uploads are disabled until storage is set up.</div>\n    <div ngf-no-file-drop>File Drag/Drop is not supported for this browser</div>\n  </div>\n  <div ng-repeat=\"fileUpload in fileUploads track by $index\" ng-class=\"{'has-error': fileUpload.status === 'error'}\" class=\"file\">\n    <div class=\"row\">\n      <div class=\"fileName control-label col-sm-10\">{{ fileUpload.name }} <span ng-click=\"removeUpload(fileUpload.name)\" class=\"glyphicon glyphicon-remove\"></span></div>\n      <div class=\"fileSize control-label col-sm-2 text-right\">{{ fileSize(fileUpload.size) }}</div>\n    </div>\n    <div class=\"row\">\n      <div class=\"col-sm-12\">\n        <span ng-if=\"fileUpload.status === 'progress'\">\n          <div class=\"progress\">\n            <div class=\"progress-bar\" role=\"progressbar\" aria-valuenow=\"{{fileUpload.progress}}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"width:{{fileUpload.progress}}%\">\n              <span class=\"sr-only\">{{fileUpload.progress}}% Complete</span>\n            </div>\n          </div>\n        </span>\n        <div ng-if=\"!fileUpload.status !== 'progress'\" class=\"bg-{{ fileUpload.status }} control-label\">{{ fileUpload.message }}</div>\n      </div>\n    </div>\n  </div>\n</div>\n<label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition === 'bottom')\" for=\"{{ componentId }}\" class=\"control-label control-label--bottom\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>"
       );
 
       $templateCache.put('formio/componentsView/file.html',
@@ -70486,7 +71315,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],459:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70672,7 +71501,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],300:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],460:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70708,7 +71537,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],301:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],461:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70800,7 +71629,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],462:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('formio');
 
@@ -70845,7 +71674,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":283,"./button":284,"./checkbox":285,"./columns":286,"./components":287,"./container":288,"./content":289,"./currency":290,"./custom":291,"./datagrid":292,"./datetime":293,"./day":294,"./editgrid":295,"./email":296,"./fieldset":297,"./file":298,"./form":299,"./hidden":300,"./htmlelement":301,"./number":303,"./page":304,"./panel":305,"./password":306,"./phonenumber":307,"./radio":308,"./resource":309,"./select":310,"./selectboxes":311,"./signature":312,"./survey":313,"./table":314,"./textarea":315,"./textfield":316,"./time":317,"./well":318}],303:[function(_dereq_,module,exports){
+},{"./address":443,"./button":444,"./checkbox":445,"./columns":446,"./components":447,"./container":448,"./content":449,"./currency":450,"./custom":451,"./datagrid":452,"./datetime":453,"./day":454,"./editgrid":455,"./email":456,"./fieldset":457,"./file":458,"./form":459,"./hidden":460,"./htmlelement":461,"./number":463,"./page":464,"./panel":465,"./password":466,"./phonenumber":467,"./radio":468,"./resource":469,"./select":470,"./selectboxes":471,"./signature":472,"./survey":473,"./table":474,"./textarea":475,"./textfield":476,"./time":477,"./well":478}],463:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -70910,7 +71739,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],464:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -70937,7 +71766,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],465:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -70993,7 +71822,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],306:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],466:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -71024,7 +71853,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],307:[function(_dereq_,module,exports){
+},{}],467:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -71060,7 +71889,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],468:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71105,13 +71934,13 @@ module.exports = function(app) {
     'FormioUtils',
     function($templateCache, FormioUtils) {
       $templateCache.put('formio/components/radio.html', FormioUtils.fieldWrap(
-        "<ng-form name=\"{{ componentId }}\" ng-model=\"data[component.key]\" custom-validator=\"component.validate.custom\">\n  <div ng-class=\"component.inline ? 'radio-inline' : 'radio'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n      <input\n        type=\"{{ component.inputType }}\"\n        id=\"{{ componentId }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-model=\"data[component.key]\"\n        ng-required=\"isRequired(component)\"\n        custom-validator=\"component.validate.custom\"\n        ng-disabled=\"readOnly\"\n      >\n      {{ v.label | formioTranslate:null:options.building }}\n    </label>\n  </div>\n</ng-form>\n"
+        "<ng-form name=\"{{ componentId }}\" ng-model=\"data[component.key]\" custom-validator=\"component.validate.custom\">\n  <div ng-class=\"component.inline ? 'radio-inline' : 'radio'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\" ng-style=\"getOptionLabelStyles(component)\">\n      <span ng-if=\"topOrLeftOptionLabel(component)\">{{ v.label | formioTranslate:null:options.building }}</span>\n      <input\n        type=\"{{ component.inputType }}\"\n        id=\"{{ componentId }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-model=\"data[component.key]\"\n        ng-required=\"isRequired(component)\"\n        custom-validator=\"component.validate.custom\"\n        ng-disabled=\"readOnly\"\n        ng-style=\"getOptionInputStyles(component)\"\n      >\n      <span ng-if=\"!topOrLeftOptionLabel(component)\">{{ v.label | formioTranslate:null:options.building | shortcut:v.shortcut }}</span>\n    </label>\n  </div>\n</ng-form>\n"
       ));
     }
   ]);
 };
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],469:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -71328,7 +72157,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/resource.html',
-        "<div ng-if=\"!component.addResource\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n  <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n    <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n      <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n    </ui-select-match>\n    <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n      <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n      <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n    </ui-select-choices>\n  </ui-select>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n<div ng-if=\"component.addResource\">\n  <table class=\"table table-bordered\">\n    <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </label>\n    <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n    <tr>\n      <td>\n        <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n          <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n            <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n          </ui-select-match>\n          <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n            <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n            <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n          </ui-select-choices>\n        </ui-select>\n        <formio-errors ng-if=\"::!options.building\"></formio-errors>\n      </td>\n    </tr>\n    <tr>\n      <td>\n        <a ng-click=\"newResource()\" class=\"btn btn-primary\">\n          <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addResourceLabel || \"Add Resource\" | formioTranslate:null:options.building}}\n        </a>\n      </td>\n    </tr>\n  </table>\n</div>\n"
+        "<div ng-if=\"!component.addResource\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition !== 'bottom')\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\" ng-style=\"getLabelStyles(component)\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n  <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\" ng-style=\"getInputGroupStyles(component)\">\n    <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n      <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n    </ui-select-match>\n    <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n      <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n      <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n    </ui-select-choices>\n  </ui-select>\n  <label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition === 'bottom')\" for=\"{{ componentId }}\" class=\"control-label control-label--bottom\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label | formioTranslate:null:options.building }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n<div ng-if=\"component.addResource\">\n  <table class=\"table table-bordered\">\n    <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n      {{ component.label | formioTranslate:null:options.building }}\n      <formio-component-tooltip></formio-component-tooltip>\n    </label>\n    <span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n    <tr>\n      <td>\n        <ui-select ui-select-required safe-multiple-to-single ui-select-open-on-focus ng-model=\"data[component.key]\" ng-disabled=\"readOnly\" ng-required=\"isRequired(component)\" id=\"{{ componentId }}\" name=\"{{ componentId }}\" theme=\"bootstrap\" tabindex=\"{{ component.tabindex || 0 }}\">\n          <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n            <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n          </ui-select-match>\n          <ui-select-choices class=\"ui-select-choices\" repeat=\"item in selectItems | filter: $select.search\" refresh=\"refreshSubmissions($select.search)\" refresh-delay=\"250\">\n            <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n            <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"resourceLoading\">Load more...</button>\n          </ui-select-choices>\n        </ui-select>\n        <formio-errors ng-if=\"::!options.building\"></formio-errors>\n      </td>\n    </tr>\n    <tr>\n      <td>\n        <a ng-click=\"newResource()\" class=\"btn btn-primary\">\n          <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span> {{ component.addResourceLabel || \"Add Resource\" | formioTranslate:null:options.building}}\n        </a>\n      </td>\n    </tr>\n  </table>\n</div>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -71339,7 +72168,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],310:[function(_dereq_,module,exports){
+},{}],470:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-depth: ["error", 6]*/
 
@@ -71558,9 +72387,13 @@ module.exports = function(app) {
             };
 
             // Ensures that the value is within the select items.
-            var ensureValue = function() {
-              var value = $scope.data[settings.key];
+            var ensureValue = function(value) {
+              value = value || $scope.data[settings.key];
               if (!value || (Array.isArray(value) && value.length === 0)) {
+                return;
+              }
+              if (Array.isArray(value)) {
+                value.forEach(ensureValue);
                 return;
               }
               // Iterate through the list of items and see if our value exists...
@@ -71951,7 +72784,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/select.html',
-        "<label ng-if=\"options.building || (component.label && !component.hideLabel)\"  for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select\n  ui-select-required\n  ui-select-open-on-focus\n  ng-model=\"data[component.key]\"\n  safe-multiple-to-single\n  name=\"{{ componentId }}\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"isRequired(component)\"\n  id=\"{{ componentId }}\"\n  theme=\"bootstrap\"\n  custom-validator=\"component.validate.custom\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n>\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"getSelectItem(item) as item in selectItems | filter: $select.search\" refresh=\"refreshItems($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n    <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"selectLoading\">Load more...</button>\n  </ui-select-choices>\n</ui-select>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
+        "<label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition !== 'bottom')\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\" ng-style=\"getLabelStyles(component)\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<span ng-if=\"!component.label && isRequired(component)\" class=\"glyphicon glyphicon-asterisk form-control-feedback field-required-inline\" aria-hidden=\"true\"></span>\n<ui-select\n  ui-select-required\n  ui-select-open-on-focus\n  ng-model=\"data[component.key]\"\n  safe-multiple-to-single\n  name=\"{{ componentId }}\"\n  ng-disabled=\"readOnly\"\n  ng-required=\"isRequired(component)\"\n  id=\"{{ componentId }}\"\n  theme=\"bootstrap\"\n  custom-validator=\"component.validate.custom\"\n  tabindex=\"{{ component.tabindex || 0 }}\"\n  ng-style=\"getInputGroupStyles(component)\"\n>\n  <ui-select-match class=\"ui-select-match\" placeholder=\"{{ component.placeholder | formioTranslate:null:options.building }}\">\n    <formio-select-item template=\"component.template\" item=\"$item || $select.selected\" select=\"$select\"></formio-select-item>\n  </ui-select-match>\n  <ui-select-choices class=\"ui-select-choices\" repeat=\"getSelectItem(item) as item in selectItems | filter: $select.search\" refresh=\"refreshItems($select.search)\" refresh-delay=\"250\">\n    <formio-select-item template=\"component.template\" item=\"item\" select=\"$select\"></formio-select-item>\n    <button ng-if=\"hasNextPage && ($index == $select.items.length-1)\" class=\"btn btn-success btn-block\" ng-click=\"loadMoreItems($select, $event)\" ng-disabled=\"selectLoading\">Load more...</button>\n  </ui-select-choices>\n</ui-select>\n<label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition === 'bottom')\" for=\"{{ componentId }}\" class=\"control-label control-label--bottom\" ng-class=\"{'field-required': isRequired(component)}\">\n  {{ component.label | formioTranslate:null:options.building }}\n  <formio-component-tooltip></formio-component-tooltip>\n</label>\n<div ng-if=\"!!component.description\" class=\"help-block\">\n  <span>{{ component.description }}</span>\n</div>\n<formio-errors ng-if=\"::!options.building\"></formio-errors>\n"
       );
 
       // Change the ui-select to ui-select multiple.
@@ -71962,7 +72795,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":214,"lodash/cloneDeep":221,"lodash/get":229,"lodash/isEqual":239,"lodash/mapValues":256,"lodash/set":266}],311:[function(_dereq_,module,exports){
+},{"lodash/assign":383,"lodash/cloneDeep":387,"lodash/get":395,"lodash/isEqual":405,"lodash/mapValues":419,"lodash/set":428}],471:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -71984,18 +72817,7 @@ module.exports = function(app) {
       templateUrl: 'formio/components/selectboxes-directive.html',
       link: function($scope, el, attrs, ngModel) {
         if ($scope.options && $scope.options.building) return;
-        // Initialize model
-        var model = {};
-        angular.forEach($scope.component.values, function(v) {
-          model[v.value] = ngModel.$viewValue.hasOwnProperty(v.value)
-            ? !!ngModel.$viewValue[v.value]
-            : false;
-        });
-        // FA-835 - Update the view model with our defaults.
-        // FA-921 - Attempt to load a current model, if present before the defaults.
-        ngModel.$setViewValue($scope.model || model);
 
-        ngModel.$setPristine(true);
         ngModel.$isEmpty = function(value) {
           if (typeof value === 'undefined') {
             return true;
@@ -72006,12 +72828,40 @@ module.exports = function(app) {
           });
         };
 
+        // Initialize model
+        var model = {};
+        angular.forEach($scope.component.values, function(v) {
+          model[v.value] = ngModel.$viewValue.hasOwnProperty(v.value)
+            ? !!ngModel.$viewValue[v.value]
+            : false;
+        });
+
+        var modelValue = $scope.model || model;
+        if (!ngModel.$isEmpty(modelValue)) {
+          // FA-835 - Update the view model with our defaults.
+          // FA-921 - Attempt to load a current model, if present before the defaults.
+          ngModel.$setViewValue(modelValue);
+          ngModel.$setPristine(true);
+        }
+
         $scope.toggleCheckbox = function(value) {
           var _model = angular.copy(ngModel.$viewValue || {});
           _model[value] = !_model[value];
           ngModel.$setViewValue(_model);
         };
-      }
+      },
+      controller: [
+        '$scope',
+        'FormioUtils',
+        function(
+          $scope,
+          FormioUtils
+        ) {
+          $scope.topOrLeftOptionLabel = FormioUtils.optionsLabelPositionWrapper(FormioUtils.topOrLeftOptionLabel);
+          $scope.getOptionLabelStyles = FormioUtils.optionsLabelPositionWrapper(FormioUtils.getOptionLabelStyles);
+          $scope.getOptionInputStyles = FormioUtils.optionsLabelPositionWrapper(FormioUtils.getOptionInputStyles);
+        }
+      ]
     };
   }]);
 
@@ -72061,16 +72911,16 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/components/selectboxes-directive.html',
-        "<div class=\"select-boxes\">\n  <div ng-class=\"component.inline ? 'checkbox-inline' : 'checkbox'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\">\n      <input type=\"checkbox\"\n        id=\"{{ componentId }}-{{ v.value }}\"\n        name=\"{{ componentId }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-disabled=\"readOnly\"\n        ng-click=\"toggleCheckbox(v.value)\"\n        ng-checked=\"model[v.value]\"\n        grid-row=\"gridRow\"\n        grid-col=\"gridCol\"\n      >\n      {{ v.label | formioTranslate:null:options.building }}\n    </label>\n  </div>\n</div>\n"
+        "<div class=\"select-boxes\">\n  <div ng-class=\"component.inline ? 'checkbox-inline' : 'checkbox'\" ng-repeat=\"v in component.values track by $index\">\n    <label class=\"control-label\" for=\"{{ componentId }}-{{ v.value }}\" ng-style=\"getOptionLabelStyles(component)\">\n      <span ng-if=\"topOrLeftOptionLabel(component)\">{{ v.label | formioTranslate:null:options.building }}</span>\n      <input type=\"checkbox\"\n        id=\"{{ componentId }}-{{ v.value }}\"\n        name=\"{{ componentId }}-{{ v.value }}\"\n        value=\"{{ v.value }}\"\n        tabindex=\"{{ component.tabindex || 0 }}\"\n        ng-disabled=\"readOnly\"\n        ng-click=\"toggleCheckbox(v.value)\"\n        ng-checked=\"model[v.value]\"\n        grid-row=\"gridRow\"\n        grid-col=\"gridCol\"\n        ng-style=\"getOptionInputStyles(component)\"\n      >\n      <span ng-if=\"!topOrLeftOptionLabel(component)\">{{ v.label | formioTranslate:null:options.building | shortcut:v.shortcut }}</span>\n    </label>\n  </div>\n</div>\n"
       );
       $templateCache.put('formio/components/selectboxes.html',
-        "<div class=\"select-boxes\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel)\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <formio-select-boxes\n    name=\"{{componentId}}\"\n    ng-model=\"data[component.key]\"\n    ng-model-options=\"{allowInvalid: true}\"\n    component=\"component\"\n    component-id=\"componentId\"\n    read-only=\"readOnly\"\n    ng-required=\"isRequired(component)\"\n    custom-validator=\"component.validate.custom\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    options=\"options\"\n  ></formio-select-boxes>\n  <div ng-if=\"!!component.description\" class=\"help-block\">\n    <span>{{ component.description }}</span>\n  </div>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n"
+        "<div class=\"select-boxes\">\n  <label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition !== 'bottom')\" for=\"{{ componentId }}\" class=\"control-label\" ng-class=\"{'field-required': isRequired(component)}\" ng-style=\"getLabelStyles(component)\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <formio-select-boxes\n    name=\"{{componentId}}\"\n    ng-model=\"data[component.key]\"\n    ng-model-options=\"{allowInvalid: true}\"\n    component=\"component\"\n    component-id=\"componentId\"\n    read-only=\"readOnly\"\n    ng-required=\"isRequired(component)\"\n    custom-validator=\"component.validate.custom\"\n    grid-row=\"gridRow\"\n    grid-col=\"gridCol\"\n    options=\"options\"\n    ng-style=\"getInputGroupStyles(component)\"\n  ></formio-select-boxes>\n  <label ng-if=\"options.building || (component.label && !component.hideLabel && component.labelPosition === 'bottom')\" for=\"{{ componentId }}\" class=\"control-label control-label--bottom\" ng-class=\"{'field-required': isRequired(component)}\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <div ng-if=\"!!component.description\" class=\"help-block\">\n    <span>{{ component.description }}</span>\n  </div>\n  <formio-errors ng-if=\"::!options.building\"></formio-errors>\n</div>\n"
       );
     }
   ]);
 };
 
-},{}],312:[function(_dereq_,module,exports){
+},{}],472:[function(_dereq_,module,exports){
 "use strict";
 
 var SignaturePad = _dereq_('signature_pad');
@@ -72212,7 +73062,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"signature_pad":351}],313:[function(_dereq_,module,exports){
+},{"signature_pad":512}],473:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -72273,7 +73123,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],474:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -72353,7 +73203,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],315:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],475:[function(_dereq_,module,exports){
 "use strict";
 
 module.exports = function(app) {
@@ -72479,7 +73329,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],476:[function(_dereq_,module,exports){
 "use strict";
 
 
@@ -72540,7 +73390,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],477:[function(_dereq_,module,exports){
 "use strict";
 
 var moment = _dereq_('moment');
@@ -72612,7 +73462,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"moment":278}],318:[function(_dereq_,module,exports){
+},{"moment":438}],478:[function(_dereq_,module,exports){
 "use strict";
 
 var GridUtils = _dereq_('../factories/GridUtils')();
@@ -72665,7 +73515,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"../factories/GridUtils":334}],319:[function(_dereq_,module,exports){
+},{"../factories/GridUtils":494}],479:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -72743,7 +73593,7 @@ module.exports = function() {
   };
 };
 
-},{}],320:[function(_dereq_,module,exports){
+},{}],480:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73150,7 +74000,7 @@ module.exports = function() {
   };
 };
 
-},{}],321:[function(_dereq_,module,exports){
+},{}],481:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile) {
   return {
@@ -73167,7 +74017,7 @@ module.exports = ['$sce', '$parse', '$compile', function($sce, $parse, $compile)
   };
 }];
 
-},{}],322:[function(_dereq_,module,exports){
+},{}],482:[function(_dereq_,module,exports){
 "use strict";
 var _get = _dereq_('lodash/get');
 
@@ -73267,6 +74117,90 @@ module.exports = [
           $scope.isRequired = function(component) {
             return FormioUtils.isRequired(component);
           };
+
+          function labelOnTheLeft(position) {
+            return [
+              'left-left',
+              'left-right'
+            ].indexOf(position) !== -1;
+          }
+
+          function labelOnTheRight(position) {
+            return [
+              'right-left',
+              'right-right'
+            ].indexOf(position) !== -1;
+          }
+
+          function labelOnTheLeftOrRight(position) {
+            return labelOnTheLeft(position) || labelOnTheRight(position);
+          }
+
+          function getLabelTextAlign(position) {
+            return position.match('-right') ? 'right': 'left';
+          }
+
+          function getComponentLabelWidth(component) {
+            if (angular.isUndefined(component.labelWidth)) {
+              component.labelWidth = 30;
+            }
+
+            return component.labelWidth;
+          }
+
+          function getComponentLabelMargin(component) {
+            if (angular.isUndefined(component.labelMargin)) {
+              component.labelMargin = 3;
+            }
+
+            return component.labelMargin;
+          }
+
+          $scope.getLabelStyles = function(component) {
+            var labelPosition = _get(component, 'labelPosition');
+
+            if (labelOnTheLeft(labelPosition)) {
+              return {
+                float: 'left',
+                width: getComponentLabelWidth(component) + '%',
+                'margin-right': getComponentLabelMargin(component) + '%',
+                'text-align': getLabelTextAlign(labelPosition)
+              };
+            }
+
+            if (labelOnTheRight(labelPosition)) {
+              return {
+                float: 'right',
+                width: getComponentLabelWidth(component) + '%',
+                'margin-left': getComponentLabelMargin(component) + '%',
+                'text-align': getLabelTextAlign(labelPosition)
+              };
+            }
+          };
+
+          $scope.getInputGroupStyles = function(component) {
+            var labelPosition = _get(component, 'labelPosition');
+            
+            if (labelOnTheLeftOrRight(labelPosition)) {
+              var totalLabelWidth = getComponentLabelWidth(component) + getComponentLabelMargin(component);
+              var styles = {
+                width: (100 - totalLabelWidth) + '%'
+              };
+
+              if (labelOnTheLeft(labelPosition)) {
+                styles['margin-left'] = totalLabelWidth + '%';
+              }
+               else {
+                styles['margin-right'] = totalLabelWidth + '%';
+              }
+
+              return styles;
+            }
+          };
+
+          $scope.topOrLeftOptionLabel = FormioUtils.optionsLabelPositionWrapper(FormioUtils.topOrLeftOptionLabel);
+          $scope.getOptionLabelStyles = FormioUtils.optionsLabelPositionWrapper(FormioUtils.getOptionLabelStyles);
+          $scope.getOptionInputStyles = FormioUtils.optionsLabelPositionWrapper(FormioUtils.getOptionInputStyles);
 
           // Survey components haves questions.
           // We want to make the survey component label marked with error if any
@@ -73435,7 +74369,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/get":229}],323:[function(_dereq_,module,exports){
+},{"lodash/get":395}],483:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73451,7 +74385,7 @@ module.exports = function() {
   };
 };
 
-},{}],324:[function(_dereq_,module,exports){
+},{}],484:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioComponents',
@@ -73524,7 +74458,7 @@ module.exports = [
   }
 ];
 
-},{}],325:[function(_dereq_,module,exports){
+},{}],485:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73608,7 +74542,7 @@ module.exports = function() {
   };
 };
 
-},{}],326:[function(_dereq_,module,exports){
+},{}],486:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$compile',
@@ -73627,7 +74561,7 @@ module.exports = [
   }
 ];
 
-},{}],327:[function(_dereq_,module,exports){
+},{}],487:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73637,7 +74571,7 @@ module.exports = function() {
   };
 };
 
-},{}],328:[function(_dereq_,module,exports){
+},{}],488:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 // Javascript editor directive
@@ -73713,7 +74647,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{"lodash/map":255}],329:[function(_dereq_,module,exports){
+},{"lodash/map":418}],489:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73745,7 +74679,7 @@ module.exports = function() {
   };
 };
 
-},{}],330:[function(_dereq_,module,exports){
+},{}],490:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -73801,7 +74735,7 @@ module.exports = function() {
   };
 };
 
-},{}],331:[function(_dereq_,module,exports){
+},{}],491:[function(_dereq_,module,exports){
 "use strict";
 var isNaN = _dereq_('lodash/isNAN');
 var isFinite = _dereq_('lodash/isFinite');
@@ -74270,17 +75204,8 @@ module.exports = function() {
 
         // Move onto the previous page.
         $scope.prev = function() {
-          var errors = $scope.checkErrors();
-          if (errors) {
-            $scope.pageHasErrors[$scope.currentPage] = true;
-            if (!$scope.formioOptions.wizardFreeNavigation) {
-              return;
-            }
-          }
-          else {
-            $scope.pageHasErrors[$scope.currentPage] = false;
-          }
-
+          // var errors = $scope.checkErrors();
+          $scope.pageHasErrors[$scope.currentPage] = false;
           var prev = $scope.history.pop();
           $scope.currentPage = prev;
           FormioUtils.alter('prevPage', $scope, function(err) {
@@ -74420,7 +75345,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/isEmpty":238,"lodash/isFinite":241,"lodash/isNAN":244}],332:[function(_dereq_,module,exports){
+},{"lodash/isEmpty":404,"lodash/isFinite":406,"lodash/isNAN":409}],492:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -74604,7 +75529,7 @@ module.exports = [
   }
 ];
 
-},{}],333:[function(_dereq_,module,exports){
+},{}],493:[function(_dereq_,module,exports){
 "use strict";
 var formioUtils = _dereq_('formiojs/utils');
 var _filter = _dereq_('lodash/filter');
@@ -74612,6 +75537,14 @@ var _get = _dereq_('lodash/get');
 
 module.exports = function() {
   var hooks = {};
+
+  function optionsLabelOnTheTopOrBottom(position) {
+    return [
+      'top',
+      'bottom'
+    ].indexOf(position) !== -1;
+  }
+
   return {
     // Asynchronously iterate through a map.
     each: function(items, each, done) {
@@ -74936,44 +75869,52 @@ module.exports = function() {
     },
     fieldWrap: function(input) {
       var multiInput = input.replace('data[component.key]', 'data[component.key][$index]');
-      var inputLabel = '<label ng-if="options.building || (component.label && !component.hideLabel)" for="{{ component.key }}" class="control-label" ng-class="{\'field-required\': isRequired(component)}">' +
+      var inputTopLabel = '<label ng-if="options.building || (component.label && !component.hideLabel && component.labelPosition !== \'bottom\')" for="{{ component.key }}" class="control-label" ng-class="{\'field-required\': isRequired(component)}" ng-style="getLabelStyles(component)">' +
+        '{{ component.label | formioTranslate:null:options.building }} ' +
+        '<formio-component-tooltip></formio-component-tooltip>' +
+        '</label>';
+      var inputBottomLabel = '<label ng-if="options.building || (component.label && !component.hideLabel && component.labelPosition === \'bottom\')" for="{{ component.key }}" class="control-label control-label--bottom" ng-class="{\'field-required\': isRequired(component)}">' +
         '{{ component.label | formioTranslate:null:options.building }} ' +
         '<formio-component-tooltip></formio-component-tooltip>' +
         '</label>';
       var requiredInline = '<span ng-if="(component.hideLabel === true || component.label === \'\' || !component.label) && isRequired(component)" class="glyphicon glyphicon-asterisk form-control-feedback field-required-inline" aria-hidden="true"></span>';
       var template =
         '<div ng-if="!component.multiple">' +
-          inputLabel +
-          '<div class="input-group">' +
+          inputTopLabel +
+          '<div class="input-group" ng-style="getInputGroupStyles(component)">' +
             '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
             input +
             requiredInline +
             '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
           '</div>' +
+          inputBottomLabel +
           '<div class="formio-errors">' +
             '<formio-errors ng-if="::!options.building"></formio-errors>' +
           '</div>' +
         '</div>' +
-        '<div ng-if="component.multiple"><table class="table table-bordered">' +
-          inputLabel +
-          '<tr ng-repeat="value in data[component.key] track by $index">' +
-            '<td>' +
-              '<div class="input-group">' +
-                '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
-                  multiInput +
-                  requiredInline +
-                '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
-              '</div>' +
-              '<div class="formio-errors">' +
-                '<formio-errors ng-if="::!options.building"></formio-errors>' +
-              '</div>' +
-            '</td>' +
-            '<td><a ng-click="(readOnly || formioForm.submitting)? null:removeFieldValue($index) " ng-disabled = "readOnly || formioForm.submitting" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
-          '</tr>' +
-          '<tr>' +
-            '<td colspan="2"><a ng-click="(readOnly || formioForm.submitting)? null: addFieldValue() " ng-disabled = "readOnly || formioForm.submitting" class="btn btn-primary"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" | formioTranslate:null:options.building }}</a></td>' +
-          '</tr>' +
-        '</table></div>' +
+        '<div ng-if="component.multiple">' +
+          inputTopLabel +
+          '<table class="table table-bordered" ng-style="getInputGroupStyles(component)">' +
+            '<tr ng-repeat="value in data[component.key] track by $index">' +
+              '<td>' +
+                '<div class="input-group">' +
+                  '<div class="input-group-addon" ng-if="!!component.prefix">{{ component.prefix }}</div>' +
+                    multiInput +
+                    requiredInline +
+                  '<div class="input-group-addon" ng-if="!!component.suffix">{{ component.suffix }}</div>' +
+                '</div>' +
+                '<div class="formio-errors">' +
+                  '<formio-errors ng-if="::!options.building"></formio-errors>' +
+                '</div>' +
+              '</td>' +
+              '<td><a ng-click="(readOnly || formioForm.submitting)? null:removeFieldValue($index) " ng-disabled = "readOnly || formioForm.submitting" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle"></span></a></td>' +
+            '</tr>' +
+            '<tr>' +
+              '<td colspan="2"><a ng-click="(readOnly || formioForm.submitting)? null: addFieldValue() " ng-disabled = "readOnly || formioForm.submitting" class="btn btn-primary"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> {{ component.addAnother || "Add Another" | formioTranslate:null:options.building }}</a></td>' +
+            '</tr>' +
+          '</table>' +
+          inputBottomLabel +
+        '</div>' +
         '<div ng-if="!!component.description" class="help-block">' +
           '<span>{{ component.description | formioTranslate:null:options.building }}</span>' +
         '</div>';
@@ -74988,11 +75929,63 @@ module.exports = function() {
      */
     isRequired: function(component, componentsToRequire) {
       return (component.validate && component.validate.required) || (Array.isArray(componentsToRequire) && componentsToRequire.indexOf(component.key) !== -1);
+    },
+    topOrLeftOptionLabel: function(position) {
+      return [
+        'top',
+        'left'
+      ].indexOf(position) !== -1;
+    },
+    getOptionLabelStyles: function(position) {
+      if (position === 'left') {
+        return {
+          'text-align': 'center',
+          'padding-left': 0
+        };
+      }
+
+      if (optionsLabelOnTheTopOrBottom(position)) {
+        return {
+          display: 'block',
+          'text-align': 'center',
+          'padding-left': 0
+        };
+      }
+
+      return null;
+    },
+    getOptionInputStyles: function(position) {
+      if (position === 'left') {
+        return {
+          position: 'initial',
+          'margin-left': 0
+        };
+      }
+
+      if (optionsLabelOnTheTopOrBottom(position)) {
+        return {
+          width: '100%',
+          position: 'initial',
+          'margin-left': 0
+        };
+      }
+
+      return null;
+    },
+    labelPositionWrapper: function(fn) {
+      return function(component) {
+        return fn(component.labelPosition);
+      };
+    },
+    optionsLabelPositionWrapper: function(fn) {
+      return function(component) {
+        return fn(component.optionsLabelPosition);
+      };
     }
   };
 };
 
-},{"formiojs/utils":37,"lodash/filter":227,"lodash/get":229}],334:[function(_dereq_,module,exports){
+},{"formiojs/utils":208,"lodash/filter":393,"lodash/get":395}],494:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   var generic = function(data, component) {
@@ -75118,7 +76111,7 @@ module.exports = function() {
   };
 };
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],495:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$q',
@@ -75167,7 +76160,7 @@ module.exports = [
   }
 ];
 
-},{}],336:[function(_dereq_,module,exports){
+},{}],496:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -75201,7 +76194,7 @@ module.exports = [
   }
 ];
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],497:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'FormioUtils',
@@ -75210,7 +76203,7 @@ module.exports = [
   }
 ];
 
-},{}],338:[function(_dereq_,module,exports){
+},{}],498:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$sce',
@@ -75223,7 +76216,29 @@ module.exports = [
   }
 ];
 
-},{}],339:[function(_dereq_,module,exports){
+},{}],499:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function() {
+    return function(label, shortcut) {
+      if (!shortcut || !/^[A-Za-z]$/.test(shortcut)) {
+        return label;
+      }
+  
+      var match = label.match(new RegExp(shortcut, 'i'));
+  
+      if (!match) {
+        return label;
+      }
+  
+      var char = match[0];
+      var index = match.index + 1;
+      var lowLine = '\u0332';
+  
+      return label.substring(0, index) + lowLine + label.substring(index);
+    };
+  }
+  
+},{}],500:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -75242,7 +76257,7 @@ module.exports = [
   }
 ];
 
-},{}],340:[function(_dereq_,module,exports){
+},{}],501:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioTableView',
@@ -75255,7 +76270,7 @@ module.exports = [
   }
 ];
 
-},{}],341:[function(_dereq_,module,exports){
+},{}],502:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'Formio',
@@ -75270,7 +76285,7 @@ module.exports = [
   }
 ];
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],503:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   '$filter',
@@ -75327,7 +76342,7 @@ module.exports = [
   }
 ];
 
-},{}],343:[function(_dereq_,module,exports){
+},{}],504:[function(_dereq_,module,exports){
 "use strict";
 module.exports = ['$sce', function($sce) {
   return function(val) {
@@ -75335,7 +76350,7 @@ module.exports = ['$sce', function($sce) {
   };
 }];
 
-},{}],344:[function(_dereq_,module,exports){
+},{}],505:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('angular-ui-mask/dist/mask');
 _dereq_('ui-select/dist/select');
@@ -75351,7 +76366,7 @@ _dereq_('ng-dialog');
 _dereq_('angular-ui-ace/src/ui-ace');
 _dereq_('./formio');
 
-},{"./formio":345,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":280,"ng-file-upload":282,"ui-select/dist/select":352}],345:[function(_dereq_,module,exports){
+},{"./formio":506,"angular-ckeditor":1,"angular-file-saver":3,"angular-moment":4,"angular-sanitize":6,"angular-ui-ace/src/ui-ace":7,"angular-ui-bootstrap":9,"angular-ui-mask/dist/mask":10,"bootstrap":14,"bootstrap-ui-datetime-picker/dist/datetime-picker":13,"ng-dialog":440,"ng-file-upload":442,"ui-select/dist/select":513}],506:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('./polyfills/polyfills');
 
@@ -75423,6 +76438,7 @@ app.filter('tableFieldView', _dereq_('./filters/tableFieldView'));
 app.filter('safehtml', _dereq_('./filters/safehtml'));
 app.filter('formioTranslate', _dereq_('./filters/translate'));
 app.filter('trustAsResourceUrl', _dereq_('./filters/trusturl'));
+app.filter('shortcut', _dereq_('./filters/shortcut'));
 app.config([
   '$httpProvider',
   '$injector',
@@ -75502,14 +76518,14 @@ app.run([
     );
 
     $templateCache.put('formio/errors.html',
-      "<div ng-show=\"formioForm[componentId].$error && !formioForm[componentId].$pristine\">\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.email\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a valid email' | formioTranslate:null:options.building}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.required\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'is required' | formioTranslate:null:options.building}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.number\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a number' | formioTranslate:null:options.building}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.maxlength\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be shorter than' | formioTranslate:null:options.building}} {{ component.validate.maxLength + 1 }} {{'characters' | formioTranslate:null:options.building}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.minlength\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be longer than' | formioTranslate:null:options.building}} {{ component.validate.minLength - 1 }} {{'characters' | formioTranslate:null:options.building}}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.min\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be greater than or equal to' | formioTranslate:null:options.building}} {{ component.validate.min }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.max\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be less than or equal to' | formioTranslate:null:options.building}} {{ component.validate.max }}.</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.custom\">{{ component.customError | formioTranslate }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.pattern\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'does not match the pattern' | formioTranslate:null:options.building}} {{ component.validate.pattern }}</p>\n  <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.day\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a valid date' | formioTranslate:null:options.building}}.</p>\n</div>\n"
+      "<div ng-show=\"formioForm[componentId].$error && !formioForm[componentId].$pristine\">\n  <div ng-show=\"component.validate.customMessage && (\n    formioForm[componentId].$error.email ||\n    formioForm[componentId].$error.required ||\n    formioForm[componentId].$error.number ||\n    formioForm[componentId].$error.maxlength ||\n    formioForm[componentId].$error.minlength ||\n    formioForm[componentId].$error.min ||\n    formioForm[componentId].$error.max ||\n    formioForm[componentId].$error.custom ||\n    formioForm[componentId].$error.pattern ||\n    formioForm[componentId].$error.day\n  )\">\n      <p class=\"help-block\">{{ component.validate.customMessage | formioTranslate:null:options.building }}</p>\n  </div>\n  <div ng-hide=\"component.validate.customMessage\">\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.email\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a valid email' | formioTranslate:null:options.building}}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.required\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'is required' | formioTranslate:null:options.building}}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.number\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a number' | formioTranslate:null:options.building}}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.maxlength\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be shorter than' | formioTranslate:null:options.building}} {{ component.validate.maxLength + 1 }} {{'characters' | formioTranslate:null:options.building}}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.minlength\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be longer than' | formioTranslate:null:options.building}} {{ component.validate.minLength - 1 }} {{'characters' | formioTranslate:null:options.building}}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.min\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be greater than or equal to' | formioTranslate:null:options.building}} {{ component.validate.min }}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.max\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be less than or equal to' | formioTranslate:null:options.building}} {{ component.validate.max }}.</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.custom\">{{ component.customError | formioTranslate }}</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.pattern\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'does not match the pattern' | formioTranslate:null:options.building}} {{ component.validate.pattern }}</p>\n    <p class=\"help-block\" ng-show=\"formioForm[componentId].$error.day\">{{ component.errorLabel || component.label || component.placeholder || component.key }} {{'must be a valid date' | formioTranslate:null:options.building}}.</p>\n  </div>\n</div>\n"
     );
   }
 ]);
 
 _dereq_('./components');
 
-},{"./components":302,"./directives/customValidator":319,"./directives/formio":320,"./directives/formioBindHtml.js":321,"./directives/formioComponent":322,"./directives/formioComponentTooltip":323,"./directives/formioComponentView":324,"./directives/formioDelete":325,"./directives/formioElement":326,"./directives/formioErrors":327,"./directives/formioScriptEditor":328,"./directives/formioSubmission":329,"./directives/formioSubmissions":330,"./directives/formioWizard":331,"./factories/FormioScope":332,"./factories/FormioUtils":333,"./factories/formioInterceptor":335,"./factories/formioTableView":336,"./filters/flattenComponents":337,"./filters/safehtml":338,"./filters/tableComponents":339,"./filters/tableFieldView":340,"./filters/tableView":341,"./filters/translate":342,"./filters/trusturl":343,"./polyfills/polyfills":347,"./providers/Formio":348}],346:[function(_dereq_,module,exports){
+},{"./components":462,"./directives/customValidator":479,"./directives/formio":480,"./directives/formioBindHtml.js":481,"./directives/formioComponent":482,"./directives/formioComponentTooltip":483,"./directives/formioComponentView":484,"./directives/formioDelete":485,"./directives/formioElement":486,"./directives/formioErrors":487,"./directives/formioScriptEditor":488,"./directives/formioSubmission":489,"./directives/formioSubmissions":490,"./directives/formioWizard":491,"./factories/FormioScope":492,"./factories/FormioUtils":493,"./factories/formioInterceptor":495,"./factories/formioTableView":496,"./filters/flattenComponents":497,"./filters/safehtml":498,"./filters/shortcut":499,"./filters/tableComponents":500,"./filters/tableFieldView":501,"./filters/tableView":502,"./filters/translate":503,"./filters/trusturl":504,"./polyfills/polyfills":508,"./providers/Formio":509}],507:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -75540,13 +76556,13 @@ if (typeof Object.assign != 'function') {
   })();
 }
 
-},{}],347:[function(_dereq_,module,exports){
+},{}],508:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
 _dereq_('./Object.assign');
 
-},{"./Object.assign":346}],348:[function(_dereq_,module,exports){
+},{"./Object.assign":507}],509:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   // The formio class.
@@ -75616,7 +76632,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs":29}],349:[function(_dereq_,module,exports){
+},{"formiojs":29}],510:[function(_dereq_,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -75802,7 +76818,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],350:[function(_dereq_,module,exports){
+},{}],511:[function(_dereq_,module,exports){
 module.exports = function (obj) {
     if (!obj || typeof obj !== 'object') return obj;
     
@@ -75839,7 +76855,7 @@ var isArray = Array.isArray || function (xs) {
     return {}.toString.call(xs) === '[object Array]';
 };
 
-},{}],351:[function(_dereq_,module,exports){
+},{}],512:[function(_dereq_,module,exports){
 /*!
  * Signature Pad v2.3.2
  * https://github.com/szimek/signature_pad
@@ -76451,7 +77467,7 @@ return SignaturePad;
 
 })));
 
-},{}],352:[function(_dereq_,module,exports){
+},{}],513:[function(_dereq_,module,exports){
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
@@ -78879,7 +79895,7 @@ $templateCache.put("selectize/match.tpl.html","<div ng-hide=\"$select.searchEnab
 $templateCache.put("selectize/no-choice.tpl.html","<div class=\"ui-select-no-choice selectize-dropdown\" ng-show=\"$select.items.length == 0\"><div class=\"selectize-dropdown-content\"><div data-selectable=\"\" ng-transclude=\"\"></div></div></div>");
 $templateCache.put("selectize/select-multiple.tpl.html","<div class=\"ui-select-container selectize-control multi plugin-remove_button\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" placeholder=\"{{$selectMultiple.getPlaceholder()}}\" ng-model=\"$select.search\" ng-disabled=\"$select.disabled\" aria-expanded=\"{{$select.open}}\" aria-label=\"{{ $select.baseTitle }}\" ondrop=\"return false;\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");
 $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container selectize-control single\" ng-class=\"{\'open\': $select.open}\"><div class=\"selectize-input\" ng-class=\"{\'focus\': $select.open, \'disabled\': $select.disabled, \'selectize-focus\' : $select.focus}\" ng-click=\"$select.open && !$select.searchEnabled ? $select.toggle($event) : $select.activate()\"><div class=\"ui-select-match\"></div><input type=\"search\" autocomplete=\"off\" tabindex=\"-1\" class=\"ui-select-search ui-select-toggle\" ng-class=\"{\'ui-select-search-hidden\':!$select.searchEnabled}\" ng-click=\"$select.toggle($event)\" placeholder=\"{{$select.placeholder}}\" ng-model=\"$select.search\" ng-hide=\"!$select.isEmpty() && !$select.open\" ng-disabled=\"$select.disabled\" aria-label=\"{{ $select.baseTitle }}\"></div><div class=\"ui-select-choices\"></div><div class=\"ui-select-no-choice\"></div></div>");}]);
-},{}],353:[function(_dereq_,module,exports){
+},{}],514:[function(_dereq_,module,exports){
 (function(self) {
   'use strict';
 
@@ -79342,7 +80358,7 @@ $templateCache.put("selectize/select.tpl.html","<div class=\"ui-select-container
   self.fetch.polyfill = true
 })(typeof self !== 'undefined' ? self : this);
 
-},{}],354:[function(_dereq_,module,exports){
+},{}],515:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79383,6 +80399,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/address/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -79413,13 +80430,14 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="unique"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '</ng-form>'
       );
     }
   ]);
 };
 
-},{}],355:[function(_dereq_,module,exports){
+},{}],516:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79488,6 +80506,7 @@ module.exports = function(app) {
           '<form-builder-option property="leftIcon"></form-builder-option>' +
           '<form-builder-option property="rightIcon"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
+          '<form-builder-option-shortcut></form-builder-option-shortcut>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="block"></form-builder-option>' +
@@ -79498,7 +80517,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],356:[function(_dereq_,module,exports){
+},{}],517:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79517,6 +80536,29 @@ module.exports = function(app) {
               title: 'Radio'
             }
           ];
+
+          $scope.labelPositions = [
+            {
+              value: 'top',
+              title: 'Top'
+            },
+            {
+              value: 'left',
+              title: 'Left'
+            },
+            {
+              value: 'right',
+              title: 'Right'
+            },
+            {
+              value: 'bottom',
+              title: 'Bottom'
+            }
+          ];
+  
+          if (!$scope.component.labelPosition) {
+            $scope.component.labelPosition = 'right';
+          }
         }],
         views: [
           {
@@ -79555,6 +80597,10 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="labelPosition" form-builder-tooltip="Position for the label for this field.">{{\'Label Position\' | formioTranslate}}</label>' +
+            '<select class="form-control" id="labelPosition" name="labelPosition" ng-options="position.value as position.title | formioTranslate for position in labelPositions" ng-model="component.labelPosition"></select>' +
+          '</div>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<div class="form-group">' +
@@ -79572,6 +80618,7 @@ module.exports = function(app) {
           '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
+          '<form-builder-option-shortcut></form-builder-option-shortcut>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
@@ -79587,6 +80634,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -79594,7 +80642,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],357:[function(_dereq_,module,exports){
+},{}],518:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79677,7 +80725,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],358:[function(_dereq_,module,exports){
+},{}],519:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -79828,7 +80876,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],359:[function(_dereq_,module,exports){
+},{}],520:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79862,6 +80910,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/container/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option-label-position></form-builder-option-label-position>' +
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
@@ -79875,18 +80924,22 @@ module.exports = function(app) {
 
       $templateCache.put('formio/formbuilder/container.html',
         '<fieldset>' +
-        '<label ng-if="component.label" class="control-label">' +
+        '<label ng-if="component.label && component.labelPosition !== \'bottom\'" class="control-label" ng-style="getLabelStyles(component)">' +
           '{{ component.label }} ' +
           '<formio-component-tooltip></formio-component-tooltip>' +
         '</label>' +
-        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
+        '<form-builder-list component="component" form="form" options="options" formio="::formio" ng-style="getInputGroupStyles(component)"></form-builder-list>' +
+        '<label ng-if="component.label && component.labelPosition === \'bottom\'" class="control-label control-label--bottom" ng-style="getLabelStyles(component)">' +
+          '{{ component.label }} ' +
+          '<formio-component-tooltip></formio-component-tooltip>' +
+        '</label>' +
         '</fieldset>'
       );
     }
   ]);
 };
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],521:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -79957,7 +81010,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],361:[function(_dereq_,module,exports){
+},{}],522:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80002,6 +81055,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/currency/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -80025,6 +81079,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/currency/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -80032,7 +81087,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],362:[function(_dereq_,module,exports){
+},{}],523:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80095,7 +81150,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],363:[function(_dereq_,module,exports){
+},{}],524:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80158,6 +81213,7 @@ module.exports = function(app) {
         '<ng-form>' +
         '<form-builder-option property="validate.minLength"></form-builder-option>' +
         '<form-builder-option property="validate.maxLength"></form-builder-option>' +
+        '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -80165,7 +81221,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],364:[function(_dereq_,module,exports){
+},{}],525:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80261,6 +81317,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datetime/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="defaultDate"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -80324,6 +81381,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datetime/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -80331,7 +81389,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],365:[function(_dereq_,module,exports){
+},{}],526:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80376,6 +81434,8 @@ module.exports = function(app) {
       $templateCache.put('formio/components/day/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
+          '<form-builder-option-inputs-label-position></form-builder-option-inputs-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="fields.day.placeholder" label="Day Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
@@ -80404,6 +81464,7 @@ module.exports = function(app) {
           '<form-builder-option property="fields.day.required" label="Require Day" type="checkbox"></form-builder-option>' +
           '<form-builder-option property="fields.month.required" label="Require Month" type="checkbox"></form-builder-option>' +
           '<form-builder-option property="fields.year.required" label="Require Year" type="checkbox"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -80411,7 +81472,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],366:[function(_dereq_,module,exports){
+},{}],527:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80501,6 +81562,7 @@ module.exports = function(app) {
         '      <p>You must assign the <strong>valid</strong> variable as either <strong>true</strong> or an error message if validation fails.</p>' +
         '      <p>The variables <strong>row</strong>, <strong>component</strong>, and <strong>valid</strong> are provided.</p>' +
         '    </small>' +
+        '    <form-builder-option property="validate.customMessage"></form-builder-option>' +
         '    <form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -80519,7 +81581,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],367:[function(_dereq_,module,exports){
+},{}],528:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -80561,6 +81623,7 @@ module.exports = function(app) {
           '<form-builder-option property="validate.minLength"></form-builder-option>' +
           '<form-builder-option property="validate.maxLength"></form-builder-option>' +
           '<form-builder-option property="validate.pattern"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -80568,7 +81631,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":221,"lodash/each":224}],368:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":387,"lodash/each":391}],529:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80628,7 +81691,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],369:[function(_dereq_,module,exports){
+},{}],530:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -80685,6 +81748,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/file/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="storage" form-builder-tooltip="Which storage to save the files in.">{{\'Storage\' | formioTranslate}}</label>' +
@@ -80694,6 +81758,9 @@ module.exports = function(app) {
           '<form-builder-option property="dir"></form-builder-option>' +
           '<form-builder-option property="image"></form-builder-option>' +
           '<form-builder-option property="imageSize" ng-if="component.image"></form-builder-option>' +
+          '<form-builder-option property="filePattern"></form-builder-option>' +
+          '<form-builder-option property="fileMinSize"></form-builder-option>' +
+          '<form-builder-option property="fileMaxSize"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
@@ -80712,13 +81779,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/file/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '</ng-form>'
       );
     }
   ]);
 };
 
-},{"lodash/map":255}],370:[function(_dereq_,module,exports){
+},{"lodash/map":418}],531:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80819,6 +81887,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/form/display.html',
         '<ng-form>' +
           '<form-builder-option property="label" label="Name" placeholder="Enter the name for this form field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<div class="form-group">' +
             '<label for="form" form-builder-tooltip="The form to load within this form component..">{{\'Form\' | formioTranslate}}</label>' +
             '<select class="form-control" id="form" name="form" ng-options="value._id as value.title for value in forms" ng-model="component.form"></select>' +
@@ -80835,7 +81904,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],371:[function(_dereq_,module,exports){
+},{}],532:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80896,7 +81965,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],372:[function(_dereq_,module,exports){
+},{}],533:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -80956,7 +82025,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],373:[function(_dereq_,module,exports){
+},{}],534:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -81001,7 +82070,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":354,"./button":355,"./checkbox":356,"./columns":357,"./components":358,"./container":359,"./content":360,"./currency":361,"./custom":362,"./datagrid":363,"./datetime":364,"./day":365,"./editgrid":366,"./email":367,"./fieldset":368,"./file":369,"./form":370,"./hidden":371,"./htmlelement":372,"./number":374,"./page":375,"./panel":376,"./password":377,"./phonenumber":378,"./radio":379,"./resource":380,"./select":381,"./selectboxes":382,"./signature":383,"./survey":384,"./table":385,"./textarea":386,"./textfield":387,"./time":388,"./well":389}],374:[function(_dereq_,module,exports){
+},{"./address":515,"./button":516,"./checkbox":517,"./columns":518,"./components":519,"./container":520,"./content":521,"./currency":522,"./custom":523,"./datagrid":524,"./datetime":525,"./day":526,"./editgrid":527,"./email":528,"./fieldset":529,"./file":530,"./form":531,"./hidden":532,"./htmlelement":533,"./number":535,"./page":536,"./panel":537,"./password":538,"./phonenumber":539,"./radio":540,"./resource":541,"./select":542,"./selectboxes":543,"./signature":544,"./survey":545,"./table":546,"./textarea":547,"./textfield":548,"./time":549,"./well":550}],535:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81046,6 +82115,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/number/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -81073,6 +82143,7 @@ module.exports = function(app) {
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="validate.min" type="number" label="Minimum Value" placeholder="Minimum Value" title="The minimum value this field must have before the form can be submitted."></form-builder-option>' +
           '<form-builder-option property="validate.max" type="number" label="Maximum Value" placeholder="Maximum Value" title="The maximum value this field must have before the form can be submitted."></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -81080,7 +82151,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],375:[function(_dereq_,module,exports){
+},{}],536:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81101,7 +82172,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],376:[function(_dereq_,module,exports){
+},{}],537:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81212,7 +82283,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],377:[function(_dereq_,module,exports){
+},{}],538:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81264,6 +82335,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/password/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -81285,7 +82357,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],378:[function(_dereq_,module,exports){
+},{}],539:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81330,6 +82402,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/phoneNumber/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -81356,13 +82429,14 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="unique"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '</ng-form>'
       );
     }
   ]);
 };
 
-},{}],379:[function(_dereq_,module,exports){
+},{}],540:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81407,8 +82481,10 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
+          '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
-          '<value-builder data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder>' +
+          '<value-builder-with-shortcuts form="form" component="component" data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder-with-shortcuts>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
@@ -81428,6 +82504,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -81435,7 +82512,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],380:[function(_dereq_,module,exports){
+},{}],541:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81486,6 +82563,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/resource/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
@@ -81526,13 +82604,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/resource/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '</ng-form>'
       );
     }
   ]);
 };
 
-},{}],381:[function(_dereq_,module,exports){
+},{}],542:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -81685,6 +82764,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/select/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -81776,6 +82856,7 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="unique"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -81783,7 +82864,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":220}],382:[function(_dereq_,module,exports){
+},{"lodash/clone":386}],543:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81824,8 +82905,10 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
+          '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
-          '<value-builder data="component.values" label="Select Boxes" tooltip-text="Checkboxes to display. Labels are shown in the form. Values are the corresponding values saved with the submission."></value-builder>' +
+          '<value-builder-with-shortcuts form="form" component="component" data="component.values" default="component.defaultValue" label="Values" tooltip-text="The radio button values that can be picked for this field. Values are text submitted with the form data. Labels are text that appears next to the radio buttons on the form."></value-builder-with-shortcuts>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -81853,6 +82936,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -81860,7 +82944,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],383:[function(_dereq_,module,exports){
+},{}],544:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81920,13 +83004,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/signature/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
         '</ng-form>'
       );
     }
   ]);
 };
 
-},{}],384:[function(_dereq_,module,exports){
+},{}],545:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -81967,6 +83052,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/survey/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<value-builder data="component.questions" default="component.questions" label="Questions" tooltip-text="The questions you would like to as in this survey question."></value-builder>' +
           '<value-builder data="component.values" default="component.values" label="Values" tooltip-text="The values that can be selected per question. Example: \'Satisfied\', \'Very Satisfied\', etc."></value-builder>' +
@@ -81990,6 +83076,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/survey/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -81997,7 +83084,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],385:[function(_dereq_,module,exports){
+},{}],546:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82069,7 +83156,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],386:[function(_dereq_,module,exports){
+},{}],547:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82146,6 +83233,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textarea/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="rows"></form-builder-option>' +
@@ -82180,7 +83268,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],548:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82224,6 +83312,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textfield/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -82253,6 +83342,7 @@ module.exports = function(app) {
           '<form-builder-option property="validate.minLength"></form-builder-option>' +
           '<form-builder-option property="validate.maxLength"></form-builder-option>' +
           '<form-builder-option property="validate.pattern"></form-builder-option>' +
+          '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
@@ -82260,7 +83350,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],388:[function(_dereq_,module,exports){
+},{}],549:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -82288,6 +83378,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/time/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -82310,7 +83401,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":221,"lodash/each":224}],389:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":387,"lodash/each":391}],550:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -82357,7 +83448,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],390:[function(_dereq_,module,exports){
+},{}],551:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -82527,6 +83618,21 @@ module.exports = {
     placeholder: 'Enter the url to post the files to.',
     tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#server-side\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#server-side</a> for how to set up the server.'
   },
+  filePattern: {
+    label: 'File Pattern',
+    placeholder: '.pdf,.jpg',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#full-reference\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#full-reference</a> for how to specify file patterns.'
+  },
+  fileMinSize: {
+    label: 'File Minimum Size',
+    placeholder: '1MB',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#full-reference\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#full-reference</a> for how to specify file sizes.'
+  },
+  fileMaxSize: {
+    label: 'File Maximum Size',
+    placeholder: '10MB',
+    tooltip: 'See <a href=\'https://github.com/danialfarid/ng-file-upload#full-reference\' target=\'_blank\'>https://github.com/danialfarid/ng-file-upload#full-reference</a> for how to specify file sizes.'
+  },
   dir: {
     label: 'Directory',
     placeholder: '(optional) Enter a directory for the files',
@@ -82583,6 +83689,11 @@ module.exports = {
     label: 'Regular Expression Pattern',
     placeholder: 'Regular Expression Pattern',
     tooltip: 'The regular expression pattern test that the field value must pass before the form can be submitted.'
+  },
+  'validate.customMessage': {
+    label: 'Custom Error Message',
+    placeholder: 'Custom Error Message',
+    tooltip: 'Error message displayed if any error occured.'
   },
   'rowClass': {
     label: 'Row CSS Class',
@@ -82662,7 +83773,7 @@ module.exports = {
   }
 };
 
-},{}],391:[function(_dereq_,module,exports){
+},{}],552:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -82733,7 +83844,7 @@ module.exports = {
   ]
 };
 
-},{}],392:[function(_dereq_,module,exports){
+},{}],553:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -83093,7 +84204,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":218,"lodash/cloneDeep":221,"lodash/each":224,"lodash/groupBy":230,"lodash/merge":258,"lodash/omitBy":260,"lodash/upperFirst":276}],393:[function(_dereq_,module,exports){
+},{"lodash/capitalize":385,"lodash/cloneDeep":387,"lodash/each":391,"lodash/groupBy":396,"lodash/merge":421,"lodash/omitBy":423,"lodash/upperFirst":435}],554:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -83109,7 +84220,7 @@ module.exports = [
   }
 ];
 
-},{}],394:[function(_dereq_,module,exports){
+},{}],555:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -83204,7 +84315,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":37,"lodash/get":229,"lodash/reject":264}],395:[function(_dereq_,module,exports){
+},{"formiojs/utils":208,"lodash/get":395,"lodash/reject":427}],556:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -83542,7 +84653,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":214,"lodash/camelCase":217,"lodash/isNumber":246}],396:[function(_dereq_,module,exports){
+},{"lodash/assign":383,"lodash/camelCase":384,"lodash/isNumber":410}],557:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -83567,7 +84678,7 @@ module.exports = [
   }
 ];
 
-},{}],397:[function(_dereq_,module,exports){
+},{}],558:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -83592,7 +84703,7 @@ module.exports = [
   }
 ];
 
-},{}],398:[function(_dereq_,module,exports){
+},{}],559:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -83661,7 +84772,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],399:[function(_dereq_,module,exports){
+},{}],560:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -83702,7 +84813,49 @@ module.exports = function() {
   };
 };
 
-},{}],400:[function(_dereq_,module,exports){
+},{}],561:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive for a field to edit a component inputs' label position.
+*/
+module.exports = function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      template: function() {
+        return '<div class="form-group">' +
+                  '<label for="inputsLabelPosition" form-builder-tooltip="Position for the label for inputs for this field.">{{\'Inputs Label Position\' | formioTranslate}}</label>' +
+                  '<select class="form-control" id="inputsLabelPosition" name="inputsLabelPosition" ng-options="position.value as position.title | formioTranslate for position in inputsLabelPosition" ng-model="component.inputsLabelPosition"></select>' +
+                '</div>';
+      },
+      controller: ['$scope', function($scope) {
+        $scope.inputsLabelPosition = [
+          {
+            value: 'top',
+            title: 'Top'
+          },
+          {
+            value: 'left',
+            title: 'Left'
+          },
+          {
+            value: 'right',
+            title: 'Right'
+          },
+          {
+            value: 'bottom',
+            title: 'Bottom'
+          }
+        ];
+
+        if (!$scope.component.inputsLabelPosition) {
+          $scope.component.inputsLabelPosition = 'top';
+        }
+      }]
+    };
+  };
+
+},{}],562:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -83748,7 +84901,135 @@ module.exports = function() {
   };
 };
 
-},{}],401:[function(_dereq_,module,exports){
+},{}],563:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive for a field to edit a component's label position.
+*/
+module.exports = function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      template: function() {
+        return '<div>' +
+                  '<div class="form-group">' +
+                    '<label for="labelPosition" form-builder-tooltip="Position for the label for this field.">{{\'Label Position\' | formioTranslate}}</label>' +
+                    '<select class="form-control" id="labelPosition" name="labelPosition" ng-options="position.value as position.title | formioTranslate for position in labelPositions" ng-model="component.labelPosition"></select>' +
+                  '</div>' +
+                  '<div class="form-group" ng-if="labelAtTheTopOrBottom()">' +
+                  '  <label for="labelWidth" form-builder-tooltip="The width of label on line in percentages.">{{\'Label Width\' | formioTranslate}}</label>' +
+                  '  <input type="number" class="form-control" id="labelWidth" name="labelWidth" ng-model="component.labelWidth" placeholder="30" min="0" max="100" />' +
+                  '</div>' +
+                  '<div class="form-group" ng-if="labelAtTheTopOrBottom()">' +
+                  '  <label for="labelMargin" form-builder-tooltip="The width of label margin on line in percentages.">{{\'Label Margin\' | formioTranslate}}</label>' +
+                  '  <input type="number" class="form-control" id="labelMargin" name="labelMargin" ng-model="component.labelMargin" placeholder="3" min="0" max="100" />' +
+                  '</div>' +
+                '</div>';
+      },
+      controller: ['$scope', function($scope) {
+        $scope.labelPositions = [
+          {
+            value: 'top',
+            title: 'Top'
+          },
+          {
+            value: 'left-left',
+            title: 'Left (Left-aligned)'
+          },
+          {
+            value: 'left-right',
+            title: 'Left (Right-aligned)'
+          },
+          {
+            value: 'right-left',
+            title: 'Right (Left-aligned)'
+          },
+          {
+            value: 'right-right',
+            title: 'Right (Right-aligned)'
+          },
+          {
+            value: 'bottom',
+            title: 'Bottom'
+          }
+        ];
+
+        $scope.labelAtTheTopOrBottom = function() {
+          return ['top', 'bottom'].indexOf($scope.component.labelPosition) === -1;
+        };
+
+        if (!$scope.component.labelPosition) {
+          $scope.component.labelPosition = 'top';
+        }
+      }]
+    };
+  };
+
+},{}],564:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive for a field to edit a component options' label position.
+*/
+module.exports = function() {
+    return {
+      restrict: 'E',
+      replace: true,
+      template: function() {
+        return '<div class="form-group">' +
+                  '<label for="optionsLabelPosition" form-builder-tooltip="Position for the label for options for this field.">{{\'Options Label Position\' | formioTranslate}}</label>' +
+                  '<select class="form-control" id="optionsLabelPosition" name="optionsLabelPosition" ng-options="position.value as position.title | formioTranslate for position in optionsLabelPositions" ng-model="component.optionsLabelPosition"></select>' +
+                '</div>';
+      },
+      controller: ['$scope', function($scope) {
+        $scope.optionsLabelPositions = [
+          {
+            value: 'top',
+            title: 'Top'
+          },
+          {
+            value: 'left',
+            title: 'Left'
+          },
+          {
+            value: 'right',
+            title: 'Right'
+          },
+          {
+            value: 'bottom',
+            title: 'Bottom'
+          }
+        ];
+
+        if (!$scope.component.optionsLabelPosition) {
+          $scope.component.optionsLabelPosition = 'right';
+        }
+      }]
+    };
+  };
+
+},{}],565:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive for a field to edit a component's shortcut.
+*/
+module.exports = function() {
+  return {
+    restrict: 'E',
+    replace: true,
+    template: function() {
+      return '' +
+        '<div class="form-group">' +
+        '  <label for="shortcut" form-builder-tooltip="Shortcut for this component.">{{\'Shortcut\' | formioTranslate}}</label>' +
+        '  <select class="form-control" id="shortcut" name="shortcut" ng-options="shortcut as shortcut | formioTranslate for shortcut in shortcuts" ng-model="component.shortcut" placeholder="Shortcut"></select>' +
+        '</div>';
+    },
+    controller: ['$scope', 'BuilderUtils', function($scope, BuilderUtils) {
+      $scope.shortcuts = BuilderUtils.getAvailableShortcuts($scope.form, $scope.component);
+    }]
+  };
+};
+
+},{}],566:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -83792,7 +85073,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":255}],402:[function(_dereq_,module,exports){
+},{"lodash/map":418}],567:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -83814,7 +85095,7 @@ module.exports = [
   }
 ];
 
-},{}],403:[function(_dereq_,module,exports){
+},{}],568:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -83868,7 +85149,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":258}],404:[function(_dereq_,module,exports){
+},{"lodash/merge":421}],569:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -83909,7 +85190,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],405:[function(_dereq_,module,exports){
+},{}],570:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -83946,7 +85227,7 @@ module.exports = function() {
   };
 };
 
-},{}],406:[function(_dereq_,module,exports){
+},{}],571:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -84013,7 +85294,7 @@ module.exports = function() {
   };
 };
 
-},{}],407:[function(_dereq_,module,exports){
+},{}],572:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -84036,7 +85317,7 @@ module.exports = function() {
   };
 };
 
-},{}],408:[function(_dereq_,module,exports){
+},{}],573:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -84118,9 +85399,134 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":217,"lodash/map":255}],409:[function(_dereq_,module,exports){
+},{"lodash/camelCase":384,"lodash/map":418}],574:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive that provides a UI to add {value, label} objects to an array.
+*/
+var _difference = _dereq_('lodash/difference');
+var _without = _dereq_('lodash/without');
+var _map = _dereq_('lodash/map');
+var _camelCase = _dereq_('lodash/camelCase');
+module.exports = ['BuilderUtils', function(BuilderUtils) {
+    return {
+      scope: {
+        form: '=',
+        component: '=',
+        data: '=',
+        label: '@',
+        tooltipText: '@',
+        valueLabel: '@',
+        labelLabel: '@',
+        valueProperty: '@',
+        labelProperty: '@'
+      },
+      restrict: 'E',
+      template: '<div class="form-group">' +
+                  '<label form-builder-tooltip="{{ tooltipText | formioTranslate }}">{{ label | formioTranslate }}</label>' +
+                  '<table class="table table-condensed">' +
+                    '<thead>' +
+                      '<tr>' +
+                        '<th class="col-xs-5">{{ labelLabel | formioTranslate }}</th>' +
+                        '<th class="col-xs-3">{{ valueLabel | formioTranslate }}</th>' +
+                        '<th class="col-xs-2">{{ \'Shortcut\' | formioTranslate }}</th>' +
+                        '<th class="col-xs-1"></th>' +
+                      '</tr>' +
+                    '</thead>' +
+                    '<tbody>' +
+                      '<tr ng-repeat="v in data track by $index">' +
+                        '<td class="col-xs-5"><input type="text" class="form-control" ng-model="v[labelProperty]" placeholder="{{ labelLabel | formioTranslate }}"/></td>' +
+                        '<td class="col-xs-3"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
+                        '<td class="col-xs-2"><select class="form-control" id="shortcut" name="shortcut" ng-options="shortcut as shortcut | formioTranslate for shortcut in shortcuts[$index]" ng-model="v.shortcut"  placeholder="Shortcut"></select></td>' +
+                        '<td class="col-xs-1"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                      '</tr>' +   
+                    '</tbody>' +
+                  '</table>' +
+                  '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                '</div>',
+      replace: true,
+      link: function($scope, el, attrs) {
+        $scope.valueProperty = $scope.valueProperty || 'value';
+        $scope.labelProperty = $scope.labelProperty || 'label';
+        $scope.valueLabel = $scope.valueLabel || 'Value';
+        $scope.labelLabel = $scope.labelLabel || 'Label';
+
+        var shortcuts = BuilderUtils.getAvailableShortcuts($scope.form, $scope.component);
+        $scope.shortcuts = [];
+
+        $scope.data = $scope.data || [];
+
+        if ($scope.data.length) {
+          updateShortcuts($scope.data);
+        }
+
+        $scope.addValue = function() {
+          var obj = {};
+          obj[$scope.valueProperty] = '';
+          obj[$scope.labelProperty] = '';
+          obj.shortcut = '';
+          $scope.data.push(obj);
+        };
+
+        $scope.removeValue = function(index) {
+          $scope.data.splice(index, 1);
+        };
+
+        if ($scope.data.length === 0) {
+          $scope.addValue();
+        }
+
+        if (!attrs.noAutocompleteValue) {
+          $scope.$watch('data', function(newValue, oldValue) {
+            if (newValue.length !== oldValue.length) {
+              updateShortcuts(newValue);
+              return;
+            }
+
+            var shortcutChanged = false;
+            _map(newValue, function(entry, i) {
+              var oldEntry = oldValue[i];
+
+              if (entry.shortcut !== oldEntry.shortcut) {
+                shortcutChanged = true;
+              }
+
+              if (entry[$scope.labelProperty] !== oldEntry[$scope.labelProperty]) {// label changed
+                if (entry[$scope.valueProperty] === '' || entry[$scope.valueProperty] === _camelCase(oldEntry[$scope.labelProperty])) {
+                  entry[$scope.valueProperty] = _camelCase(entry[$scope.labelProperty]);
+                }
+              }
+            });
+
+            if (shortcutChanged) {
+              updateShortcuts(newValue);
+            }
+          }, true);
+        }
+
+        function updateShortcuts(entries) {
+          var bindedShortcuts = [];
+          entries.forEach(function(entry) {
+            if (entry.shortcut) {
+              bindedShortcuts.push(entry.shortcut);
+            }
+          });
+          $scope.shortcuts = entries.map(function(entry) {
+            var shortcutsToOmit = _without(bindedShortcuts, entry.shortcut);
+            return _difference(shortcuts, shortcutsToOmit);
+          });
+        }
+      }
+    };
+  }
+];
+
+},{"lodash/camelCase":384,"lodash/difference":390,"lodash/map":418,"lodash/without":436}],575:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
+
+var _range = _dereq_('lodash/range');
+var _difference = _dereq_('lodash/difference');
 
 module.exports = ['FormioUtils', function(FormioUtils) {
   var suffixRegex = /(\d+)$/;
@@ -84222,12 +85628,59 @@ module.exports = ['FormioUtils', function(FormioUtils) {
     return component;
   };
 
+  function getAlphaShortcuts() {
+    return _range('A'.charCodeAt(), 'Z'.charCodeAt() + 1).map(function(charCode) {
+      return String.fromCharCode(charCode);
+    });
+  }
+
+  var additionalShortcuts = {
+    button: [
+      'Enter',
+      'Esc'
+    ]
+  }
+
+  function getAdditionalShortcuts(type) {
+    return additionalShortcuts[type] || [];
+  }
+
+  function getBindedShortcuts(components, input) {
+    var result = [];
+
+    FormioUtils.eachComponent(components, function(component) {
+      if (component === input) {
+        return;
+      }
+
+      if (component.shortcut) {
+        result.push(component.shortcut);
+      }
+      if (component.values) {
+        component.values.forEach(function(value) {
+          if (value.shortcut) {
+            result.push(value.shortcut);
+          }
+        });
+      }
+    }, true);
+
+    return result;
+  }
+
+  function getAvailableShortcuts(form, component) {
+    return _difference(
+      getAlphaShortcuts().concat(getAdditionalShortcuts(component.type)),
+      getBindedShortcuts(form.components, component));
+  }
+
   return {
+    getAvailableShortcuts: getAvailableShortcuts,
     uniquify: uniquify
   };
 }];
 
-},{}],410:[function(_dereq_,module,exports){
+},{"lodash/difference":390,"lodash/range":426}],576:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -84261,16 +85714,16 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],411:[function(_dereq_,module,exports){
+},{}],577:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":412,"angular-drag-and-drop-lists":2,"ng-dialog":280,"ng-formio/src/formio-complete.js":344}],412:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":578,"angular-drag-and-drop-lists":2,"ng-dialog":440,"ng-formio/src/formio-complete.js":505}],578:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.24.0 | https://unpkg.com/ng-formio-builder@2.24.0/LICENSE.txt */
+/*! ng-formio-builder v2.25.0 | https://unpkg.com/ng-formio-builder@2.25.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -84361,7 +85814,15 @@ app.directive('formBuilderOption', _dereq_('./directives/formBuilderOption'));
 
 app.directive('formBuilderTable', _dereq_('./directives/formBuilderTable'));
 
+app.directive('formBuilderOptionInputsLabelPosition', _dereq_('./directives/formBuilderOptionInputsLabelPosition'));
+
 app.directive('formBuilderOptionKey', _dereq_('./directives/formBuilderOptionKey'));
+
+app.directive('formBuilderOptionLabelPosition', _dereq_('./directives/formBuilderOptionLabelPosition'));
+
+app.directive('formBuilderOptionOptionsLabelPosition', _dereq_('./directives/formBuilderOptionOptionsLabelPosition'));
+
+app.directive('formBuilderOptionShortcut', _dereq_('./directives/formBuilderOptionShortcut'));
 
 app.directive('formBuilderOptionTags', _dereq_('./directives/formBuilderOptionTags'));
 
@@ -84372,6 +85833,8 @@ app.directive('formBuilderOptionCustomValidation', _dereq_('./directives/formBui
 app.directive('formBuilderTooltip', _dereq_('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', _dereq_('./directives/valueBuilder'));
+
+app.directive('valueBuilderWithShortcuts', _dereq_('./directives/valueBuilderWithShortcuts'));
 
 app.directive('objectBuilder', _dereq_('./directives/objectBuilder'));
 
@@ -84433,5 +85896,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":373,"./constants/commonOptions":390,"./constants/formOptions":391,"./directives/formBuilder":392,"./directives/formBuilderComponent":393,"./directives/formBuilderConditional":394,"./directives/formBuilderDnd":395,"./directives/formBuilderElement":396,"./directives/formBuilderList":397,"./directives/formBuilderOption":398,"./directives/formBuilderOptionCustomValidation":399,"./directives/formBuilderOptionKey":400,"./directives/formBuilderOptionTags":401,"./directives/formBuilderRow":402,"./directives/formBuilderTable":403,"./directives/formBuilderTooltip":404,"./directives/jsonInput":405,"./directives/objectBuilder":406,"./directives/validApiKey":407,"./directives/valueBuilder":408,"./factories/BuilderUtils":409,"./factories/debounce":410}]},{},[411])(411)
+},{"./components":534,"./constants/commonOptions":551,"./constants/formOptions":552,"./directives/formBuilder":553,"./directives/formBuilderComponent":554,"./directives/formBuilderConditional":555,"./directives/formBuilderDnd":556,"./directives/formBuilderElement":557,"./directives/formBuilderList":558,"./directives/formBuilderOption":559,"./directives/formBuilderOptionCustomValidation":560,"./directives/formBuilderOptionInputsLabelPosition":561,"./directives/formBuilderOptionKey":562,"./directives/formBuilderOptionLabelPosition":563,"./directives/formBuilderOptionOptionsLabelPosition":564,"./directives/formBuilderOptionShortcut":565,"./directives/formBuilderOptionTags":566,"./directives/formBuilderRow":567,"./directives/formBuilderTable":568,"./directives/formBuilderTooltip":569,"./directives/jsonInput":570,"./directives/objectBuilder":571,"./directives/validApiKey":572,"./directives/valueBuilder":573,"./directives/valueBuilderWithShortcuts":574,"./factories/BuilderUtils":575,"./factories/debounce":576}]},{},[577])(577)
 });

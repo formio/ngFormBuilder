@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 2.25.0
 ### Added
  - Possibility to specify label position for component and for options for Checkboxes and Radio components.
  - Possibility to add custom validation message.
  - Possibility to add shortcuts.
+ - Min and Max size for file uploads.
+ 
+### Changed
+ - Upgrade ng-formio to 2.25.0
 
 ## 2.24.0
 ### Changed
