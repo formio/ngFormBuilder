@@ -240,6 +240,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/select/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option ng-show="!!component.searchField" property="validate.select"></form-builder-option>' +
           '<form-builder-option property="unique"></form-builder-option>' +
           '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +

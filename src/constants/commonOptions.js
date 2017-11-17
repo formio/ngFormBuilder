@@ -243,6 +243,11 @@ module.exports = {
     placeholder: 'Custom Error Message',
     tooltip: 'Error message displayed if any error occured.'
   },
+  'validate.select': {
+    label: 'Perform server validation',
+    type: 'checkbox',
+    tooltip: 'Check this if you would like for the server to perform a validation check to ensure the selected value is an available option. This requires a Search query to ensure a record is found.'
+  },
   'rowClass': {
     label: 'Row CSS Class',
     placeholder: 'Row CSS Class',

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.25.2
+### Added
+ - Ability for select components to validate on the server.
+
 ## 2.25.1
 ### Fixed
  - Issue where the label posisions were messing up the form builder.
