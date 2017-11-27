@@ -98260,7 +98260,7 @@ module.exports = function(app) {
           input: true,
           tree: true,
           components: [],
-          multiple: true,
+          multiple: false,
           tableView: true,
           label: '',
           key: 'editgrid',
@@ -113383,7 +113383,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":444,"angular-drag-and-drop-lists":2,"ng-dialog":306,"ng-formio/src/formio-full.js":371}],444:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.25.4 | https://unpkg.com/ng-formio-builder@2.25.4/LICENSE.txt */
+/*! ng-formio-builder v2.25.5 | https://unpkg.com/ng-formio-builder@2.25.5/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

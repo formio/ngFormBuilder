@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.25.5
+### Changed
+ - Upgraded ng-formio lib.
+
 ## 2.25.4
 ### Changed
  - Upgraded dependencies.
