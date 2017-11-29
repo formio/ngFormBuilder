@@ -89092,12 +89092,17 @@ module.exports = function(app) {
           if ($scope.options && $scope.options.building) return; // FOR-71 - Skip parsing input data.
 
           // Ensure that values are numbers.
-          if (
-            $scope.data &&
-            $scope.data.hasOwnProperty($scope.component.key) &&
-            !isNumeric($scope.data[$scope.component.key])
-          ) {
-            $scope.data[$scope.component.key] = parseFloat($scope.data[$scope.component.key]);
+          if ($scope.data && $scope.data.hasOwnProperty($scope.component.key)) {
+            if (Array.isArray($scope.data[$scope.component.key])) {
+              $scope.data[$scope.component.key].forEach(function(value, index) {
+                if (!isNumeric(value)) {
+                  $scope.data[$scope.component.key][index] = parseFloat(value);
+                }
+              });
+            }
+            else if (!isNumeric($scope.data[$scope.component.key])) {
+              $scope.data[$scope.component.key] = parseFloat($scope.data[$scope.component.key]);
+            }
           }
         }]
       });
@@ -102832,10 +102837,10 @@ module.exports = ['BuilderUtils', function(BuilderUtils) {
                         '<td class="col-xs-3"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
                         '<td class="col-xs-2"><select class="form-control" id="shortcut" name="shortcut" ng-options="shortcut as shortcut | formioTranslate for shortcut in shortcuts[$index]" ng-model="v.shortcut"  placeholder="Shortcut"></select></td>' +
                         '<td class="col-xs-1"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
-                      '</tr>' +   
+                      '</tr>' +
                     '</tbody>' +
                   '</table>' +
-                  '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                  '<button type="button" class="btn btn-default" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
                 '</div>',
       replace: true,
       link: function($scope, el, attrs) {
@@ -103116,7 +103121,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":442,"angular-drag-and-drop-lists":2,"ng-dialog":304,"ng-formio/src/formio-complete.js":369}],442:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.25.5 | https://unpkg.com/ng-formio-builder@2.25.5/LICENSE.txt */
+/*! ng-formio-builder v2.25.6 | https://unpkg.com/ng-formio-builder@2.25.6/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

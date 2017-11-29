@@ -36,10 +36,10 @@ module.exports = ['BuilderUtils', function(BuilderUtils) {
                         '<td class="col-xs-3"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
                         '<td class="col-xs-2"><select class="form-control" id="shortcut" name="shortcut" ng-options="shortcut as shortcut | formioTranslate for shortcut in shortcuts[$index]" ng-model="v.shortcut"  placeholder="Shortcut"></select></td>' +
                         '<td class="col-xs-1"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
-                      '</tr>' +   
+                      '</tr>' +
                     '</tbody>' +
                   '</table>' +
-                  '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                  '<button type="button" class="btn btn-default" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
                 '</div>',
       replace: true,
       link: function($scope, el, attrs) {
