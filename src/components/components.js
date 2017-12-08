@@ -46,6 +46,7 @@ module.exports = function(app) {
       // Create the common API tab markup.
       $templateCache.put('formio/components/common/data.html',
         '<form-builder-option property="defaultValue"></form-builder-option>' +
+        '<form-builder-option property="dbIndex" class="form-builder-premium form-builder-dbindex"></form-builder-option>' +
         '<uib-accordion>' +
         '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
         '    <uib-accordion>' +
