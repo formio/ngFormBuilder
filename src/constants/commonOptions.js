@@ -86,6 +86,11 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Disable the form input.'
   },
+  dbIndex: {
+    label: 'Database Index',
+    type: 'checkbox',
+    tooltip: 'Set this field as an index within the database. Increases performance for submission queries.'
+  },
   clearOnRefresh: {
     label: 'Clear Value On Refresh',
     type: 'checkbox',
