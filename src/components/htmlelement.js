@@ -27,7 +27,7 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/formbuilder/htmlelement.html',
-        '<p ng-if="!component.content">HTML Element with no content</p><formio-html-element component="component"></div>'
+        '<p ng-if="!component.content">{{ \'HTML Element with no content\' | formioTranslate }}</p><formio-html-element component="component"></div>'
       );
 
       // Create the settings markup.
