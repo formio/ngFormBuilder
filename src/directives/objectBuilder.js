@@ -31,14 +31,7 @@ module.exports = function() {
               '</div>',
     replace: true,
     link: function($scope) {
-      $scope.data = $scope.data || {};
-      $scope.dataArray = [];
-      for (var key in $scope.data) {
-        $scope.dataArray.push({
-          key: key,
-          value: $scope.data[key]
-        });
-      }
+      init();
 
       $scope.addValue = function() {
         $scope.dataArray.push({key: '', value: ''});
@@ -52,6 +45,8 @@ module.exports = function() {
         $scope.addValue();
       }
 
+      $scope.$watch('data', init);
+
       $scope.$watch('dataArray', function(newValue) {
         $scope.data = {};
         for (var i in newValue) {
@@ -59,6 +54,17 @@ module.exports = function() {
           $scope.data[item.key] = item.value;
         }
       }, true);
+
+      function init() {
+        $scope.data = $scope.data || {};
+        $scope.dataArray = [];
+        for (var key in $scope.data) {
+          $scope.dataArray.push({
+            key: key,
+            value: $scope.data[key]
+          });
+        }
+      }
     }
   };
 };
