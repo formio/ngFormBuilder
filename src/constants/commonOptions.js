@@ -328,5 +328,9 @@ module.exports = {
     label: 'Add Resource Text',
     placeholder: 'Add Resource',
     tooltip: 'Set the text of the Add Resource button.'
+  },
+  'useLocaleSettings': {
+    label: 'Use Locale Settings',
+    type: 'checkbox',
   }
 };
