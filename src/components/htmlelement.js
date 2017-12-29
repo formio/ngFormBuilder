@@ -27,12 +27,13 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/formbuilder/htmlelement.html',
-        '<formio-html-element component="component"></div>'
+        '<p ng-if="!component.content">{{ \'HTML Element with no content\' | formioTranslate }}</p><formio-html-element component="component"></div>'
       );
 
       // Create the settings markup.
       $templateCache.put('formio/components/htmlelement/display.html',
         '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="customClass" label="Container Custom Class"></form-builder-option>' +
           '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
           '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +

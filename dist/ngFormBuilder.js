@@ -101,6 +101,21 @@ _jsonLogicJs2.default.add_operation('in', function (a, b) {
   return b.indexOf(a) !== -1;
 });
 
+// Retrieve Any Date
+_jsonLogicJs2.default.add_operation("getDate", function (date) {
+  return (0, _moment2.default)(date).toISOString();
+});
+
+// Set Relative Minimum Date
+_jsonLogicJs2.default.add_operation("relativeMinDate", function (relativeMinDate) {
+  return (0, _moment2.default)().subtract(relativeMinDate, "days").toISOString();
+});
+
+// Set Relative Maximum Date
+_jsonLogicJs2.default.add_operation("relativeMaxDate", function (relativeMaxDate) {
+  return (0, _moment2.default)().add(relativeMaxDate, "days").toISOString();
+});
+
 var FormioUtils = {
   jsonLogic: _jsonLogicJs2.default, // Share
 
@@ -563,6 +578,17 @@ var FormioUtils = {
   },
   isValidDate: function isValidDate(date) {
     return (0, _isDate3.default)(date) && !(0, _isNaN3.default)(date.getDate());
+  },
+  getLocaleDateFormatInfo: function getLocaleDateFormatInfo(locale) {
+    var formatInfo = {};
+
+    var day = 21;
+    var exampleDate = new Date(2017, 11, day);
+    var localDateString = exampleDate.toLocaleDateString(locale);
+
+    formatInfo.dayFirst = localDateString.slice(0, 2) === day.toString();
+
+    return formatInfo;
   }
 };
 
@@ -31581,7 +31607,8 @@ module.exports = function(app) {
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
-          '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
+          '<form-builder-option property="useLocaleSettings" title="Use locale settings to display date and time."></form-builder-option>' +
+          '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>." ng-if="!component.useLocaleSettings"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
@@ -31698,7 +31725,8 @@ module.exports = function(app) {
           '<form-builder-option property="fields.day.placeholder" label="Day Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.year.placeholder" label="Year Placeholder"></form-builder-option>' +
-          '<form-builder-option property="dayFirst" type="checkbox" label="Day first" title="Display the Day field before the Month field."></form-builder-option>' +
+          '<form-builder-option property="useLocaleSettings" title="Use locale settings to display day."></form-builder-option>' +
+          '<form-builder-option property="dayFirst" type="checkbox" label="Day first" title="Display the Day field before the Month field." ng-if="!component.useLocaleSettings"></form-builder-option>' +
           '<form-builder-option property="fields.day.hide" type="checkbox" label="Hide Day" title="Hide the day part of the component."></form-builder-option>' +
           '<form-builder-option property="fields.month.hide" type="checkbox" label="Hide Month" title="Hide the month part of the component."></form-builder-option>' +
           '<form-builder-option property="fields.year.hide" type="checkbox" label="Hide Year" title="Hide the year part of the component."></form-builder-option>' +
@@ -32254,12 +32282,13 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/formbuilder/htmlelement.html',
-        '<formio-html-element component="component"></div>'
+        '<p ng-if="!component.content">{{ \'HTML Element with no content\' | formioTranslate }}</p><formio-html-element component="component"></div>'
       );
 
       // Create the settings markup.
       $templateCache.put('formio/components/htmlelement/display.html',
         '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="customClass" label="Container Custom Class"></form-builder-option>' +
           '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
           '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
@@ -34040,6 +34069,10 @@ module.exports = {
     label: 'Add Resource Text',
     placeholder: 'Add Resource',
     tooltip: 'Set the text of the Add Resource button.'
+  },
+  'useLocaleSettings': {
+    label: 'Use Locale Settings',
+    type: 'checkbox',
   }
 };
 
@@ -35532,14 +35565,7 @@ module.exports = function() {
               '</div>',
     replace: true,
     link: function($scope) {
-      $scope.data = $scope.data || {};
-      $scope.dataArray = [];
-      for (var key in $scope.data) {
-        $scope.dataArray.push({
-          key: key,
-          value: $scope.data[key]
-        });
-      }
+      init();
 
       $scope.addValue = function() {
         $scope.dataArray.push({key: '', value: ''});
@@ -35553,6 +35579,8 @@ module.exports = function() {
         $scope.addValue();
       }
 
+      $scope.$watch('data', init);
+
       $scope.$watch('dataArray', function(newValue) {
         $scope.data = {};
         for (var i in newValue) {
@@ -35560,6 +35588,17 @@ module.exports = function() {
           $scope.data[item.key] = item.value;
         }
       }, true);
+
+      function init() {
+        $scope.data = $scope.data || {};
+        $scope.dataArray = [];
+        for (var key in $scope.data) {
+          $scope.dataArray.push({
+            key: key,
+            value: $scope.data[key]
+          });
+        }
+      }
     }
   };
 };
@@ -35986,7 +36025,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],323:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.26.1 | https://unpkg.com/ng-formio-builder@2.26.1/LICENSE.txt */
+/*! ng-formio-builder v2.26.2 | https://unpkg.com/ng-formio-builder@2.26.2/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
