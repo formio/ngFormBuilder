@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [UNRELEASED]
 ### Added
  - 'useLocaleSettings' option to Day and DateTime components.
+ - Label setting for HTML element component
 
 ## 2.26.0
 ### Changed
