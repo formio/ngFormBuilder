@@ -109088,7 +109088,7 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.forms = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
+          $scope.formio.loadForms({params: {limit: 4294967295}}).then(function(forms) {
             var data = [];
             if ($scope.form._id) {
               angular.forEach(forms, function(form) {
@@ -109125,7 +109125,7 @@ module.exports = function(app) {
 
           var forms = {};
           $scope.form = {title: 'Unknown form'};
-          $scope.formio.loadForms({params: {limit: 200}}).then(function(formioForms) {
+          $scope.formio.loadForms({params: {limit: 4294967295}}).then(function(formioForms) {
             angular.forEach(formioForms, function(form) {
               forms[form._id] = form;
             });
@@ -109794,7 +109794,7 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.resources = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
+          $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
             $scope.resources = resources;
             if (!$scope.component.resource) {
               $scope.component.resource = resources[0]._id;
@@ -111380,7 +111380,7 @@ module.exports = ['debounce', function(debounce) {
             subgroups: {}
           };
 
-          var query = {params: {type: 'resource', limit: 100}};
+          var query = {params: {type: 'resource', limit: 4294967295}};
           if ($scope.options && $scope.options.resourceFilter) {
             query.params.tags = $scope.options.resourceFilter;
           }
@@ -113017,7 +113017,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":448,"angular-drag-and-drop-lists":2,"ng-dialog":305,"ng-formio/src/formio-full.js":373}],448:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.26.2 | https://unpkg.com/ng-formio-builder@2.26.2/LICENSE.txt */
+/*! ng-formio-builder v2.26.3 | https://unpkg.com/ng-formio-builder@2.26.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
