@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
+### Fixed
+ - ObjectBuilder directive.
+
 ### Added
  - 'useLocaleSettings' option to Day and DateTime components.
  - Label setting for HTML element component
