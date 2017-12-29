@@ -64,7 +64,7 @@ module.exports = function(app) {
 
           var forms = {};
           $scope.form = {title: 'Unknown form'};
-          $scope.formio.loadForms({params: {limit: 100}}).then(function(formioForms) {
+          $scope.formio.loadForms({params: {limit: 200}}).then(function(formioForms) {
             angular.forEach(formioForms, function(form) {
               forms[form._id] = form;
             });

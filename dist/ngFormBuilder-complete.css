@@ -905,6 +905,37 @@ tags-input .autocomplete .suggestion-item em {
   min-width: 200px;
 }
 
+/* FOR-873 */
+.btn-disable{
+  outline: none !important;
+  cursor: not-allowed !important;
+  background-color: #7DC4EE !important;
+  border: #7DC4EE !important;
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* No */
+}
+
+.btn-disable:hover{
+  outline: none !important;
+  background-color: #7DC4EE !important;
+  border: #7DC4EE !important;
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* No */
+}
+
+.btn-disable:active{
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
 /* FOR-109 */
 .input-group .form-control {
   z-index: inherit;

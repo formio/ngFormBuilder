@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.26.1
+### Changed
+ - Increased the limit of the forms pulling for nested forms.
+ - Upgrade ng-formio to 2.26.4
+
 ## 2.26.0
 ### Changed
  - Upgrade ng-formio to 2.26.0
