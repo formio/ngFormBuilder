@@ -41,6 +41,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -51,11 +52,12 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="fieldSet" type="checkbox" label="Field Set" title="Displays the radio' +
+        ' buttons wrapped by a field-set and legend."></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
