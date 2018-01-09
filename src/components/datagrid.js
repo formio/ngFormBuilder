@@ -39,6 +39,7 @@ module.exports = function(app) {
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="addAnother"></form-builder-option>' +
+        '<form-builder-option-add-another-position></form-builder-option-add-another-position>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
