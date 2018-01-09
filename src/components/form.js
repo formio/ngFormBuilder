@@ -103,6 +103,7 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="reference"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted"></form-builder-option>' +
