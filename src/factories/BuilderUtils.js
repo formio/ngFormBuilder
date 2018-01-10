@@ -74,6 +74,25 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 
   /**
+   * Iterate the given label to make it unique.
+   *
+   * @param {String} label
+   *   Modify the component label to be unique.
+   *
+   * @returns {String}
+   *   The new component label.
+   */
+  var iterateLabel = function(label) {
+    if (!label.match(suffixRegex)) {
+      return label + '2';
+    }
+
+    return label.replace(suffixRegex, function(suffix) {
+      return Number(suffix) + 1;
+    });
+  };
+
+  /**
    * Appends a number to a component.key to keep it unique
    *
    * @param {Object} form
@@ -97,9 +116,9 @@ module.exports = ['FormioUtils', function(FormioUtils) {
       var memoization = findExistingComponents(form.components, component);
       while (keyExists(memoization, component.key)) {
         component.key = iterateKey(component.key);
+        component.label = iterateLabel(component.label);
       }
     }, true);
-
     return component;
   };
 
