@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.27.0
+### Added
+ - Data grid "Add Another" positions.
+ - Default labels.
+ - Ability to wrap checkboxes in fieldsets.
+ - Added label setting for HTML component
+
+### Changed
+ - Upgraded ng-formio to 2.27.x
+ - Allow nested forms to set clear on hide.
+
 ## 2.26.3
 ### Fixed
  - Removed all limits to form queries.
