@@ -1,10 +1,34 @@
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
-    function(formioComponentsProvider) {
+    'FORM_OPTIONS',
+    function(
+      formioComponentsProvider,
+      FORM_OPTIONS
+    ) {
       formioComponentsProvider.register('datagrid', {
         fbtemplate: 'formio/formbuilder/datagrid.html',
         icon: 'fa fa-th',
+        onEdit: ['$scope', function($scope) {
+          $scope.themes = FORM_OPTIONS.themes;
+          if (!$scope.component.addAnotherPosition) {
+            $scope.component.addAnotherPosition = 'bottom';
+          }
+          $scope.addAnotherPosition = [
+            {
+              value: 'top',
+              title: 'Top'
+            },
+            {
+              value: 'bottom',
+              title: 'Bottom'
+            },
+            {
+              value: 'both',
+              title: 'Both'
+            }
+          ];
+        }],
         views: [
           {
             name: 'Display',
@@ -39,6 +63,10 @@ module.exports = function(app) {
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="addAnother"></form-builder-option>' +
+        '<div class="form-group">' +
+          '<label for="addAnotherPosition" form-builder-tooltip="Position for Add Another button with respect to Data Grid Array.">{{\'Add Another Position\' | formioTranslate}}</label>' +
+          '<select class="form-control" id="addAnotherPosition" name="addAnotherPosition" ng-options="position.value as position.title | formioTranslate for position in addAnotherPosition" ng-model="component.addAnotherPosition"></select>' +
+        '</div>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
