@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.27.1
+### Fixed
+ - Options to accept single-way binding.
+
 ## 2.27.0
 ### Added
  - Data grid "Add Another" positions.

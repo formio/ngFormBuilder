@@ -17,7 +17,7 @@ module.exports = ['debounce', function(debounce) {
       type: '=',
       onSave: '=',
       onCancel: '=',
-      options: '=?'
+      options: '<'
     },
     controller: [
       '$scope',

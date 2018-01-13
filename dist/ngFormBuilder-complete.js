@@ -105495,7 +105495,7 @@ module.exports = ['debounce', function(debounce) {
       type: '=',
       onSave: '=',
       onCancel: '=',
-      options: '=?'
+      options: '<'
     },
     controller: [
       '$scope',
@@ -107359,7 +107359,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":453,"angular-drag-and-drop-lists":1,"ng-dialog":292,"ng-formio/src/formio-complete.js":380}],453:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.27.0 | https://unpkg.com/ng-formio-builder@2.27.0/LICENSE.txt */
+/*! ng-formio-builder v2.27.1 | https://unpkg.com/ng-formio-builder@2.27.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
