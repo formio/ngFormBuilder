@@ -61,7 +61,7 @@ module.exports = {
     tooltip: 'Check this if you would like to use Formio Authentication with the request.',
     type: 'checkbox'
   },
-  spellCheck: {
+  spellcheck: {
     label: 'Enable Spell Check',
     tooltip: 'Check this if you wish to enable spell check.',
     type: 'checkbox'
