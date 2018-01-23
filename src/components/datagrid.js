@@ -60,6 +60,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datagrid/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="addAnother"></form-builder-option>' +
@@ -77,7 +78,6 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
-        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
