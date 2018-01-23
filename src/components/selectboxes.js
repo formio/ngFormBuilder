@@ -70,6 +70,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
           '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
