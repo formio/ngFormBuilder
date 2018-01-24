@@ -34,7 +34,7 @@ module.exports = function(app) {
               title: 'Bottom'
             }
           ];
-  
+
           if (!$scope.component.labelPosition) {
             $scope.component.labelPosition = 'right';
           }
@@ -82,7 +82,7 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
-          '<div class="form-group">' +
+          '<div class="form-group" ng-if="form.display === \'pdf\'">' +
             '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">{{\'Input Type\' | formioTranslate}}</label>' +
             '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title | formioTranslate for inputType in inputTypes" ng-model="component.inputType"></select>' +
           '</div>' +
