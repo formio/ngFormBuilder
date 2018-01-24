@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Changed
+ - Hide 'input type' option for CheckBox component for forms which are not PDF.
+
 ## 2.27.1
 ### Fixed
  - Options to accept single-way binding.
