@@ -366,9 +366,11 @@ module.exports = ['debounce', function(debounce) {
             height = windowScrollBottom - formBuilderOffsetTop - bottomOffset;
           }
           else if (windowScrollBottom < formBuilderOffsetBottom) {
+            // Form builder is visible.
             height = windowHeight - headerOffset - bottomOffset;
           }
           else {
+            // Bottom part of Form Builder is visible.
             height = formBuilderOffsetBottom - windowScrollTop - headerOffset - bottomOffset;
           }
 
@@ -385,6 +387,7 @@ module.exports = ['debounce', function(debounce) {
             scroll = maxScroll;
           }
 
+          // Necessary fix for header.
           if (scroll > 0 && scroll < headerOffset) {
             height -= scroll;
           }
