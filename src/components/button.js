@@ -54,7 +54,7 @@ module.exports = function(app) {
         '  <label for="event" form-builder-tooltip="Place an Url where the submission will be sent.">{{\'Button Url\'' +
         ' | formioTranslate}}</label>' +
         '  <input type="url" class="form-control" id="event" name="event" ng-model="component.url"' +
-        ' placeholder="URL: https://example.form.io 2" />' +
+        ' placeholder="URL: https://example.form.io" />' +
         '</div>' +
         '<headers-builder ng-if="component.action === \'url\'" form="form" component="component"' +
         ' data="component.headers" label="Headers" tooltip-text="Headers Properties' +
