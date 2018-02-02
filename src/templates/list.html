@@ -14,7 +14,7 @@
       dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
       dnd-dragend="dndDragIframeWorkaround.isDragging = false"
       dnd-moved="removeComponent(component, false)">
-    <form-builder-component ng-if="!component.hideBuilder" ng-init="component.hideLabel = false;"></form-builder-component>
+    <form-builder-component ng-if="!component.hideBuilder"></form-builder-component>
     <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
   </li>
 </ul>
