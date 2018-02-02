@@ -37,6 +37,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -49,11 +50,9 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
-        '<form-builder-option property="fieldSet" type="checkbox" label="Wrap inside field set" title="Displays the radio' +
-        ' buttons wrapped by a field-set and legend."></form-builder-option>' +
+          '<form-builder-option property="fieldSet" type="checkbox" label="Wrap inside field set" title="Displays the radio buttons wrapped by a field-set and legend."></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'

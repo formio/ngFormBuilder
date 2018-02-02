@@ -87,6 +87,8 @@ app.directive('jsonInput', require('./directives/jsonInput'));
 
 app.directive('formBuilderOption', require('./directives/formBuilderOption'));
 
+app.directive('labelValidator', require('./directives/labelValidator'));
+
 app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionInputsLabelPosition', require('./directives/formBuilderOptionInputsLabelPosition'));
