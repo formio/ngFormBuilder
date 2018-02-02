@@ -103,6 +103,8 @@ app.directive('formBuilderOptionShortcut', require('./directives/formBuilderOpti
 
 app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
 
+app.directive('textMask', require('./directives/textMask'));
+
 app.directive('validApiKey', require('./directives/validApiKey'));
 
 app.directive('formBuilderOptionCustomValidation', require('./directives/formBuilderOptionCustomValidation'));
