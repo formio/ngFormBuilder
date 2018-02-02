@@ -37,7 +37,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/survey/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
-        '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<value-builder data="component.questions" default="component.questions" label="Questions" tooltip-text="The questions you would like to as in this survey question."></value-builder>' +
