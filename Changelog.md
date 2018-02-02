@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [UNRELEASED]
+### Changed
+ - Hide 'input type' option for CheckBox component for forms which are not PDF.
+
 ### Added
+ - Input mask for default value for Textfield and Phone Number components.
  - Scroll bar for components column.
 
 ## 2.27.1
