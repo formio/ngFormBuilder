@@ -97,6 +97,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/form/display.html',
         '<ng-form>' +
           '<form-builder-option property="label" label="Name" placeholder="Enter the name for this form field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<div class="form-group">' +
             '<label for="form" form-builder-tooltip="The form to load within this form component..">{{\'Form\' | formioTranslate}}</label>' +

@@ -18,12 +18,13 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
       var formioTranslate = $filter('formioTranslate');
 
       var property = attrs.property;
-      var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
+      var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label);
       var placeholder = attrs.placeholder || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
       var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = attrs.tooltip || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
       var input = type === 'textarea' ? angular.element('<textarea></textarea>') : angular.element('<input>');
+
       var inputAttrs = {
         id: property,
         name: property,
@@ -40,6 +41,10 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
         }
       });
 
+      if(property === 'label') {
+        inputAttrs['label-validator'] = "";
+        inputAttrs.required = "";
+      }
       // Add min/max value floor values for validation.
       if (property === 'validate.minLength' || property === 'validate.maxLength') {
         inputAttrs.min = 0;
@@ -58,9 +63,9 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label>' +
+                '<label class="control-label" for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label><div class="input-group">' +
                 input.prop('outerHTML') +
-              '</div>';
+              '</div></div>';
     }
   };
 }];

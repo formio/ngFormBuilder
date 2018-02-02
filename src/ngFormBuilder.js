@@ -87,6 +87,8 @@ app.directive('jsonInput', require('./directives/jsonInput'));
 
 app.directive('formBuilderOption', require('./directives/formBuilderOption'));
 
+app.directive('labelValidator', require('./directives/labelValidator'));
+
 app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionInputsLabelPosition', require('./directives/formBuilderOptionInputsLabelPosition'));
@@ -101,6 +103,8 @@ app.directive('formBuilderOptionShortcut', require('./directives/formBuilderOpti
 
 app.directive('formBuilderOptionTags', require('./directives/formBuilderOptionTags'));
 
+app.directive('textMask', require('./directives/textMask'));
+
 app.directive('validApiKey', require('./directives/validApiKey'));
 
 app.directive('formBuilderOptionCustomValidation', require('./directives/formBuilderOptionCustomValidation'));
@@ -108,6 +112,8 @@ app.directive('formBuilderOptionCustomValidation', require('./directives/formBui
 app.directive('formBuilderTooltip', require('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', require('./directives/valueBuilder'));
+
+app.directive('headersBuilder', require('./directives/headersBuilder'));
 
 app.directive('valueBuilderWithShortcuts', require('./directives/valueBuilderWithShortcuts'));
 
