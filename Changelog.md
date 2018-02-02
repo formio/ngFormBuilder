@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
  - Input mask for default value for Textfield and Phone Number components.
+ - Scroll bar for components column.
 
 ## 2.27.1
 ### Fixed

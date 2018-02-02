@@ -328,7 +328,11 @@ module.exports = ['debounce', function(debounce) {
       }
     ],
     link: function(scope, element) {
-      var scrollSidebar = debounce(function() {
+      var minHeight = 200;
+      var headerOffset = 50;
+      var bottomOffset = 15;
+
+      var scrollSidebar = function() {
         // Disable all buttons within the form.
         angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
 
@@ -336,19 +340,66 @@ module.exports = ['debounce', function(debounce) {
         var formComponents = angular.element('.formcomponents');
         var formBuilder = angular.element('.formbuilder');
         if (formComponents.length !== 0 && formBuilder.length !== 0) {
-          var maxScroll = formBuilder.outerHeight() > formComponents.outerHeight() ? formBuilder.outerHeight() - formComponents.outerHeight() : 0;
-          // 50 pixels gives space for the fixed header.
-          var scroll = angular.element(window).scrollTop() - formComponents.parent().offset().top + 50;
+          var windowEl = angular.element(window);
+          var windowHeight = windowEl.height();
+          var windowScrollTop = windowEl.scrollTop();
+          var windowScrollBottom = windowScrollTop + windowHeight;
+
+          var formBuilderOffsetTop = formBuilder.offset().top;
+          var formBuilderHeight = formBuilder.outerHeight();
+          var formBuilderOffsetBottom = formBuilderOffsetTop + formBuilderHeight;
+
+          var height = 0;
+
+          if (windowHeight > formBuilderHeight) {
+            formComponents.css('height', formBuilderHeight);
+            return;
+          }
+
+          if (windowScrollBottom < formBuilderOffsetTop
+            || windowScrollTop > formBuilderOffsetBottom) {
+            // Form Builder is not visible.
+            return;
+          }
+          else if (windowScrollTop < formBuilderOffsetTop) {
+            // Top part of Form Builder is visible.
+            height = windowScrollBottom - formBuilderOffsetTop - bottomOffset;
+          }
+          else if (windowScrollBottom < formBuilderOffsetBottom) {
+            // Form builder is visible.
+            height = windowHeight - headerOffset - bottomOffset;
+          }
+          else {
+            // Bottom part of Form Builder is visible.
+            height = formBuilderOffsetBottom - windowScrollTop - headerOffset - bottomOffset;
+          }
+
+          if (height < minHeight) {
+            height = minHeight;
+          }
+
+          var maxScroll = formBuilderHeight - height - bottomOffset;
+          var scroll = windowScrollTop - formBuilderOffsetTop + headerOffset;
           if (scroll < 0) {
             scroll = 0;
           }
           if (scroll > maxScroll) {
             scroll = maxScroll;
           }
-          formComponents.css('margin-top', scroll + 'px');
+
+          // Necessary fix for header.
+          if (scroll > 0 && scroll < headerOffset) {
+            height -= scroll;
+          }
+
+          formComponents.css({
+            'margin-top': scroll,
+            height: height
+          });
         }
-      }, 100, false);
-      window.onscroll = scrollSidebar;
+      };
+      window.onscroll = debounce(scrollSidebar, 100, false);
+      scrollSidebar();
       element.on('$destroy', function() {
         window.onscroll = null;
       });
