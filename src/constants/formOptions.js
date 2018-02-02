@@ -18,7 +18,7 @@ module.exports = {
     },
     {
       name: 'url',
-      title: 'Url'
+      title: 'POST to URL'
     },
     {
       name: 'oauth',
