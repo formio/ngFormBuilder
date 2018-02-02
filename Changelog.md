@@ -4,13 +4,21 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 2.28.0
 ### Changed
+ - Upgrade ng-formio to 2.28.0, and upgraded other dependencies.
  - Hide 'input type' option for CheckBox component for forms which are not PDF.
+ - Added the button that is pressed when posting to form.io.
+ - Component Label should be required in all components, use "Hide Label" to hide it.
 
 ### Added
  - Input mask for default value for Textfield and Phone Number components.
  - Scroll bar for components column.
+ - Post to URL for buttons.
+ - Autofocus configuration.
+ 
+### Fixed
+ - Default value for input mask.
 
 ## 2.27.1
 ### Fixed

@@ -299,6 +299,11 @@ ul.component-list li {
 
 /***************************** Form Component Buttons *********************/
 
+.formcomponents {
+  overflow: auto;
+  min-height: 200px;
+}
+
 .formcomponents .formcomponentcontainer {
   margin: 0 2px 2px 0;
 }
