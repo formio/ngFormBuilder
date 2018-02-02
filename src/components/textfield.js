@@ -52,6 +52,7 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="spellcheck"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
