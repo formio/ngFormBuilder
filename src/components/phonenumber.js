@@ -11,7 +11,7 @@ module.exports = function(app) {
           },
           {
             name: 'Data',
-            template: 'formio/components/common/data.html'
+            template: 'formio/components/textfield/data.html'
           },
           {
             name: 'Validation',

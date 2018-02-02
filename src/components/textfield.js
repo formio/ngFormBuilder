@@ -10,7 +10,7 @@ module.exports = function(app) {
           },
           {
             name: 'Data',
-            template: 'formio/components/common/data.html'
+            template: 'formio/components/textfield/data.html'
           },
           {
             name: 'Validation',
@@ -62,6 +62,54 @@ module.exports = function(app) {
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/textfield/data.html',
+        '<form-builder-option text-mask property="defaultValue"></form-builder-option>' +
+        '<form-builder-option property="dbIndex" class="form-builder-premium form-builder-dbindex"></form-builder-option>' +
+        '<uib-accordion>' +
+        '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Default" class="panel panel-default" is-open="true">' +
+        '        <formio-script-editor rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+        '        <small>' +
+        '          <p>Enter custom default value code.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Default" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom default value using <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.customDefaultValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
+        '  </div>' +
+        '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Value" class="panel panel-default" is-open="true">' +
+        '        <formio-script-editor rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+        '        <small>' +
+        '          <p>Enter code to calculate a value.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Value" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom calculation logic with JSON and <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.calculateValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
+        '  </div>' +
+        '</uib-accordion>'
       );
 
       $templateCache.put('formio/components/textfield/validate.html',
