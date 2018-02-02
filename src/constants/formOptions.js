@@ -17,6 +17,10 @@ module.exports = {
       title: 'Reset'
     },
     {
+      name: 'url',
+      title: 'Url'
+    },
+    {
       name: 'oauth',
       title: 'OAuth'
     }

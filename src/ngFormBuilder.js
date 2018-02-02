@@ -113,6 +113,8 @@ app.directive('formBuilderTooltip', require('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', require('./directives/valueBuilder'));
 
+app.directive('headersBuilder', require('./directives/headersBuilder'));
+
 app.directive('valueBuilderWithShortcuts', require('./directives/valueBuilderWithShortcuts'));
 
 app.directive('objectBuilder', require('./directives/objectBuilder'));
