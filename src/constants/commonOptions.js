@@ -337,5 +337,10 @@ module.exports = {
   'useLocaleSettings': {
     label: 'Use Locale Settings',
     type: 'checkbox',
+  },
+  'delimiter': {
+    label: 'Use Delimiter',
+    type: 'checkbox',
+    tooltip: 'Separate thousands by local delimiter.'
   }
 };
