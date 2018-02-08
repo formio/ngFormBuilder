@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Added
+ - 'delimiter' property to Number and Currency components.
+
 ## 2.28.0
 ### Changed
  - Upgrade ng-formio to 2.28.0, and upgraded other dependencies.
@@ -16,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Scroll bar for components column.
  - Post to URL for buttons.
  - Autofocus configuration.
- 
+
 ### Fixed
  - Default value for input mask.
 
