@@ -189,7 +189,7 @@ module.exports = ['debounce', function(debounce) {
           var component = {
             type: 'panel',
             title: 'Page ' + pageNum,
-            isNew: true,
+            isNew: false,
             components: [],
             input: false,
             key: 'page' + pageNum
@@ -200,6 +200,7 @@ module.exports = ['debounce', function(debounce) {
             component: component
           });
           $scope.form.components.splice(index, 0, component);
+          $scope.$emit('formUpdate', $scope.form);
         };
 
         // Ensure the number of pages is always correct.
