@@ -200,7 +200,6 @@ module.exports = ['debounce', function(debounce) {
             component: component
           });
           $scope.form.components.splice(index, 0, component);
-          $scope.$emit('formUpdate', $scope.form);
         };
 
         // Ensure the number of pages is always correct.
