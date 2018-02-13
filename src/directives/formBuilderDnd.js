@@ -98,6 +98,18 @@ module.exports = [
       if (index === 'undefined') {
         index = -1;
       }
+
+      // If this is a root component and the display is a wizard, then we know
+      // that they dropped the component outside of where it is supposed to go...
+      // Instead append or prepend to the components array.
+      if ($scope.component.display === 'wizard') {
+        var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
+        index = pageIndex;
+        $scope.$apply(function() {
+          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
+        });
+      }
+
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component, index);
@@ -120,17 +132,6 @@ module.exports = [
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
       $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
-
-      // If this is a root component and the display is a wizard, then we know
-      // that they dropped the component outside of where it is supposed to go...
-      // Instead append or prepend to the components array.
-      if ($scope.component.display === 'wizard') {
-        $scope.$apply(function() {
-          var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
-          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
-        });
-        return true;
-      }
 
       // Make sure that they don't ever add a component on the bottom of the submit button.
       var lastComponent = $scope.component.components[$scope.component.components.length - 1];
@@ -159,6 +160,9 @@ module.exports = [
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
+      if ($scope.component.display = 'wizard') {
+        list = $scope.form.components[$scope.form.page].components;
+      }
       list.splice(index, 1, newComponent);
       $scope.emit('update', newComponent);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
