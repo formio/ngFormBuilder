@@ -45,6 +45,7 @@ module.exports = function(app) {
       );
       $templateCache.put('formio/components/columns/display.html',
         '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<div class="form-group">' +
             '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">{{\'Column Properties\' | formioTranslate}}</label>' +
