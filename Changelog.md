@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [UNRELEASED]
 ### Added
  - 'delimiter' property to Number and Currency components.
+ - Possibility to specify label for Columns component
 
 ## 2.28.0
 ### Changed
