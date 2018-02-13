@@ -4,8 +4,9 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [UNRELEASED]
 ### Added
+ - 'delimiter' property to Number and Currency components.
  - Possibility to specify label for Columns component
 
 ## 2.28.0
@@ -20,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
  - Scroll bar for components column.
  - Post to URL for buttons.
  - Autofocus configuration.
- 
+
 ### Fixed
  - Default value for input mask.
 
