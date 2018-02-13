@@ -189,7 +189,7 @@ module.exports = ['debounce', function(debounce) {
           var component = {
             type: 'panel',
             title: 'Page ' + pageNum,
-            isNew: true,
+            isNew: false,
             components: [],
             input: false,
             key: 'page' + pageNum
