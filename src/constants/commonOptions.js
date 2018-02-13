@@ -61,6 +61,11 @@ module.exports = {
     tooltip: 'Check this if you would like to use Formio Authentication with the request.',
     type: 'checkbox'
   },
+  spellcheck: {
+    label: 'Enable Spell Check',
+    tooltip: 'Check this if you wish to enable spell check.',
+    type: 'checkbox'
+  },
   tableView: {
     label: 'Table View',
     type: 'checkbox',
@@ -328,5 +333,9 @@ module.exports = {
     label: 'Add Resource Text',
     placeholder: 'Add Resource',
     tooltip: 'Set the text of the Add Resource button.'
+  },
+  'useLocaleSettings': {
+    label: 'Use Locale Settings',
+    type: 'checkbox',
   }
 };

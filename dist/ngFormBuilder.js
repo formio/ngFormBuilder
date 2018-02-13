@@ -14,6 +14,10 @@ var _get2 = _dereq_('lodash/get');
 
 var _get3 = _interopRequireDefault(_get2);
 
+var _set2 = _dereq_('lodash/set');
+
+var _set3 = _interopRequireDefault(_set2);
+
 var _round2 = _dereq_('lodash/round');
 
 var _round3 = _interopRequireDefault(_round2);
@@ -66,6 +70,10 @@ var _isPlainObject2 = _dereq_('lodash/isPlainObject');
 
 var _isPlainObject3 = _interopRequireDefault(_isPlainObject2);
 
+var _isRegExp2 = _dereq_('lodash/isRegExp');
+
+var _isRegExp3 = _interopRequireDefault(_isRegExp2);
+
 var _forOwn2 = _dereq_('lodash/forOwn');
 
 var _forOwn3 = _interopRequireDefault(_forOwn2);
@@ -91,6 +99,21 @@ function _interopRequireDefault(obj) {
 // Configure JsonLogic
 _operators.lodashOperators.forEach(function (name) {
   return _jsonLogicJs2.default.add_operation('_' + name, _lodash2.default[name]);
+});
+
+// Retrieve Any Date
+_jsonLogicJs2.default.add_operation("getDate", function (date) {
+  return (0, _moment2.default)(date).toISOString();
+});
+
+// Set Relative Minimum Date
+_jsonLogicJs2.default.add_operation("relativeMinDate", function (relativeMinDate) {
+  return (0, _moment2.default)().subtract(relativeMinDate, "days").toISOString();
+});
+
+// Set Relative Maximum Date
+_jsonLogicJs2.default.add_operation("relativeMaxDate", function (relativeMaxDate) {
+  return (0, _moment2.default)().add(relativeMaxDate, "days").toISOString();
 });
 
 var FormioUtils = {
@@ -232,7 +255,7 @@ var FormioUtils = {
    * @returns {Object}
    *   The component that matches the given key, or undefined if not found.
    */
-  getComponent: function getComponent(components, key) {
+  getComponent: function getComponent(components, key, includeAll) {
     var result = void 0;
     FormioUtils.eachComponent(components, function (component, path) {
       if (FormioUtils.matchComponent(component, key)) {
@@ -240,7 +263,7 @@ var FormioUtils = {
         result = component;
         return true;
       }
-    });
+    }, includeAll);
     return result;
   },
 
@@ -361,27 +384,88 @@ var FormioUtils = {
    * @param data
    *   The full submission data.
    */
-  checkCalculated: function checkCalculated(component, submission, data) {
+  checkCalculated: function checkCalculated(component, submission, rowData) {
     // Process calculated value stuff if present.
     if (component.calculateValue) {
+      var row = rowData;
+      var data = submission ? submission.data : rowData;
       if ((0, _isString3.default)(component.calculateValue)) {
         try {
           var util = this;
-          data[component.key] = eval('(function(data, util) { var value = [];' + component.calculateValue.toString() + '; return value; })(data, util)');
+          rowData[component.key] = new Function('data', 'row', 'util', 'var value = [];' + component.calculateValue.toString() + '; return value;')(data, row, util);
         } catch (e) {
           console.warn('An error occurred calculating a value for ' + component.key, e);
         }
       } else {
         try {
-          data[component.key] = this.jsonLogic.apply(component.calculateValue, {
-            data: submission ? submission.data : data,
-            row: data,
-            _: _lodash2.default
-          });
+          rowData[component.key] = this.jsonLogic.apply(component.calculateValue, { data: data, row: row, _: _lodash2.default });
         } catch (e) {
           console.warn('An error occurred calculating a value for ' + component.key, e);
         }
       }
+    }
+  },
+
+  /**
+   * Check if a simple conditional evaluates to true.
+   *
+   * @param condition
+   * @param condition
+   * @param row
+   * @param data
+   * @returns {boolean}
+   */
+  checkSimpleConditional: function checkSimpleConditional(component, condition, row, data) {
+    var value = null;
+    if (row) {
+      value = this.getValue({ data: row }, condition.when);
+    }
+    if (data && (0, _isNil3.default)(value)) {
+      value = this.getValue({ data: data }, condition.when);
+    }
+    // FOR-400 - Fix issue where falsey values were being evaluated as show=true
+    if ((0, _isNil3.default)(value)) {
+      value = '';
+    }
+    // Special check for selectboxes component.
+    if ((0, _isObject3.default)(value) && (0, _has3.default)(value, condition.eq)) {
+      return value[condition.eq].toString() === condition.show.toString();
+    }
+    // FOR-179 - Check for multiple values.
+    if ((0, _isArray3.default)(value) && value.indexOf(trigger.eq) !== -1) {
+      return condition.show.toString() === 'true';
+    }
+
+    return value.toString() === condition.eq.toString() === (condition.show.toString() === 'true');
+  },
+
+  /**
+   * Check custom javascript conditional.
+   *
+   * @param component
+   * @param custom
+   * @param row
+   * @param data
+   * @returns {*}
+   */
+  checkCustomConditional: function checkCustomConditional(component, custom, row, data, variable, onError) {
+    try {
+      return new Function('component', 'row', 'data', 'var ' + variable + ' = true; ' + custom.toString() + '; return ' + variable + ';')(component, row, data);
+    } catch (e) {
+      console.warn('An error occurred in a condition statement for component ' + component.key, e);
+      return onError;
+    }
+  },
+  checkJsonConditional: function checkJsonConditional(component, json, row, data, onError) {
+    try {
+      return _jsonLogicJs2.default.apply(json, {
+        data: data,
+        row: row,
+        _: _lodash2.default
+      });
+    } catch (err) {
+      console.warn('An error occurred in jsonLogic advanced condition for ' + component.key, err);
+      return onError;
     }
   },
 
@@ -399,47 +483,61 @@ var FormioUtils = {
    */
   checkCondition: function checkCondition(component, row, data) {
     if (component.customConditional) {
-      try {
-        var script = '(function() { var show = true;' + component.customConditional.toString() + '; return show; })()';
-        var result = eval(script);
-        return result.toString() === 'true';
-      } catch (e) {
-        console.warn('An error occurred in a custom conditional statement for component ' + component.key, e);
-        return true;
-      }
+      return this.checkCustomConditional(component, component.customConditional, row, data, 'show', true);
     } else if (component.conditional && component.conditional.when) {
-      var cond = component.conditional;
-      var value = null;
-      if (row) {
-        value = this.getValue({ data: row }, cond.when);
-      }
-      if (data && (0, _isNil3.default)(value)) {
-        value = this.getValue({ data: data }, cond.when);
-      }
-      // FOR-400 - Fix issue where falsey values were being evaluated as show=true
-      if ((0, _isNil3.default)(value)) {
-        return false;
-      }
-      // Special check for selectboxes component.
-      if ((0, _isObject3.default)(value) && (0, _has3.default)(value, cond.eq)) {
-        return value[cond.eq].toString() === cond.show.toString();
-      }
-      // FOR-179 - Check for multiple values.
-      if ((0, _isArray3.default)(value) && value.indexOf(cond.eq) !== -1) {
-        return cond.show.toString() === 'true';
-      }
-
-      return value.toString() === cond.eq.toString() === (cond.show.toString() === 'true');
+      return this.checkSimpleConditional(component, component.conditional, row, data, true);
     } else if (component.conditional && component.conditional.json) {
-      return _jsonLogicJs2.default.apply(component.conditional.json, {
-        data: data,
-        row: row,
-        _: _lodash2.default
-      });
+      return this.checkJsonConditional(component, component.conditional.json, row, data);
     }
 
     // Default to show.
     return true;
+  },
+
+  /**
+   * Test a trigger on a component.
+   *
+   * @param component
+   * @param action
+   * @param data
+   * @param row
+   * @returns {mixed}
+   */
+  checkTrigger: function checkTrigger(component, trigger, row, data) {
+    switch (trigger.type) {
+      case 'simple':
+        return this.checkSimpleConditional(component, trigger.simple, row, data);
+        break;
+      case 'javascript':
+        return this.checkCustomConditional(component, trigger.javascript, row, data, 'result', false);
+        break;
+      case 'json':
+        return this.checkJsonConditional(component, trigger.json, row, data, false);
+        break;
+    }
+    // If none of the types matched, don't fire the trigger.
+    return false;
+  },
+  setActionProperty: function setActionProperty(component, action, row, data, result) {
+    switch (action.property.type) {
+      case 'boolean':
+        if ((0, _get3.default)(component, action.property.value, false).toString() !== action.state.toString()) {
+          (0, _set3.default)(component, action.property.value, action.state.toString() === 'true');
+        }
+        break;
+      case 'string':
+        var newValue = FormioUtils.interpolate(action.text, {
+          data: data,
+          row: row,
+          component: component,
+          result: result
+        });
+        if (newValue !== (0, _get3.default)(component, action.property.value, '')) {
+          (0, _set3.default)(component, action.property.value, newValue);
+        }
+        break;
+    }
+    return component;
   },
 
   /**
@@ -548,13 +646,115 @@ var FormioUtils = {
   },
   isValidDate: function isValidDate(date) {
     return (0, _isDate3.default)(date) && !(0, _isNaN3.default)(date.getDate());
+  },
+  getLocaleDateFormatInfo: function getLocaleDateFormatInfo(locale) {
+    var formatInfo = {};
+
+    var day = 21;
+    var exampleDate = new Date(2017, 11, day);
+    var localDateString = exampleDate.toLocaleDateString(locale);
+
+    formatInfo.dayFirst = localDateString.slice(0, 2) === day.toString();
+
+    return formatInfo;
+  },
+
+  /**
+   * Convert the format from the angular-datepicker module to flatpickr format.
+   * @param format
+   * @return {string}
+   */
+  convertFormatToFlatpickr: function convertFormatToFlatpickr(format) {
+    return format
+    // Year conversion.
+    .replace(/y/g, 'Y').replace('YYYY', 'Y').replace('YY', 'y')
+
+    // Month conversion.
+    .replace('MMMM', 'F').replace(/M/g, 'n').replace('nnn', 'M').replace('nn', 'm')
+
+    // Day in month.
+    .replace(/d/g, 'j').replace('jj', 'd')
+
+    // Day in week.
+    .replace('EEEE', 'l').replace('EEE', 'D')
+
+    // Hours, minutes, seconds
+    .replace('HH', 'H').replace('hh', 'h').replace('mm', 'i').replace('ss', 'S').replace(/a/g, 'K');
+  },
+
+  /**
+   * Convert the format from the angular-datepicker module to moment format.
+   * @param format
+   * @return {string}
+   */
+  convertFormatToMoment: function convertFormatToMoment(format) {
+    return format
+    // Year conversion.
+    .replace(/y/g, 'Y')
+    // Day in month.
+    .replace(/d/g, 'D')
+    // Day in week.
+    .replace(/E/g, 'd')
+    // AM/PM marker
+    .replace(/a/g, 'A');
+  },
+
+  /**
+   * Returns an input mask that is compatible with the input mask library.
+   * @param {string} mask - The Form.io input mask.
+   * @returns {Array} - The input mask for the mask library.
+   */
+  getInputMask: function getInputMask(mask) {
+    if (mask instanceof Array) {
+      return mask;
+    }
+    var maskArray = [];
+    maskArray.numeric = true;
+    for (var i = 0; i < mask.length; i++) {
+      switch (mask[i]) {
+        case '9':
+          maskArray.push(/\d/);
+          break;
+        case 'A':
+          maskArray.numeric = false;
+          maskArray.push(/[a-zA-Z]/);
+          break;
+        case 'a':
+          maskArray.numeric = false;
+          maskArray.push(/[a-z]/);
+          break;
+        case '*':
+          maskArray.numeric = false;
+          maskArray.push(/[a-zA-Z0-9]/);
+          break;
+        default:
+          maskArray.push(mask[i]);
+          break;
+      }
+    }
+    return maskArray;
+  },
+  matchInputMask: function matchInputMask(value, inputMask) {
+    if (!inputMask) {
+      return true;
+    }
+    for (var i = 0; i < inputMask.length; i++) {
+      var char = value[i];
+      var charPart = inputMask[i];
+
+      if (!((0, _isRegExp3.default)(charPart) && charPart.test(char) || charPart === char)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 };
 
 module.exports = global.FormioUtils = FormioUtils;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./jsonlogic/operators":2,"json-logic-js":4,"lodash":236,"lodash/chunk":198,"lodash/clone":199,"lodash/forOwn":208,"lodash/get":209,"lodash/has":211,"lodash/isArray":215,"lodash/isBoolean":218,"lodash/isDate":220,"lodash/isNaN":224,"lodash/isNil":225,"lodash/isObject":227,"lodash/isPlainObject":229,"lodash/isString":230,"lodash/last":235,"lodash/pad":242,"lodash/round":247,"lodash/template":250,"moment":260}],2:[function(_dereq_,module,exports){
+},{"./jsonlogic/operators":2,"json-logic-js":4,"lodash":238,"lodash/chunk":199,"lodash/clone":200,"lodash/forOwn":209,"lodash/get":210,"lodash/has":212,"lodash/isArray":216,"lodash/isBoolean":219,"lodash/isDate":221,"lodash/isNaN":225,"lodash/isNil":226,"lodash/isObject":228,"lodash/isPlainObject":230,"lodash/isRegExp":231,"lodash/isString":232,"lodash/last":237,"lodash/pad":244,"lodash/round":249,"lodash/set":250,"lodash/template":253,"moment":263}],2:[function(_dereq_,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -667,7 +867,7 @@ http://ricostacruz.com/cheatsheets/umdjs.html
       console.log(a); return a;
     },
     "in": function(a, b) {
-      if(typeof b.indexOf === "undefined") return false;
+      if(!b || typeof b.indexOf === "undefined") return false;
       return (b.indexOf(a) !== -1);
     },
     "cat": function() {
@@ -1064,7 +1264,7 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":124,"./_root":173}],6:[function(_dereq_,module,exports){
+},{"./_getNative":125,"./_root":174}],6:[function(_dereq_,module,exports){
 var hashClear = _dereq_('./_hashClear'),
     hashDelete = _dereq_('./_hashDelete'),
     hashGet = _dereq_('./_hashGet'),
@@ -1098,7 +1298,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":134,"./_hashDelete":135,"./_hashGet":136,"./_hashHas":137,"./_hashSet":138}],7:[function(_dereq_,module,exports){
+},{"./_hashClear":135,"./_hashDelete":136,"./_hashGet":137,"./_hashHas":138,"./_hashSet":139}],7:[function(_dereq_,module,exports){
 var listCacheClear = _dereq_('./_listCacheClear'),
     listCacheDelete = _dereq_('./_listCacheDelete'),
     listCacheGet = _dereq_('./_listCacheGet'),
@@ -1132,7 +1332,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":150,"./_listCacheDelete":151,"./_listCacheGet":152,"./_listCacheHas":153,"./_listCacheSet":154}],8:[function(_dereq_,module,exports){
+},{"./_listCacheClear":151,"./_listCacheDelete":152,"./_listCacheGet":153,"./_listCacheHas":154,"./_listCacheSet":155}],8:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -1141,7 +1341,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":124,"./_root":173}],9:[function(_dereq_,module,exports){
+},{"./_getNative":125,"./_root":174}],9:[function(_dereq_,module,exports){
 var mapCacheClear = _dereq_('./_mapCacheClear'),
     mapCacheDelete = _dereq_('./_mapCacheDelete'),
     mapCacheGet = _dereq_('./_mapCacheGet'),
@@ -1175,7 +1375,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":155,"./_mapCacheDelete":156,"./_mapCacheGet":157,"./_mapCacheHas":158,"./_mapCacheSet":159}],10:[function(_dereq_,module,exports){
+},{"./_mapCacheClear":156,"./_mapCacheDelete":157,"./_mapCacheGet":158,"./_mapCacheHas":159,"./_mapCacheSet":160}],10:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -1184,7 +1384,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":124,"./_root":173}],11:[function(_dereq_,module,exports){
+},{"./_getNative":125,"./_root":174}],11:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -1193,7 +1393,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":124,"./_root":173}],12:[function(_dereq_,module,exports){
+},{"./_getNative":125,"./_root":174}],12:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -1222,7 +1422,7 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":9,"./_setCacheAdd":174,"./_setCacheHas":175}],13:[function(_dereq_,module,exports){
+},{"./_MapCache":9,"./_setCacheAdd":175,"./_setCacheHas":176}],13:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     stackClear = _dereq_('./_stackClear'),
     stackDelete = _dereq_('./_stackDelete'),
@@ -1251,7 +1451,7 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":7,"./_stackClear":179,"./_stackDelete":180,"./_stackGet":181,"./_stackHas":182,"./_stackSet":183}],14:[function(_dereq_,module,exports){
+},{"./_ListCache":7,"./_stackClear":180,"./_stackDelete":181,"./_stackGet":182,"./_stackHas":183,"./_stackSet":184}],14:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -1259,7 +1459,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":173}],15:[function(_dereq_,module,exports){
+},{"./_root":174}],15:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -1267,7 +1467,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":173}],16:[function(_dereq_,module,exports){
+},{"./_root":174}],16:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -1276,7 +1476,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":124,"./_root":173}],17:[function(_dereq_,module,exports){
+},{"./_getNative":125,"./_root":174}],17:[function(_dereq_,module,exports){
 /**
  * Adds the key-value `pair` to `map`.
  *
@@ -1502,7 +1702,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":81,"./_isIndex":143,"./isArguments":214,"./isArray":215,"./isBuffer":219,"./isTypedArray":232}],26:[function(_dereq_,module,exports){
+},{"./_baseTimes":82,"./_isIndex":144,"./isArguments":215,"./isArray":216,"./isBuffer":220,"./isTypedArray":234}],26:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -1614,7 +1814,7 @@ var asciiSize = baseProperty('length');
 
 module.exports = asciiSize;
 
-},{"./_baseProperty":72}],31:[function(_dereq_,module,exports){
+},{"./_baseProperty":73}],31:[function(_dereq_,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -1667,7 +1867,7 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":39,"./eq":205}],34:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":39,"./eq":206}],34:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -1697,7 +1897,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":39,"./eq":205}],35:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":39,"./eq":206}],35:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /**
@@ -1720,7 +1920,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":205}],36:[function(_dereq_,module,exports){
+},{"./eq":206}],36:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -1762,7 +1962,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":98,"./keys":233}],38:[function(_dereq_,module,exports){
+},{"./_copyObject":99,"./keys":235}],38:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -1781,7 +1981,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":98,"./keysIn":234}],39:[function(_dereq_,module,exports){
+},{"./_copyObject":99,"./keysIn":236}],39:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -1808,7 +2008,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":113}],40:[function(_dereq_,module,exports){
+},{"./_defineProperty":114}],40:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     arrayEach = _dereq_('./_arrayEach'),
     assignValue = _dereq_('./_assignValue'),
@@ -1963,7 +2163,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":13,"./_arrayEach":21,"./_assignValue":34,"./_baseAssign":37,"./_baseAssignIn":38,"./_cloneBuffer":90,"./_copyArray":97,"./_copySymbols":99,"./_copySymbolsIn":100,"./_getAllKeys":120,"./_getAllKeysIn":121,"./_getTag":129,"./_initCloneArray":139,"./_initCloneByTag":140,"./_initCloneObject":141,"./isArray":215,"./isBuffer":219,"./isObject":227,"./keys":233}],41:[function(_dereq_,module,exports){
+},{"./_Stack":13,"./_arrayEach":21,"./_assignValue":34,"./_baseAssign":37,"./_baseAssignIn":38,"./_cloneBuffer":91,"./_copyArray":98,"./_copySymbols":100,"./_copySymbolsIn":101,"./_getAllKeys":121,"./_getAllKeysIn":122,"./_getTag":130,"./_initCloneArray":140,"./_initCloneByTag":141,"./_initCloneObject":142,"./isArray":216,"./isBuffer":220,"./isObject":228,"./keys":235}],41:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -1995,7 +2195,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":227}],42:[function(_dereq_,module,exports){
+},{"./isObject":228}],42:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arrayIncludes = _dereq_('./_arrayIncludes'),
     arrayIncludesWith = _dereq_('./_arrayIncludesWith'),
@@ -2064,7 +2264,7 @@ function baseDifference(array, values, iteratee, comparator) {
 
 module.exports = baseDifference;
 
-},{"./_SetCache":12,"./_arrayIncludes":23,"./_arrayIncludesWith":24,"./_arrayMap":26,"./_baseUnary":83,"./_cacheHas":85}],43:[function(_dereq_,module,exports){
+},{"./_SetCache":12,"./_arrayIncludes":23,"./_arrayIncludesWith":24,"./_arrayMap":26,"./_baseUnary":84,"./_cacheHas":86}],43:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -2080,7 +2280,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":48,"./_createBaseEach":104}],44:[function(_dereq_,module,exports){
+},{"./_baseForOwn":48,"./_createBaseEach":105}],44:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -2169,7 +2369,7 @@ function baseFlatten(array, depth, predicate, isStrict, result) {
 
 module.exports = baseFlatten;
 
-},{"./_arrayPush":27,"./_isFlattenable":142}],47:[function(_dereq_,module,exports){
+},{"./_arrayPush":27,"./_isFlattenable":143}],47:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -2187,7 +2387,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":105}],48:[function(_dereq_,module,exports){
+},{"./_createBaseFor":106}],48:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -2205,7 +2405,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":47,"./keys":233}],49:[function(_dereq_,module,exports){
+},{"./_baseFor":47,"./keys":235}],49:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     toKey = _dereq_('./_toKey');
 
@@ -2231,7 +2431,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":87,"./_toKey":188}],50:[function(_dereq_,module,exports){
+},{"./_castPath":88,"./_toKey":189}],50:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isArray = _dereq_('./isArray');
 
@@ -2253,7 +2453,7 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":27,"./isArray":215}],51:[function(_dereq_,module,exports){
+},{"./_arrayPush":27,"./isArray":216}],51:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     getRawTag = _dereq_('./_getRawTag'),
     objectToString = _dereq_('./_objectToString');
@@ -2283,7 +2483,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":14,"./_getRawTag":126,"./_objectToString":167}],52:[function(_dereq_,module,exports){
+},{"./_Symbol":14,"./_getRawTag":127,"./_objectToString":168}],52:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -2341,7 +2541,7 @@ function baseIndexOf(array, value, fromIndex) {
 
 module.exports = baseIndexOf;
 
-},{"./_baseFindIndex":45,"./_baseIsNaN":60,"./_strictIndexOf":184}],55:[function(_dereq_,module,exports){
+},{"./_baseFindIndex":45,"./_baseIsNaN":60,"./_strictIndexOf":185}],55:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -2361,7 +2561,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":51,"./isObjectLike":228}],56:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObjectLike":229}],56:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -2381,7 +2581,7 @@ function baseIsDate(value) {
 
 module.exports = baseIsDate;
 
-},{"./_baseGetTag":51,"./isObjectLike":228}],57:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObjectLike":229}],57:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -2411,7 +2611,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":58,"./isObjectLike":228}],58:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":58,"./isObjectLike":229}],58:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -2496,7 +2696,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":13,"./_equalArrays":114,"./_equalByTag":115,"./_equalObjects":116,"./_getTag":129,"./isArray":215,"./isBuffer":219,"./isTypedArray":232}],59:[function(_dereq_,module,exports){
+},{"./_Stack":13,"./_equalArrays":115,"./_equalByTag":116,"./_equalObjects":117,"./_getTag":130,"./isArray":216,"./isBuffer":220,"./isTypedArray":234}],59:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -2623,7 +2823,27 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":147,"./_toSource":189,"./isFunction":222,"./isObject":227}],62:[function(_dereq_,module,exports){
+},{"./_isMasked":148,"./_toSource":190,"./isFunction":223,"./isObject":228}],62:[function(_dereq_,module,exports){
+var baseGetTag = _dereq_('./_baseGetTag'),
+    isObjectLike = _dereq_('./isObjectLike');
+
+/** `Object#toString` result references. */
+var regexpTag = '[object RegExp]';
+
+/**
+ * The base implementation of `_.isRegExp` without Node.js optimizations.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a regexp, else `false`.
+ */
+function baseIsRegExp(value) {
+  return isObjectLike(value) && baseGetTag(value) == regexpTag;
+}
+
+module.exports = baseIsRegExp;
+
+},{"./_baseGetTag":51,"./isObjectLike":229}],63:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -2685,7 +2905,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":51,"./isLength":223,"./isObjectLike":228}],63:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isLength":224,"./isObjectLike":229}],64:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -2718,7 +2938,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":67,"./_baseMatchesProperty":68,"./identity":213,"./isArray":215,"./property":244}],64:[function(_dereq_,module,exports){
+},{"./_baseMatches":68,"./_baseMatchesProperty":69,"./identity":214,"./isArray":216,"./property":246}],65:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -2750,7 +2970,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":148,"./_nativeKeys":164}],65:[function(_dereq_,module,exports){
+},{"./_isPrototype":149,"./_nativeKeys":165}],66:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isPrototype = _dereq_('./_isPrototype'),
     nativeKeysIn = _dereq_('./_nativeKeysIn');
@@ -2785,7 +3005,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":148,"./_nativeKeysIn":165,"./isObject":227}],66:[function(_dereq_,module,exports){
+},{"./_isPrototype":149,"./_nativeKeysIn":166,"./isObject":228}],67:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -2809,7 +3029,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":43,"./isArrayLike":216}],67:[function(_dereq_,module,exports){
+},{"./_baseEach":43,"./isArrayLike":217}],68:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -2833,7 +3053,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":59,"./_getMatchData":123,"./_matchesStrictComparable":161}],68:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":59,"./_getMatchData":124,"./_matchesStrictComparable":162}],69:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -2868,7 +3088,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":57,"./_isKey":145,"./_isStrictComparable":149,"./_matchesStrictComparable":161,"./_toKey":188,"./get":209,"./hasIn":212}],69:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":57,"./_isKey":146,"./_isStrictComparable":150,"./_matchesStrictComparable":162,"./_toKey":189,"./get":210,"./hasIn":213}],70:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -2911,7 +3131,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":13,"./_assignMergeValue":33,"./_baseFor":47,"./_baseMergeDeep":70,"./isObject":227,"./keysIn":234}],70:[function(_dereq_,module,exports){
+},{"./_Stack":13,"./_assignMergeValue":33,"./_baseFor":47,"./_baseMergeDeep":71,"./isObject":228,"./keysIn":236}],71:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -3006,7 +3226,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":33,"./_cloneBuffer":90,"./_cloneTypedArray":96,"./_copyArray":97,"./_initCloneObject":141,"./isArguments":214,"./isArray":215,"./isArrayLikeObject":217,"./isBuffer":219,"./isFunction":222,"./isObject":227,"./isPlainObject":229,"./isTypedArray":232,"./toPlainObject":255}],71:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":33,"./_cloneBuffer":91,"./_cloneTypedArray":97,"./_copyArray":98,"./_initCloneObject":142,"./isArguments":215,"./isArray":216,"./isArrayLikeObject":218,"./isBuffer":220,"./isFunction":223,"./isObject":228,"./isPlainObject":230,"./isTypedArray":234,"./toPlainObject":258}],72:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -3038,7 +3258,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":49,"./_baseSet":78,"./_castPath":87}],72:[function(_dereq_,module,exports){
+},{"./_baseGet":49,"./_baseSet":79,"./_castPath":88}],73:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -3054,7 +3274,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],73:[function(_dereq_,module,exports){
+},{}],74:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -3072,7 +3292,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":49}],74:[function(_dereq_,module,exports){
+},{"./_baseGet":49}],75:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.propertyOf` without support for deep paths.
  *
@@ -3088,7 +3308,7 @@ function basePropertyOf(object) {
 
 module.exports = basePropertyOf;
 
-},{}],75:[function(_dereq_,module,exports){
+},{}],76:[function(_dereq_,module,exports){
 /* Built-in method references for those with the same name as other `lodash` methods. */
 var nativeCeil = Math.ceil,
     nativeMax = Math.max;
@@ -3118,7 +3338,7 @@ function baseRange(start, end, step, fromRight) {
 
 module.exports = baseRange;
 
-},{}],76:[function(_dereq_,module,exports){
+},{}],77:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -3155,7 +3375,7 @@ function baseRepeat(string, n) {
 
 module.exports = baseRepeat;
 
-},{}],77:[function(_dereq_,module,exports){
+},{}],78:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity'),
     overRest = _dereq_('./_overRest'),
     setToString = _dereq_('./_setToString');
@@ -3174,7 +3394,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":169,"./_setToString":177,"./identity":213}],78:[function(_dereq_,module,exports){
+},{"./_overRest":170,"./_setToString":178,"./identity":214}],79:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -3223,7 +3443,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":34,"./_castPath":87,"./_isIndex":143,"./_toKey":188,"./isObject":227}],79:[function(_dereq_,module,exports){
+},{"./_assignValue":34,"./_castPath":88,"./_isIndex":144,"./_toKey":189,"./isObject":228}],80:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -3247,7 +3467,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":113,"./constant":201,"./identity":213}],80:[function(_dereq_,module,exports){
+},{"./_defineProperty":114,"./constant":202,"./identity":214}],81:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -3280,7 +3500,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],81:[function(_dereq_,module,exports){
+},{}],82:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -3302,7 +3522,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],82:[function(_dereq_,module,exports){
+},{}],83:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     arrayMap = _dereq_('./_arrayMap'),
     isArray = _dereq_('./isArray'),
@@ -3341,7 +3561,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":14,"./_arrayMap":26,"./isArray":215,"./isSymbol":231}],83:[function(_dereq_,module,exports){
+},{"./_Symbol":14,"./_arrayMap":26,"./isArray":216,"./isSymbol":233}],84:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -3357,7 +3577,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],84:[function(_dereq_,module,exports){
+},{}],85:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap');
 
 /**
@@ -3378,7 +3598,7 @@ function baseValues(object, props) {
 
 module.exports = baseValues;
 
-},{"./_arrayMap":26}],85:[function(_dereq_,module,exports){
+},{"./_arrayMap":26}],86:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -3393,7 +3613,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],86:[function(_dereq_,module,exports){
+},{}],87:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -3409,7 +3629,7 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":213}],87:[function(_dereq_,module,exports){
+},{"./identity":214}],88:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isKey = _dereq_('./_isKey'),
     stringToPath = _dereq_('./_stringToPath'),
@@ -3432,7 +3652,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":145,"./_stringToPath":187,"./isArray":215,"./toString":256}],88:[function(_dereq_,module,exports){
+},{"./_isKey":146,"./_stringToPath":188,"./isArray":216,"./toString":259}],89:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -3452,7 +3672,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":80}],89:[function(_dereq_,module,exports){
+},{"./_baseSlice":81}],90:[function(_dereq_,module,exports){
 var Uint8Array = _dereq_('./_Uint8Array');
 
 /**
@@ -3470,7 +3690,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":15}],90:[function(_dereq_,module,exports){
+},{"./_Uint8Array":15}],91:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Detect free variable `exports`. */
@@ -3507,7 +3727,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":173}],91:[function(_dereq_,module,exports){
+},{"./_root":174}],92:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -3525,7 +3745,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":89}],92:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":90}],93:[function(_dereq_,module,exports){
 var addMapEntry = _dereq_('./_addMapEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     mapToArray = _dereq_('./_mapToArray');
@@ -3549,7 +3769,7 @@ function cloneMap(map, isDeep, cloneFunc) {
 
 module.exports = cloneMap;
 
-},{"./_addMapEntry":17,"./_arrayReduce":28,"./_mapToArray":160}],93:[function(_dereq_,module,exports){
+},{"./_addMapEntry":17,"./_arrayReduce":28,"./_mapToArray":161}],94:[function(_dereq_,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -3568,7 +3788,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],94:[function(_dereq_,module,exports){
+},{}],95:[function(_dereq_,module,exports){
 var addSetEntry = _dereq_('./_addSetEntry'),
     arrayReduce = _dereq_('./_arrayReduce'),
     setToArray = _dereq_('./_setToArray');
@@ -3592,7 +3812,7 @@ function cloneSet(set, isDeep, cloneFunc) {
 
 module.exports = cloneSet;
 
-},{"./_addSetEntry":18,"./_arrayReduce":28,"./_setToArray":176}],95:[function(_dereq_,module,exports){
+},{"./_addSetEntry":18,"./_arrayReduce":28,"./_setToArray":177}],96:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -3612,7 +3832,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":14}],96:[function(_dereq_,module,exports){
+},{"./_Symbol":14}],97:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -3630,7 +3850,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":89}],97:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":90}],98:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -3652,7 +3872,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],98:[function(_dereq_,module,exports){
+},{}],99:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     baseAssignValue = _dereq_('./_baseAssignValue');
 
@@ -3694,7 +3914,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":34,"./_baseAssignValue":39}],99:[function(_dereq_,module,exports){
+},{"./_assignValue":34,"./_baseAssignValue":39}],100:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbols = _dereq_('./_getSymbols');
 
@@ -3712,7 +3932,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":98,"./_getSymbols":127}],100:[function(_dereq_,module,exports){
+},{"./_copyObject":99,"./_getSymbols":128}],101:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbolsIn = _dereq_('./_getSymbolsIn');
 
@@ -3730,7 +3950,7 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":98,"./_getSymbolsIn":128}],101:[function(_dereq_,module,exports){
+},{"./_copyObject":99,"./_getSymbolsIn":129}],102:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -3738,7 +3958,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":173}],102:[function(_dereq_,module,exports){
+},{"./_root":174}],103:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -3763,7 +3983,7 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":20,"./_baseAggregator":36,"./_baseIteratee":63,"./isArray":215}],103:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":20,"./_baseAggregator":36,"./_baseIteratee":64,"./isArray":216}],104:[function(_dereq_,module,exports){
 var baseRest = _dereq_('./_baseRest'),
     isIterateeCall = _dereq_('./_isIterateeCall');
 
@@ -3802,7 +4022,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":77,"./_isIterateeCall":144}],104:[function(_dereq_,module,exports){
+},{"./_baseRest":78,"./_isIterateeCall":145}],105:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -3836,7 +4056,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":216}],105:[function(_dereq_,module,exports){
+},{"./isArrayLike":217}],106:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -3863,7 +4083,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],106:[function(_dereq_,module,exports){
+},{}],107:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -3898,7 +4118,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":88,"./_hasUnicode":132,"./_stringToArray":186,"./toString":256}],107:[function(_dereq_,module,exports){
+},{"./_castSlice":89,"./_hasUnicode":133,"./_stringToArray":187,"./toString":259}],108:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -3924,7 +4144,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":28,"./deburr":202,"./words":259}],108:[function(_dereq_,module,exports){
+},{"./_arrayReduce":28,"./deburr":203,"./words":262}],109:[function(_dereq_,module,exports){
 var baseRepeat = _dereq_('./_baseRepeat'),
     baseToString = _dereq_('./_baseToString'),
     castSlice = _dereq_('./_castSlice'),
@@ -3959,7 +4179,7 @@ function createPadding(length, chars) {
 
 module.exports = createPadding;
 
-},{"./_baseRepeat":76,"./_baseToString":82,"./_castSlice":88,"./_hasUnicode":132,"./_stringSize":185,"./_stringToArray":186}],109:[function(_dereq_,module,exports){
+},{"./_baseRepeat":77,"./_baseToString":83,"./_castSlice":89,"./_hasUnicode":133,"./_stringSize":186,"./_stringToArray":187}],110:[function(_dereq_,module,exports){
 var baseRange = _dereq_('./_baseRange'),
     isIterateeCall = _dereq_('./_isIterateeCall'),
     toFinite = _dereq_('./toFinite');
@@ -3991,7 +4211,7 @@ function createRange(fromRight) {
 
 module.exports = createRange;
 
-},{"./_baseRange":75,"./_isIterateeCall":144,"./toFinite":252}],110:[function(_dereq_,module,exports){
+},{"./_baseRange":76,"./_isIterateeCall":145,"./toFinite":255}],111:[function(_dereq_,module,exports){
 var toInteger = _dereq_('./toInteger'),
     toNumber = _dereq_('./toNumber'),
     toString = _dereq_('./toString');
@@ -4026,7 +4246,7 @@ function createRound(methodName) {
 
 module.exports = createRound;
 
-},{"./toInteger":253,"./toNumber":254,"./toString":256}],111:[function(_dereq_,module,exports){
+},{"./toInteger":256,"./toNumber":257,"./toString":259}],112:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /** Used for built-in method references. */
@@ -4057,7 +4277,7 @@ function customDefaultsAssignIn(objValue, srcValue, key, object) {
 
 module.exports = customDefaultsAssignIn;
 
-},{"./eq":205}],112:[function(_dereq_,module,exports){
+},{"./eq":206}],113:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -4130,7 +4350,7 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":74}],113:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":75}],114:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 var defineProperty = (function() {
@@ -4143,7 +4363,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":124}],114:[function(_dereq_,module,exports){
+},{"./_getNative":125}],115:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -4228,7 +4448,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":12,"./_arraySome":29,"./_cacheHas":85}],115:[function(_dereq_,module,exports){
+},{"./_SetCache":12,"./_arraySome":29,"./_cacheHas":86}],116:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -4342,7 +4562,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":14,"./_Uint8Array":15,"./_equalArrays":114,"./_mapToArray":160,"./_setToArray":176,"./eq":205}],116:[function(_dereq_,module,exports){
+},{"./_Symbol":14,"./_Uint8Array":15,"./_equalArrays":115,"./_mapToArray":161,"./_setToArray":177,"./eq":206}],117:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -4433,7 +4653,7 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":120}],117:[function(_dereq_,module,exports){
+},{"./_getAllKeys":121}],118:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map characters to HTML entities. */
@@ -4456,7 +4676,7 @@ var escapeHtmlChar = basePropertyOf(htmlEscapes);
 
 module.exports = escapeHtmlChar;
 
-},{"./_basePropertyOf":74}],118:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":75}],119:[function(_dereq_,module,exports){
 /** Used to escape characters for inclusion in compiled string literals. */
 var stringEscapes = {
   '\\': '\\',
@@ -4480,7 +4700,7 @@ function escapeStringChar(chr) {
 
 module.exports = escapeStringChar;
 
-},{}],119:[function(_dereq_,module,exports){
+},{}],120:[function(_dereq_,module,exports){
 (function (global){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -4488,7 +4708,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],120:[function(_dereq_,module,exports){
+},{}],121:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbols = _dereq_('./_getSymbols'),
     keys = _dereq_('./keys');
@@ -4506,7 +4726,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":50,"./_getSymbols":127,"./keys":233}],121:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":50,"./_getSymbols":128,"./keys":235}],122:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -4525,7 +4745,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":50,"./_getSymbolsIn":128,"./keysIn":234}],122:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":50,"./_getSymbolsIn":129,"./keysIn":236}],123:[function(_dereq_,module,exports){
 var isKeyable = _dereq_('./_isKeyable');
 
 /**
@@ -4545,7 +4765,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":146}],123:[function(_dereq_,module,exports){
+},{"./_isKeyable":147}],124:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -4571,7 +4791,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":149,"./keys":233}],124:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":150,"./keys":235}],125:[function(_dereq_,module,exports){
 var baseIsNative = _dereq_('./_baseIsNative'),
     getValue = _dereq_('./_getValue');
 
@@ -4590,7 +4810,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":61,"./_getValue":130}],125:[function(_dereq_,module,exports){
+},{"./_baseIsNative":61,"./_getValue":131}],126:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /** Built-in value references. */
@@ -4598,7 +4818,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":168}],126:[function(_dereq_,module,exports){
+},{"./_overArg":169}],127:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used for built-in method references. */
@@ -4646,7 +4866,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":14}],127:[function(_dereq_,module,exports){
+},{"./_Symbol":14}],128:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     stubArray = _dereq_('./stubArray');
 
@@ -4678,7 +4898,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":22,"./stubArray":248}],128:[function(_dereq_,module,exports){
+},{"./_arrayFilter":22,"./stubArray":251}],129:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -4705,7 +4925,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":27,"./_getPrototype":125,"./_getSymbols":127,"./stubArray":248}],129:[function(_dereq_,module,exports){
+},{"./_arrayPush":27,"./_getPrototype":126,"./_getSymbols":128,"./stubArray":251}],130:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -4765,7 +4985,7 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":5,"./_Map":8,"./_Promise":10,"./_Set":11,"./_WeakMap":16,"./_baseGetTag":51,"./_toSource":189}],130:[function(_dereq_,module,exports){
+},{"./_DataView":5,"./_Map":8,"./_Promise":10,"./_Set":11,"./_WeakMap":16,"./_baseGetTag":51,"./_toSource":190}],131:[function(_dereq_,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -4780,7 +5000,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],131:[function(_dereq_,module,exports){
+},{}],132:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -4821,7 +5041,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":87,"./_isIndex":143,"./_toKey":188,"./isArguments":214,"./isArray":215,"./isLength":223}],132:[function(_dereq_,module,exports){
+},{"./_castPath":88,"./_isIndex":144,"./_toKey":189,"./isArguments":215,"./isArray":216,"./isLength":224}],133:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -4849,7 +5069,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],133:[function(_dereq_,module,exports){
+},{}],134:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2,}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -4866,7 +5086,7 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],134:[function(_dereq_,module,exports){
+},{}],135:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /**
@@ -4883,7 +5103,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":163}],135:[function(_dereq_,module,exports){
+},{"./_nativeCreate":164}],136:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -4902,7 +5122,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],136:[function(_dereq_,module,exports){
+},{}],137:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -4934,7 +5154,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":163}],137:[function(_dereq_,module,exports){
+},{"./_nativeCreate":164}],138:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -4959,7 +5179,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":163}],138:[function(_dereq_,module,exports){
+},{"./_nativeCreate":164}],139:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -4984,7 +5204,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":163}],139:[function(_dereq_,module,exports){
+},{"./_nativeCreate":164}],140:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -5012,7 +5232,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],140:[function(_dereq_,module,exports){
+},{}],141:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
     cloneDataView = _dereq_('./_cloneDataView'),
     cloneMap = _dereq_('./_cloneMap'),
@@ -5094,7 +5314,7 @@ function initCloneByTag(object, tag, cloneFunc, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":89,"./_cloneDataView":91,"./_cloneMap":92,"./_cloneRegExp":93,"./_cloneSet":94,"./_cloneSymbol":95,"./_cloneTypedArray":96}],141:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":90,"./_cloneDataView":92,"./_cloneMap":93,"./_cloneRegExp":94,"./_cloneSet":95,"./_cloneSymbol":96,"./_cloneTypedArray":97}],142:[function(_dereq_,module,exports){
 var baseCreate = _dereq_('./_baseCreate'),
     getPrototype = _dereq_('./_getPrototype'),
     isPrototype = _dereq_('./_isPrototype');
@@ -5114,7 +5334,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":41,"./_getPrototype":125,"./_isPrototype":148}],142:[function(_dereq_,module,exports){
+},{"./_baseCreate":41,"./_getPrototype":126,"./_isPrototype":149}],143:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray');
@@ -5136,7 +5356,7 @@ function isFlattenable(value) {
 
 module.exports = isFlattenable;
 
-},{"./_Symbol":14,"./isArguments":214,"./isArray":215}],143:[function(_dereq_,module,exports){
+},{"./_Symbol":14,"./isArguments":215,"./isArray":216}],144:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -5160,7 +5380,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],144:[function(_dereq_,module,exports){
+},{}],145:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq'),
     isArrayLike = _dereq_('./isArrayLike'),
     isIndex = _dereq_('./_isIndex'),
@@ -5192,7 +5412,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":143,"./eq":205,"./isArrayLike":216,"./isObject":227}],145:[function(_dereq_,module,exports){
+},{"./_isIndex":144,"./eq":206,"./isArrayLike":217,"./isObject":228}],146:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -5223,7 +5443,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":215,"./isSymbol":231}],146:[function(_dereq_,module,exports){
+},{"./isArray":216,"./isSymbol":233}],147:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -5240,7 +5460,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],147:[function(_dereq_,module,exports){
+},{}],148:[function(_dereq_,module,exports){
 var coreJsData = _dereq_('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -5262,7 +5482,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":101}],148:[function(_dereq_,module,exports){
+},{"./_coreJsData":102}],149:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -5282,7 +5502,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],149:[function(_dereq_,module,exports){
+},{}],150:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -5299,7 +5519,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":227}],150:[function(_dereq_,module,exports){
+},{"./isObject":228}],151:[function(_dereq_,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -5314,7 +5534,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],151:[function(_dereq_,module,exports){
+},{}],152:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -5351,7 +5571,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":35}],152:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":35}],153:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -5372,7 +5592,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":35}],153:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":35}],154:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -5390,7 +5610,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":35}],154:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":35}],155:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -5418,7 +5638,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":35}],155:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":35}],156:[function(_dereq_,module,exports){
 var Hash = _dereq_('./_Hash'),
     ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map');
@@ -5441,7 +5661,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":6,"./_ListCache":7,"./_Map":8}],156:[function(_dereq_,module,exports){
+},{"./_Hash":6,"./_ListCache":7,"./_Map":8}],157:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -5461,7 +5681,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":122}],157:[function(_dereq_,module,exports){
+},{"./_getMapData":123}],158:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -5479,7 +5699,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":122}],158:[function(_dereq_,module,exports){
+},{"./_getMapData":123}],159:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -5497,7 +5717,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":122}],159:[function(_dereq_,module,exports){
+},{"./_getMapData":123}],160:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -5521,7 +5741,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":122}],160:[function(_dereq_,module,exports){
+},{"./_getMapData":123}],161:[function(_dereq_,module,exports){
 /**
  * Converts `map` to its key-value pairs.
  *
@@ -5541,7 +5761,7 @@ function mapToArray(map) {
 
 module.exports = mapToArray;
 
-},{}],161:[function(_dereq_,module,exports){
+},{}],162:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -5563,7 +5783,7 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],162:[function(_dereq_,module,exports){
+},{}],163:[function(_dereq_,module,exports){
 var memoize = _dereq_('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -5591,7 +5811,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":238}],163:[function(_dereq_,module,exports){
+},{"./memoize":240}],164:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -5599,7 +5819,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":124}],164:[function(_dereq_,module,exports){
+},{"./_getNative":125}],165:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -5607,7 +5827,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":168}],165:[function(_dereq_,module,exports){
+},{"./_overArg":169}],166:[function(_dereq_,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -5629,7 +5849,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],166:[function(_dereq_,module,exports){
+},{}],167:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -5653,7 +5873,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":119}],167:[function(_dereq_,module,exports){
+},{"./_freeGlobal":120}],168:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -5677,7 +5897,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],168:[function(_dereq_,module,exports){
+},{}],169:[function(_dereq_,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -5694,7 +5914,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],169:[function(_dereq_,module,exports){
+},{}],170:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -5732,25 +5952,25 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":19}],170:[function(_dereq_,module,exports){
+},{"./_apply":19}],171:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reEscape = /<%-([\s\S]+?)%>/g;
 
 module.exports = reEscape;
 
-},{}],171:[function(_dereq_,module,exports){
+},{}],172:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reEvaluate = /<%([\s\S]+?)%>/g;
 
 module.exports = reEvaluate;
 
-},{}],172:[function(_dereq_,module,exports){
+},{}],173:[function(_dereq_,module,exports){
 /** Used to match template delimiters. */
 var reInterpolate = /<%=([\s\S]+?)%>/g;
 
 module.exports = reInterpolate;
 
-},{}],173:[function(_dereq_,module,exports){
+},{}],174:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -5761,7 +5981,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":119}],174:[function(_dereq_,module,exports){
+},{"./_freeGlobal":120}],175:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -5782,7 +6002,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],175:[function(_dereq_,module,exports){
+},{}],176:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -5798,7 +6018,7 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],176:[function(_dereq_,module,exports){
+},{}],177:[function(_dereq_,module,exports){
 /**
  * Converts `set` to an array of its values.
  *
@@ -5818,7 +6038,7 @@ function setToArray(set) {
 
 module.exports = setToArray;
 
-},{}],177:[function(_dereq_,module,exports){
+},{}],178:[function(_dereq_,module,exports){
 var baseSetToString = _dereq_('./_baseSetToString'),
     shortOut = _dereq_('./_shortOut');
 
@@ -5834,7 +6054,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":79,"./_shortOut":178}],178:[function(_dereq_,module,exports){
+},{"./_baseSetToString":80,"./_shortOut":179}],179:[function(_dereq_,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -5873,7 +6093,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],179:[function(_dereq_,module,exports){
+},{}],180:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache');
 
 /**
@@ -5890,7 +6110,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":7}],180:[function(_dereq_,module,exports){
+},{"./_ListCache":7}],181:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -5910,7 +6130,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],181:[function(_dereq_,module,exports){
+},{}],182:[function(_dereq_,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -5926,7 +6146,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],182:[function(_dereq_,module,exports){
+},{}],183:[function(_dereq_,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -5942,7 +6162,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],183:[function(_dereq_,module,exports){
+},{}],184:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map'),
     MapCache = _dereq_('./_MapCache');
@@ -5978,7 +6198,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":7,"./_Map":8,"./_MapCache":9}],184:[function(_dereq_,module,exports){
+},{"./_ListCache":7,"./_Map":8,"./_MapCache":9}],185:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.indexOf` which performs strict equality
  * comparisons of values, i.e. `===`.
@@ -6003,7 +6223,7 @@ function strictIndexOf(array, value, fromIndex) {
 
 module.exports = strictIndexOf;
 
-},{}],185:[function(_dereq_,module,exports){
+},{}],186:[function(_dereq_,module,exports){
 var asciiSize = _dereq_('./_asciiSize'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeSize = _dereq_('./_unicodeSize');
@@ -6023,7 +6243,7 @@ function stringSize(string) {
 
 module.exports = stringSize;
 
-},{"./_asciiSize":30,"./_hasUnicode":132,"./_unicodeSize":190}],186:[function(_dereq_,module,exports){
+},{"./_asciiSize":30,"./_hasUnicode":133,"./_unicodeSize":191}],187:[function(_dereq_,module,exports){
 var asciiToArray = _dereq_('./_asciiToArray'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeToArray = _dereq_('./_unicodeToArray');
@@ -6043,7 +6263,7 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":31,"./_hasUnicode":132,"./_unicodeToArray":191}],187:[function(_dereq_,module,exports){
+},{"./_asciiToArray":31,"./_hasUnicode":133,"./_unicodeToArray":192}],188:[function(_dereq_,module,exports){
 var memoizeCapped = _dereq_('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -6073,7 +6293,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":162}],188:[function(_dereq_,module,exports){
+},{"./_memoizeCapped":163}],189:[function(_dereq_,module,exports){
 var isSymbol = _dereq_('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -6096,7 +6316,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":231}],189:[function(_dereq_,module,exports){
+},{"./isSymbol":233}],190:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -6124,7 +6344,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],190:[function(_dereq_,module,exports){
+},{}],191:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -6170,7 +6390,7 @@ function unicodeSize(string) {
 
 module.exports = unicodeSize;
 
-},{}],191:[function(_dereq_,module,exports){
+},{}],192:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -6212,7 +6432,7 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],192:[function(_dereq_,module,exports){
+},{}],193:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -6283,7 +6503,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],193:[function(_dereq_,module,exports){
+},{}],194:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -6343,7 +6563,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":34,"./_copyObject":98,"./_createAssigner":103,"./_isPrototype":148,"./isArrayLike":216,"./keys":233}],194:[function(_dereq_,module,exports){
+},{"./_assignValue":34,"./_copyObject":99,"./_createAssigner":104,"./_isPrototype":149,"./isArrayLike":217,"./keys":235}],195:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
     keysIn = _dereq_('./keysIn');
@@ -6383,7 +6603,7 @@ var assignInWith = createAssigner(function(object, source, srcIndex, customizer)
 
 module.exports = assignInWith;
 
-},{"./_copyObject":98,"./_createAssigner":103,"./keysIn":234}],195:[function(_dereq_,module,exports){
+},{"./_copyObject":99,"./_createAssigner":104,"./keysIn":236}],196:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply'),
     baseRest = _dereq_('./_baseRest'),
     isError = _dereq_('./isError');
@@ -6420,7 +6640,7 @@ var attempt = baseRest(function(func, args) {
 
 module.exports = attempt;
 
-},{"./_apply":19,"./_baseRest":77,"./isError":221}],196:[function(_dereq_,module,exports){
+},{"./_apply":19,"./_baseRest":78,"./isError":222}],197:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -6451,7 +6671,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":107,"./capitalize":197}],197:[function(_dereq_,module,exports){
+},{"./_createCompounder":108,"./capitalize":198}],198:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -6476,7 +6696,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":256,"./upperFirst":257}],198:[function(_dereq_,module,exports){
+},{"./toString":259,"./upperFirst":260}],199:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice'),
     isIterateeCall = _dereq_('./_isIterateeCall'),
     toInteger = _dereq_('./toInteger');
@@ -6528,7 +6748,7 @@ function chunk(array, size, guard) {
 
 module.exports = chunk;
 
-},{"./_baseSlice":80,"./_isIterateeCall":144,"./toInteger":253}],199:[function(_dereq_,module,exports){
+},{"./_baseSlice":81,"./_isIterateeCall":145,"./toInteger":256}],200:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -6566,7 +6786,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"./_baseClone":40}],200:[function(_dereq_,module,exports){
+},{"./_baseClone":40}],201:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -6597,7 +6817,7 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":40}],201:[function(_dereq_,module,exports){
+},{"./_baseClone":40}],202:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -6625,7 +6845,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],202:[function(_dereq_,module,exports){
+},{}],203:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -6672,7 +6892,7 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":112,"./toString":256}],203:[function(_dereq_,module,exports){
+},{"./_deburrLetter":113,"./toString":259}],204:[function(_dereq_,module,exports){
 var baseDifference = _dereq_('./_baseDifference'),
     baseFlatten = _dereq_('./_baseFlatten'),
     baseRest = _dereq_('./_baseRest'),
@@ -6707,10 +6927,10 @@ var difference = baseRest(function(array, values) {
 
 module.exports = difference;
 
-},{"./_baseDifference":42,"./_baseFlatten":46,"./_baseRest":77,"./isArrayLikeObject":217}],204:[function(_dereq_,module,exports){
+},{"./_baseDifference":42,"./_baseFlatten":46,"./_baseRest":78,"./isArrayLikeObject":218}],205:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":207}],205:[function(_dereq_,module,exports){
+},{"./forEach":208}],206:[function(_dereq_,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -6749,7 +6969,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],206:[function(_dereq_,module,exports){
+},{}],207:[function(_dereq_,module,exports){
 var escapeHtmlChar = _dereq_('./_escapeHtmlChar'),
     toString = _dereq_('./toString');
 
@@ -6794,7 +7014,7 @@ function escape(string) {
 
 module.exports = escape;
 
-},{"./_escapeHtmlChar":117,"./toString":256}],207:[function(_dereq_,module,exports){
+},{"./_escapeHtmlChar":118,"./toString":259}],208:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -6837,7 +7057,7 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":21,"./_baseEach":43,"./_castFunction":86,"./isArray":215}],208:[function(_dereq_,module,exports){
+},{"./_arrayEach":21,"./_baseEach":43,"./_castFunction":87,"./isArray":216}],209:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     castFunction = _dereq_('./_castFunction');
 
@@ -6875,7 +7095,7 @@ function forOwn(object, iteratee) {
 
 module.exports = forOwn;
 
-},{"./_baseForOwn":48,"./_castFunction":86}],209:[function(_dereq_,module,exports){
+},{"./_baseForOwn":48,"./_castFunction":87}],210:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -6910,7 +7130,7 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-},{"./_baseGet":49}],210:[function(_dereq_,module,exports){
+},{"./_baseGet":49}],211:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -6953,7 +7173,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":39,"./_createAggregator":102}],211:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":39,"./_createAggregator":103}],212:[function(_dereq_,module,exports){
 var baseHas = _dereq_('./_baseHas'),
     hasPath = _dereq_('./_hasPath');
 
@@ -6990,7 +7210,7 @@ function has(object, path) {
 
 module.exports = has;
 
-},{"./_baseHas":52,"./_hasPath":131}],212:[function(_dereq_,module,exports){
+},{"./_baseHas":52,"./_hasPath":132}],213:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -7026,7 +7246,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":53,"./_hasPath":131}],213:[function(_dereq_,module,exports){
+},{"./_baseHasIn":53,"./_hasPath":132}],214:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -7049,7 +7269,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],214:[function(_dereq_,module,exports){
+},{}],215:[function(_dereq_,module,exports){
 var baseIsArguments = _dereq_('./_baseIsArguments'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -7087,7 +7307,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":55,"./isObjectLike":228}],215:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":55,"./isObjectLike":229}],216:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -7115,7 +7335,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],216:[function(_dereq_,module,exports){
+},{}],217:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isLength = _dereq_('./isLength');
 
@@ -7150,7 +7370,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":222,"./isLength":223}],217:[function(_dereq_,module,exports){
+},{"./isFunction":223,"./isLength":224}],218:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -7185,7 +7405,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":216,"./isObjectLike":228}],218:[function(_dereq_,module,exports){
+},{"./isArrayLike":217,"./isObjectLike":229}],219:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -7216,7 +7436,7 @@ function isBoolean(value) {
 
 module.exports = isBoolean;
 
-},{"./_baseGetTag":51,"./isObjectLike":228}],219:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObjectLike":229}],220:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -7256,7 +7476,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":173,"./stubFalse":249}],220:[function(_dereq_,module,exports){
+},{"./_root":174,"./stubFalse":252}],221:[function(_dereq_,module,exports){
 var baseIsDate = _dereq_('./_baseIsDate'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -7285,7 +7505,7 @@ var isDate = nodeIsDate ? baseUnary(nodeIsDate) : baseIsDate;
 
 module.exports = isDate;
 
-},{"./_baseIsDate":56,"./_baseUnary":83,"./_nodeUtil":166}],221:[function(_dereq_,module,exports){
+},{"./_baseIsDate":56,"./_baseUnary":84,"./_nodeUtil":167}],222:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike'),
     isPlainObject = _dereq_('./isPlainObject');
@@ -7323,7 +7543,7 @@ function isError(value) {
 
 module.exports = isError;
 
-},{"./_baseGetTag":51,"./isObjectLike":228,"./isPlainObject":229}],222:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObjectLike":229,"./isPlainObject":230}],223:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObject = _dereq_('./isObject');
 
@@ -7362,7 +7582,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":51,"./isObject":227}],223:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObject":228}],224:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -7399,7 +7619,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],224:[function(_dereq_,module,exports){
+},{}],225:[function(_dereq_,module,exports){
 var isNumber = _dereq_('./isNumber');
 
 /**
@@ -7439,7 +7659,7 @@ function isNaN(value) {
 
 module.exports = isNaN;
 
-},{"./isNumber":226}],225:[function(_dereq_,module,exports){
+},{"./isNumber":227}],226:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is `null` or `undefined`.
  *
@@ -7466,7 +7686,7 @@ function isNil(value) {
 
 module.exports = isNil;
 
-},{}],226:[function(_dereq_,module,exports){
+},{}],227:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -7506,7 +7726,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":51,"./isObjectLike":228}],227:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObjectLike":229}],228:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -7539,7 +7759,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],228:[function(_dereq_,module,exports){
+},{}],229:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -7570,7 +7790,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],229:[function(_dereq_,module,exports){
+},{}],230:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -7634,7 +7854,36 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":51,"./_getPrototype":125,"./isObjectLike":228}],230:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./_getPrototype":126,"./isObjectLike":229}],231:[function(_dereq_,module,exports){
+var baseIsRegExp = _dereq_('./_baseIsRegExp'),
+    baseUnary = _dereq_('./_baseUnary'),
+    nodeUtil = _dereq_('./_nodeUtil');
+
+/* Node.js helper references. */
+var nodeIsRegExp = nodeUtil && nodeUtil.isRegExp;
+
+/**
+ * Checks if `value` is classified as a `RegExp` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a regexp, else `false`.
+ * @example
+ *
+ * _.isRegExp(/abc/);
+ * // => true
+ *
+ * _.isRegExp('/abc/');
+ * // => false
+ */
+var isRegExp = nodeIsRegExp ? baseUnary(nodeIsRegExp) : baseIsRegExp;
+
+module.exports = isRegExp;
+
+},{"./_baseIsRegExp":62,"./_baseUnary":84,"./_nodeUtil":167}],232:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isArray = _dereq_('./isArray'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -7666,7 +7915,7 @@ function isString(value) {
 
 module.exports = isString;
 
-},{"./_baseGetTag":51,"./isArray":215,"./isObjectLike":228}],231:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isArray":216,"./isObjectLike":229}],233:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -7697,7 +7946,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":51,"./isObjectLike":228}],232:[function(_dereq_,module,exports){
+},{"./_baseGetTag":51,"./isObjectLike":229}],234:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -7726,7 +7975,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":62,"./_baseUnary":83,"./_nodeUtil":166}],233:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":63,"./_baseUnary":84,"./_nodeUtil":167}],235:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -7765,7 +8014,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":25,"./_baseKeys":64,"./isArrayLike":216}],234:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":25,"./_baseKeys":65,"./isArrayLike":217}],236:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -7799,7 +8048,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":25,"./_baseKeysIn":65,"./isArrayLike":216}],235:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":25,"./_baseKeysIn":66,"./isArrayLike":217}],237:[function(_dereq_,module,exports){
 /**
  * Gets the last element of `array`.
  *
@@ -7821,7 +8070,7 @@ function last(array) {
 
 module.exports = last;
 
-},{}],236:[function(_dereq_,module,exports){
+},{}],238:[function(_dereq_,module,exports){
 (function (global){
 /**
  * @license
@@ -24909,7 +25158,7 @@ module.exports = last;
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],237:[function(_dereq_,module,exports){
+},{}],239:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -24964,7 +25213,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":26,"./_baseIteratee":63,"./_baseMap":66,"./isArray":215}],238:[function(_dereq_,module,exports){
+},{"./_arrayMap":26,"./_baseIteratee":64,"./_baseMap":67,"./isArray":216}],240:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache');
 
 /** Error message constants. */
@@ -25039,7 +25288,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":9}],239:[function(_dereq_,module,exports){
+},{"./_MapCache":9}],241:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -25080,7 +25329,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":69,"./_createAssigner":103}],240:[function(_dereq_,module,exports){
+},{"./_baseMerge":70,"./_createAssigner":104}],242:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -25122,7 +25371,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],241:[function(_dereq_,module,exports){
+},{}],243:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -25153,7 +25402,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":63,"./negate":240,"./pickBy":243}],242:[function(_dereq_,module,exports){
+},{"./_baseIteratee":64,"./negate":242,"./pickBy":245}],244:[function(_dereq_,module,exports){
 var createPadding = _dereq_('./_createPadding'),
     stringSize = _dereq_('./_stringSize'),
     toInteger = _dereq_('./toInteger'),
@@ -25204,7 +25453,7 @@ function pad(string, length, chars) {
 
 module.exports = pad;
 
-},{"./_createPadding":108,"./_stringSize":185,"./toInteger":253,"./toString":256}],243:[function(_dereq_,module,exports){
+},{"./_createPadding":109,"./_stringSize":186,"./toInteger":256,"./toString":259}],245:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -25243,7 +25492,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":26,"./_baseIteratee":63,"./_basePickBy":71,"./_getAllKeysIn":121}],244:[function(_dereq_,module,exports){
+},{"./_arrayMap":26,"./_baseIteratee":64,"./_basePickBy":72,"./_getAllKeysIn":122}],246:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -25277,7 +25526,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":72,"./_basePropertyDeep":73,"./_isKey":145,"./_toKey":188}],245:[function(_dereq_,module,exports){
+},{"./_baseProperty":73,"./_basePropertyDeep":74,"./_isKey":146,"./_toKey":189}],247:[function(_dereq_,module,exports){
 var createRange = _dereq_('./_createRange');
 
 /**
@@ -25325,7 +25574,7 @@ var range = createRange();
 
 module.exports = range;
 
-},{"./_createRange":109}],246:[function(_dereq_,module,exports){
+},{"./_createRange":110}],248:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -25373,7 +25622,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":22,"./_baseFilter":44,"./_baseIteratee":63,"./isArray":215,"./negate":240}],247:[function(_dereq_,module,exports){
+},{"./_arrayFilter":22,"./_baseFilter":44,"./_baseIteratee":64,"./isArray":216,"./negate":242}],249:[function(_dereq_,module,exports){
 var createRound = _dereq_('./_createRound');
 
 /**
@@ -25401,7 +25650,44 @@ var round = createRound('round');
 
 module.exports = round;
 
-},{"./_createRound":110}],248:[function(_dereq_,module,exports){
+},{"./_createRound":111}],250:[function(_dereq_,module,exports){
+var baseSet = _dereq_('./_baseSet');
+
+/**
+ * Sets the value at `path` of `object`. If a portion of `path` doesn't exist,
+ * it's created. Arrays are created for missing index properties while objects
+ * are created for all other missing properties. Use `_.setWith` to customize
+ * `path` creation.
+ *
+ * **Note:** This method mutates `object`.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to modify.
+ * @param {Array|string} path The path of the property to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns `object`.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.set(object, 'a[0].b.c', 4);
+ * console.log(object.a[0].b.c);
+ * // => 4
+ *
+ * _.set(object, ['x', '0', 'y', 'z'], 5);
+ * console.log(object.x[0].y.z);
+ * // => 5
+ */
+function set(object, path, value) {
+  return object == null ? object : baseSet(object, path, value);
+}
+
+module.exports = set;
+
+},{"./_baseSet":79}],251:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -25426,7 +25712,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],249:[function(_dereq_,module,exports){
+},{}],252:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -25446,7 +25732,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],250:[function(_dereq_,module,exports){
+},{}],253:[function(_dereq_,module,exports){
 var assignInWith = _dereq_('./assignInWith'),
     attempt = _dereq_('./attempt'),
     baseValues = _dereq_('./_baseValues'),
@@ -25686,7 +25972,7 @@ function template(string, options, guard) {
 
 module.exports = template;
 
-},{"./_baseValues":84,"./_customDefaultsAssignIn":111,"./_escapeStringChar":118,"./_isIterateeCall":144,"./_reInterpolate":172,"./assignInWith":194,"./attempt":195,"./isError":221,"./keys":233,"./templateSettings":251,"./toString":256}],251:[function(_dereq_,module,exports){
+},{"./_baseValues":85,"./_customDefaultsAssignIn":112,"./_escapeStringChar":119,"./_isIterateeCall":145,"./_reInterpolate":173,"./assignInWith":195,"./attempt":196,"./isError":222,"./keys":235,"./templateSettings":254,"./toString":259}],254:[function(_dereq_,module,exports){
 var escape = _dereq_('./escape'),
     reEscape = _dereq_('./_reEscape'),
     reEvaluate = _dereq_('./_reEvaluate'),
@@ -25755,7 +26041,7 @@ var templateSettings = {
 
 module.exports = templateSettings;
 
-},{"./_reEscape":170,"./_reEvaluate":171,"./_reInterpolate":172,"./escape":206}],252:[function(_dereq_,module,exports){
+},{"./_reEscape":171,"./_reEvaluate":172,"./_reInterpolate":173,"./escape":207}],255:[function(_dereq_,module,exports){
 var toNumber = _dereq_('./toNumber');
 
 /** Used as references for various `Number` constants. */
@@ -25799,7 +26085,7 @@ function toFinite(value) {
 
 module.exports = toFinite;
 
-},{"./toNumber":254}],253:[function(_dereq_,module,exports){
+},{"./toNumber":257}],256:[function(_dereq_,module,exports){
 var toFinite = _dereq_('./toFinite');
 
 /**
@@ -25837,7 +26123,7 @@ function toInteger(value) {
 
 module.exports = toInteger;
 
-},{"./toFinite":252}],254:[function(_dereq_,module,exports){
+},{"./toFinite":255}],257:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -25905,7 +26191,7 @@ function toNumber(value) {
 
 module.exports = toNumber;
 
-},{"./isObject":227,"./isSymbol":231}],255:[function(_dereq_,module,exports){
+},{"./isObject":228,"./isSymbol":233}],258:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -25939,7 +26225,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":98,"./keysIn":234}],256:[function(_dereq_,module,exports){
+},{"./_copyObject":99,"./keysIn":236}],259:[function(_dereq_,module,exports){
 var baseToString = _dereq_('./_baseToString');
 
 /**
@@ -25969,7 +26255,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":82}],257:[function(_dereq_,module,exports){
+},{"./_baseToString":83}],260:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -25993,7 +26279,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":106}],258:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":107}],261:[function(_dereq_,module,exports){
 var baseDifference = _dereq_('./_baseDifference'),
     baseRest = _dereq_('./_baseRest'),
     isArrayLikeObject = _dereq_('./isArrayLikeObject');
@@ -26026,7 +26312,7 @@ var without = baseRest(function(array, values) {
 
 module.exports = without;
 
-},{"./_baseDifference":42,"./_baseRest":77,"./isArrayLikeObject":217}],259:[function(_dereq_,module,exports){
+},{"./_baseDifference":42,"./_baseRest":78,"./isArrayLikeObject":218}],262:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -26063,9 +26349,9 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":32,"./_hasUnicodeWord":133,"./_unicodeWords":192,"./toString":256}],260:[function(_dereq_,module,exports){
+},{"./_asciiWords":32,"./_hasUnicodeWord":134,"./_unicodeWords":193,"./toString":259}],263:[function(_dereq_,module,exports){
 //! moment.js
-//! version : 2.19.4
+//! version : 2.20.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -26725,7 +27011,7 @@ var matchTimestamp = /[+-]?\d+(\.\d{1,3})?/; // 123456789 123456789.123
 
 // any word (or two) characters or numbers including two/three word month in arabic.
 // includes scottish gaelic two word and hyphenated months
-var matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i;
+var matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i;
 
 
 var regexes = {};
@@ -29366,19 +29652,24 @@ function toString () {
     return this.clone().locale('en').format('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
 }
 
-function toISOString() {
+function toISOString(keepOffset) {
     if (!this.isValid()) {
         return null;
     }
-    var m = this.clone().utc();
+    var utc = keepOffset !== true;
+    var m = utc ? this.clone().utc() : this;
     if (m.year() < 0 || m.year() > 9999) {
-        return formatMoment(m, 'YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
+        return formatMoment(m, utc ? 'YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]' : 'YYYYYY-MM-DD[T]HH:mm:ss.SSSZ');
     }
     if (isFunction(Date.prototype.toISOString)) {
         // native implementation is ~50x faster, use it when we can
-        return this.toDate().toISOString();
+        if (utc) {
+            return this.toDate().toISOString();
+        } else {
+            return new Date(this._d.valueOf()).toISOString().replace('Z', formatMoment(m, 'Z'));
+        }
     }
-    return formatMoment(m, 'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]');
+    return formatMoment(m, utc ? 'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]' : 'YYYY-MM-DD[T]HH:mm:ss.SSSZ');
 }
 
 /**
@@ -30546,7 +30837,7 @@ addParseToken('x', function (input, array, config) {
 // Side effect imports
 
 
-hooks.version = '2.19.4';
+hooks.version = '2.20.1';
 
 setHookCallback(createLocal);
 
@@ -30578,11 +30869,26 @@ hooks.relativeTimeThreshold = getSetRelativeTimeThreshold;
 hooks.calendarFormat        = getCalendarFormat;
 hooks.prototype             = proto;
 
+// currently HTML5 input type only supports 24-hour formats
+hooks.HTML5_FMT = {
+    DATETIME_LOCAL: 'YYYY-MM-DDTHH:mm',             // <input type="datetime-local" />
+    DATETIME_LOCAL_SECONDS: 'YYYY-MM-DDTHH:mm:ss',  // <input type="datetime-local" step="1" />
+    DATETIME_LOCAL_MS: 'YYYY-MM-DDTHH:mm:ss.SSS',   // <input type="datetime-local" step="0.001" />
+    DATE: 'YYYY-MM-DD',                             // <input type="date" />
+    TIME: 'HH:mm',                                  // <input type="time" />
+    TIME_SECONDS: 'HH:mm:ss',                       // <input type="time" step="1" />
+    TIME_MS: 'HH:mm:ss.SSS',                        // <input type="time" step="0.001" />
+    WEEK: 'YYYY-[W]WW',                             // <input type="week" />
+    MONTH: 'YYYY-MM'                                // <input type="month" />
+};
+
 return hooks;
 
 })));
 
-},{}],261:[function(_dereq_,module,exports){
+},{}],264:[function(_dereq_,module,exports){
+!function(e,r){"object"==typeof exports&&"object"==typeof module?module.exports=r():"function"==typeof define&&define.amd?define([],r):"object"==typeof exports?exports.vanillaTextMask=r():e.vanillaTextMask=r()}(this,function(){return function(e){function r(n){if(t[n])return t[n].exports;var o=t[n]={exports:{},id:n,loaded:!1};return e[n].call(o.exports,o,o.exports,r),o.loaded=!0,o.exports}var t={};return r.m=e,r.c=t,r.p="",r(0)}([function(e,r,t){"use strict";function n(e){return e&&e.__esModule?e:{default:e}}function o(e){var r=e.inputElement,t=(0,u.default)(e),n=function(e){var r=e.target.value;return t.update(r)};return r.addEventListener("input",n),t.update(r.value),{textMaskInputElement:t,destroy:function(){r.removeEventListener("input",n)}}}Object.defineProperty(r,"__esModule",{value:!0}),r.conformToMask=void 0,r.maskInput=o;var i=t(2);Object.defineProperty(r,"conformToMask",{enumerable:!0,get:function(){return n(i).default}});var a=t(5),u=n(a);r.default=o},function(e,r){"use strict";Object.defineProperty(r,"__esModule",{value:!0}),r.placeholderChar="_"},function(e,r,t){"use strict";function n(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:a,r=arguments.length>1&&void 0!==arguments[1]?arguments[1]:a,t=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{},n=t.guide,u=void 0===n||n,l=t.previousConformedValue,s=void 0===l?a:l,f=t.placeholderChar,d=void 0===f?i.placeholderChar:f,c=t.placeholder,v=void 0===c?(0,o.convertMaskToPlaceholder)(r,d):c,p=t.currentCaretPosition,h=t.keepCharPositions,g=u===!1&&void 0!==s,m=e.length,y=s.length,b=v.length,C=r.length,P=m-y,x=P>0,k=p+(x?-P:0),O=k+Math.abs(P);if(h===!0&&!x){for(var M=a,T=k;T<O;T++)v[T]===d&&(M+=d);e=e.slice(0,k)+M+e.slice(k,m)}for(var w=e.split(a).map(function(e,r){return{char:e,isNew:r>=k&&r<O}}),_=m-1;_>=0;_--){var j=w[_].char;if(j!==d){var V=_>=k&&y===C;j===v[V?_-P:_]&&w.splice(_,1)}}var S=a,E=!1;e:for(var N=0;N<b;N++){var A=v[N];if(A===d){if(w.length>0)for(;w.length>0;){var I=w.shift(),L=I.char,R=I.isNew;if(L===d&&g!==!0){S+=d;continue e}if(r[N].test(L)){if(h===!0&&R!==!1&&s!==a&&u!==!1&&x){for(var J=w.length,q=null,F=0;F<J;F++){var W=w[F];if(W.char!==d&&W.isNew===!1)break;if(W.char===d){q=F;break}}null!==q?(S+=L,w.splice(q,1)):N--}else S+=L;continue e}E=!0}g===!1&&(S+=v.substr(N,b));break}S+=A}if(g&&x===!1){for(var z=null,B=0;B<S.length;B++)v[B]===d&&(z=B);S=null!==z?S.substr(0,z+1):a}return{conformedValue:S,meta:{someCharsRejected:E}}}Object.defineProperty(r,"__esModule",{value:!0}),r.default=n;var o=t(3),i=t(1),a=""},function(e,r,t){"use strict";function n(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:l,r=arguments.length>1&&void 0!==arguments[1]?arguments[1]:u.placeholderChar;if(e.indexOf(r)!==-1)throw new Error("Placeholder character must not be used as part of the mask. Please specify a character that is not present in your mask as your placeholder character.\n\n"+("The placeholder character that was received is: "+JSON.stringify(r)+"\n\n")+("The mask that was received is: "+JSON.stringify(e)));return e.map(function(e){return e instanceof RegExp?r:e}).join("")}function o(e){return"string"==typeof e||e instanceof String}function i(e){return"number"==typeof e&&void 0===e.length&&!isNaN(e)}function a(e){for(var r=[],t=void 0;t=e.indexOf(s),t!==-1;)r.push(t),e.splice(t,1);return{maskWithoutCaretTraps:e,indexes:r}}Object.defineProperty(r,"__esModule",{value:!0}),r.convertMaskToPlaceholder=n,r.isString=o,r.isNumber=i,r.processCaretTraps=a;var u=t(1),l=[],s="[]"},function(e,r){"use strict";function t(e){var r=e.previousConformedValue,t=void 0===r?o:r,i=e.previousPlaceholder,a=void 0===i?o:i,u=e.currentCaretPosition,l=void 0===u?0:u,s=e.conformedValue,f=e.rawValue,d=e.placeholderChar,c=e.placeholder,v=e.indexesOfPipedChars,p=void 0===v?n:v,h=e.caretTrapIndexes,g=void 0===h?n:h;if(0===l)return 0;var m=f.length,y=t.length,b=c.length,C=s.length,P=m-y,x=P>0,k=0===y,O=P>1&&!x&&!k;if(O)return l;var M=x&&(t===s||s===c),T=0,w=void 0,_=void 0;if(M)T=l-P;else{var j=s.toLowerCase(),V=f.toLowerCase(),S=V.substr(0,l).split(o),E=S.filter(function(e){return j.indexOf(e)!==-1});_=E[E.length-1];var N=a.substr(0,E.length).split(o).filter(function(e){return e!==d}).length,A=c.substr(0,E.length).split(o).filter(function(e){return e!==d}).length,I=A!==N,L=void 0!==a[E.length-1]&&void 0!==c[E.length-2]&&a[E.length-1]!==d&&a[E.length-1]!==c[E.length-1]&&a[E.length-1]===c[E.length-2];!x&&(I||L)&&N>0&&c.indexOf(_)>-1&&void 0!==f[l]&&(w=!0,_=f[l]);for(var R=p.map(function(e){return j[e]}),J=R.filter(function(e){return e===_}).length,q=E.filter(function(e){return e===_}).length,F=c.substr(0,c.indexOf(d)).split(o).filter(function(e,r){return e===_&&f[r]!==e}).length,W=F+q+J+(w?1:0),z=0,B=0;B<C;B++){var D=j[B];if(T=B+1,D===_&&z++,z>=W)break}}if(x){for(var G=T,H=T;H<=b;H++)if(c[H]===d&&(G=H),c[H]===d||g.indexOf(H)!==-1||H===b)return G}else if(w){for(var K=T-1;K>=0;K--)if(s[K]===_||g.indexOf(K)!==-1||0===K)return K}else for(var Q=T;Q>=0;Q--)if(c[Q-1]===d||g.indexOf(Q)!==-1||0===Q)return Q}Object.defineProperty(r,"__esModule",{value:!0}),r.default=t;var n=[],o=""},function(e,r,t){"use strict";function n(e){return e&&e.__esModule?e:{default:e}}function o(e){var r={previousConformedValue:void 0,previousPlaceholder:void 0};return{state:r,update:function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:e,o=n.inputElement,s=n.mask,d=n.guide,m=n.pipe,b=n.placeholderChar,C=void 0===b?p.placeholderChar:b,P=n.keepCharPositions,x=void 0!==P&&P,k=n.showMask,O=void 0!==k&&k;if("undefined"==typeof t&&(t=o.value),t!==r.previousConformedValue){("undefined"==typeof s?"undefined":l(s))===y&&void 0!==s.pipe&&void 0!==s.mask&&(m=s.pipe,s=s.mask);var M=void 0,T=void 0;if(s instanceof Array&&(M=(0,v.convertMaskToPlaceholder)(s,C)),s!==!1){var w=a(t),_=o.selectionEnd,j=r.previousConformedValue,V=r.previousPlaceholder,S=void 0;if(("undefined"==typeof s?"undefined":l(s))===h){if(T=s(w,{currentCaretPosition:_,previousConformedValue:j,placeholderChar:C}),T===!1)return;var E=(0,v.processCaretTraps)(T),N=E.maskWithoutCaretTraps,A=E.indexes;T=N,S=A,M=(0,v.convertMaskToPlaceholder)(T,C)}else T=s;var I={previousConformedValue:j,guide:d,placeholderChar:C,pipe:m,placeholder:M,currentCaretPosition:_,keepCharPositions:x},L=(0,c.default)(w,T,I),R=L.conformedValue,J=("undefined"==typeof m?"undefined":l(m))===h,q={};J&&(q=m(R,u({rawValue:w},I)),q===!1?q={value:j,rejected:!0}:(0,v.isString)(q)&&(q={value:q}));var F=J?q.value:R,W=(0,f.default)({previousConformedValue:j,previousPlaceholder:V,conformedValue:F,placeholder:M,rawValue:w,currentCaretPosition:_,placeholderChar:C,indexesOfPipedChars:q.indexesOfPipedChars,caretTrapIndexes:S}),z=F===M&&0===W,B=O?M:g,D=z?B:F;r.previousConformedValue=D,r.previousPlaceholder=M,o.value!==D&&(o.value=D,i(o,W))}}}}}function i(e,r){document.activeElement===e&&(b?C(function(){return e.setSelectionRange(r,r,m)},0):e.setSelectionRange(r,r,m))}function a(e){if((0,v.isString)(e))return e;if((0,v.isNumber)(e))return String(e);if(void 0===e||null===e)return g;throw new Error("The 'value' provided to Text Mask needs to be a string or a number. The value received was:\n\n "+JSON.stringify(e))}Object.defineProperty(r,"__esModule",{value:!0});var u=Object.assign||function(e){for(var r=1;r<arguments.length;r++){var t=arguments[r];for(var n in t)Object.prototype.hasOwnProperty.call(t,n)&&(e[n]=t[n])}return e},l="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};r.default=o;var s=t(4),f=n(s),d=t(2),c=n(d),v=t(3),p=t(1),h="function",g="",m="none",y="object",b="undefined"!=typeof navigator&&/Android/i.test(navigator.userAgent),C="undefined"!=typeof requestAnimationFrame?requestAnimationFrame:setTimeout}])});
+},{}],265:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -30623,6 +30929,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/address/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -30644,7 +30951,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -30661,7 +30968,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],262:[function(_dereq_,module,exports){
+},{}],266:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -30715,6 +31022,15 @@ module.exports = function(app) {
           '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button Event\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
           '</div>' +
+        '<div class="form-group" ng-if="component.action === \'url\'">' +
+        '  <label for="event" form-builder-tooltip="Place an Url where the submission will be sent.">{{\'Button Url\'' +
+        ' | formioTranslate}}</label>' +
+        '  <input type="url" class="form-control" id="event" name="event" ng-model="component.url"' +
+        ' placeholder="URL: https://example.form.io" />' +
+        '</div>' +
+        '<headers-builder ng-if="component.action === \'url\'" form="form" component="component"' +
+        ' data="component.headers" label="Headers" tooltip-text="Headers Properties' +
+        ' and Values for your request."></headers-builder>' +
           '<div class="form-group" ng-if="component.action === \'custom\'">' +
           '  <label for="custom" form-builder-tooltip="The custom logic to evaluate when the button is clicked.">{{\'Button Custom Logic\' | formioTranslate}}</label>' +
           '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.custom" placeholder="/*** Example Code ***/\ndata[\'mykey\'] = data[\'anotherKey\'];"></formio-script-editor>' +
@@ -30734,6 +31050,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="block"></form-builder-option>' +
+        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
           '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
         '</ng-form>'
       );
@@ -30741,7 +31058,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],263:[function(_dereq_,module,exports){
+},{}],267:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -30779,7 +31096,7 @@ module.exports = function(app) {
               title: 'Bottom'
             }
           ];
-  
+
           if (!$scope.component.labelPosition) {
             $scope.component.labelPosition = 'right';
           }
@@ -30821,13 +31138,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<div class="form-group">' +
             '<label for="labelPosition" form-builder-tooltip="Position for the label for this field.">{{\'Label Position\' | formioTranslate}}</label>' +
             '<select class="form-control" id="labelPosition" name="labelPosition" ng-options="position.value as position.title | formioTranslate for position in labelPositions" ng-model="component.labelPosition"></select>' +
           '</div>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
-          '<div class="form-group">' +
+          '<div class="form-group" ng-if="form.display === \'pdf\'">' +
             '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">{{\'Input Type\' | formioTranslate}}</label>' +
             '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title | formioTranslate for inputType in inputTypes" ng-model="component.inputType"></select>' +
           '</div>' +
@@ -30849,7 +31167,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -30866,7 +31184,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],264:[function(_dereq_,module,exports){
+},{}],268:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -30949,7 +31267,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],265:[function(_dereq_,module,exports){
+},{}],269:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -30987,7 +31305,8 @@ module.exports = function(app) {
               '</div>' +
               '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
-                '<button type="submit" class="btn btn-success" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
+                '<button type="submit" class="btn btn-success" ng-if="component.input" ng-disabled="!component.label" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
+        '<button type="submit" class="btn btn-success" ng-if="!component.input" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">{{\'Cancel\' | formioTranslate}}</button>&nbsp;' +
                 '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">{{\'Remove\' | formioTranslate}}</button>' +
               '</div>' +
@@ -31101,7 +31420,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],266:[function(_dereq_,module,exports){
+},{}],270:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31135,6 +31454,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/container/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option-label-position></form-builder-option-label-position>' +
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
@@ -31164,7 +31484,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],267:[function(_dereq_,module,exports){
+},{}],271:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31235,7 +31555,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],268:[function(_dereq_,module,exports){
+},{}],272:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31280,6 +31600,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/currency/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
@@ -31295,7 +31616,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31312,7 +31633,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],269:[function(_dereq_,module,exports){
+},{}],273:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31375,15 +31696,39 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],270:[function(_dereq_,module,exports){
+},{}],274:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
-    function(formioComponentsProvider) {
+    'FORM_OPTIONS',
+    function(
+      formioComponentsProvider,
+      FORM_OPTIONS
+    ) {
       formioComponentsProvider.register('datagrid', {
         fbtemplate: 'formio/formbuilder/datagrid.html',
         icon: 'fa fa-th',
+        onEdit: ['$scope', function($scope) {
+          $scope.themes = FORM_OPTIONS.themes;
+          if (!$scope.component.addAnotherPosition) {
+            $scope.component.addAnotherPosition = 'bottom';
+          }
+          $scope.addAnotherPosition = [
+            {
+              value: 'top',
+              title: 'Top'
+            },
+            {
+              value: 'bottom',
+              title: 'Bottom'
+            },
+            {
+              value: 'both',
+              title: 'Both'
+            }
+          ];
+        }],
         views: [
           {
             name: 'Display',
@@ -31415,9 +31760,14 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datagrid/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="errorLabel"></form-builder-option>' +
         '<form-builder-option property="addAnother"></form-builder-option>' +
+        '<div class="form-group">' +
+          '<label for="addAnotherPosition" form-builder-tooltip="Position for Add Another button with respect to Data Grid Array.">{{\'Add Another Position\' | formioTranslate}}</label>' +
+          '<select class="form-control" id="addAnotherPosition" name="addAnotherPosition" ng-options="position.value as position.title | formioTranslate for position in addAnotherPosition" ng-model="component.addAnotherPosition"></select>' +
+        '</div>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
         '<form-builder-option property="striped"></form-builder-option>' +
         '<form-builder-option property="bordered"></form-builder-option>' +
@@ -31428,7 +31778,6 @@ module.exports = function(app) {
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
-        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -31446,7 +31795,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],271:[function(_dereq_,module,exports){
+},{}],275:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31542,13 +31891,15 @@ module.exports = function(app) {
       $templateCache.put('formio/components/datetime/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="defaultDate"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
-          '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>."></form-builder-option>' +
+          '<form-builder-option property="useLocaleSettings" title="Use locale settings to display date and time."></form-builder-option>' +
+          '<form-builder-option property="format" label="Date Format" placeholder="Enter the Date format" title="The format for displaying this field\'s date. The format must be specified like the <a href=\'https://docs.angularjs.org/api/ng/filter/date\' target=\'_blank\'>AngularJS date filter</a>." ng-if="!component.useLocaleSettings"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
@@ -31556,7 +31907,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -31614,7 +31965,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],272:[function(_dereq_,module,exports){
+},{}],276:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31659,13 +32010,15 @@ module.exports = function(app) {
       $templateCache.put('formio/components/day/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option-inputs-label-position></form-builder-option-inputs-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="fields.day.placeholder" label="Day Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.month.placeholder" label="Month Placeholder"></form-builder-option>' +
           '<form-builder-option property="fields.year.placeholder" label="Year Placeholder"></form-builder-option>' +
-          '<form-builder-option property="dayFirst" type="checkbox" label="Day first" title="Display the Day field before the Month field."></form-builder-option>' +
+          '<form-builder-option property="useLocaleSettings" title="Use locale settings to display day."></form-builder-option>' +
+          '<form-builder-option property="dayFirst" type="checkbox" label="Day first" title="Display the Day field before the Month field." ng-if="!component.useLocaleSettings"></form-builder-option>' +
           '<form-builder-option property="fields.day.hide" type="checkbox" label="Hide Day" title="Hide the day part of the component."></form-builder-option>' +
           '<form-builder-option property="fields.month.hide" type="checkbox" label="Hide Month" title="Hide the month part of the component."></form-builder-option>' +
           '<form-builder-option property="fields.year.hide" type="checkbox" label="Hide Year" title="Hide the year part of the component."></form-builder-option>' +
@@ -31678,7 +32031,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -31697,7 +32050,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],273:[function(_dereq_,module,exports){
+},{}],277:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31741,13 +32094,13 @@ module.exports = function(app) {
       $templateCache.put('formio/components/editgrid/display.html',
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="tooltip"></form-builder-option>' +
         '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
         '<form-builder-option property="hidden"></form-builder-option>' +
-        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="disabled"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -31806,7 +32159,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],274:[function(_dereq_,module,exports){
+},{}],278:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -31856,7 +32209,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":200,"lodash/each":204}],275:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":201,"lodash/each":205}],279:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -31916,7 +32269,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],276:[function(_dereq_,module,exports){
+},{}],280:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -31973,6 +32326,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/file/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<div class="form-group">' +
@@ -31995,7 +32349,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32011,7 +32365,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":237}],277:[function(_dereq_,module,exports){
+},{"lodash/map":239}],281:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32042,7 +32396,7 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.forms = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {limit: 100}}).then(function(forms) {
+          $scope.formio.loadForms({params: {limit: 4294967295}}).then(function(forms) {
             var data = [];
             if ($scope.form._id) {
               angular.forEach(forms, function(form) {
@@ -32079,7 +32433,7 @@ module.exports = function(app) {
 
           var forms = {};
           $scope.form = {title: 'Unknown form'};
-          $scope.formio.loadForms({params: {limit: 100}}).then(function(formioForms) {
+          $scope.formio.loadForms({params: {limit: 4294967295}}).then(function(formioForms) {
             angular.forEach(formioForms, function(form) {
               forms[form._id] = form;
             });
@@ -32112,6 +32466,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/form/display.html',
         '<ng-form>' +
           '<form-builder-option property="label" label="Name" placeholder="Enter the name for this form field" title="The name for this field. It is only used for administrative purposes such as generating the automatic property name in the API tab (which may be changed manually)."></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<div class="form-group">' +
             '<label for="form" form-builder-tooltip="The form to load within this form component..">{{\'Form\' | formioTranslate}}</label>' +
@@ -32119,6 +32474,7 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="reference"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
@@ -32129,7 +32485,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],278:[function(_dereq_,module,exports){
+},{}],282:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32190,7 +32546,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],279:[function(_dereq_,module,exports){
+},{}],283:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32221,12 +32577,14 @@ module.exports = function(app) {
     '$templateCache',
     function($templateCache) {
       $templateCache.put('formio/formbuilder/htmlelement.html',
-        '<formio-html-element component="component"></div>'
+        '<p ng-if="!component.content">{{ \'HTML Element with no content\' | formioTranslate }}</p><formio-html-element component="component"></div>'
       );
 
       // Create the settings markup.
       $templateCache.put('formio/components/htmlelement/display.html',
         '<ng-form>' +
+        '<form-builder-option property="label"></form-builder-option>' +
+        '<form-builder-option property="hideLabel"></form-builder-option>' +
         '<form-builder-option property="customClass" label="Container Custom Class"></form-builder-option>' +
           '<form-builder-option property="tag" label="HTML Tag" placeholder="HTML Element Tag" title="The tag of this HTML element."></form-builder-option>' +
           '<form-builder-option property="className" label="CSS Class" placeholder="CSS Class" title="The CSS class for this HTML element."></form-builder-option>' +
@@ -32250,7 +32608,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],280:[function(_dereq_,module,exports){
+},{}],284:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -32295,7 +32653,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":261,"./button":262,"./checkbox":263,"./columns":264,"./components":265,"./container":266,"./content":267,"./currency":268,"./custom":269,"./datagrid":270,"./datetime":271,"./day":272,"./editgrid":273,"./email":274,"./fieldset":275,"./file":276,"./form":277,"./hidden":278,"./htmlelement":279,"./number":281,"./page":282,"./panel":283,"./password":284,"./phonenumber":285,"./radio":286,"./resource":287,"./select":288,"./selectboxes":289,"./signature":290,"./survey":291,"./table":292,"./textarea":293,"./textfield":294,"./time":295,"./well":296}],281:[function(_dereq_,module,exports){
+},{"./address":265,"./button":266,"./checkbox":267,"./columns":268,"./components":269,"./container":270,"./content":271,"./currency":272,"./custom":273,"./datagrid":274,"./datetime":275,"./day":276,"./editgrid":277,"./email":278,"./fieldset":279,"./file":280,"./form":281,"./hidden":282,"./htmlelement":283,"./number":285,"./page":286,"./panel":287,"./password":288,"./phonenumber":289,"./radio":290,"./resource":291,"./select":292,"./selectboxes":293,"./signature":294,"./survey":295,"./table":296,"./textarea":297,"./textfield":298,"./time":299,"./well":300}],285:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32340,6 +32698,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/number/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -32356,7 +32715,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32376,7 +32735,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],282:[function(_dereq_,module,exports){
+},{}],286:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32397,7 +32756,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],283:[function(_dereq_,module,exports){
+},{}],287:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32508,7 +32867,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],284:[function(_dereq_,module,exports){
+},{}],288:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32560,6 +32919,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/password/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -32573,7 +32933,7 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32582,7 +32942,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],285:[function(_dereq_,module,exports){
+},{}],289:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32597,7 +32957,7 @@ module.exports = function(app) {
           },
           {
             name: 'Data',
-            template: 'formio/components/common/data.html'
+            template: 'formio/components/textfield/data.html'
           },
           {
             name: 'Validation',
@@ -32627,6 +32987,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/phoneNumber/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -32643,7 +33004,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32661,7 +33022,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],290:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32706,6 +33067,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/radio/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -32716,11 +33078,13 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="inline" type="checkbox" label="Inline Layout" title="Displays the radio buttons horizontally."></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="fieldSet" type="checkbox" label="Wrap inside field set" title="Displays the radio' +
+        ' buttons wrapped by a field-set and legend."></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32737,7 +33101,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],287:[function(_dereq_,module,exports){
+},{}],291:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -32747,7 +33111,7 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.resources = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
+          $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
             $scope.resources = resources;
             if (!$scope.component.resource) {
               $scope.component.resource = resources[0]._id;
@@ -32788,6 +33152,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/resource/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -32820,7 +33185,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32836,7 +33201,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],288:[function(_dereq_,module,exports){
+},{}],292:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -32989,6 +33354,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/select/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -33000,9 +33366,9 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -33091,7 +33457,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":199}],289:[function(_dereq_,module,exports){
+},{"lodash/clone":200}],293:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33132,6 +33498,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option-options-label-position></form-builder-option-options-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
@@ -33144,9 +33511,9 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="fieldSet" type="checkbox" label="Wrap inside field set" title="Displays the radio buttons wrapped by a field-set and legend."></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -33163,6 +33530,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
           '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
@@ -33171,7 +33539,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],290:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33238,7 +33606,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],295:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33279,6 +33647,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/survey/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<value-builder data="component.questions" default="component.questions" label="Questions" tooltip-text="The questions you would like to as in this survey question."></value-builder>' +
@@ -33294,7 +33663,6 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -33311,7 +33679,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],292:[function(_dereq_,module,exports){
+},{}],296:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33383,7 +33751,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],297:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33460,6 +33828,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textarea/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -33482,11 +33851,12 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="spellcheck"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -33495,7 +33865,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],294:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33509,7 +33879,7 @@ module.exports = function(app) {
           },
           {
             name: 'Data',
-            template: 'formio/components/common/data.html'
+            template: 'formio/components/textfield/data.html'
           },
           {
             name: 'Validation',
@@ -33539,6 +33909,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textfield/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -33551,15 +33922,64 @@ module.exports = function(app) {
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
+          '<form-builder-option property="spellcheck"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="mask"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
+      );
+
+      $templateCache.put('formio/components/textfield/data.html',
+        '<form-builder-option text-mask property="defaultValue"></form-builder-option>' +
+        '<form-builder-option property="dbIndex" class="form-builder-premium form-builder-dbindex"></form-builder-option>' +
+        '<uib-accordion>' +
+        '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Default" class="panel panel-default" is-open="true">' +
+        '        <formio-script-editor rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+        '        <small>' +
+        '          <p>Enter custom default value code.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Default" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom default value using <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.customDefaultValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
+        '  </div>' +
+        '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Value" class="panel panel-default" is-open="true">' +
+        '        <formio-script-editor rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+        '        <small>' +
+        '          <p>Enter code to calculate a value.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Value" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom calculation logic with JSON and <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.calculateValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
+        '  </div>' +
+        '</uib-accordion>'
       );
 
       $templateCache.put('formio/components/textfield/validate.html',
@@ -33577,7 +33997,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],295:[function(_dereq_,module,exports){
+},{}],299:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -33605,6 +34025,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/time/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option-label-position></form-builder-option-label-position>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="description"></form-builder-option>' +
@@ -33618,8 +34039,8 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -33628,7 +34049,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":200,"lodash/each":204}],296:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":201,"lodash/each":205}],300:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -33675,7 +34096,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],301:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -33738,6 +34159,11 @@ module.exports = {
   authenticate: {
     label: 'Formio Authenticate',
     tooltip: 'Check this if you would like to use Formio Authentication with the request.',
+    type: 'checkbox'
+  },
+  spellcheck: {
+    label: 'Enable Spell Check',
+    tooltip: 'Check this if you wish to enable spell check.',
     type: 'checkbox'
   },
   tableView: {
@@ -34007,10 +34433,14 @@ module.exports = {
     label: 'Add Resource Text',
     placeholder: 'Add Resource',
     tooltip: 'Set the text of the Add Resource button.'
+  },
+  'useLocaleSettings': {
+    label: 'Use Locale Settings',
+    type: 'checkbox',
   }
 };
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],302:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -34029,6 +34459,10 @@ module.exports = {
     {
       name: 'reset',
       title: 'Reset'
+    },
+    {
+      name: 'url',
+      title: 'POST to URL'
     },
     {
       name: 'oauth',
@@ -34081,7 +34515,7 @@ module.exports = {
   ]
 };
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],303:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -34102,7 +34536,7 @@ module.exports = ['debounce', function(debounce) {
       type: '=',
       onSave: '=',
       onCancel: '=',
-      options: '=?'
+      options: '<'
     },
     controller: [
       '$scope',
@@ -34329,7 +34763,7 @@ module.exports = ['debounce', function(debounce) {
             subgroups: {}
           };
 
-          var query = {params: {type: 'resource', limit: 100}};
+          var query = {params: {type: 'resource', limit: 4294967295}};
           if ($scope.options && $scope.options.resourceFilter) {
             query.params.tags = $scope.options.resourceFilter;
           }
@@ -34413,7 +34847,11 @@ module.exports = ['debounce', function(debounce) {
       }
     ],
     link: function(scope, element) {
-      var scrollSidebar = debounce(function() {
+      var minHeight = 200;
+      var headerOffset = 50;
+      var bottomOffset = 15;
+
+      var scrollSidebar = function() {
         // Disable all buttons within the form.
         angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
 
@@ -34421,19 +34859,66 @@ module.exports = ['debounce', function(debounce) {
         var formComponents = angular.element('.formcomponents');
         var formBuilder = angular.element('.formbuilder');
         if (formComponents.length !== 0 && formBuilder.length !== 0) {
-          var maxScroll = formBuilder.outerHeight() > formComponents.outerHeight() ? formBuilder.outerHeight() - formComponents.outerHeight() : 0;
-          // 50 pixels gives space for the fixed header.
-          var scroll = angular.element(window).scrollTop() - formComponents.parent().offset().top + 50;
+          var windowEl = angular.element(window);
+          var windowHeight = windowEl.height();
+          var windowScrollTop = windowEl.scrollTop();
+          var windowScrollBottom = windowScrollTop + windowHeight;
+
+          var formBuilderOffsetTop = formBuilder.offset().top;
+          var formBuilderHeight = formBuilder.outerHeight();
+          var formBuilderOffsetBottom = formBuilderOffsetTop + formBuilderHeight;
+
+          var height = 0;
+
+          if (windowHeight > formBuilderHeight) {
+            formComponents.css('height', formBuilderHeight);
+            return;
+          }
+
+          if (windowScrollBottom < formBuilderOffsetTop
+            || windowScrollTop > formBuilderOffsetBottom) {
+            // Form Builder is not visible.
+            return;
+          }
+          else if (windowScrollTop < formBuilderOffsetTop) {
+            // Top part of Form Builder is visible.
+            height = windowScrollBottom - formBuilderOffsetTop - bottomOffset;
+          }
+          else if (windowScrollBottom < formBuilderOffsetBottom) {
+            // Form builder is visible.
+            height = windowHeight - headerOffset - bottomOffset;
+          }
+          else {
+            // Bottom part of Form Builder is visible.
+            height = formBuilderOffsetBottom - windowScrollTop - headerOffset - bottomOffset;
+          }
+
+          if (height < minHeight) {
+            height = minHeight;
+          }
+
+          var maxScroll = formBuilderHeight - height - bottomOffset;
+          var scroll = windowScrollTop - formBuilderOffsetTop + headerOffset;
           if (scroll < 0) {
             scroll = 0;
           }
           if (scroll > maxScroll) {
             scroll = maxScroll;
           }
-          formComponents.css('margin-top', scroll + 'px');
+
+          // Necessary fix for header.
+          if (scroll > 0 && scroll < headerOffset) {
+            height -= scroll;
+          }
+
+          formComponents.css({
+            'margin-top': scroll,
+            height: height
+          });
         }
-      }, 100, false);
-      window.onscroll = scrollSidebar;
+      };
+      window.onscroll = debounce(scrollSidebar, 100, false);
+      scrollSidebar();
       element.on('$destroy', function() {
         window.onscroll = null;
       });
@@ -34441,7 +34926,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":197,"lodash/cloneDeep":200,"lodash/each":204,"lodash/groupBy":210,"lodash/merge":239,"lodash/omitBy":241,"lodash/upperFirst":257}],300:[function(_dereq_,module,exports){
+},{"lodash/capitalize":198,"lodash/cloneDeep":201,"lodash/each":205,"lodash/groupBy":211,"lodash/merge":241,"lodash/omitBy":243,"lodash/upperFirst":260}],304:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -34457,7 +34942,7 @@ module.exports = [
   }
 ];
 
-},{}],301:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils');
@@ -34552,7 +35037,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":3,"lodash/get":209,"lodash/reject":246}],302:[function(_dereq_,module,exports){
+},{"formiojs/utils":3,"lodash/get":210,"lodash/reject":248}],306:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -34890,7 +35375,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":193,"lodash/camelCase":196,"lodash/isNumber":226}],303:[function(_dereq_,module,exports){
+},{"lodash/assign":194,"lodash/camelCase":197,"lodash/isNumber":227}],307:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -34915,7 +35400,7 @@ module.exports = [
   }
 ];
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],308:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -34940,7 +35425,7 @@ module.exports = [
   }
 ];
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -34962,12 +35447,13 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
       var formioTranslate = $filter('formioTranslate');
 
       var property = attrs.property;
-      var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label) || '';
+      var label = attrs.label || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].label);
       var placeholder = attrs.placeholder || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
       var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = attrs.tooltip || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
 
       var input = type === 'textarea' ? angular.element('<textarea></textarea>') : angular.element('<input>');
+
       var inputAttrs = {
         id: property,
         name: property,
@@ -34984,6 +35470,10 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
         }
       });
 
+      if(property === 'label') {
+        inputAttrs['label-validator'] = "";
+        inputAttrs.required = "";
+      }
       // Add min/max value floor values for validation.
       if (property === 'validate.minLength' || property === 'validate.maxLength') {
         inputAttrs.min = 0;
@@ -35002,14 +35492,14 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
 
       input.addClass('form-control');
       return '<div class="form-group">' +
-                '<label for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label>' +
+                '<label class="control-label" for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label><div class="input-group">' +
                 input.prop('outerHTML') +
-              '</div>';
+              '</div></div>';
     }
   };
 }];
 
-},{}],306:[function(_dereq_,module,exports){
+},{}],310:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -35050,7 +35540,7 @@ module.exports = function() {
   };
 };
 
-},{}],307:[function(_dereq_,module,exports){
+},{}],311:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component inputs' label position.
@@ -35092,7 +35582,7 @@ module.exports = function() {
     };
   };
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -35138,7 +35628,7 @@ module.exports = function() {
   };
 };
 
-},{}],309:[function(_dereq_,module,exports){
+},{}],313:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's label position.
@@ -35202,7 +35692,7 @@ module.exports = function() {
     };
   };
 
-},{}],310:[function(_dereq_,module,exports){
+},{}],314:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component options' label position.
@@ -35244,7 +35734,7 @@ module.exports = function() {
     };
   };
 
-},{}],311:[function(_dereq_,module,exports){
+},{}],315:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's shortcut.
@@ -35266,7 +35756,7 @@ module.exports = function() {
   };
 };
 
-},{}],312:[function(_dereq_,module,exports){
+},{}],316:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -35310,7 +35800,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":237}],313:[function(_dereq_,module,exports){
+},{"lodash/map":239}],317:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -35332,7 +35822,7 @@ module.exports = [
   }
 ];
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],318:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -35386,7 +35876,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":239}],315:[function(_dereq_,module,exports){
+},{"lodash/merge":241}],319:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -35427,7 +35917,70 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive that provides a UI to add {value, label} objects to an array.
+*/
+var _map = _dereq_('lodash/map');
+var _camelCase = _dereq_('lodash/camelCase');
+module.exports = function() {
+  return {
+    scope: {
+      data: '=',
+      label: '@',
+      tooltipText: '@',
+      valueLabel: '@',
+      labelHeader: '@',
+      valueProperty: '@',
+      headerProperty: '@'
+    },
+    restrict: 'E',
+    template: '<div class="form-group">' +
+                '<label form-builder-tooltip="{{ tooltipText | formioTranslate }}">{{ label | formioTranslate }}</label>' +
+                '<table class="table table-condensed">' +
+                  '<thead>' +
+                    '<tr>' +
+                      '<th class="col-xs-6">{{ labelHeader | formioTranslate }}</th>' +
+                      '<th class="col-xs-4">{{ valueLabel | formioTranslate }}</th>' +
+                      '<th class="col-xs-2"></th>' +
+                    '</tr>' +
+                  '</thead>' +
+                  '<tbody>' +
+                    '<tr ng-repeat="v in data track by $index">' +
+                      '<td class="col-xs-6"><input type="text" class="form-control" ng-model="v[headerProperty]" placeholder="{{ labelHeader | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-4"><input type="text" class="form-control" ng-model="v[valueProperty]" placeholder="{{ valueLabel | formioTranslate }}"/></td>' +
+                      '<td class="col-xs-2"><button type="button" class="btn btn-danger btn-xs" ng-click="removeValue($index)" tabindex="-1"><span class="glyphicon glyphicon-remove-circle"></span></button></td>' +
+                    '</tr>' +
+                  '</tbody>' +
+                '</table>' +
+                '<button type="button" class="btn btn-default" ng-click="addValue()">{{ \'Add Header\'' +
+    ' | formioTranslate' +
+    ' }}</button>' +
+              '</div>',
+    replace: true,
+    link: function($scope, el, attrs) {
+      $scope.valueProperty = $scope.valueProperty || 'value';
+      $scope.headerProperty = $scope.headerProperty || 'header';
+      $scope.valueLabel = $scope.valueLabel || 'Value';
+      $scope.labelHeader = $scope.labelHeader || 'Header';
+      $scope.data = $scope.data || [];
+
+      $scope.addValue = function() {
+        var obj = {};
+        obj[$scope.valueProperty] = '';
+        obj[$scope.headerProperty] = '';
+        $scope.data.push(obj);
+      };
+
+      $scope.removeValue = function(index) {
+        $scope.data.splice(index, 1);
+      };
+    }
+  };
+};
+
+},{"lodash/camelCase":197,"lodash/map":239}],321:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -35464,7 +36017,30 @@ module.exports = function() {
   };
 };
 
-},{}],317:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function () {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function (scope, element, attrs, ctrl) {
+
+      scope.$watch('component.label', function () {
+        if(ctrl.$invalid) {
+          element[0].parentNode.classList.add('has-error');
+          ctrl.$validate();
+        }
+        else {
+          element[0].parentNode.classList.remove('has-error');
+          ctrl.$validate();
+        }
+      }, true);
+
+    }
+  };
+}
+
+},{}],323:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -35499,14 +36075,7 @@ module.exports = function() {
               '</div>',
     replace: true,
     link: function($scope) {
-      $scope.data = $scope.data || {};
-      $scope.dataArray = [];
-      for (var key in $scope.data) {
-        $scope.dataArray.push({
-          key: key,
-          value: $scope.data[key]
-        });
-      }
+      init();
 
       $scope.addValue = function() {
         $scope.dataArray.push({key: '', value: ''});
@@ -35520,6 +36089,8 @@ module.exports = function() {
         $scope.addValue();
       }
 
+      $scope.$watch('data', init);
+
       $scope.$watch('dataArray', function(newValue) {
         $scope.data = {};
         for (var i in newValue) {
@@ -35527,11 +36098,72 @@ module.exports = function() {
           $scope.data[item.key] = item.value;
         }
       }, true);
+
+      function init() {
+        $scope.data = $scope.data || {};
+        $scope.dataArray = [];
+        for (var key in $scope.data) {
+          $scope.dataArray.push({
+            key: key,
+            value: $scope.data[key]
+          });
+        }
+      }
     }
   };
 };
 
-},{}],318:[function(_dereq_,module,exports){
+},{}],324:[function(_dereq_,module,exports){
+"use strict";
+/**
+* A directive for an input mask for default value.
+*/
+var maskInput = _dereq_('vanilla-text-mask').default;
+var formioUtils = _dereq_('formiojs/utils');
+module.exports = function() {
+  return {
+    restrict: 'A',
+    replace: true,
+    link: function(scope, element) {
+      var input = null;
+
+      if (element[0].tagName === 'INPUT') {
+        // `textMask` directive is used directly on an input element
+        input = element[0];
+      }
+      else {
+        // `textMask` directive is used on an abstracted input element
+        input = element[0].getElementsByTagName('INPUT')[0];
+      }
+
+      var maskedElement = null;
+
+      scope.$watch('component.inputMask', function(mask) {
+        if (!mask) {
+          return;
+        }
+
+        var inputMask = formioUtils.getInputMask(mask);
+        // var defaultValue = scope.component.defaultValue;
+
+        if (maskedElement) {
+          maskedElement.destroy();
+        }
+
+        maskedElement = maskInput({
+          inputElement: input,
+          mask: inputMask,
+          showMask: true,
+          keepCharPositions: false,
+          guide: true,
+          placeholderChar: '_'
+        });
+      });
+    }
+  };
+};
+
+},{"formiojs/utils":3,"vanilla-text-mask":264}],325:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -35554,7 +36186,7 @@ module.exports = function() {
   };
 };
 
-},{}],319:[function(_dereq_,module,exports){
+},{}],326:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -35636,7 +36268,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":196,"lodash/map":237}],320:[function(_dereq_,module,exports){
+},{"lodash/camelCase":197,"lodash/map":239}],327:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -35758,7 +36390,7 @@ module.exports = ['BuilderUtils', function(BuilderUtils) {
   }
 ];
 
-},{"lodash/camelCase":196,"lodash/difference":203,"lodash/map":237,"lodash/without":258}],321:[function(_dereq_,module,exports){
+},{"lodash/camelCase":197,"lodash/difference":204,"lodash/map":239,"lodash/without":261}],328:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -35917,7 +36549,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{"lodash/difference":203,"lodash/range":245}],322:[function(_dereq_,module,exports){
+},{"lodash/difference":204,"lodash/range":247}],329:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -35951,9 +36583,9 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],330:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.26.0 | https://unpkg.com/ng-formio-builder@2.26.0/LICENSE.txt */
+/*! ng-formio-builder v2.28.0 | https://unpkg.com/ng-formio-builder@2.28.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -36042,6 +36674,8 @@ app.directive('jsonInput', _dereq_('./directives/jsonInput'));
 
 app.directive('formBuilderOption', _dereq_('./directives/formBuilderOption'));
 
+app.directive('labelValidator', _dereq_('./directives/labelValidator'));
+
 app.directive('formBuilderTable', _dereq_('./directives/formBuilderTable'));
 
 app.directive('formBuilderOptionInputsLabelPosition', _dereq_('./directives/formBuilderOptionInputsLabelPosition'));
@@ -36056,6 +36690,8 @@ app.directive('formBuilderOptionShortcut', _dereq_('./directives/formBuilderOpti
 
 app.directive('formBuilderOptionTags', _dereq_('./directives/formBuilderOptionTags'));
 
+app.directive('textMask', _dereq_('./directives/textMask'));
+
 app.directive('validApiKey', _dereq_('./directives/validApiKey'));
 
 app.directive('formBuilderOptionCustomValidation', _dereq_('./directives/formBuilderOptionCustomValidation'));
@@ -36063,6 +36699,8 @@ app.directive('formBuilderOptionCustomValidation', _dereq_('./directives/formBui
 app.directive('formBuilderTooltip', _dereq_('./directives/formBuilderTooltip'));
 
 app.directive('valueBuilder', _dereq_('./directives/valueBuilder'));
+
+app.directive('headersBuilder', _dereq_('./directives/headersBuilder'));
 
 app.directive('valueBuilderWithShortcuts', _dereq_('./directives/valueBuilderWithShortcuts'));
 
@@ -36103,7 +36741,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/list.html',
-      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\" ng-init=\"component.hideLabel = false;\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
+      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
     );
 
     $templateCache.put('formio/formbuilder/row.html',
@@ -36126,5 +36764,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":280,"./constants/commonOptions":297,"./constants/formOptions":298,"./directives/formBuilder":299,"./directives/formBuilderComponent":300,"./directives/formBuilderConditional":301,"./directives/formBuilderDnd":302,"./directives/formBuilderElement":303,"./directives/formBuilderList":304,"./directives/formBuilderOption":305,"./directives/formBuilderOptionCustomValidation":306,"./directives/formBuilderOptionInputsLabelPosition":307,"./directives/formBuilderOptionKey":308,"./directives/formBuilderOptionLabelPosition":309,"./directives/formBuilderOptionOptionsLabelPosition":310,"./directives/formBuilderOptionShortcut":311,"./directives/formBuilderOptionTags":312,"./directives/formBuilderRow":313,"./directives/formBuilderTable":314,"./directives/formBuilderTooltip":315,"./directives/jsonInput":316,"./directives/objectBuilder":317,"./directives/validApiKey":318,"./directives/valueBuilder":319,"./directives/valueBuilderWithShortcuts":320,"./factories/BuilderUtils":321,"./factories/debounce":322}]},{},[323])(323)
+},{"./components":284,"./constants/commonOptions":301,"./constants/formOptions":302,"./directives/formBuilder":303,"./directives/formBuilderComponent":304,"./directives/formBuilderConditional":305,"./directives/formBuilderDnd":306,"./directives/formBuilderElement":307,"./directives/formBuilderList":308,"./directives/formBuilderOption":309,"./directives/formBuilderOptionCustomValidation":310,"./directives/formBuilderOptionInputsLabelPosition":311,"./directives/formBuilderOptionKey":312,"./directives/formBuilderOptionLabelPosition":313,"./directives/formBuilderOptionOptionsLabelPosition":314,"./directives/formBuilderOptionShortcut":315,"./directives/formBuilderOptionTags":316,"./directives/formBuilderRow":317,"./directives/formBuilderTable":318,"./directives/formBuilderTooltip":319,"./directives/headersBuilder":320,"./directives/jsonInput":321,"./directives/labelValidator":322,"./directives/objectBuilder":323,"./directives/textMask":324,"./directives/validApiKey":325,"./directives/valueBuilder":326,"./directives/valueBuilderWithShortcuts":327,"./factories/BuilderUtils":328,"./factories/debounce":329}]},{},[330])(330)
 });

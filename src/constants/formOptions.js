@@ -17,6 +17,10 @@ module.exports = {
       title: 'Reset'
     },
     {
+      name: 'url',
+      title: 'POST to URL'
+    },
+    {
       name: 'oauth',
       title: 'OAuth'
     }
