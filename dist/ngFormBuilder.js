@@ -31233,6 +31233,7 @@ module.exports = function(app) {
       );
       $templateCache.put('formio/components/columns/display.html',
         '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<div class="form-group">' +
             '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">{{\'Column Properties\' | formioTranslate}}</label>' +
@@ -31616,6 +31617,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32715,6 +32717,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -34437,6 +34440,11 @@ module.exports = {
   'useLocaleSettings': {
     label: 'Use Locale Settings',
     type: 'checkbox',
+  },
+  'delimiter': {
+    label: 'Use Delimiter',
+    type: 'checkbox',
+    tooltip: 'Separate thousands by local delimiter.'
   }
 };
 
@@ -34708,7 +34716,7 @@ module.exports = ['debounce', function(debounce) {
           var component = {
             type: 'panel',
             title: 'Page ' + pageNum,
-            isNew: true,
+            isNew: false,
             components: [],
             input: false,
             key: 'page' + pageNum
@@ -35139,6 +35147,18 @@ module.exports = [
       if (index === 'undefined') {
         index = -1;
       }
+
+      // If this is a root component and the display is a wizard, then we know
+      // that they dropped the component outside of where it is supposed to go...
+      // Instead append or prepend to the components array.
+      if ($scope.component.display === 'wizard') {
+        var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
+        index = pageIndex;
+        $scope.$apply(function() {
+          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
+        });
+      }
+
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component, index);
@@ -35161,17 +35181,6 @@ module.exports = [
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
       $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
-
-      // If this is a root component and the display is a wizard, then we know
-      // that they dropped the component outside of where it is supposed to go...
-      // Instead append or prepend to the components array.
-      if ($scope.component.display === 'wizard') {
-        $scope.$apply(function() {
-          var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
-          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
-        });
-        return true;
-      }
 
       // Make sure that they don't ever add a component on the bottom of the submit button.
       var lastComponent = $scope.component.components[$scope.component.components.length - 1];
@@ -35200,6 +35209,9 @@ module.exports = [
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
+      if ($scope.component.display = 'wizard') {
+        list = $scope.form.components[$scope.form.page].components;
+      }
       list.splice(index, 1, newComponent);
       $scope.emit('update', newComponent);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
@@ -35295,6 +35307,12 @@ module.exports = [
               $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
               BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+            }
+
+            // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
+            if (!$scope.component.label) {
+              $scope.component.label = $scope.component.key || $scope.component.type;
+              $scope.component.hideLabel = true;
             }
           });
         }]
@@ -36585,7 +36603,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],330:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.28.0 | https://unpkg.com/ng-formio-builder@2.28.0/LICENSE.txt */
+/*! ng-formio-builder v2.28.1 | https://unpkg.com/ng-formio-builder@2.28.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

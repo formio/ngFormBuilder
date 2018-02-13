@@ -4,10 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 2.28.1
 ### Added
  - 'delimiter' property to Number and Currency components.
  - Possibility to specify label for Columns component
+ - Automatically set label to key and check "hideLabel" if they delete the label.
+
+### Fixed
+ - Bug where components within a wizard panel would get deleted if you canceled the settings.
+ - Dropping custom component below any page after first page clobbering the page.
+
+### Changed
+ - Upgrade ng-formio to 2.28.3
 
 ## 2.28.0
 ### Changed

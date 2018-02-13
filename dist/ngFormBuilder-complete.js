@@ -86530,7 +86530,6 @@ module.exports = function(app) {
               case 'custom':
               case 'oauth':
               case 'url':
-                return;
               default:
                 return 'button';
             }
@@ -86555,8 +86554,8 @@ module.exports = function(app) {
               }
               var flattened = FormioUtils.flattenComponents(parent.form.components, true);
               var components = flattened;
-              (new Function('form', 'flattened', 'components', '_merge', 'data', $scope.component.custom.toString()))
-              (parent.form, flattened, components, _merge, $scope.data);
+              (new Function('form', 'flattened', 'components', '_merge', '$scope', 'data', $scope.component.custom.toString()))
+              (parent.form, flattened, components, _merge, $scope, $scope.data);
             }
             catch (e) {
               /* eslint-disable no-console */
@@ -87733,7 +87732,7 @@ module.exports = function(app) {
       require: 'ngModel',
       restrict: 'A',
       link: function(scope, elem, attr, ctrl) {
-        if (scope.options && scope.options.building) return;
+        if (scope.options && scope.options.building || !scope.formioForm) return;
 
         // Add the control to the main form.
         scope.formioForm.$addControl(ctrl);
@@ -90390,9 +90389,6 @@ module.exports = function(app) {
             if ($scope.component.wysiwyg === true) {
               $scope.component.wysiwyg = defaults;
             }
-            else {
-              $scope.component.wysiwyg = angular.extend(defaults, $scope.component.wysiwyg);
-            }
 
             // FOR-929 - Remove spell check attribute
             if (!$scope.component.spellcheck){
@@ -91476,7 +91472,7 @@ module.exports = [
 
           $scope.getInputGroupStyles = function(component) {
             var labelPosition = _get(component, 'labelPosition');
-            
+
             if (labelOnTheLeftOrRight(labelPosition)) {
               var totalLabelWidth = getComponentLabelWidth(component) + getComponentLabelMargin(component);
               var styles = {
@@ -91506,6 +91502,10 @@ module.exports = [
           // class to the survey component.
           // Note: Chek that this method is used in the template.
           $scope.invalidQuestions = function(formioForm) {
+            if (!formioForm) {
+              return false;
+            }
+
             var errorInQuestions = false;
             if (!$scope.component.questions) {
               errorInQuestions = false;
@@ -91908,10 +91908,21 @@ module.exports = function() {
         };
       };
 
+      var formattedNumberString = (12345.6789).toLocaleString(scope.options.language || 'en');
+
       scope.decimalSeparator = scope.options.decimalSeparator = scope.options.decimalSeparator ||
-        (12345.6789).toLocaleString(scope.options.language).match(/345(.*)67/)[1];
-      scope.thousandsSeparator = scope.options.thousandsSeparator = scope.options.thousandsSeparator ||
-        (12345.6789).toLocaleString(scope.options.language).match(/12(.*)345/)[1];
+        formattedNumberString.match(/345(.*)67/)[1];
+
+      if (scope.component.delimiter) {
+        if (scope.options.hasOwnProperty('thousandsSeparator')) {
+          console.warn("Property 'thousandsSeparator' is deprecated. Please use i18n to specify delimiter.");
+        }
+
+        scope.delimiter = scope.options.thousandsSeparator || formattedNumberString.match(/12(.*)345/)[1];
+      }
+      else {
+        scope.delimiter = '';
+      }
 
       if (format === 'currency') {
         scope.currency = scope.component.currency || 'USD';
@@ -91958,7 +91969,7 @@ module.exports = function() {
           mask = createNumberMask({
             prefix: scope.prefix,
             suffix: scope.suffix,
-            thousandsSeparatorSymbol: _get(scope.component, 'thousandsSeparator', scope.thousandsSeparator),
+            thousandsSeparatorSymbol: _get(scope.component, 'thousandsSeparator', scope.delimiter),
             decimalSymbol: _get(scope.component, 'decimalSymbol', scope.decimalSeparator),
             decimalLimit: _get(scope.component, 'decimalLimit', scope.decimalLimit),
             allowNegative: _get(scope.component, 'allowNegative', true),
@@ -91970,7 +91981,7 @@ module.exports = function() {
           mask = createNumberMask({
             prefix: '',
             suffix: '',
-            thousandsSeparatorSymbol: _get(scope.component, 'thousandsSeparator', scope.thousandsSeparator),
+            thousandsSeparatorSymbol: _get(scope.component, 'thousandsSeparator', scope.delimiter),
             decimalSymbol: _get(scope.component, 'decimalSymbol', scope.decimalSeparator),
             decimalLimit: _get(scope.component, 'decimalLimit', scope.decimalLimit),
             allowNegative: _get(scope.component, 'allowNegative', true),
@@ -92016,7 +92027,7 @@ module.exports = function() {
           value = value.replace(scope.prefix, '').replace(scope.suffix, '');
 
           // Remove thousands separators and convert decimal separator to dot.
-          value = value.split(scope.thousandsSeparator).join('').replace(scope.decimalSeparator, '.');
+          value = value.split(scope.delimiter).join('').replace(scope.decimalSeparator, '.');
 
           if (scope.component.validate && scope.component.validate.integer) {
             return parseInt(value, 10);
@@ -98285,6 +98296,7 @@ module.exports = function(app) {
       );
       $templateCache.put('formio/components/columns/display.html',
         '<ng-form>' +
+          '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<div class="form-group">' +
             '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">{{\'Column Properties\' | formioTranslate}}</label>' +
@@ -98668,6 +98680,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -99767,6 +99780,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -101489,6 +101503,11 @@ module.exports = {
   'useLocaleSettings': {
     label: 'Use Locale Settings',
     type: 'checkbox',
+  },
+  'delimiter': {
+    label: 'Use Delimiter',
+    type: 'checkbox',
+    tooltip: 'Separate thousands by local delimiter.'
   }
 };
 
@@ -101760,7 +101779,7 @@ module.exports = ['debounce', function(debounce) {
           var component = {
             type: 'panel',
             title: 'Page ' + pageNum,
-            isNew: true,
+            isNew: false,
             components: [],
             input: false,
             key: 'page' + pageNum
@@ -102191,6 +102210,18 @@ module.exports = [
       if (index === 'undefined') {
         index = -1;
       }
+
+      // If this is a root component and the display is a wizard, then we know
+      // that they dropped the component outside of where it is supposed to go...
+      // Instead append or prepend to the components array.
+      if ($scope.component.display === 'wizard') {
+        var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
+        index = pageIndex;
+        $scope.$apply(function() {
+          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
+        });
+      }
+
       // Only edit immediately for components that are not resource comps.
       if (component.isNew && !component.lockConfiguration && (!component.key || (component.key.indexOf('.') === -1))) {
         $scope.editComponent(component, index);
@@ -102213,17 +102244,6 @@ module.exports = [
       dndDragIframeWorkaround.isDragging = false;
       $scope.emit('add');
       $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
-
-      // If this is a root component and the display is a wizard, then we know
-      // that they dropped the component outside of where it is supposed to go...
-      // Instead append or prepend to the components array.
-      if ($scope.component.display === 'wizard') {
-        $scope.$apply(function() {
-          var pageIndex = (index === 0) ? 0 : $scope.form.components[$scope.form.page].components.length;
-          $scope.form.components[$scope.form.page].components.splice(pageIndex, 0, component);
-        });
-        return true;
-      }
 
       // Make sure that they don't ever add a component on the bottom of the submit button.
       var lastComponent = $scope.component.components[$scope.component.components.length - 1];
@@ -102252,6 +102272,9 @@ module.exports = [
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
+      if ($scope.component.display = 'wizard') {
+        list = $scope.form.components[$scope.form.page].components;
+      }
       list.splice(index, 1, newComponent);
       $scope.emit('update', newComponent);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
@@ -102347,6 +102370,12 @@ module.exports = [
               $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
               BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+            }
+
+            // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
+            if (!$scope.component.label) {
+              $scope.component.label = $scope.component.key || $scope.component.type;
+              $scope.component.hideLabel = true;
             }
           });
         }]
@@ -103644,7 +103673,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":452,"angular-drag-and-drop-lists":2,"ng-dialog":306,"ng-formio/src/formio-complete.js":374}],452:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.28.0 | https://unpkg.com/ng-formio-builder@2.28.0/LICENSE.txt */
+/*! ng-formio-builder v2.28.1 | https://unpkg.com/ng-formio-builder@2.28.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
