@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Added
+ - Possibility to specify label for Columns component
+
 ## 2.28.0
 ### Changed
  - Upgrade ng-formio to 2.28.0, and upgraded other dependencies.
