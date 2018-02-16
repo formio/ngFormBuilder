@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.28.2
+### Changed
+ - Upgraded ng-formio to 2.28.4
+
 ## 2.28.1
 ### Added
  - 'delimiter' property to Number and Currency components.
