@@ -88,7 +88,7 @@ module.exports = [
       // Add parent key to default key if parent is present.
       // Sometimes $scope.component is the parent but columns and tables it is actually the column.
       var parent = $scope.parent || $scope.component;
-      if (parent.type !== 'form' && parent.type !== 'resource' && component.isNew) {
+      if (parent.type !== 'form' && parent.type !== 'resource' && component.isNew && component.key) {
         $scope.parentKey = parent.key;
         component.key = $scope.parentKey + _upperFirst(component.key);
       } else {
@@ -161,7 +161,10 @@ module.exports = [
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
       if ($scope.component.display = 'wizard') {
-        list = $scope.form.components[$scope.form.page].components;
+        var pages = $scope.form.components.filter(function(component) {
+          return component.type === 'panel';
+        });
+        list = pages[$scope.form.page].components;
       }
       list.splice(index, 1, newComponent);
       $scope.emit('update', newComponent);
