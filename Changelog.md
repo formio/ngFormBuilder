@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.28.3
+### Changed
+ - Upgraded ng-formio to 2.28.6, formiojs to 2.29.3
+
+### Fixed
+ - Issue with the wizard builder where dragging components outside of panel makes it freak out.
+
 ## 2.28.2
 ### Changed
  - Upgraded ng-formio to 2.28.4
