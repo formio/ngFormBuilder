@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.28.4
+### Fixed
+ - Some performance issues with some controls when a lot of forms are present.
+
 ## 2.28.3
 ### Changed
  - Upgraded ng-formio to 2.28.6, formiojs to 2.29.3
