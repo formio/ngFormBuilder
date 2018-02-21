@@ -31065,7 +31065,10 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.forms = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {limit: 4294967295}}).then(function(forms) {
+          $scope.formio.loadForms({params: {
+            limit: 4294967295,
+            select: '_id,title,type'
+          }}).then(function(forms) {
             var data = [];
             if ($scope.form._id) {
               angular.forEach(forms, function(form) {
@@ -31102,7 +31105,10 @@ module.exports = function(app) {
 
           var forms = {};
           $scope.form = {title: 'Unknown form'};
-          $scope.formio.loadForms({params: {limit: 4294967295}}).then(function(formioForms) {
+          $scope.formio.loadForms({params: {
+            limit: 4294967295,
+            select: '_id,title,type'
+          }}).then(function(formioForms) {
             angular.forEach(formioForms, function(form) {
               forms[form._id] = form;
             });
@@ -31781,7 +31787,11 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.resources = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
+          $scope.formio.loadForms({params: {
+            type: 'resource',
+            limit: 4294967295,
+            select: '_id,title'
+          }}).then(function(resources) {
             $scope.resources = resources;
             if (!$scope.component.resource) {
               $scope.component.resource = resources[0]._id;
@@ -31981,7 +31991,11 @@ module.exports = function(app) {
             }
 
             if (($scope.resources.length === 0) && (source === 'resource')) {
-              $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
+              $scope.formio.loadForms({params: {
+                type: 'resource',
+                limit: 4294967295,
+                select: '_id,title,components'
+              }}).then(function(resources) {
                 $scope.resources = resources;
                 loadFields();
               });
@@ -33438,7 +33452,11 @@ module.exports = ['debounce', function(debounce) {
             subgroups: {}
           };
 
-          var query = {params: {type: 'resource', limit: 4294967295}};
+          var query = {params: {
+            type: 'resource',
+            limit: 4294967295,
+            select: '_id,title,name,components'
+          }};
           if ($scope.options && $scope.options.resourceFilter) {
             query.params.tags = $scope.options.resourceFilter;
           }
