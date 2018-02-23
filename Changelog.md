@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.28.6
+### Fixed
+ - Issue where existing forms would not reset the key and label to original if it is deleted.
+
 ## 2.28.5
 ### Fixed
  - The forced label to not be so aggressive when they are editing the label.

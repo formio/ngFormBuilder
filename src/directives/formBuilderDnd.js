@@ -157,6 +157,19 @@ module.exports = [
       return true;
     };
 
+    var updateKey = function(component) {
+      if (!component.lockKey && component.isNew) {
+        if ($scope.data.hasOwnProperty(component.key)) {
+          delete $scope.data[component.key];
+        }
+        if (component.label) {
+          component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
+        }
+        BuilderUtils.uniquify($scope.form, component);
+        $scope.data[component.key] = component.multiple ? [''] : '';
+      }
+    };
+
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
@@ -167,6 +180,7 @@ module.exports = [
         list = pages[$scope.form.page].components;
       }
       list.splice(index, 1, newComponent);
+      updateKey(newComponent);
       $scope.emit('update', newComponent);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
@@ -224,6 +238,7 @@ module.exports = [
       var previousSettings = angular.copy(component);
 
       // Open the dialog.
+      var originalKey = '';
       ngDialog.open({
         template: 'formio/components/settings.html',
         scope: childScope,
@@ -254,13 +269,9 @@ module.exports = [
           // Watch the settings label and auto set the key from it.
           var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
-            if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
-              if ($scope.data.hasOwnProperty($scope.component.key)) {
-                delete $scope.data[$scope.component.key];
-              }
-              $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
-              BuilderUtils.uniquify($scope.form, $scope.component);
-              $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+            updateKey($scope.component);
+            if (!originalKey) {
+              originalKey = $scope.component.key;
             }
           });
         }]
@@ -278,7 +289,7 @@ module.exports = [
 
         // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
         if (!component.label) {
-          component.label = component.key || component.type;
+          component.label = component.key = originalKey || component.type;
           component.hideLabel = true;
         }
 
