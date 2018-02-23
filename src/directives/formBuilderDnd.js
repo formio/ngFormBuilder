@@ -157,6 +157,19 @@ module.exports = [
       return true;
     };
 
+    var updateKey = function(component) {
+      if (!component.lockKey && component.isNew) {
+        if ($scope.data.hasOwnProperty(component.key)) {
+          delete $scope.data[component.key];
+        }
+        if (component.label) {
+          component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
+        }
+        BuilderUtils.uniquify($scope.form, component);
+        $scope.data[component.key] = component.multiple ? [''] : '';
+      }
+    };
+
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
