@@ -61,10 +61,20 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
               '</div>';
       }
 
+      var helpMessage = '';
+      switch (property) {
+        case 'label':
+          helpMessage = '<span class="help-block" ng-if="!component.label">You must provide a label for this component.</span>';
+          break;
+        default:
+          break;
+      }
+
       input.addClass('form-control');
       return '<div class="form-group">' +
                 '<label class="control-label" for="' + property + '" form-builder-tooltip="' + formioTranslate(tooltip) + '">' + formioTranslate(label) + '</label><div class="input-group">' +
                 input.prop('outerHTML') +
+                helpMessage +
               '</div></div>';
     }
   };
