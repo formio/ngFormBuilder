@@ -262,12 +262,6 @@ module.exports = [
               BuilderUtils.uniquify($scope.form, $scope.component);
               $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
             }
-
-            // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
-            if (!$scope.component.label) {
-              $scope.component.label = $scope.component.key || $scope.component.type;
-              $scope.component.hideLabel = true;
-            }
           });
         }]
       }).closePromise.then(function(e) {
@@ -280,6 +274,12 @@ module.exports = [
           // Revert to old settings, but use the same object reference
           _assign(component, previousSettings);
           return;
+        }
+
+        // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
+        if (!component.label) {
+          component.label = component.key || component.type;
+          component.hideLabel = true;
         }
 
         FormioUtils.eachComponent([component], function(child) {

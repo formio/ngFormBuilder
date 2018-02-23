@@ -6,11 +6,11 @@ module.exports = function () {
 
       scope.$watch('component.label', function () {
         if(ctrl.$invalid) {
-          element[0].parentNode.classList.add('has-error');
+          element[0].parentNode.classList.add('has-warning');
           ctrl.$validate();
         }
         else {
-          element[0].parentNode.classList.remove('has-error');
+          element[0].parentNode.classList.remove('has-warning');
           ctrl.$validate();
         }
       }, true);
