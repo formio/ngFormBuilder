@@ -6,12 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 2.29.0
 ### Fixed
- - How the form builder handles "hidden" labels where it now shows a tooltip instead of make you think the component has a label.
- - The the custom component is handled
-
-
-## 2.28.6
-### Fixed
+ - The how the custom component is handled
  - Issue where existing forms would not reset the key and label to original if it is deleted.
  - Problem where hideLabel would still show on certain components.
 
