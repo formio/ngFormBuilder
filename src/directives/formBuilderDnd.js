@@ -157,7 +157,7 @@ module.exports = [
       return true;
     };
 
-    var updateKey = function(component) {
+    $scope.updateKey = function(component) {
       if (!component.lockKey && component.isNew) {
         if ($scope.data.hasOwnProperty(component.key)) {
           delete $scope.data[component.key];
@@ -169,21 +169,6 @@ module.exports = [
         BuilderUtils.uniquify($scope.form, component);
         $scope.data[component.key] = component.multiple ? [''] : '';
       }
-    };
-
-    // Allow prototyped scopes to update the original component.
-    $scope.updateComponent = function(newComponent, index) {
-      var list = $scope.component.components;
-      if ($scope.component.display = 'wizard') {
-        var pages = $scope.form.components.filter(function(component) {
-          return component.type === 'panel';
-        });
-        list = pages[$scope.form.page].components;
-      }
-      list.splice(index, 1, newComponent);
-      updateKey(newComponent);
-      $scope.emit('update', newComponent);
-      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
@@ -238,6 +223,11 @@ module.exports = [
 
       var previousSettings = angular.copy(component);
 
+      // Make sure this component has a key.
+      if (!component.key) {
+        component.key = component.type;
+      }
+
       // Open the dialog.
       var originalKey = '';
       ngDialog.open({
@@ -269,7 +259,7 @@ module.exports = [
 
           // Watch the settings label and auto set the key from it.
           $scope.$watch('component.label', function() {
-            updateKey($scope.component);
+            $scope.updateKey($scope.component);
             if (!originalKey) {
               originalKey = $scope.component.key;
             }
@@ -289,7 +279,9 @@ module.exports = [
 
         // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
         if (!component.label) {
-          component.label = component.key = originalKey || component.type;
+          component.key = originalKey;
+          $scope.updateKey(component);
+          component.label = component.key || component.type;
           component.hideLabel = true;
         }
 
