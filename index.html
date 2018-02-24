@@ -326,7 +326,6 @@ node server</pre>
         });
 
         var originalComps = _.cloneDeep($rootScope.form.components);
-        originalComps.push(angular.copy(formioComponents.components.button.settings));
         $rootScope.jsonCollapsed = true;
         $timeout(function() {
           $rootScope.jsonCollapsed = false;

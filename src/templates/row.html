@@ -1,5 +1,5 @@
 <div class="formbuilder-row">
-  <label ng-if="component.label" class="control-label">{{ component.label }}</label>
+  <label ng-if="labelVisible()" class="control-label">{{ component.label }}</label>
   <ul class="component-row formbuilder-group"
       dnd-list="component.components"
       dnd-drop="addComponent(item, index)"

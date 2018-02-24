@@ -221,8 +221,8 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Condense the size of the table.'
   },
-  datagridLabel: {
-    label: 'Datagrid Label',
+  dataGridLabel: {
+    label: 'Show Label in DataGrid',
     type: 'checkbox',
     tooltip: 'Show the label when in a datagrid.'
   },

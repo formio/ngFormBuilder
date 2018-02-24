@@ -157,18 +157,18 @@ module.exports = [
       return true;
     };
 
-    // Allow prototyped scopes to update the original component.
-    $scope.updateComponent = function(newComponent, index) {
-      var list = $scope.component.components;
-      if ($scope.component.display = 'wizard') {
-        var pages = $scope.form.components.filter(function(component) {
-          return component.type === 'panel';
-        });
-        list = pages[$scope.form.page].components;
+    $scope.updateKey = function(component) {
+      if (!component.lockKey && component.isNew) {
+        if ($scope.data.hasOwnProperty(component.key)) {
+          delete $scope.data[component.key];
+        }
+        if (component.label) {
+          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
+          component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
+        }
+        BuilderUtils.uniquify($scope.form, component);
+        $scope.data[component.key] = component.multiple ? [''] : '';
       }
-      list.splice(index, 1, newComponent);
-      $scope.emit('update', newComponent);
-      $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
 
     var remove = function(component) {
@@ -223,7 +223,13 @@ module.exports = [
 
       var previousSettings = angular.copy(component);
 
+      // Make sure this component has a key.
+      if (!component.key) {
+        component.key = component.type;
+      }
+
       // Open the dialog.
+      var originalKey = '';
       ngDialog.open({
         template: 'formio/components/settings.html',
         scope: childScope,
@@ -252,15 +258,10 @@ module.exports = [
           });
 
           // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
-            if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
-              if ($scope.data.hasOwnProperty($scope.component.key)) {
-                delete $scope.data[$scope.component.key];
-              }
-              $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
-              BuilderUtils.uniquify($scope.form, $scope.component);
-              $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+            $scope.updateKey($scope.component);
+            if (!originalKey) {
+              originalKey = $scope.component.key;
             }
           });
         }]
@@ -278,6 +279,8 @@ module.exports = [
 
         // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
         if (!component.label) {
+          component.key = originalKey;
+          $scope.updateKey(component);
           component.label = component.key || component.type;
           component.hideLabel = true;
         }

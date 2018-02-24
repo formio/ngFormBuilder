@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.29.0
+### Fixed
+ - The how the custom component is handled
+ - Issue where existing forms would not reset the key and label to original if it is deleted.
+ - Problem where hideLabel would still show on certain components.
+
+### Added
+ - The ability to set any component to show their label within a datagrid.
+ 
+### Changed
+ - How the labels are shown when they have "hideLabel" checked, where they are just a tooltip now.
+
 ## 2.28.5
 ### Fixed
  - The forced label to not be so aggressive when they are editing the label.

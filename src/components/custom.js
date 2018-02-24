@@ -1,3 +1,5 @@
+var _assign = require('lodash/assign');
+
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -36,7 +38,8 @@ module.exports = function(app) {
           newValue.key = newValue.key || newValue.type;
           newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
           newValue.persistent = (newValue.hasOwnProperty('persistent') ? newValue.persistent : true);
-          $scope.updateComponent(newValue, $scope.index);
+          $scope.updateKey(newValue);
+          _assign($scope.component, newValue);
         }
       });
     }
