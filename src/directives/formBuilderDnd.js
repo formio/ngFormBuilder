@@ -163,6 +163,7 @@ module.exports = [
           delete $scope.data[component.key];
         }
         if (component.label) {
+          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
         }
         BuilderUtils.uniquify($scope.form, component);
@@ -267,7 +268,6 @@ module.exports = [
           });
 
           // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
             updateKey($scope.component);
             if (!originalKey) {

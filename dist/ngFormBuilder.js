@@ -29901,6 +29901,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/columns/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<div class="form-group">' +
             '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">{{\'Column Properties\' | formioTranslate}}</label>' +
@@ -30332,12 +30333,10 @@ module.exports = function(app) {
       $scope,
       formioComponents
     ) {
-      // Because of the weirdnesses of prototype inheritence, components can't update themselves, only their properties.
-      $scope.customComponent = angular.copy($scope.component);
-      $scope.$watch('customComponent', function(newValue) {
+      $scope.$watch('component', function(newValue) {
         if (newValue) {
           // Don't allow a type of a real type.
-          newValue.type = (formioComponents.components.hasOwnProperty(newValue.type) ? 'custom' : newValue.type);
+          newValue.type = (!newValue.type || formioComponents.components.hasOwnProperty(newValue.type) ? 'custom' : newValue.type);
           // Ensure some key settings are set.
           newValue.key = newValue.key || newValue.type;
           newValue.protected = (newValue.hasOwnProperty('protected') ? newValue.protected : false);
@@ -30357,7 +30356,7 @@ module.exports = function(app) {
         '<div class="form-group">' +
         '<p>Custom components can be used to render special fields or widgets inside your app. For information on how to display in an app, see <a href="http://help.form.io/userguide/#custom" target="_blank">custom component documentation</a>.</p>' +
         '<label for="json" form-builder-tooltip="Enter the JSON for this custom element.">{{\'Custom Element JSON\' | formioTranslate}}</label>' +
-        '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="customComponent" placeholder="{}" rows="10"></textarea>' +
+        '<textarea ng-controller="customComponent" class="form-control" id="json" name="json" json-input ng-model="component" placeholder="{}" rows="10"></textarea>' +
         '</div>' +
         '</ng-form>'
       );
@@ -33891,6 +33890,20 @@ module.exports = [
       return true;
     };
 
+    var updateKey = function(component) {
+      if (!component.lockKey && component.isNew) {
+        if ($scope.data.hasOwnProperty(component.key)) {
+          delete $scope.data[component.key];
+        }
+        if (component.label) {
+          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
+          component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
+        }
+        BuilderUtils.uniquify($scope.form, component);
+        $scope.data[component.key] = component.multiple ? [''] : '';
+      }
+    };
+
     // Allow prototyped scopes to update the original component.
     $scope.updateComponent = function(newComponent, index) {
       var list = $scope.component.components;
@@ -33901,6 +33914,7 @@ module.exports = [
         list = pages[$scope.form.page].components;
       }
       list.splice(index, 1, newComponent);
+      updateKey(newComponent);
       $scope.emit('update', newComponent);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: newComponent});
     };
@@ -33958,6 +33972,7 @@ module.exports = [
       var previousSettings = angular.copy(component);
 
       // Open the dialog.
+      var originalKey = '';
       ngDialog.open({
         template: 'formio/components/settings.html',
         scope: childScope,
@@ -33986,15 +34001,10 @@ module.exports = [
           });
 
           // Watch the settings label and auto set the key from it.
-          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
           $scope.$watch('component.label', function() {
-            if ($scope.component.label && !$scope.component.lockKey && $scope.component.isNew) {
-              if ($scope.data.hasOwnProperty($scope.component.key)) {
-                delete $scope.data[$scope.component.key];
-              }
-              $scope.component.key = _camelCase($scope.parentKey + ' ' + $scope.component.label.replace(invalidRegex, ''));
-              BuilderUtils.uniquify($scope.form, $scope.component);
-              $scope.data[$scope.component.key] = $scope.component.multiple ? [''] : '';
+            updateKey($scope.component);
+            if (!originalKey) {
+              originalKey = $scope.component.key;
             }
           });
         }]
@@ -34012,7 +34022,7 @@ module.exports = [
 
         // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
         if (!component.label) {
-          component.label = component.key || component.type;
+          component.label = component.key = originalKey || component.type;
           component.hideLabel = true;
         }
 
@@ -35301,7 +35311,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],295:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.28.5 | https://unpkg.com/ng-formio-builder@2.28.5/LICENSE.txt */
+/*! ng-formio-builder v2.28.6 | https://unpkg.com/ng-formio-builder@2.28.6/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -35311,6 +35321,7 @@ var app = angular.module('ngFormBuilder', [
   'dndLists',
   'ngDialog',
   'ui.bootstrap.accordion',
+  'ui.bootstrap.tooltip',
   'ckeditor'
 ]);
 
@@ -35453,7 +35464,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      "<div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n  <div ng-if=\"::!hideButtons\" ng-include=\"'formio/formbuilder/editbuttons.html'\"></div>\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n    <form-builder-element></form-builder-element>\n  </div>\n</div>\n"
+      "<div class=\"component-form-group component-type-{{ component.type }} form-builder-component\" ng-attr-uib-tooltip=\"{{ component.hideLabel ? component.label : undefined }}\" tooltip-placement=\"top-left\">\n  <div ng-if=\"::!hideButtons\" ng-include=\"'formio/formbuilder/editbuttons.html'\"></div>\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n    <form-builder-element></form-builder-element>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/list.html',
