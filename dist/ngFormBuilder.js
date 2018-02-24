@@ -29620,6 +29620,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -29824,7 +29825,6 @@ module.exports = function(app) {
           '  <label for="value" form-builder-tooltip="The value used with this radio button.">{{\'Radio Value\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
           '</div>' +
-          '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option-shortcut></form-builder-option-shortcut>' +
@@ -29836,6 +29836,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -30287,6 +30288,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -30577,6 +30579,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -30701,6 +30704,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -30815,7 +30819,7 @@ module.exports = function(app) {
 
       $templateCache.put('formio/formbuilder/editgrid.html',
         '<fieldset>' +
-        '<label ng-if="component.label" class="control-label">' +
+        '<label ng-if="component.label && !component.hideLabel" class="control-label">' +
           '{{ component.label }} ' +
           '<formio-component-tooltip></formio-component-tooltip>' +
         '</label>' +
@@ -31392,6 +31396,7 @@ module.exports = function(app) {
           '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31610,6 +31615,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31681,6 +31687,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31759,8 +31766,9 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
+          '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31865,6 +31873,7 @@ module.exports = function(app) {
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32053,6 +32062,7 @@ module.exports = function(app) {
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32198,6 +32208,7 @@ module.exports = function(app) {
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32541,6 +32552,7 @@ module.exports = function(app) {
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32613,6 +32625,7 @@ module.exports = function(app) {
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="mask"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32725,6 +32738,7 @@ module.exports = function(app) {
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -33004,8 +33018,8 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Condense the size of the table.'
   },
-  datagridLabel: {
-    label: 'Datagrid Label',
+  dataGridLabel: {
+    label: 'Show Label in DataGrid',
     type: 'checkbox',
     tooltip: 'Show the label when in a datagrid.'
   },
@@ -35464,7 +35478,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/component.html',
-      "<div class=\"component-form-group component-type-{{ component.type }} form-builder-component\" ng-attr-uib-tooltip=\"{{ component.hideLabel ? component.label : undefined }}\" tooltip-placement=\"top-left\">\n  <div ng-if=\"::!hideButtons\" ng-include=\"'formio/formbuilder/editbuttons.html'\"></div>\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n    <form-builder-element></form-builder-element>\n  </div>\n</div>\n"
+      "<div class=\"component-form-group component-type-{{ component.type }} form-builder-component\" ng-attr-uib-tooltip=\"{{ (component.input && component.label && component.hideLabel) ? component.label : undefined }}\" tooltip-placement=\"top-left\">\n  <div ng-if=\"::!hideButtons\" ng-include=\"'formio/formbuilder/editbuttons.html'\"></div>\n  <div class=\"form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n    <form-builder-element></form-builder-element>\n  </div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/list.html',
@@ -35472,7 +35486,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/row.html',
-      "<div class=\"formbuilder-row\">\n  <label ng-if=\"component.label\" class=\"control-label\">{{ component.label }}</label>\n  <ul class=\"component-row formbuilder-group\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n      dnd-horizontal-list=\"true\">\n    <li ng-repeat=\"component in component.components\"\n        class=\"formbuilder-group-row pull-left\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\">\n      <form-builder-component></form-builder-component>\n      <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n    </li>\n    <li class=\"formbuilder-group-row form-builder-drop\" ng-if=\"component.components.length < hideCount\">\n      <div class=\"alert alert-info\" role=\"alert\">\n        Drag and Drop a form component\n      </div>\n    </li>\n  </ul>\n  <div style=\"clear:both;\"></div>\n</div>\n"
+      "<div class=\"formbuilder-row\">\n  <label ng-if=\"component.label && !component.hideLabel\" class=\"control-label\">{{ component.label }}</label>\n  <ul class=\"component-row formbuilder-group\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n      dnd-horizontal-list=\"true\">\n    <li ng-repeat=\"component in component.components\"\n        class=\"formbuilder-group-row pull-left\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\">\n      <form-builder-component></form-builder-component>\n      <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n    </li>\n    <li class=\"formbuilder-group-row form-builder-drop\" ng-if=\"component.components.length < hideCount\">\n      <div class=\"alert alert-info\" role=\"alert\">\n        Drag and Drop a form component\n      </div>\n    </li>\n  </ul>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
@@ -35480,7 +35494,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',
-      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"component.label\" class=\"control-label\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <tr>\n      <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n        {{ (component.label || '') | formioTranslate:null:builder }}\n        <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n      </th>\n    </tr>\n    <tr\n      class=\"component-list\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n    >\n      <td\n        ng-repeat=\"component in component.components\"\n        ng-init=\"hideMoveButton = true; component.hideLabel = true\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\"\n      >\n        <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n          <div class=\"has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n            <div class=\"input-group\">\n              <form-builder-component></form-builder-component>\n            </div>\n          </div>\n        </div>\n      </td>\n      <td ng-if=\"component.components.length === 0\">\n        <div class=\"alert alert-info\" role=\"alert\">\n          Datagrid Components\n        </div>\n      </td>\n    </tr>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
+      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"component.label && !component.hideLabel\" class=\"control-label\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <thead>\n      <tr>\n        <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n          {{ (component.label || '') | formioTranslate:null:builder }}\n          <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n        </th>\n      </tr>\n    </thead>\n    <tbody>\n      <tr\n        class=\"component-list\"\n        dnd-list=\"component.components\"\n        dnd-drop=\"addComponent(item, index)\"\n      >\n        <td\n          ng-repeat=\"component in component.components\"\n          ng-init=\"hideMoveButton = true; component.hideLabel = true\"\n          dnd-draggable=\"component\"\n          dnd-effect-allowed=\"move\"\n          dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n          dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n          dnd-moved=\"removeComponent(component, false)\"\n        >\n          <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n            <div class=\"has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n              <div class=\"input-group\">\n                <form-builder-component></form-builder-component>\n              </div>\n            </div>\n          </div>\n        </td>\n        <td ng-if=\"component.components.length === 0\">\n          <div class=\"alert alert-info\" role=\"alert\">\n            Datagrid Components\n          </div>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/components/confirm-remove.html',

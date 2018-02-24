@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 2.28.6
 ### Fixed
  - Issue where existing forms would not reset the key and label to original if it is deleted.
+ - Problem where hideLabel would still show on certain components.
+ 
+### Changed
+ - How the labels are shown when they have "hideLabel" checked, where they are just a tooltip now.
 
 ## 2.28.5
 ### Fixed
