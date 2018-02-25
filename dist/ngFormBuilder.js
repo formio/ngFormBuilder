@@ -29928,7 +29928,7 @@ module.exports = function(app) {
                 '</tr>' +
               '</tbody>' +
             '</table>' +
-            '<button type="button" class="btn" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
+            '<button type="button" class="btn btn-default" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
           '</div>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -34691,7 +34691,7 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn btn-default" ng-click="addValue()">{{ \'Add Header\'' +
+                '<button type="button" class="btn btn-primary" ng-click="addValue()"><span class="glyphicon glyphicon-plus"></span> {{ \'Add Header\'' +
     ' | formioTranslate' +
     ' }}</button>' +
               '</div>',
@@ -34808,7 +34808,7 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                '<button type="button" class="btn btn-primary" ng-click="addValue()"><span class="glyphicon glyphicon-plus"></span> {{ \'Add Value\' | formioTranslate }}</button>' +
               '</div>',
     replace: true,
     link: function($scope) {
@@ -34960,7 +34960,7 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                '<button type="button" class="btn btn-primary" ng-click="addValue()"><span class="glyphicon glyphicon-plus"></span> {{ \'Add Value\' | formioTranslate }}</button>' +
               '</div>',
     replace: true,
     link: function($scope, el, attrs) {
@@ -35048,7 +35048,7 @@ module.exports = ['BuilderUtils', function(BuilderUtils) {
                       '</tr>' +
                     '</tbody>' +
                   '</table>' +
-                  '<button type="button" class="btn btn-default" ng-click="addValue()">{{ \'Add Value\' | formioTranslate }}</button>' +
+                  '<button type="button" class="btn btn-primary" ng-click="addValue()"><span class="glyphicon glyphicon-plus"></span> {{ \'Add Value\' | formioTranslate }}</button>' +
                 '</div>',
       replace: true,
       link: function($scope, el, attrs) {
@@ -35322,7 +35322,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],295:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.29.1 | https://unpkg.com/ng-formio-builder@2.29.1/LICENSE.txt */
+/*! ng-formio-builder v2.29.2 | https://unpkg.com/ng-formio-builder@2.29.2/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

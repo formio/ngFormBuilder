@@ -72,7 +72,7 @@ module.exports = function(app) {
                 '</tr>' +
               '</tbody>' +
             '</table>' +
-            '<button type="button" class="btn" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
+            '<button type="button" class="btn btn-default" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
           '</div>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
