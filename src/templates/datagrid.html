@@ -7,7 +7,7 @@
     <thead>
       <tr>
         <th style="padding:30px 0 10px 0" ng-repeat="component in component.components" ng-class="{'field-required': component.validate.required}">
-          <span ng-if="!component.dataGridLabel && !component.hideLabel">{{ (component.label || '') | formioTranslate:null:builder }}</span>
+          <span ng-if="!component.dataGridLabel && (component.input || !component.hideLabel)">{{ (component.label || '') | formioTranslate:null:builder }}</span>
           <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
         </th>
       </tr>
