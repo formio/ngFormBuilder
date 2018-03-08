@@ -36,6 +36,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/well/display.html',
         '<ng-form>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '<ng-form>'
       );

@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.30.2
+### Changed
+ - Upgraded dependencies.
+
+### Fixed
+ - Issues where the labels would show up when fieldsets are added to data grids.
+ - Removed double tooltip in resources.
+ - Select Component - Change end tag on the select component element
+
 ## 2.30.1
 ### Fixed
  - Issue where DataGrid would not show input element labels within columns.
