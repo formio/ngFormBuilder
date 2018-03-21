@@ -22,6 +22,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
       var placeholder = attrs.placeholder || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].placeholder) || null;
       var type = attrs.type || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].type) || 'text';
       var tooltip = attrs.tooltip || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].tooltip) || '';
+      var step = attrs.step || (COMMON_OPTIONS[property] && COMMON_OPTIONS[property].step) || '';
 
       var input = type === 'textarea' ? angular.element('<textarea></textarea>') : angular.element('<input>');
 
@@ -32,6 +33,11 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
         'ng-model': 'component.' + property,
         placeholder: formioTranslate(placeholder)
       };
+
+      if (step) {
+        inputAttrs.step = step;
+      }
+
       // Pass through attributes from the directive to the input element
       angular.forEach(attrs.$attr, function(key) {
         inputAttrs[key] = attrs[attrs.$normalize(key)];
