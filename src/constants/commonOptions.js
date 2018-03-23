@@ -342,5 +342,10 @@ module.exports = {
     label: 'Use Delimiter',
     type: 'checkbox',
     tooltip: 'Separate thousands by local delimiter.'
+  },
+  'autofocus': {
+    label: 'Initial Focus',
+    type: 'checkbox',
+    tooltip: 'Make this field the initially focused element on this form.'
   }
 };
