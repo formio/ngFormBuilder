@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [UNRELEASED]
+### Fixed
+- Autofocus option.
+
 ## 2.30.2
 ### Changed
  - Upgraded dependencies.
@@ -45,7 +49,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
  - The ability to set any component to show their label within a datagrid.
- 
+
 ### Changed
  - How the labels are shown when they have "hideLabel" checked, where they are just a tooltip now.
 
