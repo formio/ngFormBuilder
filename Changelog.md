@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.31.0
+### Changed
+ - Upgrade ng-formio to v2.31.0
+ - Upgrade formio.js to v2.30.0
+
+### Added
+ - Decimal limit settings and configurations.
+
 ## 2.30.2
 ### Changed
  - Upgraded dependencies.
