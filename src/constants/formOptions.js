@@ -25,16 +25,6 @@ module.exports = {
       title: 'OAuth'
     }
   ],
-  delimiters: [
-    {
-      name: ',',
-      title: 'Comma ","'
-    },
-    {
-      name: '.',
-      title: 'Dot "."'
-    }
-  ],
   themes: [
     {
       name: 'default',
