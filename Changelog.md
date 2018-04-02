@@ -4,12 +4,14 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 2.31.1
 ### Added
  - `moment` description to calculated and conditional sections.
  - Calculated value section for DateTime component.
 
 ### Changed
+ - Upgrade ng-formio to 2.31.1
+ - Upgrade formiojs to 2.30.1
  - Structure of form builder page for DateTime component.
 
 ## 2.31.0
