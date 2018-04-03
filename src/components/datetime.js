@@ -57,12 +57,8 @@ module.exports = function(app) {
             template: 'formio/components/datetime/display.html'
           },
           {
-            name: 'Date',
-            template: 'formio/components/datetime/date.html'
-          },
-          {
-            name: 'Time',
-            template: 'formio/components/datetime/time.html'
+            name: 'Data',
+            template: 'formio/components/datetime/data.html'
           },
           {
             name: 'Validation',
@@ -115,44 +111,59 @@ module.exports = function(app) {
         '</ng-form>'
       );
 
-      $templateCache.put('formio/components/datetime/date.html',
+      $templateCache.put('formio/components/datetime/data.html',
         '<ng-form>' +
-          '<div class="checkbox">' +
-            '<label form-builder-tooltip="Enables date input for this field.">' +
-              '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> {{\'Enable Date Input\' | formioTranslate}}' +
-            '</label>' +
-          '</div>' +
-          '<form-builder-option property="datePicker.minDate"></form-builder-option>' +
-          '<form-builder-option property="datePicker.maxDate"></form-builder-option>' +
-          '<div class="form-group">' +
-            '<label for="startingDay" form-builder-tooltip="The first day of the week.">{{\'Starting Day\' | formioTranslate}}</label>' +
-            '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day | formioTranslate for (idx, day) in startingDays"></select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">{{\'Minimum Mode\' | formioTranslate}}</label>' +
-            '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">{{\'Maximum Mode\' | formioTranslate}}</label>' +
-            '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
-          '</div>' +
-          '<form-builder-option property="datePicker.yearRows" label="Number of Years Displayed (Rows)" placeholder="Year Range (Rows)" title="The number of years to display in the years view (Rows)."></form-builder-option>' +
-          '<form-builder-option property="datePicker.yearColumns" label="Number of Years Displayed (Columns)" placeholder="Year Range (Columns)" title="The number of years to display in the years view (Columns)."></form-builder-option>' +
-          '<form-builder-option property="datePicker.showWeeks" type="checkbox" label="Show Week Numbers" title="Displays the week numbers on the date picker."></form-builder-option>' +
-        '</ng-form>'
-      );
-
-      $templateCache.put('formio/components/datetime/time.html',
-        '<ng-form>' +
-          '<div class="checkbox">' +
-            '<label form-builder-tooltip="Enables time input for this field.">' +
-              '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> {{\'Enable Time Input\' | formioTranslate}}' +
-            '</label>' +
-          '</div>' +
-          '<form-builder-option property="timePicker.hourStep" type="number" label="Hour Step Size" title="The number of hours to increment/decrement in the time picker."></form-builder-option>' +
-          '<form-builder-option property="timePicker.minuteStep" type="number" label="Minute Step Size" title="The number of minutes to increment/decrement in the time picker."></form-builder-option>' +
-          '<form-builder-option property="timePicker.showMeridian" type="checkbox" label="12 Hour Time (AM/PM)" title="Display time in 12 hour time with AM/PM."></form-builder-option>' +
-          '<form-builder-option property="timePicker.readonlyInput" type="checkbox" label="Read-Only Input" title="Makes the time picker input boxes read-only. The time can only be changed by the increment/decrement buttons."></form-builder-option>' +
+          '<form-builder-option property="defaultDate"></form-builder-option>' +
+          '<uib-accordion>' +
+            '<div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
+              '<formio-script-editor rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+              '<small>' +
+                '<p>Enter code to calculate a value.</p>' +
+                '<p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+                '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+                '<p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
+              '</small>' +
+            '</div>' +
+          '</uib-accordion>' +
+          '<uib-accordion>' +
+            '<div uib-accordion-group heading="Date" class="panel panel-default">' +
+              '<div class="checkbox">' +
+                '<label form-builder-tooltip="Enables date input for this field.">' +
+                  '<input type="checkbox" id="enableDate" name="enableDate" ng-model="component.enableDate" ng-checked="component.enableDate" ng-change="setFormat()"> {{\'Enable Date Input\' | formioTranslate}}' +
+                '</label>' +
+              '</div>' +
+              '<form-builder-option property="datePicker.minDate"></form-builder-option>' +
+              '<form-builder-option property="datePicker.maxDate"></form-builder-option>' +
+              '<div class="form-group">' +
+                '<label for="startingDay" form-builder-tooltip="The first day of the week.">{{\'Starting Day\' | formioTranslate}}</label>' +
+                '<select class="form-control" id="startingDay" name="startingDay" ng-model="component.datePicker.startingDay" ng-options="idx as day | formioTranslate for (idx, day) in startingDays"></select>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label for="minMode" form-builder-tooltip="The smallest unit of time view to display in the date picker.">{{\'Minimum Mode\' | formioTranslate}}</label>' +
+                '<select class="form-control" id="minMode" name="minMode" ng-model="component.datePicker.minMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label for="maxMode" form-builder-tooltip="The largest unit of time view to display in the date picker.">{{\'Maximum Mode\' | formioTranslate}}</label>' +
+                '<select class="form-control" id="maxMode" name="maxMode" ng-model="component.datePicker.maxMode" ng-options="mode.name as mode.label | formioTranslate for mode in modes"></select>' +
+              '</div>' +
+              '<form-builder-option property="datePicker.yearRows" label="Number of Years Displayed (Rows)" placeholder="Year Range (Rows)" title="The number of years to display in the years view (Rows)."></form-builder-option>' +
+              '<form-builder-option property="datePicker.yearColumns" label="Number of Years Displayed (Columns)" placeholder="Year Range (Columns)" title="The number of years to display in the years view (Columns)."></form-builder-option>' +
+              '<form-builder-option property="datePicker.showWeeks" type="checkbox" label="Show Week Numbers" title="Displays the week numbers on the date picker."></form-builder-option>' +
+            '</div>' +
+          '</uib-accordion>' +
+          '<uib-accordion>' +
+            '<div uib-accordion-group heading="Time" class="panel panel-default">' +
+              '<div class="checkbox">' +
+                '<label form-builder-tooltip="Enables time input for this field.">' +
+                  '<input type="checkbox" id="enableTime" name="enableTime" ng-model="component.enableTime" ng-checked="component.enableTime" ng-change="setFormat()"> {{\'Enable Time Input\' | formioTranslate}}' +
+                '</label>' +
+              '</div>' +
+              '<form-builder-option property="timePicker.hourStep" type="number" label="Hour Step Size" title="The number of hours to increment/decrement in the time picker."></form-builder-option>' +
+              '<form-builder-option property="timePicker.minuteStep" type="number" label="Minute Step Size" title="The number of minutes to increment/decrement in the time picker."></form-builder-option>' +
+              '<form-builder-option property="timePicker.showMeridian" type="checkbox" label="12 Hour Time (AM/PM)" title="Display time in 12 hour time with AM/PM."></form-builder-option>' +
+              '<form-builder-option property="timePicker.readonlyInput" type="checkbox" label="Read-Only Input" title="Makes the time picker input boxes read-only. The time can only be changed by the increment/decrement buttons."></form-builder-option>' +
+            '</div>' +
+          '</uib-accordion>' +
         '</ng-form>'
       );
 
