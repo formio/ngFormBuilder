@@ -59,6 +59,7 @@
     "lodash": "^4.17.4",
     "ng-dialog": "^1.4.0",
     "ng-formio": "^2.31.1",
-    "ng-tags-input": "^3.2.0"
+    "ng-tags-input": "^3.2.0",
+    "vanilla-text-mask": "^5.0.1"
   }
 }
