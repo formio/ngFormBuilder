@@ -342,5 +342,15 @@ module.exports = {
     label: 'Use Delimiter',
     type: 'checkbox',
     tooltip: 'Separate thousands by local delimiter.'
+  },
+  'collapsible': {
+    label: 'Collapsible',
+    type: 'checkbox',
+    tooltip: 'It\'s possible to hide body clicking the title.'
+  },
+  'collapsed': {
+    label: 'Collapsed',
+    type: 'checkbox',
+    tooltip: 'Component\'s body initially hidden.'
   }
 };
