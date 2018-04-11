@@ -33,7 +33,7 @@ module.exports = function() {
                     '</tr>' +
                   '</tbody>' +
                 '</table>' +
-                '<button type="button" class="btn btn-default" ng-click="addValue()">{{ \'Add Header\'' +
+                '<button type="button" class="btn btn-primary" ng-click="addValue()"><span class="glyphicon glyphicon-plus"></span> {{ \'Add Header\'' +
     ' | formioTranslate' +
     ' }}</button>' +
               '</div>',

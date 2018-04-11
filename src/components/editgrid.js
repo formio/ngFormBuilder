@@ -93,7 +93,7 @@ module.exports = function(app) {
 
       $templateCache.put('formio/formbuilder/editgrid.html',
         '<fieldset>' +
-        '<label ng-if="component.label" class="control-label">' +
+        '<label ng-if="labelVisible()" class="control-label">' +
           '{{ component.label }} ' +
           '<formio-component-tooltip></formio-component-tooltip>' +
         '</label>' +

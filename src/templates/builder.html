@@ -48,7 +48,17 @@
         <div form-builder-droppable style="width:100%;height:1000px;position:absolute;" id="fb-drop-zone"></div>
         <formio form="form" options="{building: true}"></formio>
       </div>
-      <form-builder-list ng-if="form.display !== 'pdf'" component="form" form="form" formio="::formio" hide-dnd-box-count="hideCount" root-list="true" class="rootlist" options="options"></form-builder-list>
+      <form-builder-list
+        ng-if="form.display !== 'pdf'"
+        component="form"
+        form="form"
+        formio="::formio"
+        hide-dnd-box-count="hideCount"
+        root-list="true"
+        class="rootlist"
+        options="options"
+        dnd-disable-if="form.display === 'wizard'"
+      ></form-builder-list>
     </div>
   </div>
 </div>

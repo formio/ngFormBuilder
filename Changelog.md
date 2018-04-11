@@ -4,6 +4,88 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.31.1
+### Added
+ - `moment` description to calculated and conditional sections.
+ - Calculated value section for DateTime component.
+
+### Changed
+ - Upgrade ng-formio to 2.31.1
+ - Upgrade formiojs to 2.30.1
+ - Structure of form builder page for DateTime component.
+
+## 2.31.0
+### Changed
+ - Upgrade ng-formio to v2.31.0
+ - Upgrade formio.js to v2.30.0
+
+### Added
+ - Decimal limit settings and configurations.
+
+## 2.30.2
+### Changed
+ - Upgraded dependencies.
+
+### Fixed
+ - Issues where the labels would show up when fieldsets are added to data grids.
+ - Removed double tooltip in resources.
+ - Select Component - Change end tag on the select component element
+
+## 2.30.1
+### Fixed
+ - Issue where DataGrid would not show input element labels within columns.
+
+## 2.30.0
+### Changed
+ - Upgrade ng-formio to 2.30.0
+
+## 2.29.5
+### Changed
+ - Upgraded ng-formiot o 2.29.6
+
+## 2.29.4
+### Changed
+ - Grab lastest ng-formio.
+
+## 2.29.3
+### Changed
+ - Upgraded ngFormio so that it will not set autofocus to true for text areas.
+
+## 2.29.2
+### Fixed
+ - Issue where the certain buttons would not have a proper class.
+
+## 2.29.0
+### Fixed
+ - The how the custom component is handled
+ - Issue where existing forms would not reset the key and label to original if it is deleted.
+ - Problem where hideLabel would still show on certain components.
+
+### Added
+ - The ability to set any component to show their label within a datagrid.
+
+### Changed
+ - How the labels are shown when they have "hideLabel" checked, where they are just a tooltip now.
+
+## 2.28.5
+### Fixed
+ - The forced label to not be so aggressive when they are editing the label.
+
+## 2.28.4
+### Fixed
+ - Some performance issues with some controls when a lot of forms are present.
+
+## 2.28.3
+### Changed
+ - Upgraded ng-formio to 2.28.6, formiojs to 2.29.3
+
+### Fixed
+ - Issue with the wizard builder where dragging components outside of panel makes it freak out.
+
+## 2.28.2
+### Changed
+ - Upgraded ng-formio to 2.28.4
+
 ## 2.28.1
 ### Added
  - 'delimiter' property to Number and Currency components.

@@ -49,6 +49,7 @@ module.exports = function(app) {
           '<form-builder-option property="legend" label="Legend" placeholder="FieldSet Legend" title="The legend text to appear above this fieldset."></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );

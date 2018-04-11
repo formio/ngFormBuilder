@@ -27,6 +27,7 @@ module.exports = [
             '<p>Enter custom conditional code.</p>' +
             '<p>You must assign the <strong>show</strong> variable as either <strong>true</strong> or <strong>false</strong>.</p>' +
             '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+            '<p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
             '<p><strong>Note: Advanced Conditional logic will override the results of the Simple Conditional logic.</strong></p>' +
             '</small>' +
           '</div>' +

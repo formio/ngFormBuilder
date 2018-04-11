@@ -34,7 +34,7 @@ module.exports = function(app) {
               '</div>' +
               '<formio-settings-info component="component" data="{}" formio="::formio"></formio-settings-info>' +
               '<div class="form-group">' +
-                '<button type="submit" class="btn btn-success" ng-if="component.input" ng-disabled="!component.label" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
+                '<button type="submit" class="btn btn-success" ng-if="component.input" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
         '<button type="submit" class="btn btn-success" ng-if="!component.input" ng-click="closeThisDialog(true)">{{\'Save\' | formioTranslate}}</button>&nbsp;' +
                 '<button type="button" class="btn btn-default" ng-click="closeThisDialog(false)" ng-if="!component.isNew">{{\'Cancel\' | formioTranslate}}</button>&nbsp;' +
                 '<button type="button" class="btn btn-danger" ng-click="removeComponent(component, formComponents[component.type].confirmRemove); closeThisDialog(false)">{{\'Remove\' | formioTranslate}}</button>' +
@@ -57,6 +57,7 @@ module.exports = function(app) {
         '          <p>Enter custom default value code.</p>' +
         '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
         '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
         '          <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
         '        </small>' +
         '      </div>' +
@@ -78,6 +79,7 @@ module.exports = function(app) {
         '          <p>Enter code to calculate a value.</p>' +
         '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
         '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
         '        </small>' +
         '      </div>' +
         '      <div uib-accordion-group heading="JSONLogic Value" class="panel panel-default">' +

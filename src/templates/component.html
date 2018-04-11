@@ -1,4 +1,4 @@
-<div class="component-form-group component-type-{{ component.type }} form-builder-component">
+<div class="component-form-group component-type-{{ component.type }} form-builder-component" ng-attr-uib-tooltip="{{ (component.input && component.label && component.hideLabel) ? component.label : undefined }}" tooltip-placement="top-left">
   <div ng-if="::!hideButtons" ng-include="'formio/formbuilder/editbuttons.html'"></div>
   <div class="form-group has-feedback form-field-type-{{ component.type }} {{component.customClass}}" id="form-group-{{ component.key }}" style="position:inherit" ng-style="component.style">
     <form-builder-element></form-builder-element>

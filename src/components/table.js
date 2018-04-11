@@ -61,6 +61,7 @@ module.exports = function(app) {
           '<form-builder-option property="bordered"></form-builder-option>' +
           '<form-builder-option property="hover"></form-builder-option>' +
           '<form-builder-option property="condensed"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );

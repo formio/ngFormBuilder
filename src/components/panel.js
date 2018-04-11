@@ -78,6 +78,7 @@ module.exports = function(app) {
             '<select class="form-control" id="breadcrumb" name="breadcrumb" ng-options="breadcrumb.name as breadcrumb.title for breadcrumb in breadcrumbs" ng-model="component.breadcrumb"></select>' +
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -91,6 +92,7 @@ module.exports = function(app) {
               '<p>Enter custom conditional code.</p>' +
               '<p>You must assign the <strong>next</strong> variable with the API key of the next page.</p>' +
               '<p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+              '<p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
             '</small>' +
           '</div>' +
           '<div uib-accordion-group heading="JSON Next Page" class="panel panel-default">' +

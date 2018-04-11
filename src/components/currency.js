@@ -11,7 +11,7 @@ module.exports = function(app) {
           },
           {
             name: 'Data',
-            template: 'formio/components/common/data.html'
+            template: 'formio/components/number/data.html'
           },
           {
             name: 'Validation',
@@ -59,6 +59,7 @@ module.exports = function(app) {
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="delimiter"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );

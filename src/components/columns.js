@@ -46,6 +46,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/columns/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
+          '<form-builder-option property="hideLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<div class="form-group">' +
             '<label form-builder-tooltip="The width, offset, push and pull settings for the columns">{{\'Column Properties\' | formioTranslate}}</label>' +
@@ -71,7 +72,7 @@ module.exports = function(app) {
                 '</tr>' +
               '</tbody>' +
             '</table>' +
-            '<button type="button" class="btn" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
+            '<button type="button" class="btn btn-default" ng-click="addColumn()">{{\'Add Column\' | formioTranslate}}</button>' +
           '</div>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'

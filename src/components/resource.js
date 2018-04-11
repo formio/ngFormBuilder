@@ -6,7 +6,11 @@ module.exports = function(app) {
         onEdit: ['$scope', function($scope) {
           $scope.resources = [];
           $scope.component.project = $scope.formio.projectId;
-          $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
+          $scope.formio.loadForms({params: {
+            type: 'resource',
+            limit: 4294967295,
+            select: '_id,title'
+          }}).then(function(resources) {
             $scope.resources = resources;
             if (!$scope.component.resource) {
               $scope.component.resource = resources[0]._id;
@@ -67,7 +71,6 @@ module.exports = function(app) {
             '<label for="template" form-builder-tooltip="The HTML template for the result data items.">{{\'Item Template\' | formioTranslate}}</label>' +
             '<textarea class="form-control" id="template" name="template" ng-model="component.template" rows="3">{{ component.template }}</textarea>' +
           '</div>' +
-          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
@@ -81,6 +84,7 @@ module.exports = function(app) {
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
