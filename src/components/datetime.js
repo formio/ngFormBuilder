@@ -124,6 +124,7 @@ module.exports = function(app) {
                 '<p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
               '</small>' +
             '</div>' +
+        '    <form-builder-option property="calculateServer" type="checkbox" label="Calculate on server" tooltip="Perform these calculations on the server as well as the frontend."></form-builder-option>' +
           '</uib-accordion>' +
           '<uib-accordion>' +
             '<div uib-accordion-group heading="Date" class="panel panel-default">' +

@@ -112,6 +112,7 @@ module.exports = function(app) {
         '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.calculateValue" placeholder=\'{ ... }\'></textarea>' +
         '      </div>' +
         '    </uib-accordion>' +
+        '    <form-builder-option property="calculateServer" type="checkbox" label="Calculate on server" tooltip="Perform these calculations on the server as well as the frontend."></form-builder-option>' +
         '  </div>' +
         '</uib-accordion>'
       );
