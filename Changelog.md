@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Autofocus option.
 
+### Added
+ - Collapsible and Collapsed fields for Panel and FieldSet.
+
 ## 2.31.1
 ### Added
  - `moment` description to calculated and conditional sections.
