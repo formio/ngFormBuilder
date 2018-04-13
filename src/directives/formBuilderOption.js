@@ -50,6 +50,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
       if(property === 'label') {
         inputAttrs['label-validator'] = "";
         inputAttrs.required = "";
+        inputAttrs.autofocus = true;
       }
       // Add min/max value floor values for validation.
       if (property === 'validate.minLength' || property === 'validate.maxLength') {
