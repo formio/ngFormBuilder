@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.formioBuilder = f()}})(function(){var define,module,exports;return (function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(_dereq_,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.formioBuilder = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
@@ -29635,7 +29635,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -29735,7 +29735,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="block"></form-builder-option>' +
-        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
         '</ng-form>'
       );
@@ -29851,7 +29851,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -30306,7 +30306,7 @@ module.exports = function(app) {
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="delimiter"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -30597,7 +30597,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -30737,7 +30737,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -30970,6 +30970,8 @@ module.exports = function(app) {
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="collapsible"></form-builder-option>' +
+          '<form-builder-option property="collapsed" ng-if="component.collapsible"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31057,7 +31059,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -31418,7 +31420,6 @@ module.exports = function(app) {
           '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
-          '<form-builder-option property="validate.step" label="Increment (Step)" placeholder="Enter how much to increment per step (or precision)." title="The amount to increment/decrement for each step."></form-builder-option>' +
           '<form-builder-option property="prefix"></form-builder-option>' +
           '<form-builder-option property="suffix"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
@@ -31429,7 +31430,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -31607,6 +31608,8 @@ module.exports = function(app) {
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="hideLabel"></form-builder-option>' +
+          '<form-builder-option property="collapsible"></form-builder-option>' +
+          '<form-builder-option property="collapsed" ng-if="component.collapsible"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -31703,7 +31706,7 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -31775,7 +31778,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -31856,7 +31859,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -31961,7 +31964,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
@@ -32147,7 +32150,7 @@ module.exports = function(app) {
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
@@ -32296,6 +32299,7 @@ module.exports = function(app) {
           '<form-builder-option property="fieldSet" type="checkbox" label="Wrap inside field set" title="Displays the radio buttons wrapped by a field-set and legend."></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -32313,7 +32317,6 @@ module.exports = function(app) {
       $templateCache.put('formio/components/selectboxes/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
-        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
           '<form-builder-option property="validate.customMessage"></form-builder-option>' +
           '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
@@ -32371,6 +32374,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
@@ -32447,6 +32451,7 @@ module.exports = function(app) {
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -32639,7 +32644,7 @@ module.exports = function(app) {
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
@@ -32712,7 +32717,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="mask"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
@@ -33232,6 +33237,21 @@ module.exports = {
     label: 'Use Delimiter',
     type: 'checkbox',
     tooltip: 'Separate thousands by local delimiter.'
+  },
+  'autofocus': {
+    label: 'Initial Focus',
+    type: 'checkbox',
+    tooltip: 'Make this field the initially focused element on this form.'
+  },
+  'collapsible': {
+    label: 'Collapsible',
+    type: 'checkbox',
+    tooltip: 'It\'s possible to hide body clicking the title.'
+  },
+  'collapsed': {
+    label: 'Collapsed',
+    type: 'checkbox',
+    tooltip: 'Component\'s body initially hidden.'
   }
 };
 
@@ -34295,6 +34315,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
       if(property === 'label') {
         inputAttrs['label-validator'] = "";
         inputAttrs.required = "";
+        inputAttrs.autofocus = true;
       }
       // Add min/max value floor values for validation.
       if (property === 'validate.minLength' || property === 'validate.maxLength') {
@@ -35417,7 +35438,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],295:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.31.1 | https://unpkg.com/ng-formio-builder@2.31.1/LICENSE.txt */
+/*! ng-formio-builder v2.32.0 | https://unpkg.com/ng-formio-builder@2.32.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
