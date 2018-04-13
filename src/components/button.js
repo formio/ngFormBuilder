@@ -78,7 +78,7 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="block"></form-builder-option>' +
-        '<form-builder-option property="autofocus" type="checkbox" label="Add autofocus" tooltip="Set autofocus attribute to the field"></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disableOnInvalid"></form-builder-option>' +
         '</ng-form>'
       );
