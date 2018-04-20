@@ -46,19 +46,23 @@ module.exports = function(app) {
             '<label for="action" form-builder-tooltip="This is the action to be performed by this button.">{{\'Action\' | formioTranslate}}</label>' +
             '<select class="form-control" id="action" name="action" ng-options="action.name as action.title | formioTranslate for action in actions" ng-model="component.action"></select>' +
           '</div>' +
+          '<div class="form-group" ng-if="component.action === \'saveState\'">' +
+          '  <label for="state" form-builder-tooltip="Save the submission in a state. Defaults to \'submitted\'. \'draft\' will skip validation.">{{\'Submission State\' | formioTranslate}}</label>' +
+          '  <input type="text" class="form-control" id="state" name="state" ng-model="component.state" placeholder="submitted" />' +
+          '</div>' +
           '<div class="form-group" ng-if="component.action === \'event\'">' +
           '  <label for="event" form-builder-tooltip="The event to fire when the button is clicked.">{{\'Button Event\' | formioTranslate}}</label>' +
           '  <input type="text" class="form-control" id="event" name="event" ng-model="component.event" placeholder="event" />' +
           '</div>' +
-        '<div class="form-group" ng-if="component.action === \'url\'">' +
-        '  <label for="event" form-builder-tooltip="Place an Url where the submission will be sent.">{{\'Button Url\'' +
-        ' | formioTranslate}}</label>' +
-        '  <input type="url" class="form-control" id="event" name="event" ng-model="component.url"' +
-        ' placeholder="URL: https://example.form.io" />' +
-        '</div>' +
-        '<headers-builder ng-if="component.action === \'url\'" form="form" component="component"' +
-        ' data="component.headers" label="Headers" tooltip-text="Headers Properties' +
-        ' and Values for your request."></headers-builder>' +
+          '<div class="form-group" ng-if="component.action === \'url\'">' +
+          '  <label for="url" form-builder-tooltip="Place an Url where the submission will be sent.">{{\'Button Url\'' +
+          ' | formioTranslate}}</label>' +
+          '  <input type="url" class="form-control" id="url" name="event" ng-model="component.url"' +
+          ' placeholder="URL: https://example.form.io" />' +
+          '</div>' +
+          '<headers-builder ng-if="component.action === \'url\'" form="form" component="component"' +
+          ' data="component.headers" label="Headers" tooltip-text="Headers Properties' +
+          ' and Values for your request."></headers-builder>' +
           '<div class="form-group" ng-if="component.action === \'custom\'">' +
           '  <label for="custom" form-builder-tooltip="The custom logic to evaluate when the button is clicked.">{{\'Button Custom Logic\' | formioTranslate}}</label>' +
           '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.custom" placeholder="/*** Example Code ***/\ndata[\'mykey\'] = data[\'anotherKey\'];"></formio-script-editor>' +
