@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.33.0
+### Added
+ - Option to calculate values on server.
+ - Option to button component for saving state and deleting.
+ - Tooltips for editbuttons.
+
 ## 2.32.0
 ### Changed
  - Upgrade renderer dependency.
