@@ -11,11 +11,15 @@ module.exports = ['$filter', function($filter) {
       var formioTranslate = $filter('formioTranslate');
 
       if (attrs.formBuilderTooltip || attrs.title) {
-        var tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
+        var tooltip = el;
+        if (attrs.popoverAppend !== 'false') {
+          tooltip = angular.element('<i class="glyphicon glyphicon-question-sign text-muted"></i>');
+          el.append(' ').append(tooltip);
+        }        
         tooltip.popover({
           html: true,
           trigger: 'manual',
-          placement: 'right',
+          placement: attrs.popoverPlacement || 'right',
           content: formioTranslate(attrs.title || attrs.formBuilderTooltip)
         }).on('mouseenter', function() {
           var $self = angular.element(this);
