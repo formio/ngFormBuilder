@@ -5,6 +5,10 @@ module.exports = {
       title: 'Submit'
     },
     {
+      name: 'saveState',
+      title: 'Save in state'
+    },
+    {
       name: 'event',
       title: 'Event'
     },
@@ -15,6 +19,10 @@ module.exports = {
     {
       name: 'reset',
       title: 'Reset'
+    },
+    {
+      name: 'delete',
+      title: 'Delete'
     },
     {
       name: 'url',
