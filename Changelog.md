@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - Multiple masks settings for text field and phone number components
 
+## 2.33.0
+### Added
+ - Option to calculate values on server.
+ - Option to button component for saving state and deleting.
+ - Tooltips for editbuttons.
+
+## 2.32.0
+### Changed
+ - Upgrade renderer dependency.
+
+### Fixed
+- Autofocus option.
+
+### Added
+ - Collapsible and Collapsed fields for Panel and FieldSet.
+
 ## 2.31.1
 ### Added
  - `moment` description to calculated and conditional sections.

@@ -60,7 +60,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="mask"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
@@ -115,6 +115,7 @@ module.exports = function(app) {
         '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.calculateValue" placeholder=\'{ ... }\'></textarea>' +
         '      </div>' +
         '    </uib-accordion>' +
+        '    <form-builder-option property="calculateServer" type="checkbox" label="Calculate on server" tooltip="Perform these calculations on the server as well as the frontend."></form-builder-option>' +
         '  </div>' +
         '</uib-accordion>'
       );

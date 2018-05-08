@@ -104,7 +104,7 @@ module.exports = function(app) {
           '<form-builder-option property="persistent"></form-builder-option>' +
           '<form-builder-option property="encrypted" class="form-builder-premium"></form-builder-option>' +
           '<form-builder-option property="hidden"></form-builder-option>' +
-          '<form-builder-option property="autofocus" type="checkbox" label="Initial Focus" tooltip="Make this field the initially focused element on this form."></form-builder-option>' +
+          '<form-builder-option property="autofocus"></form-builder-option>' +
           '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="dataGridLabel"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
@@ -124,6 +124,7 @@ module.exports = function(app) {
                 '<p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
               '</small>' +
             '</div>' +
+        '    <form-builder-option property="calculateServer" type="checkbox" label="Calculate on server" tooltip="Perform these calculations on the server as well as the frontend."></form-builder-option>' +
           '</uib-accordion>' +
           '<uib-accordion>' +
             '<div uib-accordion-group heading="Date" class="panel panel-default">' +
