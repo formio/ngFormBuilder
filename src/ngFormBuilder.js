@@ -92,6 +92,8 @@ app.directive('labelValidator', require('./directives/labelValidator'));
 
 app.directive('formBuilderTable', require('./directives/formBuilderTable'));
 
+app.directive('formBuilderOptionInputFormat', require('./directives/formBuilderOptionInputFormat'));
+
 app.directive('formBuilderOptionInputsLabelPosition', require('./directives/formBuilderOptionInputsLabelPosition'));
 
 app.directive('formBuilderOptionKey', require('./directives/formBuilderOptionKey'));
