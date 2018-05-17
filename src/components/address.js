@@ -42,7 +42,6 @@ module.exports = function(app) {
           '<form-builder-option property="placeholder"></form-builder-option>' +
           '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
-          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<div class="form-group">' +
