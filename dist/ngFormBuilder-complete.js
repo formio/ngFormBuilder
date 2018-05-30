@@ -101228,7 +101228,7 @@ module.exports = function(app) {
           },
           {
             name: 'Data',
-            template: 'formio/components/common/data.html'
+            template: 'formio/components/textarea/data.html'
           },
           {
             name: 'Validation',
@@ -101324,6 +101324,58 @@ module.exports = function(app) {
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
+
+      $templateCache.put('formio/components/textarea/data.html',
+        '<form-builder-option property="defaultValue"></form-builder-option>' +
+        '<form-builder-option-input-format></form-builder-option-input-format>' +
+        '<form-builder-option property="dbIndex" class="form-builder-premium form-builder-dbindex"></form-builder-option>' +
+        '<uib-accordion>' +
+        '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Default" class="panel panel-default" is-open="true">' +
+        '        <formio-script-editor rows="5" id="customDefaultValue" name="customDefaultValue" ng-model="component.customDefaultValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+        '        <small>' +
+        '          <p>Enter custom default value code.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
+        '          <p>Default Values are only calculated on form load. Use Calculated Value for a value that will update with the form.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Default" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom default value using <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.customDefaultValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
+        '  </div>' +
+        '  <div uib-accordion-group heading="Calculated Value" class="panel panel-default">' +
+        '    <uib-accordion>' +
+        '      <div uib-accordion-group heading="JavaScript Value" class="panel panel-default" is-open="true">' +
+        '        <formio-script-editor rows="5" id="calculateValue" name="calculateValue" ng-model="component.calculateValue" placeholder="/*** Example Code ***/\nvalue = data[\'mykey\'] + data[\'anotherKey\'];"></formio-script-editor>' +
+        '        <small>' +
+        '          <p>Enter code to calculate a value.</p>' +
+        '          <p>You must assign the <strong>value</strong> variable as the result you want for the default value.</p>' +
+        '          <p>The global variable <strong>data</strong> is provided, and allows you to access the data of any form component, by using its API key.</p>' +
+        '          <p>Also <strong>moment</strong> library is available, and allows you to manipulate dates in a convenient way.</p>' +
+        '        </small>' +
+        '      </div>' +
+        '      <div uib-accordion-group heading="JSONLogic Value" class="panel panel-default">' +
+        '        <small>' +
+        '          <p>Execute custom calculation logic with JSON and <a href="http://jsonlogic.com/">JSONLogic</a>.</p>' +
+        '          <p>Submission data is available as JsonLogic variables, with the same api key as your components.</p>' +
+        '          <p><a href="http://formio.github.io/formio.js/app/examples/calculated.html" target="_blank">Click here for an example</a></p>' +
+        '        </small>' +
+        '        <textarea class="form-control" rows="5" id="json" name="json" json-input ng-model="component.calculateValue" placeholder=\'{ ... }\'></textarea>' +
+        '      </div>' +
+        '    </uib-accordion>' +
+        '    <form-builder-option property="calculateServer" type="checkbox" label="Calculate on server" tooltip="Perform these calculations on the server as well as the frontend."></form-builder-option>' +
+        '  </div>' +
+        '</uib-accordion>'
+      );
     }
   ]);
 };
@@ -101403,6 +101455,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textfield/data.html',
         '<form-builder-option text-mask property="defaultValue" ng-if="!component.allowMultipleMasks"></form-builder-option>' +
         '<multi-mask-input component="component" property="defaultValue" ng-if="component.allowMultipleMasks"></multi-mask-input>' +
+        '<form-builder-option-input-format></form-builder-option-input-format>' +
         '<form-builder-option property="dbIndex" class="form-builder-premium form-builder-dbindex"></form-builder-option>' +
         '<uib-accordion>' +
         '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
@@ -103081,6 +103134,50 @@ module.exports = function() {
 },{}],402:[function(_dereq_,module,exports){
 "use strict";
 /**
+* A directive for a field to edit a component input format.
+*/
+module.exports = function() {
+  return {
+    restrict: 'E',
+    replace: true,
+    template: function() {
+      return '<div class="form-group">' +
+                '<label for="inputFormat" form-builder-tooltip="Input format protects from cross-site scripting attacks.">{{\'Input Format\' | formioTranslate}}</label>' +
+                '<select class="form-control" id="inputFormat" name="inputFormat" ng-options="format.value as format.title | formioTranslate for format in formats" ng-model="component.inputFormat"></select>' +
+              '</div>';
+    },
+    controller: ['$scope', function($scope) {
+      $scope.formats = [
+        {
+          value: 'plain',
+          title: 'Plain'
+        },
+        {
+          value: 'html',
+          title: 'HTML'
+        },
+        {
+          value: 'raw',
+          title: 'Raw (Insecure)'
+        }
+      ];
+
+      if (!$scope.component.inputFormat) {
+        if ($scope.component.type === 'textarea') {
+          $scope.$watch('component.wysiwyg', function(wysiwyg) {
+            $scope.component.inputFormat = wysiwyg ? 'html' : 'plain';
+          });
+        }
+
+        $scope.component.inputFormat = 'plain';
+      }
+    }]
+  };
+};
+
+},{}],403:[function(_dereq_,module,exports){
+"use strict";
+/**
 * A directive for a field to edit a component inputs' label position.
 */
 module.exports = function() {
@@ -103120,7 +103217,7 @@ module.exports = function() {
     };
   };
 
-},{}],403:[function(_dereq_,module,exports){
+},{}],404:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -103166,7 +103263,7 @@ module.exports = function() {
   };
 };
 
-},{}],404:[function(_dereq_,module,exports){
+},{}],405:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's label position.
@@ -103230,7 +103327,7 @@ module.exports = function() {
     };
   };
 
-},{}],405:[function(_dereq_,module,exports){
+},{}],406:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component options' label position.
@@ -103272,7 +103369,7 @@ module.exports = function() {
     };
   };
 
-},{}],406:[function(_dereq_,module,exports){
+},{}],407:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's shortcut.
@@ -103294,7 +103391,7 @@ module.exports = function() {
   };
 };
 
-},{}],407:[function(_dereq_,module,exports){
+},{}],408:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -103338,7 +103435,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":242}],408:[function(_dereq_,module,exports){
+},{"lodash/map":242}],409:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -103360,7 +103457,7 @@ module.exports = [
   }
 ];
 
-},{}],409:[function(_dereq_,module,exports){
+},{}],410:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -103414,7 +103511,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":245}],410:[function(_dereq_,module,exports){
+},{"lodash/merge":245}],411:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -103459,7 +103556,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],411:[function(_dereq_,module,exports){
+},{}],412:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -103522,7 +103619,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":204,"lodash/map":242}],412:[function(_dereq_,module,exports){
+},{"lodash/camelCase":204,"lodash/map":242}],413:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -103559,7 +103656,7 @@ module.exports = function() {
   };
 };
 
-},{}],413:[function(_dereq_,module,exports){
+},{}],414:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function () {
   return {
@@ -103582,7 +103679,7 @@ module.exports = function () {
   };
 }
 
-},{}],414:[function(_dereq_,module,exports){
+},{}],415:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive that provides a UI for multiple masks input.
@@ -103623,7 +103720,7 @@ module.exports = ['COMMON_OPTIONS', function (COMMON_OPTIONS) {
   };
 }];
 
-},{}],415:[function(_dereq_,module,exports){
+},{}],416:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -103696,7 +103793,7 @@ module.exports = function() {
   };
 };
 
-},{}],416:[function(_dereq_,module,exports){
+},{}],417:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for an input mask for default value.
@@ -103746,7 +103843,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":27,"vanilla-text-mask":354}],417:[function(_dereq_,module,exports){
+},{"formiojs/utils":27,"vanilla-text-mask":354}],418:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -103769,7 +103866,7 @@ module.exports = function() {
   };
 };
 
-},{}],418:[function(_dereq_,module,exports){
+},{}],419:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -103851,7 +103948,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":204,"lodash/map":242}],419:[function(_dereq_,module,exports){
+},{"lodash/camelCase":204,"lodash/map":242}],420:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -103973,7 +104070,7 @@ module.exports = ['BuilderUtils', function(BuilderUtils) {
   }
 ];
 
-},{"lodash/camelCase":204,"lodash/difference":210,"lodash/map":242,"lodash/without":260}],420:[function(_dereq_,module,exports){
+},{"lodash/camelCase":204,"lodash/difference":210,"lodash/map":242,"lodash/without":260}],421:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -104132,7 +104229,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{"lodash/difference":210,"lodash/range":250}],421:[function(_dereq_,module,exports){
+},{"lodash/difference":210,"lodash/range":250}],422:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -104166,14 +104263,14 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],422:[function(_dereq_,module,exports){
+},{}],423:[function(_dereq_,module,exports){
 "use strict";
 _dereq_('ng-formio/src/formio-complete.js');
 _dereq_('angular-drag-and-drop-lists');
 _dereq_('ng-dialog');
 _dereq_('./ngFormBuilder.js');
 
-},{"./ngFormBuilder.js":423,"angular-drag-and-drop-lists":1,"ng-dialog":264,"ng-formio/src/formio-complete.js":343}],423:[function(_dereq_,module,exports){
+},{"./ngFormBuilder.js":424,"angular-drag-and-drop-lists":1,"ng-dialog":264,"ng-formio/src/formio-complete.js":343}],424:[function(_dereq_,module,exports){
 "use strict";
 /*! ng-formio-builder v2.34.0 | https://unpkg.com/ng-formio-builder@2.34.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
@@ -104269,6 +104366,8 @@ app.directive('labelValidator', _dereq_('./directives/labelValidator'));
 
 app.directive('formBuilderTable', _dereq_('./directives/formBuilderTable'));
 
+app.directive('formBuilderOptionInputFormat', _dereq_('./directives/formBuilderOptionInputFormat'));
+
 app.directive('formBuilderOptionInputsLabelPosition', _dereq_('./directives/formBuilderOptionInputsLabelPosition'));
 
 app.directive('formBuilderOptionKey', _dereq_('./directives/formBuilderOptionKey'));
@@ -104357,5 +104456,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":375,"./constants/commonOptions":392,"./constants/formOptions":393,"./directives/formBuilder":394,"./directives/formBuilderComponent":395,"./directives/formBuilderConditional":396,"./directives/formBuilderDnd":397,"./directives/formBuilderElement":398,"./directives/formBuilderList":399,"./directives/formBuilderOption":400,"./directives/formBuilderOptionCustomValidation":401,"./directives/formBuilderOptionInputsLabelPosition":402,"./directives/formBuilderOptionKey":403,"./directives/formBuilderOptionLabelPosition":404,"./directives/formBuilderOptionOptionsLabelPosition":405,"./directives/formBuilderOptionShortcut":406,"./directives/formBuilderOptionTags":407,"./directives/formBuilderRow":408,"./directives/formBuilderTable":409,"./directives/formBuilderTooltip":410,"./directives/headersBuilder":411,"./directives/jsonInput":412,"./directives/labelValidator":413,"./directives/multiMaskInput":414,"./directives/objectBuilder":415,"./directives/textMask":416,"./directives/validApiKey":417,"./directives/valueBuilder":418,"./directives/valueBuilderWithShortcuts":419,"./factories/BuilderUtils":420,"./factories/debounce":421}]},{},[422])(422)
+},{"./components":375,"./constants/commonOptions":392,"./constants/formOptions":393,"./directives/formBuilder":394,"./directives/formBuilderComponent":395,"./directives/formBuilderConditional":396,"./directives/formBuilderDnd":397,"./directives/formBuilderElement":398,"./directives/formBuilderList":399,"./directives/formBuilderOption":400,"./directives/formBuilderOptionCustomValidation":401,"./directives/formBuilderOptionInputFormat":402,"./directives/formBuilderOptionInputsLabelPosition":403,"./directives/formBuilderOptionKey":404,"./directives/formBuilderOptionLabelPosition":405,"./directives/formBuilderOptionOptionsLabelPosition":406,"./directives/formBuilderOptionShortcut":407,"./directives/formBuilderOptionTags":408,"./directives/formBuilderRow":409,"./directives/formBuilderTable":410,"./directives/formBuilderTooltip":411,"./directives/headersBuilder":412,"./directives/jsonInput":413,"./directives/labelValidator":414,"./directives/multiMaskInput":415,"./directives/objectBuilder":416,"./directives/textMask":417,"./directives/validApiKey":418,"./directives/valueBuilder":419,"./directives/valueBuilderWithShortcuts":420,"./factories/BuilderUtils":421,"./factories/debounce":422}]},{},[423])(423)
 });

@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
+## 2.34.0
 ### Added
  - Input Format option for TextField and TextArea components.
-
-## [Unreleased]
-### Added
  - Multiple masks settings for text field and phone number components
+
+### Changed
+ - Upgrade all depdencies.
 
 ## 2.33.0
 ### Added
