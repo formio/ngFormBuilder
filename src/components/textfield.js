@@ -71,6 +71,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/textfield/data.html',
         '<form-builder-option text-mask property="defaultValue" ng-if="!component.allowMultipleMasks"></form-builder-option>' +
         '<multi-mask-input component="component" property="defaultValue" ng-if="component.allowMultipleMasks"></multi-mask-input>' +
+        '<form-builder-option-input-format></form-builder-option-input-format>' +
         '<form-builder-option property="dbIndex" class="form-builder-premium form-builder-dbindex"></form-builder-option>' +
         '<uib-accordion>' +
         '  <div uib-accordion-group heading="Custom Default Value" class="panel panel-default">' +
