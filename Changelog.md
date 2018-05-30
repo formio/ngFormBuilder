@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
  - Input Format option for TextField and TextArea components.
 
+## [Unreleased]
+### Added
+ - Multiple masks settings for text field and phone number components
+
 ## 2.33.0
 ### Added
  - Option to calculate values on server.

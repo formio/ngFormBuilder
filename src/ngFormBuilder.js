@@ -124,6 +124,8 @@ app.directive('objectBuilder', require('./directives/objectBuilder'));
 
 app.directive('formBuilderConditional', require('./directives/formBuilderConditional'));
 
+app.directive('multiMaskInput', require('./directives/multiMaskInput'));
+
 /**
  * This workaround handles the fact that iframes capture mouse drag
  * events. This interferes with dragging over components like the
