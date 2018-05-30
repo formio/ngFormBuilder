@@ -43,7 +43,6 @@ module.exports = function(app) {
           '<value-builder data="component.questions" default="component.questions" label="Questions" tooltip-text="The questions you would like to as in this survey question."></value-builder>' +
           '<value-builder data="component.values" default="component.values" label="Values" tooltip-text="The values that can be selected per question. Example: \'Satisfied\', \'Very Satisfied\', etc."></value-builder>' +
           '<form-builder-option property="defaultValue"></form-builder-option>' +
-          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option property="errorLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +

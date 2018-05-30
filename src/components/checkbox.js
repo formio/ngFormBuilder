@@ -96,7 +96,6 @@ module.exports = function(app) {
           '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
           '</div>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
-          '<form-builder-option property="tooltip"></form-builder-option>' +
           '<form-builder-option-shortcut></form-builder-option-shortcut>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="clearOnHide"></form-builder-option>' +
