@@ -278,7 +278,8 @@ module.exports = [
         }
 
         // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
-        if (!component.label) {
+        // Don't calculate for components that don't have a label.
+        if (!component.label && ['panel', 'content', 'fieldset', 'table', 'well'].indexOf(component.type) === -1) {
           component.key = originalKey;
           $scope.updateKey(component);
           component.label = component.key || component.type;
