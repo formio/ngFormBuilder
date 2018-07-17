@@ -32,6 +32,7 @@ app.directive('formBuilderDraggable', function() {
         var dropZone = document.getElementById('fb-drop-zone');
         if (dropZone) {
           dropZone.style.zIndex = 10;
+          dropZone.style.display = 'inherit';
         }
         event.dataTransfer.setData('Text', JSON.stringify(dragData));
         return false;
@@ -40,6 +41,7 @@ app.directive('formBuilderDraggable', function() {
         var dropZone = document.getElementById('fb-drop-zone');
         if (dropZone) {
           dropZone.style.zIndex = 0;
+          dropZone.style.display = 'none';
         }
         return false;
       }, false);
@@ -68,6 +70,7 @@ app.directive('formBuilderDroppable', function() {
         var dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
         var dropOffset = jQuery(el).offset();
         el.style.zIndex = 0;
+        el.style.display = 'none';
         dragData.fbDropX = event.pageX - dropOffset.left;
         dragData.fbDropY = event.pageY - dropOffset.top;
         scope.$emit('fbDragDrop', dragData);
