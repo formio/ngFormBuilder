@@ -36,6 +36,13 @@ app.directive('formBuilderDraggable', function() {
         event.dataTransfer.setData('Text', JSON.stringify(dragData));
         return false;
       }, false);
+      el.addEventListener('dragend', function(event) {
+        var dropZone = document.getElementById('fb-drop-zone');
+        if (dropZone) {
+          dropZone.style.zIndex = 0;
+        }
+        return false;
+      }, false);
     }
   };
 });
