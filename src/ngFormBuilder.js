@@ -27,43 +27,53 @@ app.directive('formBuilderDraggable', function() {
     link: function(scope, element) {
       var el = element[0];
       el.draggable = true;
-      el.addEventListener('dragstart', function(event) {
-        var dragData = scope.formBuilderDraggable;
-        var dropZone = document.getElementById('fb-drop-zone');
-        if (dropZone) {
-          dropZone.style.zIndex = 10;
-        }
-        event.dataTransfer.setData('Text', JSON.stringify(dragData));
-        return false;
-      }, false);
-    }
-  };
-});
+      var dropZone = document.getElementById('fb-drop-zone');
+      if (!dropZone) {
+        return console.warn('No drop-zone detected.');
+      }
 
-app.directive('formBuilderDroppable', function() {
-  return {
-    restrict: 'A',
-    link: function(scope, element) {
-      var el = element[0];
-      el.addEventListener('dragover', function(event) {
+      // Drag over event handler.
+      var dragOver = function(event) {
         if (event.preventDefault) {
           event.preventDefault();
         }
         return false;
-      }, false);
-      el.addEventListener('drop', function(event) {
+      };
+
+      // Drag end event handler.
+      var dragEnd = function() {
+        dropZone.style.zIndex = 0;
+        dropZone.style.display = 'none';
+        dropZone.removeEventListener('dragover', dragOver, false);
+        dropZone.removeEventListener('drop', dragDrop, false);
+      };
+
+      // Drag drop event handler.
+      var dragDrop = function(event) {
         if (event.preventDefault) {
           event.preventDefault();
         }
         if (event.stopPropagation) {
           event.stopPropagation();
         }
-        var dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
-        var dropOffset = jQuery(el).offset();
-        el.style.zIndex = 0;
+        var dropOffset = jQuery(dropZone).offset();
+        var dragData = angular.copy(scope.formBuilderDraggable);
         dragData.fbDropX = event.pageX - dropOffset.left;
         dragData.fbDropY = event.pageY - dropOffset.top;
-        scope.$emit('fbDragDrop', dragData);
+        angular.element(dropZone).scope().$emit('fbDragDrop', dragData);
+        dragEnd();
+        return false;
+      };
+
+      el.addEventListener('dragstart', function() {
+        dropZone.style.zIndex = 10;
+        dropZone.style.display = 'inherit';
+        dropZone.addEventListener('dragover', dragOver, false);
+        dropZone.addEventListener('drop', dragDrop, false);
+        return false;
+      }, false);
+      el.addEventListener('dragend', function(event) {
+        dragEnd();
         return false;
       }, false);
     }
