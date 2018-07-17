@@ -45,7 +45,7 @@
     </ol>
     <div class="dropzone">
       <div ng-if="form.display === 'pdf'" ng-controller="formBuilderDnd">
-        <div form-builder-droppable style="width:100%;height:1000px;position:absolute;" id="fb-drop-zone"></div>
+        <div style="width:100%;height:1000px;position:absolute;display:none;" id="fb-drop-zone"></div>
         <formio form="form" options="{building: true}"></formio>
       </div>
       <form-builder-list
