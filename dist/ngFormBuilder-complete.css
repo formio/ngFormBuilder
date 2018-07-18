@@ -1459,3 +1459,15 @@ ul.component-list li {
 .input-group.formio-multiple-mask-container {
     width: 100%;
 }
+
+.formio-drop-zone {
+  display: none;
+  position: absolute;
+  z-index:10;
+  background-color: #0d87e9;
+  opacity: 0.1;
+}
+
+.formio-drop-zone.enabled {
+  display: inherit;
+}
