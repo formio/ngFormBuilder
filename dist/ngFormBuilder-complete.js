@@ -103455,7 +103455,7 @@ module.exports = [
         FormioUtils.eachComponent([component], function(child) {
           delete child.isNew;
         }, true);
-        $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
+        $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
         $scope.emit('edit', component);
       });
     };
@@ -104840,7 +104840,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":424,"angular-drag-and-drop-lists":2,"ng-dialog":265,"ng-formio/src/formio-complete.js":343}],424:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.5 | https://unpkg.com/ng-formio-builder@2.35.5/LICENSE.txt */
+/*! ng-formio-builder v2.35.6 | https://unpkg.com/ng-formio-builder@2.35.6/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
