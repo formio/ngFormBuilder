@@ -305,11 +305,15 @@ module.exports = ['debounce', function(debounce) {
         $scope.$on('formBuilder:add', update);
         $scope.$on('formBuilder:update', update);
         $scope.$on('formBuilder:remove', update);
-        $scope.$on('formBuilder:edit', update);
+        $scope.$on('formBuilder:edit', function() {
+          $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
+          update();
+        });
 
         $scope.saveSettings = function() {
           ngDialog.closeAll(true);
-          $scope.$emit('formUpdate', $scope.form);
+          $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
+          update();
         };
 
         $scope.capitalize = _capitalize;

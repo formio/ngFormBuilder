@@ -289,7 +289,7 @@ module.exports = [
         FormioUtils.eachComponent([component], function(child) {
           delete child.isNew;
         }, true);
-        $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
+
         $scope.emit('edit', component);
       });
     };

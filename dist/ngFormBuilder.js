@@ -33970,11 +33970,15 @@ module.exports = ['debounce', function(debounce) {
         $scope.$on('formBuilder:add', update);
         $scope.$on('formBuilder:update', update);
         $scope.$on('formBuilder:remove', update);
-        $scope.$on('formBuilder:edit', update);
+        $scope.$on('formBuilder:edit', function() {
+          $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
+          update();
+        });
 
         $scope.saveSettings = function() {
           ngDialog.closeAll(true);
-          $scope.$emit('formUpdate', $scope.form);
+          $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
+          update();
         };
 
         $scope.capitalize = _capitalize;
@@ -34481,7 +34485,7 @@ module.exports = [
         FormioUtils.eachComponent([component], function(child) {
           delete child.isNew;
         }, true);
-        $scope.$broadcast('iframeMessage', {name: 'form', data: angular.copy($scope.form)});
+
         $scope.emit('edit', component);
       });
     };
@@ -35859,7 +35863,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],297:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.6 | https://unpkg.com/ng-formio-builder@2.35.6/LICENSE.txt */
+/*! ng-formio-builder v2.35.7 | https://unpkg.com/ng-formio-builder@2.35.7/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
