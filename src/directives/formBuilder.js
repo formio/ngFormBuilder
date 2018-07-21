@@ -102,6 +102,22 @@ module.exports = ['debounce', function(debounce) {
           });
         }
 
+        $scope.$on('iframe-componentUpdate', function(event, data) {
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            if (component.id === data.id) {
+              component.overlay = data.overlay;
+            }
+          });
+        });
+
+        $scope.$on('iframe-componentClick', function(event, data) {
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            if (component.id === data.id) {
+              $scope.$broadcast('editComponent', component);
+            }
+          });
+        });
+
         // Ensure we always have a page set.
         $scope.$watch('form.page', function(page) {
           if (page === undefined) {

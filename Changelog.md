@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.35.8
+### Fixed
+ - Fixed issues where the builder would not allow updates.
+
 ## 2.35.7
 ### Fixed
  - Problems where the form would get in a decoupled state for PDF building.

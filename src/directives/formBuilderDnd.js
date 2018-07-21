@@ -50,19 +50,8 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
-    $scope.$on('iframe-componentClick', function(event, data) {
-      FormioUtils.eachComponent($scope.component.components, function(component) {
-        if (component.id === data.id) {
-          $scope.editComponent(component);
-        }
-      });
-    });
-    $scope.$on('iframe-componentUpdate', function(event, data) {
-      FormioUtils.eachComponent($scope.component.components, function(component) {
-        if (component.id === data.id) {
-          component.overlay = data.overlay;
-        }
-      });
+    $scope.$on('editComponent', function(event, component) {
+      $scope.editComponent(component);
     });
 
     $scope.$on('fbDragDrop', function(event, component) {

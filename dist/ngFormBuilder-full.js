@@ -113111,6 +113111,22 @@ module.exports = ['debounce', function(debounce) {
           });
         }
 
+        $scope.$on('iframe-componentUpdate', function(event, data) {
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            if (component.id === data.id) {
+              component.overlay = data.overlay;
+            }
+          });
+        });
+
+        $scope.$on('iframe-componentClick', function(event, data) {
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            if (component.id === data.id) {
+              $scope.$broadcast('editComponent', component);
+            }
+          });
+        });
+
         // Ensure we always have a page set.
         $scope.$watch('form.page', function(page) {
           if (page === undefined) {
@@ -113590,19 +113606,8 @@ module.exports = [
       $scope.$emit.apply($scope, args);
     };
 
-    $scope.$on('iframe-componentClick', function(event, data) {
-      FormioUtils.eachComponent($scope.component.components, function(component) {
-        if (component.id === data.id) {
-          $scope.editComponent(component);
-        }
-      });
-    });
-    $scope.$on('iframe-componentUpdate', function(event, data) {
-      FormioUtils.eachComponent($scope.component.components, function(component) {
-        if (component.id === data.id) {
-          component.overlay = data.overlay;
-        }
-      });
+    $scope.$on('editComponent', function(event, component) {
+      $scope.editComponent(component);
     });
 
     $scope.$on('fbDragDrop', function(event, component) {
@@ -115214,7 +115219,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":425,"angular-drag-and-drop-lists":2,"ng-dialog":266,"ng-formio/src/formio-full.js":344}],425:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.7 | https://unpkg.com/ng-formio-builder@2.35.7/LICENSE.txt */
+/*! ng-formio-builder v2.35.8 | https://unpkg.com/ng-formio-builder@2.35.8/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
