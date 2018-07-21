@@ -34249,6 +34249,11 @@ module.exports = [
     $scope.formComponents = formioComponents.components;
     if (!$scope.component) {
       $scope.component = $scope.form;
+      $scope.$watch('form', function(newForm) {
+        if ($scope.component.type === 'form') {
+          $scope.component = newForm;
+        }
+      });
     }
 
     // Components depend on this existing
@@ -35868,7 +35873,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],297:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.8 | https://unpkg.com/ng-formio-builder@2.35.8/LICENSE.txt */
+/*! ng-formio-builder v2.35.9 | https://unpkg.com/ng-formio-builder@2.35.9/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

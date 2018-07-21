@@ -103223,6 +103223,11 @@ module.exports = [
     $scope.formComponents = formioComponents.components;
     if (!$scope.component) {
       $scope.component = $scope.form;
+      $scope.$watch('form', function(newForm) {
+        if ($scope.component.type === 'form') {
+          $scope.component = newForm;
+        }
+      });
     }
 
     // Components depend on this existing
@@ -104849,7 +104854,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":424,"angular-drag-and-drop-lists":2,"ng-dialog":265,"ng-formio/src/formio-complete.js":343}],424:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.8 | https://unpkg.com/ng-formio-builder@2.35.8/LICENSE.txt */
+/*! ng-formio-builder v2.35.9 | https://unpkg.com/ng-formio-builder@2.35.9/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

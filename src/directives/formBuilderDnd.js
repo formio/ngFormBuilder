@@ -37,6 +37,11 @@ module.exports = [
     $scope.formComponents = formioComponents.components;
     if (!$scope.component) {
       $scope.component = $scope.form;
+      $scope.$watch('form', function(newForm) {
+        if ($scope.component.type === 'form') {
+          $scope.component = newForm;
+        }
+      });
     }
 
     // Components depend on this existing
