@@ -33768,33 +33768,27 @@ module.exports = ['debounce', function(debounce) {
         }
 
         $scope.$on('iframe-componentUpdate', function(event, data) {
-          var hasId = data.hasOwnProperty('id');
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (hasId) {
+            if (data.id) {
               if (component.id === data.id) {
                 component.overlay = data.overlay;
               }
             }
-            else {
-              if (component.key === data.key) {
-                component.overlay = data.overlay;
-              }
+            else if (component.key === data.key) {
+              component.overlay = data.overlay;
             }
           });
         });
 
         $scope.$on('iframe-componentClick', function(event, data) {
-          var hasId = data.hasOwnProperty('id');
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (hasId) {
+            if (data.id) {
               if (component.id === data.id) {
                 $scope.$broadcast('editComponent', component);
               }
             }
-            else {
-              if (component.key === data.key) {
-                $scope.$broadcast('editComponent', component);
-              }
+            else if (component.key === data.key) {
+              $scope.$broadcast('editComponent', component);
             }
           });
         });
