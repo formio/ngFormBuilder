@@ -113112,17 +113112,33 @@ module.exports = ['debounce', function(debounce) {
         }
 
         $scope.$on('iframe-componentUpdate', function(event, data) {
+          var hasId = data.hasOwnProperty('id');
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (component.id === data.id) {
-              component.overlay = data.overlay;
+            if (hasId) {
+              if (component.id === data.id) {
+                component.overlay = data.overlay;
+              }
+            }
+            else {
+              if (component.key === data.key) {
+                component.overlay = data.overlay;
+              }
             }
           });
         });
 
         $scope.$on('iframe-componentClick', function(event, data) {
+          var hasId = data.hasOwnProperty('id');
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (component.id === data.id) {
-              $scope.$broadcast('editComponent', component);
+            if (hasId) {
+              if (component.id === data.id) {
+                $scope.$broadcast('editComponent', component);
+              }
+            }
+            else {
+              if (component.key === data.key) {
+                $scope.$broadcast('editComponent', component);
+              }
             }
           });
         });
@@ -115224,7 +115240,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":425,"angular-drag-and-drop-lists":2,"ng-dialog":266,"ng-formio/src/formio-full.js":344}],425:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.9 | https://unpkg.com/ng-formio-builder@2.35.9/LICENSE.txt */
+/*! ng-formio-builder v2.35.10 | https://unpkg.com/ng-formio-builder@2.35.10/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
