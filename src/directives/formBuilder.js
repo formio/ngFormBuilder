@@ -104,7 +104,7 @@ module.exports = ['debounce', function(debounce) {
 
         $scope.$on('iframe-componentUpdate', function(event, data) {
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (data.id) {
+            if (data.id && component.id) {
               if (component.id === data.id) {
                 component.overlay = data.overlay;
               }
@@ -117,7 +117,7 @@ module.exports = ['debounce', function(debounce) {
 
         $scope.$on('iframe-componentClick', function(event, data) {
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (data.id) {
+            if (data.id && component.id) {
               if (component.id === data.id) {
                 $scope.$broadcast('editComponent', component);
               }

@@ -102743,7 +102743,7 @@ module.exports = ['debounce', function(debounce) {
 
         $scope.$on('iframe-componentUpdate', function(event, data) {
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (data.id) {
+            if (data.id && component.id) {
               if (component.id === data.id) {
                 component.overlay = data.overlay;
               }
@@ -102756,7 +102756,7 @@ module.exports = ['debounce', function(debounce) {
 
         $scope.$on('iframe-componentClick', function(event, data) {
           FormioUtils.eachComponent($scope.form.components, function(component) {
-            if (data.id) {
+            if (data.id && component.id) {
               if (component.id === data.id) {
                 $scope.$broadcast('editComponent', component);
               }
@@ -103419,7 +103419,8 @@ module.exports = [
       }
 
       // Open the dialog.
-      var originalKey = '';
+      $scope.updateKey(component);
+      var originalKey = component.key;
       ngDialog.open({
         template: 'formio/components/settings.html',
         scope: childScope,
@@ -103450,9 +103451,6 @@ module.exports = [
           // Watch the settings label and auto set the key from it.
           $scope.$watch('component.label', function() {
             $scope.updateKey($scope.component);
-            if (!originalKey) {
-              originalKey = $scope.component.key;
-            }
           });
         }]
       }).closePromise.then(function(e) {
@@ -103471,7 +103469,6 @@ module.exports = [
         // Don't calculate for components that don't have a label.
         if (!component.label && ['panel', 'content', 'fieldset', 'table', 'well'].indexOf(component.type) === -1) {
           component.key = originalKey;
-          $scope.updateKey(component);
           component.label = component.key || component.type;
           component.hideLabel = true;
         }
@@ -104864,7 +104861,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":424,"angular-drag-and-drop-lists":2,"ng-dialog":265,"ng-formio/src/formio-complete.js":343}],424:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.10 | https://unpkg.com/ng-formio-builder@2.35.10/LICENSE.txt */
+/*! ng-formio-builder v2.35.11 | https://unpkg.com/ng-formio-builder@2.35.11/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

@@ -223,7 +223,8 @@ module.exports = [
       }
 
       // Open the dialog.
-      var originalKey = '';
+      $scope.updateKey(component);
+      var originalKey = component.key;
       ngDialog.open({
         template: 'formio/components/settings.html',
         scope: childScope,
@@ -254,9 +255,6 @@ module.exports = [
           // Watch the settings label and auto set the key from it.
           $scope.$watch('component.label', function() {
             $scope.updateKey($scope.component);
-            if (!originalKey) {
-              originalKey = $scope.component.key;
-            }
           });
         }]
       }).closePromise.then(function(e) {
@@ -275,7 +273,6 @@ module.exports = [
         // Don't calculate for components that don't have a label.
         if (!component.label && ['panel', 'content', 'fieldset', 'table', 'well'].indexOf(component.type) === -1) {
           component.key = originalKey;
-          $scope.updateKey(component);
           component.label = component.key || component.type;
           component.hideLabel = true;
         }
