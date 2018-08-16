@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.36.0
+### Changed
+ - Upgraded dependencies and renderer.
+
+### Added
+ - Custom properties section to Selectboxes.
+
+### Fixed
+ - Do not include columns in component with label.
+
 ## 2.35.11
 ### Fixed
  - Problem where the pdf builder would get the wrong key.
