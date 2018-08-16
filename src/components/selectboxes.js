@@ -62,7 +62,12 @@ module.exports = function(app) {
       // Create the API markup.
       $templateCache.put('formio/components/selectboxes/api.html',
         '<ng-form>' +
-          '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+        '<uib-accordion>' +
+        '<div uib-accordion-group heading="Custom Properties" class="panel panel-default">' +
+        '<object-builder data="component.properties" label="Custom Properties" tooltip-text="This allows you to configure any custom properties for this component." />' +
+        '</div>' +
+        '</uib-accordion>' +
         '</ng-form>'
       );
 
