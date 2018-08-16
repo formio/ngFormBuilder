@@ -87,8 +87,12 @@ exports.uniqueName = uniqueName;
 exports.guid = guid;
 exports.getDateSetting = getDateSetting;
 exports.isValidDate = isValidDate;
+exports.currentTimezone = currentTimezone;
+exports.offsetDate = offsetDate;
+exports.formatDate = formatDate;
 exports.getLocaleDateFormatInfo = getLocaleDateFormatInfo;
 exports.convertFormatToFlatpickr = convertFormatToFlatpickr;
+exports.convertFlatpickrToFormat = convertFlatpickrToFormat;
 exports.convertFormatToMoment = convertFormatToMoment;
 exports.getInputMask = getInputMask;
 exports.matchInputMask = matchInputMask;
@@ -97,6 +101,8 @@ exports.getNumberDecimalLimit = getNumberDecimalLimit;
 exports.getCurrencyAffixes = getCurrencyAffixes;
 exports.fieldData = fieldData;
 exports.delay = delay;
+exports.iterateKey = iterateKey;
+exports.uniqueKey = uniqueKey;
 
 var _lodash = _dereq_('lodash');
 
@@ -290,6 +296,9 @@ function eachComponent(components, fn, includeAll, path, parent) {
   if (!components) return;
   path = path || '';
   components.forEach(function (component) {
+    if (!component) {
+      return;
+    }
     var hasColumns = component.columns && Array.isArray(component.columns);
     var hasRows = component.rows && Array.isArray(component.rows);
     var hasComps = component.components && Array.isArray(component.components);
@@ -769,6 +778,55 @@ function isValidDate(date) {
   return _lodash2.default.isDate(date) && !_lodash2.default.isNaN(date.getDate());
 }
 
+/**
+ * Get the current timezone string.
+ *
+ * @return {string}
+ */
+function currentTimezone() {
+  if (navigator.languages && navigator.languages.length) {
+    return new Date().toLocaleTimeString(navigator.languages[0], {
+      timeZoneName: 'short'
+    }).split(' ')[2];
+  }
+  return (0, _moment2.default)().format('Z');
+}
+
+/**
+ * Get an offset date provided a date object and timezone object.
+ *
+ * @param date
+ * @param timezone
+ * @return {Date}
+ */
+function offsetDate(date, timezone) {
+  if (!timezone) {
+    return {
+      date: date,
+      abbr: ' (' + currentTimezone() + ')'
+    };
+  }
+  return {
+    date: new Date(date.getTime() + (parseInt(timezone.offset, 10) + date.getTimezoneOffset()) * 60000),
+    abbr: timezone.abbr ? ' (' + timezone.abbr + ')' : ''
+  };
+}
+
+/**
+ * Format a date provided a value, formate, and timezone object.
+ *
+ * @param value
+ * @param format
+ * @param timezone
+ * @return {string}
+ */
+function formatDate(value, format, timezone) {
+  var date = (0, _moment2.default)(value).toDate();
+  var offset = offsetDate(date, timezone);
+  var dateFormat = convertFormatToMoment(format);
+  return '' + (0, _moment2.default)(offset.date).format(dateFormat) + offset.abbr;
+}
+
 function getLocaleDateFormatInfo(locale) {
   var formatInfo = {};
 
@@ -802,6 +860,24 @@ function convertFormatToFlatpickr(format) {
 
   // Hours, minutes, seconds
   .replace('HH', 'H').replace('hh', 'h').replace('mm', 'i').replace('ss', 'S').replace(/a/g, 'K');
+}
+
+function convertFlatpickrToFormat(format) {
+  return format
+  // Year conversion.
+  .replace('Y', 'YYYY').replace('y', 'YY')
+
+  // Month conversion.
+  .replace('F', 'MMMM').replace('M', 'MMM').replace('m', 'MM').replace('n', 'M')
+
+  // Day in month.
+  .replace('d', 'dd').replace('j', 'd')
+
+  // Day in week.
+  .replace('l', 'EEEE').replace('D', 'EEE')
+
+  // Hours, minutes, seconds
+  .replace('H', 'HH').replace('h', 'H').replace('i', 'mm').replace('S', 'ss').replace('K', 'a');
 }
 
 /**
@@ -1009,6 +1085,40 @@ function delay(fn) {
   earlyCall.cancel = cancel;
 
   return earlyCall;
+}
+
+/**
+ * Iterate the given key to make it unique.
+ *
+ * @param {String} key
+ *   Modify the component key to be unique.
+ *
+ * @returns {String}
+ *   The new component key.
+ */
+function iterateKey(key) {
+  if (!key.match(/(\d+)$/)) {
+    return key + '2';
+  }
+
+  return key.replace(/(\d+)$/, function (suffix) {
+    return Number(suffix) + 1;
+  });
+}
+
+/**
+ * Determines a unique key within a map provided the base key.
+ *
+ * @param map
+ * @param base
+ * @return {*}
+ */
+function uniqueKey(map, base) {
+  var newKey = base;
+  while (map.hasOwnProperty(newKey)) {
+    newKey = iterateKey(newKey);
+  }
+  return newKey;
 }
 },{"./jsonlogic/operators":2,"json-logic-js":4,"lodash":209,"moment":228}],4:[function(_dereq_,module,exports){
 /* globals define,module */
@@ -32576,7 +32686,12 @@ module.exports = function(app) {
       // Create the API markup.
       $templateCache.put('formio/components/selectboxes/api.html',
         '<ng-form>' +
-          '<form-builder-option-key></form-builder-option-key>' +
+        '<form-builder-option-key></form-builder-option-key>' +
+        '<uib-accordion>' +
+        '<div uib-accordion-group heading="Custom Properties" class="panel panel-default">' +
+        '<object-builder data="component.properties" label="Custom Properties" tooltip-text="This allows you to configure any custom properties for this component." />' +
+        '</div>' +
+        '</uib-accordion>' +
         '</ng-form>'
       );
 
@@ -34493,7 +34608,7 @@ module.exports = [
 
         // If there is no component label, then set it to the key and set hide label to ensure reverse compatibility.
         // Don't calculate for components that don't have a label.
-        if (!component.label && ['panel', 'content', 'fieldset', 'table', 'well'].indexOf(component.type) === -1) {
+        if (!component.label && ['panel', 'content', 'fieldset', 'table', 'well', 'columns'].indexOf(component.type) === -1) {
           component.key = originalKey;
           component.label = component.key || component.type;
           component.hideLabel = true;
@@ -35880,7 +35995,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],297:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.35.11 | https://unpkg.com/ng-formio-builder@2.35.11/LICENSE.txt */
+/*! ng-formio-builder v2.36.0 | https://unpkg.com/ng-formio-builder@2.36.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
