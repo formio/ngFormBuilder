@@ -96,6 +96,7 @@ exports.formatOffset = formatOffset;
 exports.getLocaleDateFormatInfo = getLocaleDateFormatInfo;
 exports.convertFormatToFlatpickr = convertFormatToFlatpickr;
 exports.convertFormatToMoment = convertFormatToMoment;
+exports.convertFormatToMask = convertFormatToMask;
 exports.getInputMask = getInputMask;
 exports.matchInputMask = matchInputMask;
 exports.getNumberSeparators = getNumberSeparators;
@@ -105,6 +106,7 @@ exports.fieldData = fieldData;
 exports.delay = delay;
 exports.iterateKey = iterateKey;
 exports.uniqueKey = uniqueKey;
+exports.bootstrapVersion = bootstrapVersion;
 
 var _lodash = _dereq_('lodash');
 
@@ -132,7 +134,7 @@ var _nativePromiseOnly2 = _interopRequireDefault(_nativePromiseOnly);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } } /* global $ */
 
 // Configure JsonLogic
 _operators.lodashOperators.forEach(function (name) {
@@ -192,6 +194,7 @@ function evaluate(func, args, ret, tokenize) {
 
     try {
       func = new (Function.prototype.bind.apply(Function, [null].concat(_toConsumableArray(params), [func])))();
+      args = _lodash2.default.values(args);
     } catch (err) {
       console.warn('An error occured within the custom function for ' + component.key, err);
       returnVal = null;
@@ -199,9 +202,8 @@ function evaluate(func, args, ret, tokenize) {
     }
   }
   if (typeof func === 'function') {
-    var values = _lodash2.default.values(args);
     try {
-      returnVal = func.apply(undefined, _toConsumableArray(values));
+      returnVal = Array.isArray(args) ? func.apply(undefined, _toConsumableArray(args)) : func(args);
     } catch (err) {
       returnVal = null;
       console.warn('An error occured within custom function for ' + component.key, err);
@@ -546,16 +548,20 @@ function checkSimpleConditional(component, condition, row, data) {
   if (_lodash2.default.isNil(value)) {
     value = '';
   }
+
+  var eq = String(condition.eq);
+  var show = String(condition.show);
+
   // Special check for selectboxes component.
   if (_lodash2.default.isObject(value) && _lodash2.default.has(value, condition.eq)) {
-    return value[condition.eq].toString() === condition.show.toString();
+    return String(value[condition.eq]) === show;
   }
   // FOR-179 - Check for multiple values.
-  if (Array.isArray(value) && value.indexOf(condition.eq) !== -1) {
-    return condition.show.toString() === 'true';
+  if (Array.isArray(value) && value.map(String).indexOf(eq) !== -1) {
+    return show === 'true';
   }
 
-  return value.toString() === condition.eq.toString() === (condition.show.toString() === 'true');
+  return String(value) === eq === (show === 'true');
 }
 
 /**
@@ -887,6 +893,17 @@ function timezoneText(offsetFormat, stdFormat) {
 function formatDate(value, format, timezone) {
   var momentDate = (0, _momentTimezone2.default)(value);
   if (timezone === currentTimezone()) {
+    // See if our format contains a "z" timezone character.
+    if (format.match(/\s(z$|z\s)/)) {
+      // Return the timezoneText.
+      return timezoneText(function () {
+        return momentDate.tz(timezone).format(convertFormatToMoment(format));
+      }, function () {
+        return momentDate.format(convertFormatToMoment(format.replace(/\s(z$|z\s)/, '')));
+      });
+    }
+
+    // Return the standard format.
     return momentDate.format(convertFormatToMoment(format));
   }
   if (timezone === 'UTC') {
@@ -947,6 +964,9 @@ function getLocaleDateFormatInfo(locale) {
  */
 function convertFormatToFlatpickr(format) {
   return format
+  // Remove the Z timezone offset, not supported by flatpickr.
+  .replace(/Z/g, '')
+
   // Year conversion.
   .replace(/y/g, 'Y').replace('YYYY', 'Y').replace('YY', 'y')
 
@@ -954,7 +974,7 @@ function convertFormatToFlatpickr(format) {
   .replace('MMMM', 'F').replace(/M/g, 'n').replace('nnn', 'M').replace('nn', 'm')
 
   // Day in month.
-  .replace(/d/g, 'j').replace('jj', 'd')
+  .replace(/d/g, 'j').replace(/jj/g, 'd')
 
   // Day in week.
   .replace('EEEE', 'l').replace('EEE', 'D')
@@ -978,6 +998,16 @@ function convertFormatToMoment(format) {
   .replace(/E/g, 'd')
   // AM/PM marker
   .replace(/a/g, 'A');
+}
+
+function convertFormatToMask(format) {
+  return format
+  // Short and long month replacement.
+  .replace(/(MMM|MMMM)/g, 'MM')
+  // Year conversion
+  .replace(/[ydhmsHM]/g, '9')
+  // AM/PM conversion
+  .replace(/a/g, 'AA');
 }
 
 /**
@@ -1202,6 +1232,18 @@ function uniqueKey(map, base) {
     newKey = iterateKey(newKey);
   }
   return newKey;
+}
+
+/**
+ * Determines the major version number of bootstrap.
+ *
+ * @return {number}
+ */
+function bootstrapVersion() {
+  if (typeof $ === 'function' && typeof $().collapse === 'function') {
+    return parseInt($.fn.collapse.Constructor.VERSION.split('.')[0], 10);
+  }
+  return 0;
 }
 },{"./jsonlogic/operators":2,"json-logic-js":4,"jstimezonedetect":5,"lodash":210,"moment-timezone/moment-timezone":229,"native-promise-only":231,"whatwg-fetch":235}],4:[function(_dereq_,module,exports){
 /* globals define,module */
@@ -39238,7 +39280,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],303:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.36.1 | https://unpkg.com/ng-formio-builder@2.36.1/LICENSE.txt */
+/*! ng-formio-builder v2.36.2 | https://unpkg.com/ng-formio-builder@2.36.2/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

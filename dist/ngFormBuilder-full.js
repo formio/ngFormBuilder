@@ -1410,7 +1410,7 @@ return /******/ (function(modules) { // webpackBootstrap
 ;
 },{}],4:[function(_dereq_,module,exports){
 (function (global){
-/* angular-moment.js / v1.2.0 / (c) 2013, 2014, 2015, 2016, 2017 Uri Shaked / MIT Licence */
+/* angular-moment.js / v1.3.0 / (c) 2013, 2014, 2015, 2016, 2017, 2018 Uri Shaked / MIT Licence */
 
 'format amd';
 /* global define */
@@ -2151,7 +2151,7 @@ return /******/ (function(modules) { // webpackBootstrap
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"angular":11,"moment":276}],5:[function(_dereq_,module,exports){
 /**
- * @license AngularJS v1.7.3
+ * @license AngularJS v1.7.4
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -2863,7 +2863,7 @@ function sanitizeText(chars) {
 // define ngSanitize module and register $sanitize service
 angular.module('ngSanitize', [])
   .provider('$sanitize', $SanitizeProvider)
-  .info({ angularVersion: '1.7.3' });
+  .info({ angularVersion: '1.7.4' });
 
 /**
  * @ngdoc filter
@@ -11209,7 +11209,7 @@ module.exports = 'ui.bootstrap';
 
 },{"./dist/ui-bootstrap-tpls":8}],10:[function(_dereq_,module,exports){
 /**
- * @license AngularJS v1.7.3
+ * @license AngularJS v1.7.4
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -11309,7 +11309,7 @@ function isValidObjectMaxDepth(maxDepth) {
 function minErr(module, ErrorConstructor) {
   ErrorConstructor = ErrorConstructor || Error;
 
-  var url = 'https://errors.angularjs.org/1.7.3/';
+  var url = 'https://errors.angularjs.org/1.7.4/';
   var regex = url.replace('.', '\\.') + '[\\s\\S]*';
   var errRegExp = new RegExp(regex, 'g');
 
@@ -12141,15 +12141,16 @@ function arrayRemove(array, value) {
  * * If `source` is identical to `destination` an exception will be thrown.
  *
  * <br />
+ *
  * <div class="alert alert-warning">
  *   Only enumerable properties are taken into account. Non-enumerable properties (both on `source`
  *   and on `destination`) will be ignored.
  * </div>
  *
- * @param {*} source The source that will be used to make a copy.
- *                   Can be any type, including primitives, `null`, and `undefined`.
- * @param {(Object|Array)=} destination Destination into which the source is copied. If
- *     provided, must be of the same type as `source`.
+ * @param {*} source The source that will be used to make a copy. Can be any type, including
+ *     primitives, `null`, and `undefined`.
+ * @param {(Object|Array)=} destination Destination into which the source is copied. If provided,
+ *     must be of the same type as `source`.
  * @returns {*} The copy or updated `destination`, if `destination` was specified.
  *
  * @example
@@ -13996,11 +13997,11 @@ function toDebugString(obj, maxDepth) {
 var version = {
   // These placeholder strings will be replaced by grunt's `build` task.
   // They need to be double- or single-quoted.
-  full: '1.7.3',
+  full: '1.7.4',
   major: 1,
   minor: 7,
-  dot: 3,
-  codeName: 'eventful-proposal'
+  dot: 4,
+  codeName: 'interstellar-exploration'
 };
 
 
@@ -14149,7 +14150,7 @@ function publishExternalAPI(angular) {
       });
     }
   ])
-  .info({ angularVersion: '1.7.3' });
+  .info({ angularVersion: '1.7.4' });
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -31516,7 +31517,7 @@ function $SceDelegateProvider() {
       // If we get here, then we will either sanitize the value or throw an exception.
       if (type === SCE_CONTEXTS.MEDIA_URL || type === SCE_CONTEXTS.URL) {
         // we attempt to sanitize non-resource URLs
-        return $$sanitizeUri(maybeTrusted, type === SCE_CONTEXTS.MEDIA_URL);
+        return $$sanitizeUri(maybeTrusted.toString(), type === SCE_CONTEXTS.MEDIA_URL);
       } else if (type === SCE_CONTEXTS.RESOURCE_URL) {
         if (isResourceUrlAllowedByPolicy(maybeTrusted)) {
           return maybeTrusted;
@@ -44413,7 +44414,7 @@ var ngRefDirective = ['$parse', function($parse) {
  * For example, if an item is added to the collection, `ngRepeat` will know that all other items
  * already have DOM elements, and will not re-render them.
  *
- * All different types of tracking functions, their syntax, and and their support for duplicate
+ * All different types of tracking functions, their syntax, and their support for duplicate
  * items in collections can be found in the
  * {@link ngRepeat#ngRepeat-arguments ngRepeat expression description}.
  *
@@ -46374,7 +46375,7 @@ var SelectController =
 
     if (optionAttrs.$attr.ngValue) {
       // The value attribute is set by ngValue
-      var oldVal, hashedVal = NaN;
+      var oldVal, hashedVal;
       optionAttrs.$observe('value', function valueAttributeObserveAction(newVal) {
 
         var removal;
@@ -46546,18 +46547,6 @@ var SelectController =
  * @param {string=} ngAttrSize sets the size of the select element dynamically. Uses the
  * {@link guide/interpolation#-ngattr-for-binding-to-arbitrary-attributes ngAttr} directive.
  *
- *
- * @knownIssue
- *
- * In Firefox, the select model is only updated when the select element is blurred. For example,
- * when switching between options with the keyboard, the select model is only set to the
- * currently selected option when the select is blurred, e.g via tab key or clicking the mouse
- * outside the select.
- *
- * This is due to an ambiguity in the select element specification. See the
- * [issue on the Firefox bug tracker](https://bugzilla.mozilla.org/show_bug.cgi?id=126379)
- * for more information, and this
- * [Github comment for a workaround](https://github.com/angular/angular.js/issues/9134#issuecomment-130800488)
  *
  * @example
  * ### Simple `select` elements with static options
@@ -51985,7 +51974,19 @@ var Formio = function () {
   }, {
     key: 'getToken',
     value: function getToken(options) {
-      return Formio.getToken(options);
+      return Formio.getToken(Object.assign({ formio: this }, this.options, options));
+    }
+
+    /**
+     * Sets the JWT token for this instance.
+     *
+     * @return {*}
+     */
+
+  }, {
+    key: 'setToken',
+    value: function setToken(token, options) {
+      return Formio.setToken(token, Object.assign({ formio: this }, this.options, options));
     }
 
     /**
@@ -53378,6 +53379,7 @@ exports.formatOffset = formatOffset;
 exports.getLocaleDateFormatInfo = getLocaleDateFormatInfo;
 exports.convertFormatToFlatpickr = convertFormatToFlatpickr;
 exports.convertFormatToMoment = convertFormatToMoment;
+exports.convertFormatToMask = convertFormatToMask;
 exports.getInputMask = getInputMask;
 exports.matchInputMask = matchInputMask;
 exports.getNumberSeparators = getNumberSeparators;
@@ -53387,6 +53389,7 @@ exports.fieldData = fieldData;
 exports.delay = delay;
 exports.iterateKey = iterateKey;
 exports.uniqueKey = uniqueKey;
+exports.bootstrapVersion = bootstrapVersion;
 
 var _lodash = _dereq_('lodash');
 
@@ -53414,7 +53417,7 @@ var _nativePromiseOnly2 = _interopRequireDefault(_nativePromiseOnly);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } } /* global $ */
 
 // Configure JsonLogic
 _operators.lodashOperators.forEach(function (name) {
@@ -53474,6 +53477,7 @@ function evaluate(func, args, ret, tokenize) {
 
     try {
       func = new (Function.prototype.bind.apply(Function, [null].concat(_toConsumableArray(params), [func])))();
+      args = _lodash2.default.values(args);
     } catch (err) {
       console.warn('An error occured within the custom function for ' + component.key, err);
       returnVal = null;
@@ -53481,9 +53485,8 @@ function evaluate(func, args, ret, tokenize) {
     }
   }
   if (typeof func === 'function') {
-    var values = _lodash2.default.values(args);
     try {
-      returnVal = func.apply(undefined, _toConsumableArray(values));
+      returnVal = Array.isArray(args) ? func.apply(undefined, _toConsumableArray(args)) : func(args);
     } catch (err) {
       returnVal = null;
       console.warn('An error occured within custom function for ' + component.key, err);
@@ -53828,16 +53831,20 @@ function checkSimpleConditional(component, condition, row, data) {
   if (_lodash2.default.isNil(value)) {
     value = '';
   }
+
+  var eq = String(condition.eq);
+  var show = String(condition.show);
+
   // Special check for selectboxes component.
   if (_lodash2.default.isObject(value) && _lodash2.default.has(value, condition.eq)) {
-    return value[condition.eq].toString() === condition.show.toString();
+    return String(value[condition.eq]) === show;
   }
   // FOR-179 - Check for multiple values.
-  if (Array.isArray(value) && value.indexOf(condition.eq) !== -1) {
-    return condition.show.toString() === 'true';
+  if (Array.isArray(value) && value.map(String).indexOf(eq) !== -1) {
+    return show === 'true';
   }
 
-  return value.toString() === condition.eq.toString() === (condition.show.toString() === 'true');
+  return String(value) === eq === (show === 'true');
 }
 
 /**
@@ -54169,6 +54176,17 @@ function timezoneText(offsetFormat, stdFormat) {
 function formatDate(value, format, timezone) {
   var momentDate = (0, _momentTimezone2.default)(value);
   if (timezone === currentTimezone()) {
+    // See if our format contains a "z" timezone character.
+    if (format.match(/\s(z$|z\s)/)) {
+      // Return the timezoneText.
+      return timezoneText(function () {
+        return momentDate.tz(timezone).format(convertFormatToMoment(format));
+      }, function () {
+        return momentDate.format(convertFormatToMoment(format.replace(/\s(z$|z\s)/, '')));
+      });
+    }
+
+    // Return the standard format.
     return momentDate.format(convertFormatToMoment(format));
   }
   if (timezone === 'UTC') {
@@ -54229,6 +54247,9 @@ function getLocaleDateFormatInfo(locale) {
  */
 function convertFormatToFlatpickr(format) {
   return format
+  // Remove the Z timezone offset, not supported by flatpickr.
+  .replace(/Z/g, '')
+
   // Year conversion.
   .replace(/y/g, 'Y').replace('YYYY', 'Y').replace('YY', 'y')
 
@@ -54236,7 +54257,7 @@ function convertFormatToFlatpickr(format) {
   .replace('MMMM', 'F').replace(/M/g, 'n').replace('nnn', 'M').replace('nn', 'm')
 
   // Day in month.
-  .replace(/d/g, 'j').replace('jj', 'd')
+  .replace(/d/g, 'j').replace(/jj/g, 'd')
 
   // Day in week.
   .replace('EEEE', 'l').replace('EEE', 'D')
@@ -54260,6 +54281,16 @@ function convertFormatToMoment(format) {
   .replace(/E/g, 'd')
   // AM/PM marker
   .replace(/a/g, 'A');
+}
+
+function convertFormatToMask(format) {
+  return format
+  // Short and long month replacement.
+  .replace(/(MMM|MMMM)/g, 'MM')
+  // Year conversion
+  .replace(/[ydhmsHM]/g, '9')
+  // AM/PM conversion
+  .replace(/a/g, 'AA');
 }
 
 /**
@@ -54484,6 +54515,18 @@ function uniqueKey(map, base) {
     newKey = iterateKey(newKey);
   }
   return newKey;
+}
+
+/**
+ * Determines the major version number of bootstrap.
+ *
+ * @return {number}
+ */
+function bootstrapVersion() {
+  if (typeof $ === 'function' && typeof $().collapse === 'function') {
+    return parseInt($.fn.collapse.Constructor.VERSION.split('.')[0], 10);
+  }
+  return 0;
 }
 },{"./jsonlogic/operators":36,"json-logic-js":39,"jstimezonedetect":40,"lodash":253,"moment-timezone/moment-timezone":275,"native-promise-only":277,"whatwg-fetch":358}],38:[function(_dereq_,module,exports){
 /*!
@@ -102773,7 +102816,7 @@ module.exports = function(app) {
         ],
         tableView: function(data, options) {
           // Include only form data.
-          return GridUtils.generic(data.data, options);
+          return data ? GridUtils.generic(data.data, options) : '';
         }
       });
     }
@@ -118413,7 +118456,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":427,"angular-drag-and-drop-lists":2,"ng-dialog":278,"ng-formio/src/formio-full.js":346}],427:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.36.1 | https://unpkg.com/ng-formio-builder@2.36.1/LICENSE.txt */
+/*! ng-formio-builder v2.36.2 | https://unpkg.com/ng-formio-builder@2.36.2/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
