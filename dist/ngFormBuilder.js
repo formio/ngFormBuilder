@@ -2204,8 +2204,10 @@ var _exportNames = {
   isValidDate: true,
   currentTimezone: true,
   offsetDate: true,
+  zonesLoaded: true,
+  shouldLoadZones: true,
   loadZones: true,
-  timezoneText: true,
+  momentDate: true,
   formatDate: true,
   formatOffset: true,
   getLocaleDateFormatInfo: true,
@@ -2222,7 +2224,8 @@ var _exportNames = {
   iterateKey: true,
   uniqueKey: true,
   bootstrapVersion: true,
-  jsonLogic: true
+  jsonLogic: true,
+  moment: true
 };
 exports.evaluate = evaluate;
 exports.getRandomComponentId = getRandomComponentId;
@@ -2244,8 +2247,10 @@ exports.getDateSetting = getDateSetting;
 exports.isValidDate = isValidDate;
 exports.currentTimezone = currentTimezone;
 exports.offsetDate = offsetDate;
+exports.zonesLoaded = zonesLoaded;
+exports.shouldLoadZones = shouldLoadZones;
 exports.loadZones = loadZones;
-exports.timezoneText = timezoneText;
+exports.momentDate = momentDate;
 exports.formatDate = formatDate;
 exports.formatOffset = formatOffset;
 exports.getLocaleDateFormatInfo = getLocaleDateFormatInfo;
@@ -2266,6 +2271,12 @@ Object.defineProperty(exports, "jsonLogic", {
   enumerable: true,
   get: function get() {
     return _jsonLogicJs.default;
+  }
+});
+Object.defineProperty(exports, "moment", {
+  enumerable: true,
+  get: function get() {
+    return _momentTimezone.default;
   }
 });
 
@@ -2677,7 +2688,8 @@ function setActionProperty(component, action, row, data, result, instance) {
           component: component,
           result: result
         };
-        var newValue = instance && instance.interpolate ? instance.interpolate(action.text, evalData) : interpolate(action.text, evalData);
+        var textValue = action.property.component ? action[action.property.component] : action.text;
+        var newValue = instance && instance.interpolate ? instance.interpolate(textValue, evalData) : interpolate(textValue, evalData);
 
         if (newValue !== _lodash.default.get(component, action.property.value, '')) {
           _lodash.default.set(component, action.property.value, newValue);
@@ -2827,6 +2839,31 @@ function offsetDate(date, timezone) {
   };
 }
 /**
+ * Returns if the zones are loaded.
+ *
+ * @return {boolean}
+ */
+
+
+function zonesLoaded() {
+  return _momentTimezone.default.zonesLoaded;
+}
+/**
+ * Returns if we should load the zones.
+ *
+ * @param timezone
+ * @return {boolean}
+ */
+
+
+function shouldLoadZones(timezone) {
+  if (timezone === currentTimezone() || timezone === 'UTC') {
+    return false;
+  }
+
+  return true;
+}
+/**
  * Externally load the timezone data.
  *
  * @return {Promise<any> | *}
@@ -2834,12 +2871,7 @@ function offsetDate(date, timezone) {
 
 
 function loadZones(timezone) {
-  if (timezone === currentTimezone()) {
-    // Return non-resolving promise.
-    return new _nativePromiseOnly.default(_lodash.default.noop);
-  }
-
-  if (timezone === 'UTC') {
+  if (timezone && !shouldLoadZones(timezone)) {
     // Return non-resolving promise.
     return new _nativePromiseOnly.default(_lodash.default.noop);
   }
@@ -2852,41 +2884,38 @@ function loadZones(timezone) {
     return resp.json().then(function (zones) {
       _momentTimezone.default.tz.load(zones);
 
-      _momentTimezone.default.zonesLoaded = true;
+      _momentTimezone.default.zonesLoaded = true; // Trigger a global event that the timezones have finished loading.
+
+      if (document && document.createEvent && document.body && document.body.dispatchEvent) {
+        var event = document.createEvent('Event');
+        event.initEvent('zonesLoaded', true, true);
+        document.body.dispatchEvent(event);
+      }
     });
   });
 }
 /**
- * Set the timezone text and replace once timezones have loaded.
+ * Get the moment date object for translating dates with timezones.
  *
- * @param offsetFormat
- * @param stdFormat
+ * @param value
+ * @param format
+ * @param timezone
  * @return {*}
  */
 
 
-function timezoneText(offsetFormat, stdFormat) {
-  loadZones();
+function momentDate(value, format, timezone) {
+  var momentDate = (0, _momentTimezone.default)(value);
 
-  if (_momentTimezone.default.zonesLoaded) {
-    return offsetFormat();
+  if (timezone === 'UTC') {
+    timezone = 'Etc/UTC';
   }
 
-  var id = getRandomComponentId();
-  var tries = 0;
+  if ((timezone !== currentTimezone() || format && format.match(/\s(z$|z\s)/)) && _momentTimezone.default.zonesLoaded) {
+    return momentDate.tz(timezone);
+  }
 
-  _momentTimezone.default.zonesPromise.then(function replaceZone() {
-    var element = document.getElementById(id);
-
-    if (element) {
-      element.innerHTML = offsetFormat();
-    } else if (tries++ < 5) {
-      setTimeout(replaceZone, 100);
-    }
-  }); // For now just return the current format, and replace once zones are loaded.
-
-
-  return "<span id='".concat(id, "'>").concat(stdFormat(), "</span>");
+  return momentDate;
 }
 /**
  * Format a date provided a value, format, and timezone object.
@@ -2904,12 +2933,13 @@ function formatDate(value, format, timezone) {
   if (timezone === currentTimezone()) {
     // See if our format contains a "z" timezone character.
     if (format.match(/\s(z$|z\s)/)) {
-      // Return the timezoneText.
-      return timezoneText(function () {
+      loadZones();
+
+      if (_momentTimezone.default.zonesLoaded) {
         return momentDate.tz(timezone).format(convertFormatToMoment(format));
-      }, function () {
+      } else {
         return momentDate.format(convertFormatToMoment(format.replace(/\s(z$|z\s)/, '')));
-      });
+      }
     } // Return the standard format.
 
 
@@ -2919,14 +2949,16 @@ function formatDate(value, format, timezone) {
   if (timezone === 'UTC') {
     var offset = offsetDate(momentDate.toDate(), 'UTC');
     return "".concat((0, _momentTimezone.default)(offset.date).format(convertFormatToMoment(format)), " UTC");
-  } // Return the timezoneText.
+  } // Load the zones since we need timezone information.
 
 
-  return timezoneText(function () {
+  loadZones();
+
+  if (_momentTimezone.default.zonesLoaded) {
     return momentDate.tz(timezone).format("".concat(convertFormatToMoment(format), " z"));
-  }, function () {
+  } else {
     return momentDate.format(convertFormatToMoment(format));
-  });
+  }
 }
 /**
  * Pass a format function to format within a timezone.
@@ -2946,15 +2978,17 @@ function formatOffset(formatFn, date, format, timezone) {
 
   if (timezone === 'UTC') {
     return "".concat(formatFn(offsetDate(date, 'UTC').date, format), " UTC");
-  } // Return the timezone text.
+  } // Load the zones since we need timezone information.
 
 
-  return timezoneText(function () {
+  loadZones();
+
+  if (_momentTimezone.default.zonesLoaded) {
     var offset = offsetDate(date, timezone);
     return "".concat(formatFn(offset.date, format), " ").concat(offset.abbr);
-  }, function () {
+  } else {
     return formatFn(date, format);
-  });
+  }
 }
 
 function getLocaleDateFormatInfo(locale) {
@@ -29570,7 +29604,7 @@ module.exports = words;
 
 },{"./_asciiWords":124,"./_hasUnicodeWord":220,"./_unicodeWords":277,"./toString":334}],338:[function(_dereq_,module,exports){
 //! moment-timezone.js
-//! version : 0.5.21
+//! version : 0.5.23
 //! Copyright (c) JS Foundation and other contributors
 //! license : MIT
 //! github.com/moment/moment-timezone
@@ -29595,7 +29629,7 @@ module.exports = words;
 	// 	return moment;
 	// }
 
-	var VERSION = "0.5.21",
+	var VERSION = "0.5.23",
 		zones = {},
 		links = {},
 		names = {},
@@ -40351,7 +40385,7 @@ module.exports = [
           delete $scope.data[component.key];
         }
         if (component.label) {
-          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
+          var invalidRegex = /[^\w\.-]/g;
           component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
         }
         BuilderUtils.uniquify($scope.form, component);
@@ -41440,7 +41474,7 @@ module.exports = function() {
   return {
     require: 'ngModel',
     link: function(scope, element, attrs, ngModel) {
-      var invalidRegex = /^(\w|\w[\w-.]*\w)$/;
+      var invalidRegex = /[^\w\.-]/g;
       ngModel.$parsers.push(function(inputValue) {
         var transformedInput = inputValue.replace(invalidRegex, '');
         if (transformedInput !== inputValue) {
@@ -41852,7 +41886,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],412:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.36.3 | https://unpkg.com/ng-formio-builder@2.36.3/LICENSE.txt */
+/*! ng-formio-builder v2.36.4 | https://unpkg.com/ng-formio-builder@2.36.4/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
