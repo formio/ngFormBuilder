@@ -157,7 +157,7 @@ module.exports = [
           delete $scope.data[component.key];
         }
         if (component.label) {
-          var invalidRegex = /^[^A-Za-z_]*|[^A-Za-z0-9\-_]*/g;
+          var invalidRegex = /[^\w\.-]/g;
           component.key = _camelCase($scope.parentKey + ' ' + component.label.replace(invalidRegex, ''));
         }
         BuilderUtils.uniquify($scope.form, component);
