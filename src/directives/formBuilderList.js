@@ -6,6 +6,7 @@ module.exports = [
         formio: '=',
         form: '=',
         parent: '=?',
+        path: '=?',
         // # of items needed in the list before hiding the
         // drag and drop prompt div
         hideDndBoxCount: '=',
