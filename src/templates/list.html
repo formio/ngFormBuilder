@@ -1,6 +1,6 @@
 <ul class="component-list"
     dnd-list="component.components"
-    dnd-drop="addComponent(item, index)">
+    dnd-drop="addComponent(item, index, parent, path)">
   <li ng-if="component.components.length < hideCount">
     <div class="alert alert-info" style="text-align:center; margin-bottom: 5px;" role="alert">
       Drag and Drop a form component
@@ -13,7 +13,7 @@
       dnd-effect-allowed="move"
       dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
       dnd-dragend="dndDragIframeWorkaround.isDragging = false"
-      dnd-moved="removeComponent(component, false)">
+      dnd-moved="removeComponent(component, false, true)">
     <form-builder-component ng-if="!component.hideBuilder"></form-builder-component>
     <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
   </li>

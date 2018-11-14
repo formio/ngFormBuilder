@@ -30,7 +30,7 @@ module.exports = function(app) {
             width: '100%'
           };
           $scope.$watch('component.html', function() {
-            $scope.$emit('formBuilder:update');
+            $scope.$emit('formBuilder:update', $scope.component);
           });
         },
         views: [

@@ -45,7 +45,7 @@ module.exports = function(app) {
             '<tbody>' +
               '<tr ng-repeat="row in component.rows">' +
                 '<td ng-repeat="col in row">' +
-                  '<form-builder-list parent="component" component="col" form="form" options="options" formio="::formio"></form-builder-list>' +
+                  '<form-builder-list parent="component" path="\'rows[\' + $parent.$index + \']\' + \'[\' + $index + \'].components\'" component="col" form="form" options="options" formio="::formio"></form-builder-list>' +
                 '</td>' +
               '</tr>' +
             '</tbody>' +

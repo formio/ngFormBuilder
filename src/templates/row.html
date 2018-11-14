@@ -2,7 +2,7 @@
   <label ng-if="labelVisible()" class="control-label">{{ component.label }}</label>
   <ul class="component-row formbuilder-group"
       dnd-list="component.components"
-      dnd-drop="addComponent(item, index)"
+      dnd-drop="addComponent(item, index, parent, path)"
       dnd-horizontal-list="true">
     <li ng-repeat="component in component.components"
         class="formbuilder-group-row pull-left"
@@ -10,7 +10,7 @@
         dnd-effect-allowed="move"
         dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
         dnd-dragend="dndDragIframeWorkaround.isDragging = false"
-        dnd-moved="removeComponent(component, false)">
+        dnd-moved="removeComponent(component, false, true)">
       <form-builder-component></form-builder-component>
       <div ng-if="dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay" class="dndOverlay"></div>
     </li>

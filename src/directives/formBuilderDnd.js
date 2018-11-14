@@ -69,7 +69,7 @@ module.exports = [
       $scope.addComponent(component.settings);
     });
 
-    $scope.addComponent = function(component, index) {
+    $scope.addComponent = function(component, index, parent, path) {
 
       delete component.hideLabel;
 
@@ -124,7 +124,6 @@ module.exports = [
       $scope.$broadcast('ckeditor.refresh');
 
       dndDragIframeWorkaround.isDragging = false;
-      $scope.emit('add');
       $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
 
       // Make sure that they don't ever add a component on the bottom of the submit button.
@@ -146,6 +145,7 @@ module.exports = [
       // Add the component to the components array.
       $scope.component.components.splice(index, 0, component);
       $timeout($scope.$apply.bind($scope));
+      $scope.emit('add', component, index, parent, path);
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
       return true;
@@ -165,21 +165,22 @@ module.exports = [
       }
     };
 
-    var remove = function(component) {
-      if ($scope.component.components.indexOf(component) !== -1) {
-        $scope.component.components.splice($scope.component.components.indexOf(component), 1);
-        $scope.emit('remove', component);
-        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
-      }
-    };
-
     $scope.saveComponent = function(component) {
       $scope.emit('update', component);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
       ngDialog.closeAll(true);
     };
 
-    $scope.removeComponent = function(component, shouldConfirm) {
+    var remove = function(component, moved) {
+      var index = $scope.component.components.indexOf(component);
+      if (index !== -1) {
+        $scope.component.components.splice(index, 1);
+        $scope.emit('remove', component, index, moved);
+        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
+      }
+    };
+
+    $scope.removeComponent = function(component, shouldConfirm, moved) {
       if (shouldConfirm) {
         // Show confirm dialog before removing a component
         ngDialog.open({
@@ -188,12 +189,12 @@ module.exports = [
         }).closePromise.then(function(e) {
           var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document' || e.value === '$escape';
           if (!cancelled) {
-            remove(component);
+            remove(component, moved);
           }
         });
       }
       else {
-        remove(component);
+        remove(component, moved);
       }
     };
 
@@ -215,7 +216,7 @@ module.exports = [
         childScope.data[component.key] = component.multiple ? [''] : '';
       }
 
-      var previousSettings = angular.copy(component);
+      var previousComponent = angular.copy(component);
 
       // Make sure this component has a key.
       if (!component.key) {
@@ -265,7 +266,7 @@ module.exports = [
           }
 
           // Revert to old settings, but use the same object reference
-          _assign(component, previousSettings);
+          _assign(component, previousComponent);
           return;
         }
 
@@ -281,7 +282,7 @@ module.exports = [
           delete child.isNew;
         }, true);
 
-        $scope.emit('edit', component);
+        $scope.emit('edit', component, previousComponent);
       });
     };
 
