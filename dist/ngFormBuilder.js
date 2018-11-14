@@ -36179,7 +36179,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/columns.html',
         '<div class="row">' +
           '<div class="col-xs-{{column.width || 6}} col-xs-offset-{{column.offset}} col-xs-push-{{column.push}} col-xs-pull-{{column.pull}}" component-form-group" ng-repeat="column in component.columns">' +
-            '<form-builder-list class="formio-column" parent="component" component="column" form="form" options="options" formio="::formio"></form-builder-list>' +
+            '<form-builder-list class="formio-column" parent="component" path="\'columns[\' + $index + \'].components\'" component="column" form="form" options="options" formio="::formio"></form-builder-list>' +
           '</div>' +
         '</div>'
       );
@@ -36475,7 +36475,7 @@ module.exports = function(app) {
             width: '100%'
           };
           $scope.$watch('component.html', function() {
-            $scope.$emit('formBuilder:update');
+            $scope.$emit('formBuilder:update', $scope.component);
           });
         },
         views: [
@@ -38788,7 +38788,7 @@ module.exports = function(app) {
             '<tbody>' +
               '<tr ng-repeat="row in component.rows">' +
                 '<td ng-repeat="col in row">' +
-                  '<form-builder-list parent="component" component="col" form="form" options="options" formio="::formio"></form-builder-list>' +
+                  '<form-builder-list parent="component" path="\'rows[\' + $parent.$index + \']\' + \'[\' + $index + \'].components\'" component="col" form="form" options="options" formio="::formio"></form-builder-list>' +
                 '</td>' +
               '</tr>' +
             '</tbody>' +
@@ -40297,7 +40297,7 @@ module.exports = [
       $scope.addComponent(component.settings);
     });
 
-    $scope.addComponent = function(component, index) {
+    $scope.addComponent = function(component, index, parent, path) {
 
       delete component.hideLabel;
 
@@ -40352,7 +40352,6 @@ module.exports = [
       $scope.$broadcast('ckeditor.refresh');
 
       dndDragIframeWorkaround.isDragging = false;
-      $scope.emit('add');
       $scope.$broadcast('iframeMessage', {name: 'addElement', data: component});
 
       // Make sure that they don't ever add a component on the bottom of the submit button.
@@ -40374,6 +40373,7 @@ module.exports = [
       // Add the component to the components array.
       $scope.component.components.splice(index, 0, component);
       $timeout($scope.$apply.bind($scope));
+      $scope.emit('add', component, index, parent, path);
 
       // Return true since this will tell the drag-and-drop list component to not insert into its own array.
       return true;
@@ -40393,21 +40393,22 @@ module.exports = [
       }
     };
 
-    var remove = function(component) {
-      if ($scope.component.components.indexOf(component) !== -1) {
-        $scope.component.components.splice($scope.component.components.indexOf(component), 1);
-        $scope.emit('remove', component);
-        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
-      }
-    };
-
     $scope.saveComponent = function(component) {
       $scope.emit('update', component);
       $scope.$broadcast('iframeMessage', {name: 'updateElement', data: component});
       ngDialog.closeAll(true);
     };
 
-    $scope.removeComponent = function(component, shouldConfirm) {
+    var remove = function(component, moved) {
+      var index = $scope.component.components.indexOf(component);
+      if (index !== -1) {
+        $scope.component.components.splice(index, 1);
+        $scope.emit('remove', component, index, moved);
+        $scope.$broadcast('iframeMessage', {name: 'removeElement', data: component});
+      }
+    };
+
+    $scope.removeComponent = function(component, shouldConfirm, moved) {
       if (shouldConfirm) {
         // Show confirm dialog before removing a component
         ngDialog.open({
@@ -40416,12 +40417,12 @@ module.exports = [
         }).closePromise.then(function(e) {
           var cancelled = e.value === false || e.value === '$closeButton' || e.value === '$document' || e.value === '$escape';
           if (!cancelled) {
-            remove(component);
+            remove(component, moved);
           }
         });
       }
       else {
-        remove(component);
+        remove(component, moved);
       }
     };
 
@@ -40443,7 +40444,7 @@ module.exports = [
         childScope.data[component.key] = component.multiple ? [''] : '';
       }
 
-      var previousSettings = angular.copy(component);
+      var previousComponent = angular.copy(component);
 
       // Make sure this component has a key.
       if (!component.key) {
@@ -40493,7 +40494,7 @@ module.exports = [
           }
 
           // Revert to old settings, but use the same object reference
-          _assign(component, previousSettings);
+          _assign(component, previousComponent);
           return;
         }
 
@@ -40509,7 +40510,7 @@ module.exports = [
           delete child.isNew;
         }, true);
 
-        $scope.emit('edit', component);
+        $scope.emit('edit', component, previousComponent);
       });
     };
 
@@ -40605,6 +40606,7 @@ module.exports = [
         formio: '=',
         form: '=',
         parent: '=?',
+        path: '=?',
         // # of items needed in the list before hiding the
         // drag and drop prompt div
         hideDndBoxCount: '=',
@@ -42072,11 +42074,11 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/list.html',
-      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
+      "<ul class=\"component-list\"\n    dnd-list=\"component.components\"\n    dnd-drop=\"addComponent(item, index, parent, path)\">\n  <li ng-if=\"component.components.length < hideCount\">\n    <div class=\"alert alert-info\" style=\"text-align:center; margin-bottom: 5px;\" role=\"alert\">\n      Drag and Drop a form component\n    </div>\n  </li>\n  <!-- DO NOT PUT \"track by $index\" HERE SINCE DYNAMICALLY ADDING/REMOVING COMPONENTS WILL BREAK -->\n  <li ng-repeat=\"component in component.components\"\n      ng-if=\"!rootList || !form.display || (form.display === 'form') || (form.page === $index)\"\n      dnd-draggable=\"component\"\n      dnd-effect-allowed=\"move\"\n      dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n      dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n      dnd-moved=\"removeComponent(component, false, true)\">\n    <form-builder-component ng-if=\"!component.hideBuilder\"></form-builder-component>\n    <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n  </li>\n</ul>\n"
     );
 
     $templateCache.put('formio/formbuilder/row.html',
-      "<div class=\"formbuilder-row\">\n  <label ng-if=\"labelVisible()\" class=\"control-label\">{{ component.label }}</label>\n  <ul class=\"component-row formbuilder-group\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index)\"\n      dnd-horizontal-list=\"true\">\n    <li ng-repeat=\"component in component.components\"\n        class=\"formbuilder-group-row pull-left\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false)\">\n      <form-builder-component></form-builder-component>\n      <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n    </li>\n    <li class=\"formbuilder-group-row form-builder-drop\" ng-if=\"component.components.length < hideCount\">\n      <div class=\"alert alert-info\" role=\"alert\">\n        Drag and Drop a form component\n      </div>\n    </li>\n  </ul>\n  <div style=\"clear:both;\"></div>\n</div>\n"
+      "<div class=\"formbuilder-row\">\n  <label ng-if=\"labelVisible()\" class=\"control-label\">{{ component.label }}</label>\n  <ul class=\"component-row formbuilder-group\"\n      dnd-list=\"component.components\"\n      dnd-drop=\"addComponent(item, index, parent, path)\"\n      dnd-horizontal-list=\"true\">\n    <li ng-repeat=\"component in component.components\"\n        class=\"formbuilder-group-row pull-left\"\n        dnd-draggable=\"component\"\n        dnd-effect-allowed=\"move\"\n        dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n        dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n        dnd-moved=\"removeComponent(component, false, true)\">\n      <form-builder-component></form-builder-component>\n      <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n    </li>\n    <li class=\"formbuilder-group-row form-builder-drop\" ng-if=\"component.components.length < hideCount\">\n      <div class=\"alert alert-info\" role=\"alert\">\n        Drag and Drop a form component\n      </div>\n    </li>\n  </ul>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/formbuilder/builder.html',
@@ -42084,7 +42086,7 @@ app.run([
     );
 
     $templateCache.put('formio/formbuilder/datagrid.html',
-      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"labelVisible()\" class=\"control-label\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <thead>\n      <tr>\n        <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n          <span ng-if=\"!component.dataGridLabel && (component.input || !component.hideLabel)\">{{ (component.label || '') | formioTranslate:null:builder }}</span>\n          <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n        </th>\n      </tr>\n    </thead>\n    <tbody>\n      <tr\n        class=\"component-list\"\n        dnd-list=\"component.components\"\n        dnd-drop=\"addComponent(item, index)\"\n      >\n        <td\n          ng-repeat=\"component in component.components\"\n          ng-init=\"hideMoveButton = true; component.inDataGrid = true\"\n          dnd-draggable=\"component\"\n          dnd-effect-allowed=\"move\"\n          dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n          dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n          dnd-moved=\"removeComponent(component, false)\"\n        >\n          <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n            <div class=\"has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n              <div class=\"input-group\">\n                <form-builder-component></form-builder-component>\n              </div>\n            </div>\n          </div>\n        </td>\n        <td ng-if=\"component.components.length === 0\">\n          <div class=\"alert alert-info\" role=\"alert\">\n            Datagrid Components\n          </div>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
+      "<div class=\"datagrid-dnd dropzone\" ng-controller=\"formBuilderDnd\">\n  <label ng-if=\"labelVisible()\" class=\"control-label\">\n    {{ component.label }}\n    <formio-component-tooltip></formio-component-tooltip>\n  </label>\n  <table class=\"table datagrid-table\" ng-class=\"{'table-striped': component.striped, 'table-bordered': component.bordered, 'table-hover': component.hover, 'table-condensed': component.condensed}\">\n    <thead>\n      <tr>\n        <th style=\"padding:30px 0 10px 0\" ng-repeat=\"component in component.components\" ng-class=\"{'field-required': component.validate.required}\">\n          <span ng-if=\"!component.dataGridLabel && (component.input || !component.hideLabel)\">{{ (component.label || '') | formioTranslate:null:builder }}</span>\n          <div ng-if=\"dndDragIframeWorkaround.isDragging && !formComponent.noDndOverlay\" class=\"dndOverlay\"></div>\n        </th>\n      </tr>\n    </thead>\n    <tbody>\n      <tr\n        class=\"component-list\"\n        dnd-list=\"component.components\"\n        dnd-drop=\"addComponent(item, index, parent, path)\"\n      >\n        <td\n          ng-repeat=\"component in component.components\"\n          ng-init=\"hideMoveButton = true; component.inDataGrid = true\"\n          dnd-draggable=\"component\"\n          dnd-effect-allowed=\"move\"\n          dnd-dragstart=\"dndDragIframeWorkaround.isDragging = true\"\n          dnd-dragend=\"dndDragIframeWorkaround.isDragging = false\"\n          dnd-moved=\"removeComponent(component, false, true)\">\n        >\n          <div class=\"component-form-group component-type-{{ component.type }} form-builder-component\">\n            <div class=\"has-feedback form-field-type-{{ component.type }} {{component.customClass}}\" id=\"form-group-{{ component.key }}\" style=\"position:inherit\" ng-style=\"component.style\">\n              <div class=\"input-group\">\n                <form-builder-component></form-builder-component>\n              </div>\n            </div>\n          </div>\n        </td>\n        <td ng-if=\"component.components.length === 0\">\n          <div class=\"alert alert-info\" role=\"alert\">\n            Datagrid Components\n          </div>\n        </td>\n      </tr>\n    </tbody>\n  </table>\n  <div style=\"clear:both;\"></div>\n</div>\n"
     );
 
     $templateCache.put('formio/components/confirm-remove.html',

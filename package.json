@@ -58,7 +58,7 @@
     "formiojs": "^3.6.12",
     "lodash": "^4.17.11",
     "ng-dialog": "^1.4.0",
-    "ng-formio": "^2.36.8",
+    "ng-formio": "^2.36.9",
     "ng-tags-input": "^3.2.0",
     "vanilla-text-mask": "^5.1.1"
   }

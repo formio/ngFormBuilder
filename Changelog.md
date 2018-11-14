@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [UNRELEASED]
-### Chanded
+## 2.36.9
+### Added
+ - Additional information to builder events.
+
+## 2.36.??
+### Changed
  - API key regex.
 
 ## 2.36.0
