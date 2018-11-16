@@ -25,7 +25,7 @@
           dnd-effect-allowed="move"
           dnd-dragstart="dndDragIframeWorkaround.isDragging = true"
           dnd-dragend="dndDragIframeWorkaround.isDragging = false"
-          dnd-moved="removeComponent(component, false, true)">
+          dnd-moved="removeComponent(component, false, true)"
         >
           <div class="component-form-group component-type-{{ component.type }} form-builder-component">
             <div class="has-feedback form-field-type-{{ component.type }} {{component.customClass}}" id="form-group-{{ component.key }}" style="position:inherit" ng-style="component.style">
