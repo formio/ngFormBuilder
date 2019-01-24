@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.37.0
+### Changed
+ - Upgraded rendere to 2.37.0 which should resolve issues with wizard double submit problems in portal.form.io.
+ 
+### Fixed
+ - Problem where "undefined" would keep getting prefixed to controls added to layout components.
+
 ## 2.36.10
 ### Fixed
  - Remove extra bracket on datagrid.
