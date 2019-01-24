@@ -102713,14 +102713,31 @@ module.exports = function() {
           wrapStaticRequestPromise: wrapQPromise
         }, 'ngFormioPromiseWrapper');
 
+        // Call a safe apply.
+        var safeApply = function(fn) {
+          var phase = $rootScope.$root.$$phase;
+          if(phase == '$apply' || phase == '$digest') {
+            if(fn && (typeof(fn) === 'function')) {
+              fn();
+            }
+          } else {
+            $rootScope.$apply(fn);
+          }
+        };
+
         // Broadcast offline events from $rootScope
         Formio.events.onAny(function() {
           var event = 'formio.' + this.event;
           var args = [].splice.call(arguments, 0);
           args.unshift(event);
-          $rootScope.$apply(function() {
-            $rootScope.$broadcast.apply($rootScope, args);
-          });
+          try {
+            safeApply(function() {
+              $rootScope.$broadcast.apply($rootScope, args);
+            });
+          }
+          catch (err) {
+            console.log(err);
+          }
         });
 
         // Add ability to set the scope base url.
@@ -112633,7 +112650,7 @@ _dereq_('./ngFormBuilder.js');
 
 },{"./ngFormBuilder.js":548,"angular-drag-and-drop-lists":2,"ng-dialog":398,"ng-formio/src/formio-complete.js":466}],548:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.37.0 | https://unpkg.com/ng-formio-builder@2.37.0/LICENSE.txt */
+/*! ng-formio-builder v2.37.1 | https://unpkg.com/ng-formio-builder@2.37.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 

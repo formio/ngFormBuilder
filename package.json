@@ -1,6 +1,6 @@
 {
   "name": "ng-formio-builder",
-  "version": "2.37.0",
+  "version": "2.37.1",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
@@ -59,7 +59,7 @@
     "formiojs": "^3.12.3",
     "lodash": "^4.17.11",
     "ng-dialog": "^1.4.0",
-    "ng-formio": "^2.37.0",
+    "ng-formio": "^2.37.1",
     "ng-tags-input": "^3.2.0",
     "vanilla-text-mask": "^5.1.1"
   }
