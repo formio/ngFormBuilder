@@ -3476,6 +3476,7 @@ var _exportNames = {
   unfold: true,
   firstNonNil: true,
   withSwitch: true,
+  observeOverload: true,
   jsonLogic: true,
   moment: true
 };
@@ -3522,6 +3523,7 @@ exports.uniqueKey = uniqueKey;
 exports.bootstrapVersion = bootstrapVersion;
 exports.unfold = unfold;
 exports.withSwitch = withSwitch;
+exports.observeOverload = observeOverload;
 Object.defineProperty(exports, "jsonLogic", {
   enumerable: true,
   get: function get() {
@@ -4628,6 +4630,36 @@ function withSwitch(a, b) {
   }
 
   return [get, toggle];
+}
+
+function observeOverload(callback) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var _options$limit = options.limit,
+      limit = _options$limit === void 0 ? 50 : _options$limit,
+      _options$delay = options.delay,
+      delay = _options$delay === void 0 ? 500 : _options$delay;
+  var callCount = 0;
+  var timeoutID = 0;
+
+  var reset = function reset() {
+    return callCount = 0;
+  };
+
+  return function () {
+    if (timeoutID !== 0) {
+      clearTimeout(timeoutID);
+      timeoutID = 0;
+    }
+
+    timeoutID = setTimeout(reset, delay);
+    callCount += 1;
+
+    if (callCount >= limit) {
+      clearTimeout(timeoutID);
+      reset();
+      return callback();
+    }
+  };
 }
 },{"./formUtils":103,"./jsonlogic/operators":105,"core-js/modules/es6.array.find":78,"core-js/modules/es6.array.from":79,"core-js/modules/es6.array.iterator":80,"core-js/modules/es6.function.name":81,"core-js/modules/es6.number.constructor":82,"core-js/modules/es6.object.keys":83,"core-js/modules/es6.reflect.construct":84,"core-js/modules/es6.regexp.constructor":85,"core-js/modules/es6.regexp.match":87,"core-js/modules/es6.regexp.replace":88,"core-js/modules/es6.regexp.split":89,"core-js/modules/es6.regexp.to-string":90,"core-js/modules/es6.string.includes":91,"core-js/modules/es6.string.iterator":92,"core-js/modules/es6.symbol":93,"core-js/modules/es7.array.includes":94,"core-js/modules/es7.symbol.async-iterator":95,"core-js/modules/web.dom.iterable":96,"json-logic-js":107,"jstimezonedetect":108,"lodash":326,"moment-timezone/moment-timezone":349,"native-promise-only":351,"string-hash":353,"whatwg-fetch":356}],107:[function(_dereq_,module,exports){
 /* globals define,module */
@@ -43373,7 +43405,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],424:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.37.1 | https://unpkg.com/ng-formio-builder@2.37.1/LICENSE.txt */
+/*! ng-formio-builder v2.37.2 | https://unpkg.com/ng-formio-builder@2.37.2/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
