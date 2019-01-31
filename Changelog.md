@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.37.3
+### Changed
+ - Upgraded ng-formio and formio.js libs.
+ - Pin Angular version to 1.7.5 to resolve the ng-required issue.
+   https://github.com/angular/angular.js/issues/16814
+
 ## 2.37.1, 2.37.2
 ### Changed
  - Upgraded ng-formio lib.

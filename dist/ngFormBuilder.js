@@ -3648,13 +3648,15 @@ _jsonLogicJs.default.add_operation('relativeMaxDate', function (relativeMaxDate)
  */
 function evaluate(func, args, ret, tokenize) {
   var returnVal = null;
-  var component = args.component ? args.component : {
+  args.component = args.component ? _lodash.default.cloneDeep(args.component) : {
     key: 'unknown'
   };
 
   if (!args.form && args.instance) {
     args.form = _lodash.default.get(args.instance, 'root._form', {});
   }
+
+  args.form = _lodash.default.cloneDeep(args.form);
 
   if (typeof func === 'string') {
     if (ret) {
@@ -3681,7 +3683,7 @@ function evaluate(func, args, ret, tokenize) {
       func = _construct(Function, _toConsumableArray(params).concat([func]));
       args = _lodash.default.values(args);
     } catch (err) {
-      console.warn("An error occured within the custom function for ".concat(component.key), err);
+      console.warn("An error occured within the custom function for ".concat(args.component.key), err);
       returnVal = null;
       func = false;
     }
@@ -3692,17 +3694,17 @@ function evaluate(func, args, ret, tokenize) {
       returnVal = Array.isArray(args) ? func.apply(void 0, _toConsumableArray(args)) : func(args);
     } catch (err) {
       returnVal = null;
-      console.warn("An error occured within custom function for ".concat(component.key), err);
+      console.warn("An error occured within custom function for ".concat(args.component.key), err);
     }
   } else if (_typeof(func) === 'object') {
     try {
       returnVal = _jsonLogicJs.default.apply(func, args);
     } catch (err) {
       returnVal = null;
-      console.warn("An error occured within custom function for ".concat(component.key), err);
+      console.warn("An error occured within custom function for ".concat(args.component.key), err);
     }
   } else if (func) {
-    console.warn("Unknown function type for ".concat(component.key));
+    console.warn("Unknown function type for ".concat(args.component.key));
   }
 
   return returnVal;
@@ -43405,7 +43407,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],424:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.37.2 | https://unpkg.com/ng-formio-builder@2.37.2/LICENSE.txt */
+/*! ng-formio-builder v2.37.3 | https://unpkg.com/ng-formio-builder@2.37.3/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
