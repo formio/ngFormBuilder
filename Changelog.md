@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.37.4
+### Added
+ - The overlay "page" within the pdf layout settings.
+
 ## 2.37.3
 ### Changed
  - Upgraded ng-formio and formio.js libs.

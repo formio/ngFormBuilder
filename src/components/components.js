@@ -139,6 +139,10 @@ module.exports = function(app) {
           '      <label for="overlay-height">Height</label>' +
           '      <input class="form-control" id="overlay-height" name="overlay-height" ng-model="component.overlay.height"></input>' +
           '    </div>' +
+          '    <div class="form-group">' +
+          '      <label for="overlay-page">Page</label>' +
+          '      <input class="form-control" id="overlay-page" name="overlay-page" ng-model="component.overlay.page"></input>' +
+          '    </div>' +
           '  </div>' +
           '</uib-accordion>' +
         '</ng-form>'
