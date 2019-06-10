@@ -142,6 +142,10 @@ module.exports = [
         }
       }
 
+      if (index === undefined) {
+        index = $scope.component.components.length
+      }
+
       // Add the component to the components array.
       $scope.component.components.splice(index, 0, component);
       $timeout($scope.$apply.bind($scope));
