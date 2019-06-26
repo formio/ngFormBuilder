@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.37.5
+### Fixed
+ - FOR-2349: Fixed issues where form elements are added to end of form for pdf builder.
+ 
+### Changed
+ - Upgraded: angular@1.7.8, brfs@2.0.2, gulp-uglify@3.0.2, watchify@3.11.1, formiojs@3.22.9, gulp-load-plugins@1.6.0
+
 ## 2.37.4
 ### Added
  - The overlay "page" within the pdf layout settings.

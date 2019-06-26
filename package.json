@@ -1,6 +1,6 @@
 {
   "name": "ng-formio-builder",
-  "version": "2.37.4",
+  "version": "2.37.5",
   "description": "The Angular.js form builder component.",
   "main": "dist/ngFormBuilder.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
-    "brfs": "^2.0.1",
+    "brfs": "^2.0.2",
     "browserify": "^16.2.3",
     "del": "^3.0.0",
     "eslint-config-formio": "^1.1.0",
@@ -31,11 +31,11 @@
     "gulp-eslint": "^5.0.0",
     "gulp-filter": "^5.0.1",
     "gulp-livereload": "^3.8.1",
-    "gulp-load-plugins": "^1.5.0",
+    "gulp-load-plugins": "^1.6.0",
     "gulp-rename": "^1.4.0",
     "gulp-replace": "^1.0.0",
     "gulp-streamify": "^1.0.2",
-    "gulp-uglify": "^3.0.1",
+    "gulp-uglify": "^3.0.2",
     "main-bower-files": "^2.11.1",
     "natives": "^1.1.6",
     "run-sequence": "^2.2.0",
@@ -43,7 +43,7 @@
     "strictify": "^0.2.0",
     "uglifyify": "^5.0.1",
     "vinyl-source-stream": "^2.0.0",
-    "watchify": "^3.11.0"
+    "watchify": "^3.11.1"
   },
   "browserify": {
     "transform": [
@@ -52,11 +52,11 @@
     ]
   },
   "dependencies": {
-    "angular": "1.7.5",
+    "angular": "^1.7.8",
     "angular-ckeditor": "github:lemonde/angular-ckeditor#v1.0.3",
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-ui-bootstrap": "^2.5.6",
-    "formiojs": "^3.13.5",
+    "formiojs": "^3.22.9",
     "lodash": "^4.17.11",
     "ng-dialog": "^1.4.0",
     "ng-formio": "^2.37.3",
