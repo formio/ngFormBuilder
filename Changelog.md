@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.37.6
+### Changed
+ - Upgraded lodash@4.17.14, ng-formio@2.37.4, formiojs@3.23.1, browserify@16.3.0
+
 ## 2.37.5
 ### Fixed
  - FOR-2349: Fixed issues where form elements are added to end of form for pdf builder.
