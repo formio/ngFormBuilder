@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "angular": "^1.7.8",
-    "angular-ckeditor": "github:lemonde/angular-ckeditor#v1.0.3",
+    "angular-ckeditor-legacy": "^1.0.3",
     "angular-drag-and-drop-lists": "^2.1.0",
     "angular-ui-bootstrap": "^2.5.6",
     "formiojs": "^3.23.1",

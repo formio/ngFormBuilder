@@ -23,7 +23,7 @@
     "ng-dialog": "^1.4.0",
     "ng-formio": "^2.37.3",
     "ng-tags-input": "^3.2.0",
-    "angular-ckeditor": "^1.0.3"
+    "angular-ckeditor-legacy": "^1.0.3"
   },
   "devDependencies": {
     "font-awesome": "^4.7.0"
