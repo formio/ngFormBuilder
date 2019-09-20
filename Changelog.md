@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.38.0
+### Changed
+ - Upgrade ng-formio to 2.38.1
+
+### Fixed
+ - A broken bower dependency.
+
 ## 2.37.6
 ### Changed
  - Upgraded lodash@4.17.14, ng-formio@2.37.4, formiojs@3.23.1, browserify@16.3.0

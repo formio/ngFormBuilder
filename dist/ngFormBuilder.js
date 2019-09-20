@@ -15109,7 +15109,7 @@ module.exports = keysIn;
   var undefined;
 
   /** Used as the semantic version number. */
-  var VERSION = '4.17.14';
+  var VERSION = '4.17.15';
 
   /** Used as the size to enable large array optimizations. */
   var LARGE_ARRAY_SIZE = 200;
@@ -45046,7 +45046,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],452:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.37.6 | https://unpkg.com/ng-formio-builder@2.37.6/LICENSE.txt */
+/*! ng-formio-builder v2.38.0 | https://unpkg.com/ng-formio-builder@2.38.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
