@@ -1,139 +1,64 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.formioBuilder = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
-var pSlice = Array.prototype.slice;
-var objectKeys = _dereq_('./lib/keys.js');
-var isArguments = _dereq_('./lib/is_arguments.js');
+'use strict';
 
-var deepEqual = module.exports = function (actual, expected, opts) {
-  if (!opts) opts = {};
-  // 7.1. All identical values are equivalent, as determined by ===.
-  if (actual === expected) {
-    return true;
+var isArray = Array.isArray;
+var keyList = Object.keys;
+var hasProp = Object.prototype.hasOwnProperty;
 
-  } else if (actual instanceof Date && expected instanceof Date) {
-    return actual.getTime() === expected.getTime();
+module.exports = function equal(a, b) {
+  if (a === b) return true;
 
-  // 7.3. Other pairs that do not both pass typeof value == 'object',
-  // equivalence is determined by ==.
-  } else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
-    return opts.strict ? actual === expected : actual == expected;
+  if (a && b && typeof a == 'object' && typeof b == 'object') {
+    var arrA = isArray(a)
+      , arrB = isArray(b)
+      , i
+      , length
+      , key;
 
-  // 7.4. For all other Object pairs, including Array objects, equivalence is
-  // determined by having the same number of owned properties (as verified
-  // with Object.prototype.hasOwnProperty.call), the same set of keys
-  // (although not necessarily the same order), equivalent values for every
-  // corresponding key, and an identical 'prototype' property. Note: this
-  // accounts for both named and indexed properties on Arrays.
-  } else {
-    return objEquiv(actual, expected, opts);
-  }
-}
+    if (arrA && arrB) {
+      length = a.length;
+      if (length != b.length) return false;
+      for (i = length; i-- !== 0;)
+        if (!equal(a[i], b[i])) return false;
+      return true;
+    }
 
-function isUndefinedOrNull(value) {
-  return value === null || value === undefined;
-}
+    if (arrA != arrB) return false;
 
-function isBuffer (x) {
-  if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
-  if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
-    return false;
-  }
-  if (x.length > 0 && typeof x[0] !== 'number') return false;
-  return true;
-}
+    var dateA = a instanceof Date
+      , dateB = b instanceof Date;
+    if (dateA != dateB) return false;
+    if (dateA && dateB) return a.getTime() == b.getTime();
 
-function objEquiv(a, b, opts) {
-  var i, key;
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
-    return false;
-  // an identical 'prototype' property.
-  if (a.prototype !== b.prototype) return false;
-  //~~~I've managed to break Object.keys through screwy arguments passing.
-  //   Converting to array solves the problem.
-  if (isArguments(a)) {
-    if (!isArguments(b)) {
+    var regexpA = a instanceof RegExp
+      , regexpB = b instanceof RegExp;
+    if (regexpA != regexpB) return false;
+    if (regexpA && regexpB) return a.toString() == b.toString();
+
+    var keys = keyList(a);
+    length = keys.length;
+
+    if (length !== keyList(b).length)
       return false;
+
+    for (i = length; i-- !== 0;)
+      if (!hasProp.call(b, keys[i])) return false;
+
+    for (i = length; i-- !== 0;) {
+      key = keys[i];
+      if (!equal(a[key], b[key])) return false;
     }
-    a = pSlice.call(a);
-    b = pSlice.call(b);
-    return deepEqual(a, b, opts);
-  }
-  if (isBuffer(a)) {
-    if (!isBuffer(b)) {
-      return false;
-    }
-    if (a.length !== b.length) return false;
-    for (i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return false;
-    }
+
     return true;
   }
-  try {
-    var ka = objectKeys(a),
-        kb = objectKeys(b);
-  } catch (e) {//happens when one is a string literal and the other isn't
-    return false;
-  }
-  // having the same number of owned properties (keys incorporates
-  // hasOwnProperty)
-  if (ka.length != kb.length)
-    return false;
-  //the same set of keys (although not necessarily the same order),
-  ka.sort();
-  kb.sort();
-  //~~~cheap key test
-  for (i = ka.length - 1; i >= 0; i--) {
-    if (ka[i] != kb[i])
-      return false;
-  }
-  //equivalent values for every corresponding key, and
-  //~~~possibly expensive deep test
-  for (i = ka.length - 1; i >= 0; i--) {
-    key = ka[i];
-    if (!deepEqual(a[key], b[key], opts)) return false;
-  }
-  return typeof a === typeof b;
-}
 
-},{"./lib/is_arguments.js":2,"./lib/keys.js":3}],2:[function(_dereq_,module,exports){
-var supportsArgumentsClass = (function(){
-  return Object.prototype.toString.call(arguments)
-})() == '[object Arguments]';
-
-exports = module.exports = supportsArgumentsClass ? supported : unsupported;
-
-exports.supported = supported;
-function supported(object) {
-  return Object.prototype.toString.call(object) == '[object Arguments]';
+  return a!==a && b!==b;
 };
 
-exports.unsupported = unsupported;
-function unsupported(object){
-  return object &&
-    typeof object == 'object' &&
-    typeof object.length == 'number' &&
-    Object.prototype.hasOwnProperty.call(object, 'callee') &&
-    !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
-    false;
-};
-
-},{}],3:[function(_dereq_,module,exports){
-exports = module.exports = typeof Object.keys === 'function'
-  ? Object.keys : shim;
-
-exports.shim = shim;
-function shim (obj) {
-  var keys = [];
-  for (var key in obj) keys.push(key);
-  return keys;
-}
-
-},{}],4:[function(_dereq_,module,exports){
-var equalsOptions = { strict: true };
-var _equals = _dereq_('deep-equal');
-var areEquals = function (a, b) {
-    return _equals(a, b, equalsOptions);
-};
-var helpers_1 = _dereq_('./helpers');
+},{}],2:[function(_dereq_,module,exports){
+Object.defineProperty(exports, "__esModule", { value: true });
+var areEquals = _dereq_('fast-deep-equal');
+var helpers_1 = _dereq_("./helpers");
 exports.JsonPatchError = helpers_1.PatchError;
 exports.deepClone = helpers_1._deepClone;
 /* We use a Javascript hash to store each
@@ -190,7 +115,7 @@ var arrOps = {
         if (helpers_1.isInteger(i)) {
             arr.splice(i, 0, this.value);
         }
-        else {
+        else { // array props
             arr[i] = this.value;
         }
         // this may be needed when using '-' in an array
@@ -266,9 +191,9 @@ function applyOperation(document, operation, validateOperation, mutateDocument, 
             returnValue.removed = document; //document we removed
             return returnValue;
         }
-        else if (operation.op === 'move' || operation.op === 'copy') {
+        else if (operation.op === 'move' || operation.op === 'copy') { // it's a move or copy to root
             returnValue.newDocument = getValueByPointer(document, operation.from); // get the value by json-pointer in `from` field
-            if (operation.op === 'move') {
+            if (operation.op === 'move') { // report removed item
                 returnValue.removed = document;
             }
             return returnValue;
@@ -281,7 +206,7 @@ function applyOperation(document, operation, validateOperation, mutateDocument, 
             returnValue.newDocument = document;
             return returnValue;
         }
-        else if (operation.op === 'remove') {
+        else if (operation.op === 'remove') { // a remove on root
             returnValue.removed = document;
             returnValue.newDocument = null;
             return returnValue;
@@ -290,7 +215,7 @@ function applyOperation(document, operation, validateOperation, mutateDocument, 
             operation.value = document;
             return returnValue;
         }
-        else {
+        else { /* bad operation */
             if (validateOperation) {
                 throw new exports.JsonPatchError('Operation `op` property is not one of operations defined in RFC-6902', 'OPERATION_OP_INVALID', index, operation, document);
             }
@@ -422,7 +347,7 @@ exports.applyPatch = applyPatch;
  */
 function applyReducer(document, operation, index) {
     var operationResult = applyOperation(document, operation);
-    if (operationResult.test === false) {
+    if (operationResult.test === false) { // failed test
         throw new exports.JsonPatchError("Test operation failed", 'TEST_OPERATION_FAILED', index, operation, document);
     }
     return operationResult.newDocument;
@@ -514,17 +439,42 @@ function validate(sequence, document, externalValidator) {
     }
 }
 exports.validate = validate;
+/**
+ * Default export for backwards compat
+ */
+exports.default = {
+    JsonPatchError: exports.JsonPatchError,
+    deepClone: exports.deepClone,
+    getValueByPointer: getValueByPointer,
+    applyOperation: applyOperation,
+    applyPatch: applyPatch,
+    applyReducer: applyReducer,
+    validator: validator,
+    validate: validate
+};
 
-},{"./helpers":6,"deep-equal":1}],5:[function(_dereq_,module,exports){
+},{"./helpers":4,"fast-deep-equal":1}],3:[function(_dereq_,module,exports){
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 /*!
  * https://github.com/Starcounter-Jack/JSON-Patch
  * (c) 2017 Joachim Wester
  * MIT license
  */
-var helpers_1 = _dereq_('./helpers');
-var core_1 = _dereq_('./core');
-/* export all core functions */
-var core_2 = _dereq_('./core');
+var helpers_1 = _dereq_("./helpers");
+var core_1 = _dereq_("./core");
+/* export all core functions and types */
+var core_2 = _dereq_("./core");
 exports.applyOperation = core_2.applyOperation;
 exports.applyPatch = core_2.applyPatch;
 exports.applyReducer = core_2.applyReducer;
@@ -532,20 +482,20 @@ exports.getValueByPointer = core_2.getValueByPointer;
 exports.validate = core_2.validate;
 exports.validator = core_2.validator;
 /* export some helpers */
-var helpers_2 = _dereq_('./helpers');
+var helpers_2 = _dereq_("./helpers");
 exports.JsonPatchError = helpers_2.PatchError;
 exports.deepClone = helpers_2._deepClone;
 exports.escapePathComponent = helpers_2.escapePathComponent;
 exports.unescapePathComponent = helpers_2.unescapePathComponent;
 var beforeDict = new WeakMap();
-var Mirror = (function () {
+var Mirror = /** @class */ (function () {
     function Mirror(obj) {
         this.observers = new Map();
         this.obj = obj;
     }
     return Mirror;
 }());
-var ObserverInfo = (function () {
+var ObserverInfo = /** @class */ (function () {
     function ObserverInfo(callback, observer) {
         this.callback = callback;
         this.observer = observer;
@@ -598,21 +548,12 @@ function observe(obj, callback) {
             clearTimeout(observer.next);
             observer.next = setTimeout(dirtyCheck);
         };
-        if (typeof window !== 'undefined') {
-            if (window.addEventListener) {
-                window.addEventListener('mouseup', fastCheck);
-                window.addEventListener('keyup', fastCheck);
-                window.addEventListener('mousedown', fastCheck);
-                window.addEventListener('keydown', fastCheck);
-                window.addEventListener('change', fastCheck);
-            }
-            else {
-                document.documentElement.attachEvent('onmouseup', fastCheck);
-                document.documentElement.attachEvent('onkeyup', fastCheck);
-                document.documentElement.attachEvent('onmousedown', fastCheck);
-                document.documentElement.attachEvent('onkeydown', fastCheck);
-                document.documentElement.attachEvent('onchange', fastCheck);
-            }
+        if (typeof window !== 'undefined') { //not Node
+            window.addEventListener('mouseup', fastCheck);
+            window.addEventListener('keyup', fastCheck);
+            window.addEventListener('mousedown', fastCheck);
+            window.addEventListener('keydown', fastCheck);
+            window.addEventListener('change', fastCheck);
         }
     }
     observer.patches = patches;
@@ -622,18 +563,11 @@ function observe(obj, callback) {
         clearTimeout(observer.next);
         removeObserverFromMirror(mirror, observer);
         if (typeof window !== 'undefined') {
-            if (window.removeEventListener) {
-                window.removeEventListener('mouseup', fastCheck);
-                window.removeEventListener('keyup', fastCheck);
-                window.removeEventListener('mousedown', fastCheck);
-                window.removeEventListener('keydown', fastCheck);
-            }
-            else {
-                document.documentElement.detachEvent('onmouseup', fastCheck);
-                document.documentElement.detachEvent('onkeyup', fastCheck);
-                document.documentElement.detachEvent('onmousedown', fastCheck);
-                document.documentElement.detachEvent('onkeydown', fastCheck);
-            }
+            window.removeEventListener('mouseup', fastCheck);
+            window.removeEventListener('keyup', fastCheck);
+            window.removeEventListener('mousedown', fastCheck);
+            window.removeEventListener('keydown', fastCheck);
+            window.removeEventListener('change', fastCheck);
         }
     };
     mirror.observers.set(callback, new ObserverInfo(callback, observer));
@@ -643,9 +577,10 @@ exports.observe = observe;
 /**
  * Generate an array of patches from an observer
  */
-function generate(observer) {
+function generate(observer, invertible) {
+    if (invertible === void 0) { invertible = false; }
     var mirror = beforeDict.get(observer.object);
-    _generate(mirror.value, observer.object, observer.patches, "");
+    _generate(mirror.value, observer.object, observer.patches, "", invertible);
     if (observer.patches.length) {
         core_1.applyPatch(mirror.value, observer.patches);
     }
@@ -660,7 +595,7 @@ function generate(observer) {
 }
 exports.generate = generate;
 // Dirty check if obj is different from mirror, generate patches and update mirror
-function _generate(mirror, obj, patches, path) {
+function _generate(mirror, obj, patches, path, invertible) {
     if (obj === mirror) {
         return;
     }
@@ -678,20 +613,29 @@ function _generate(mirror, obj, patches, path) {
         if (helpers_1.hasOwnProperty(obj, key) && !(obj[key] === undefined && oldVal !== undefined && Array.isArray(obj) === false)) {
             var newVal = obj[key];
             if (typeof oldVal == "object" && oldVal != null && typeof newVal == "object" && newVal != null) {
-                _generate(oldVal, newVal, patches, path + "/" + helpers_1.escapePathComponent(key));
+                _generate(oldVal, newVal, patches, path + "/" + helpers_1.escapePathComponent(key), invertible);
             }
             else {
                 if (oldVal !== newVal) {
                     changed = true;
+                    if (invertible) {
+                        patches.push({ op: "test", path: path + "/" + helpers_1.escapePathComponent(key), value: helpers_1._deepClone(oldVal) });
+                    }
                     patches.push({ op: "replace", path: path + "/" + helpers_1.escapePathComponent(key), value: helpers_1._deepClone(newVal) });
                 }
             }
         }
         else if (Array.isArray(mirror) === Array.isArray(obj)) {
+            if (invertible) {
+                patches.push({ op: "test", path: path + "/" + helpers_1.escapePathComponent(key), value: helpers_1._deepClone(oldVal) });
+            }
             patches.push({ op: "remove", path: path + "/" + helpers_1.escapePathComponent(key) });
             deleted = true; // property has been deleted
         }
         else {
+            if (invertible) {
+                patches.push({ op: "test", path: path, value: mirror });
+            }
             patches.push({ op: "replace", path: path, value: obj });
             changed = true;
         }
@@ -709,24 +653,49 @@ function _generate(mirror, obj, patches, path) {
 /**
  * Create an array of patches from the differences in two objects
  */
-function compare(tree1, tree2) {
+function compare(tree1, tree2, invertible) {
+    if (invertible === void 0) { invertible = false; }
     var patches = [];
-    _generate(tree1, tree2, patches, '');
+    _generate(tree1, tree2, patches, '', invertible);
     return patches;
 }
 exports.compare = compare;
+/**
+ * Default export for backwards compat
+ */
+// import just to re-export as default
+var core = _dereq_("./core");
+var helpers_3 = _dereq_("./helpers");
+exports.default = __assign({}, core, { 
+    // duplex
+    unobserve: unobserve,
+    observe: observe,
+    generate: generate,
+    compare: compare,
+    // helpers
+    JsonPatchError: helpers_3.PatchError, deepClone: helpers_1._deepClone, escapePathComponent: helpers_1.escapePathComponent,
+    unescapePathComponent: helpers_3.unescapePathComponent });
 
-},{"./core":4,"./helpers":6}],6:[function(_dereq_,module,exports){
+},{"./core":2,"./helpers":4}],4:[function(_dereq_,module,exports){
 /*!
  * https://github.com/Starcounter-Jack/JSON-Patch
  * (c) 2017 Joachim Wester
  * MIT license
  */
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 var _hasOwnProperty = Object.prototype.hasOwnProperty;
 function hasOwnProperty(obj, key) {
     return _hasOwnProperty.call(obj, key);
@@ -873,21 +842,24 @@ function patchErrorMessageFormatter(message, args) {
     }
     return messageParts.join('\n');
 }
-var PatchError = (function (_super) {
+var PatchError = /** @class */ (function (_super) {
     __extends(PatchError, _super);
     function PatchError(message, name, index, operation, tree) {
-        _super.call(this, patchErrorMessageFormatter(message, { name: name, index: index, operation: operation, tree: tree }));
-        this.name = name;
-        this.index = index;
-        this.operation = operation;
-        this.tree = tree;
-        this.message = patchErrorMessageFormatter(message, { name: name, index: index, operation: operation, tree: tree });
+        var _newTarget = this.constructor;
+        var _this = _super.call(this, patchErrorMessageFormatter(message, { name: name, index: index, operation: operation, tree: tree })) || this;
+        _this.name = name;
+        _this.index = index;
+        _this.operation = operation;
+        _this.tree = tree;
+        Object.setPrototypeOf(_this, _newTarget.prototype); // restore prototype chain, see https://stackoverflow.com/a/48342359
+        _this.message = patchErrorMessageFormatter(message, { name: name, index: index, operation: operation, tree: tree });
+        return _this;
     }
     return PatchError;
 }(Error));
 exports.PatchError = PatchError;
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 (function (global){
 (function (self) {
   'use strict';
@@ -1395,14 +1367,14 @@ exports.PatchError = PatchError;
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],8:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 module.exports = function (it) {
   if (typeof it != 'function') {
     throw TypeError(String(it) + ' is not a function');
   } return it;
 };
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 var isObject = _dereq_('../internals/is-object');
 
 module.exports = function (it) {
@@ -1411,7 +1383,7 @@ module.exports = function (it) {
   } return it;
 };
 
-},{"../internals/is-object":55}],10:[function(_dereq_,module,exports){
+},{"../internals/is-object":58}],8:[function(_dereq_,module,exports){
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
 var create = _dereq_('../internals/object-create');
 var hide = _dereq_('../internals/hide');
@@ -1430,7 +1402,7 @@ module.exports = function (key) {
   ArrayPrototype[UNSCOPABLES][key] = true;
 };
 
-},{"../internals/hide":46,"../internals/object-create":64,"../internals/well-known-symbol":100}],11:[function(_dereq_,module,exports){
+},{"../internals/hide":48,"../internals/object-create":68,"../internals/well-known-symbol":105}],9:[function(_dereq_,module,exports){
 'use strict';
 var charAt = _dereq_('../internals/string-multibyte').charAt;
 
@@ -1440,7 +1412,14 @@ module.exports = function (S, index, unicode) {
   return index + (unicode ? charAt(S, index).length : 1);
 };
 
-},{"../internals/string-multibyte":91}],12:[function(_dereq_,module,exports){
+},{"../internals/string-multibyte":96}],10:[function(_dereq_,module,exports){
+module.exports = function (it, Constructor, name) {
+  if (!(it instanceof Constructor)) {
+    throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
+  } return it;
+};
+
+},{}],11:[function(_dereq_,module,exports){
 var isObject = _dereq_('../internals/is-object');
 
 module.exports = function (it) {
@@ -1449,7 +1428,7 @@ module.exports = function (it) {
   } return it;
 };
 
-},{"../internals/is-object":55}],13:[function(_dereq_,module,exports){
+},{"../internals/is-object":58}],12:[function(_dereq_,module,exports){
 'use strict';
 var $forEach = _dereq_('../internals/array-iteration').forEach;
 var sloppyArrayMethod = _dereq_('../internals/sloppy-array-method');
@@ -1460,7 +1439,7 @@ module.exports = sloppyArrayMethod('forEach') ? function forEach(callbackfn /* ,
   return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
 } : [].forEach;
 
-},{"../internals/array-iteration":16,"../internals/sloppy-array-method":89}],14:[function(_dereq_,module,exports){
+},{"../internals/array-iteration":15,"../internals/sloppy-array-method":94}],13:[function(_dereq_,module,exports){
 'use strict';
 var bind = _dereq_('../internals/bind-context');
 var toObject = _dereq_('../internals/to-object');
@@ -1503,7 +1482,7 @@ module.exports = function from(arrayLike /* , mapfn = undefined, thisArg = undef
   return result;
 };
 
-},{"../internals/bind-context":19,"../internals/call-with-safe-iteration-closing":20,"../internals/create-property":29,"../internals/get-iterator-method":42,"../internals/is-array-iterator-method":52,"../internals/to-length":96,"../internals/to-object":97}],15:[function(_dereq_,module,exports){
+},{"../internals/bind-context":18,"../internals/call-with-safe-iteration-closing":19,"../internals/create-property":30,"../internals/get-iterator-method":44,"../internals/is-array-iterator-method":55,"../internals/to-length":101,"../internals/to-object":102}],14:[function(_dereq_,module,exports){
 var toIndexedObject = _dereq_('../internals/to-indexed-object');
 var toLength = _dereq_('../internals/to-length');
 var toAbsoluteIndex = _dereq_('../internals/to-absolute-index');
@@ -1537,7 +1516,7 @@ module.exports = {
   indexOf: createMethod(false)
 };
 
-},{"../internals/to-absolute-index":93,"../internals/to-indexed-object":94,"../internals/to-length":96}],16:[function(_dereq_,module,exports){
+},{"../internals/to-absolute-index":98,"../internals/to-indexed-object":99,"../internals/to-length":101}],15:[function(_dereq_,module,exports){
 var bind = _dereq_('../internals/bind-context');
 var IndexedObject = _dereq_('../internals/indexed-object');
 var toObject = _dereq_('../internals/to-object');
@@ -1604,7 +1583,7 @@ module.exports = {
   findIndex: createMethod(6)
 };
 
-},{"../internals/array-species-create":18,"../internals/bind-context":19,"../internals/indexed-object":49,"../internals/to-length":96,"../internals/to-object":97}],17:[function(_dereq_,module,exports){
+},{"../internals/array-species-create":17,"../internals/bind-context":18,"../internals/indexed-object":51,"../internals/to-length":101,"../internals/to-object":102}],16:[function(_dereq_,module,exports){
 var fails = _dereq_('../internals/fails');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
 
@@ -1621,7 +1600,7 @@ module.exports = function (METHOD_NAME) {
   });
 };
 
-},{"../internals/fails":37,"../internals/well-known-symbol":100}],18:[function(_dereq_,module,exports){
+},{"../internals/fails":38,"../internals/well-known-symbol":105}],17:[function(_dereq_,module,exports){
 var isObject = _dereq_('../internals/is-object');
 var isArray = _dereq_('../internals/is-array');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
@@ -1643,7 +1622,7 @@ module.exports = function (originalArray, length) {
   } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
 };
 
-},{"../internals/is-array":53,"../internals/is-object":55,"../internals/well-known-symbol":100}],19:[function(_dereq_,module,exports){
+},{"../internals/is-array":56,"../internals/is-object":58,"../internals/well-known-symbol":105}],18:[function(_dereq_,module,exports){
 var aFunction = _dereq_('../internals/a-function');
 
 // optional / simple context binding
@@ -1669,7 +1648,7 @@ module.exports = function (fn, that, length) {
   };
 };
 
-},{"../internals/a-function":8}],20:[function(_dereq_,module,exports){
+},{"../internals/a-function":6}],19:[function(_dereq_,module,exports){
 var anObject = _dereq_('../internals/an-object');
 
 // call something on iterator step with safe closing on error
@@ -1684,7 +1663,7 @@ module.exports = function (iterator, fn, value, ENTRIES) {
   }
 };
 
-},{"../internals/an-object":12}],21:[function(_dereq_,module,exports){
+},{"../internals/an-object":11}],20:[function(_dereq_,module,exports){
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
 
 var ITERATOR = wellKnownSymbol('iterator');
@@ -1724,14 +1703,14 @@ module.exports = function (exec, SKIP_CLOSING) {
   return ITERATION_SUPPORT;
 };
 
-},{"../internals/well-known-symbol":100}],22:[function(_dereq_,module,exports){
+},{"../internals/well-known-symbol":105}],21:[function(_dereq_,module,exports){
 var toString = {}.toString;
 
 module.exports = function (it) {
   return toString.call(it).slice(8, -1);
 };
 
-},{}],23:[function(_dereq_,module,exports){
+},{}],22:[function(_dereq_,module,exports){
 var classofRaw = _dereq_('../internals/classof-raw');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
 
@@ -1758,7 +1737,229 @@ module.exports = function (it) {
     : (result = classofRaw(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : result;
 };
 
-},{"../internals/classof-raw":22,"../internals/well-known-symbol":100}],24:[function(_dereq_,module,exports){
+},{"../internals/classof-raw":21,"../internals/well-known-symbol":105}],23:[function(_dereq_,module,exports){
+'use strict';
+var redefineAll = _dereq_('../internals/redefine-all');
+var getWeakData = _dereq_('../internals/internal-metadata').getWeakData;
+var anObject = _dereq_('../internals/an-object');
+var isObject = _dereq_('../internals/is-object');
+var anInstance = _dereq_('../internals/an-instance');
+var iterate = _dereq_('../internals/iterate');
+var ArrayIterationModule = _dereq_('../internals/array-iteration');
+var $has = _dereq_('../internals/has');
+var InternalStateModule = _dereq_('../internals/internal-state');
+
+var setInternalState = InternalStateModule.set;
+var internalStateGetterFor = InternalStateModule.getterFor;
+var find = ArrayIterationModule.find;
+var findIndex = ArrayIterationModule.findIndex;
+var id = 0;
+
+// fallback for uncaught frozen keys
+var uncaughtFrozenStore = function (store) {
+  return store.frozen || (store.frozen = new UncaughtFrozenStore());
+};
+
+var UncaughtFrozenStore = function () {
+  this.entries = [];
+};
+
+var findUncaughtFrozen = function (store, key) {
+  return find(store.entries, function (it) {
+    return it[0] === key;
+  });
+};
+
+UncaughtFrozenStore.prototype = {
+  get: function (key) {
+    var entry = findUncaughtFrozen(this, key);
+    if (entry) return entry[1];
+  },
+  has: function (key) {
+    return !!findUncaughtFrozen(this, key);
+  },
+  set: function (key, value) {
+    var entry = findUncaughtFrozen(this, key);
+    if (entry) entry[1] = value;
+    else this.entries.push([key, value]);
+  },
+  'delete': function (key) {
+    var index = findIndex(this.entries, function (it) {
+      return it[0] === key;
+    });
+    if (~index) this.entries.splice(index, 1);
+    return !!~index;
+  }
+};
+
+module.exports = {
+  getConstructor: function (wrapper, CONSTRUCTOR_NAME, IS_MAP, ADDER) {
+    var C = wrapper(function (that, iterable) {
+      anInstance(that, C, CONSTRUCTOR_NAME);
+      setInternalState(that, {
+        type: CONSTRUCTOR_NAME,
+        id: id++,
+        frozen: undefined
+      });
+      if (iterable != undefined) iterate(iterable, that[ADDER], that, IS_MAP);
+    });
+
+    var getInternalState = internalStateGetterFor(CONSTRUCTOR_NAME);
+
+    var define = function (that, key, value) {
+      var state = getInternalState(that);
+      var data = getWeakData(anObject(key), true);
+      if (data === true) uncaughtFrozenStore(state).set(key, value);
+      else data[state.id] = value;
+      return that;
+    };
+
+    redefineAll(C.prototype, {
+      // 23.3.3.2 WeakMap.prototype.delete(key)
+      // 23.4.3.3 WeakSet.prototype.delete(value)
+      'delete': function (key) {
+        var state = getInternalState(this);
+        if (!isObject(key)) return false;
+        var data = getWeakData(key);
+        if (data === true) return uncaughtFrozenStore(state)['delete'](key);
+        return data && $has(data, state.id) && delete data[state.id];
+      },
+      // 23.3.3.4 WeakMap.prototype.has(key)
+      // 23.4.3.4 WeakSet.prototype.has(value)
+      has: function has(key) {
+        var state = getInternalState(this);
+        if (!isObject(key)) return false;
+        var data = getWeakData(key);
+        if (data === true) return uncaughtFrozenStore(state).has(key);
+        return data && $has(data, state.id);
+      }
+    });
+
+    redefineAll(C.prototype, IS_MAP ? {
+      // 23.3.3.3 WeakMap.prototype.get(key)
+      get: function get(key) {
+        var state = getInternalState(this);
+        if (isObject(key)) {
+          var data = getWeakData(key);
+          if (data === true) return uncaughtFrozenStore(state).get(key);
+          return data ? data[state.id] : undefined;
+        }
+      },
+      // 23.3.3.5 WeakMap.prototype.set(key, value)
+      set: function set(key, value) {
+        return define(this, key, value);
+      }
+    } : {
+      // 23.4.3.1 WeakSet.prototype.add(value)
+      add: function add(value) {
+        return define(this, value, true);
+      }
+    });
+
+    return C;
+  }
+};
+
+},{"../internals/an-instance":10,"../internals/an-object":11,"../internals/array-iteration":15,"../internals/has":46,"../internals/internal-metadata":53,"../internals/internal-state":54,"../internals/is-object":58,"../internals/iterate":61,"../internals/redefine-all":83}],24:[function(_dereq_,module,exports){
+'use strict';
+var $ = _dereq_('../internals/export');
+var global = _dereq_('../internals/global');
+var isForced = _dereq_('../internals/is-forced');
+var redefine = _dereq_('../internals/redefine');
+var InternalMetadataModule = _dereq_('../internals/internal-metadata');
+var iterate = _dereq_('../internals/iterate');
+var anInstance = _dereq_('../internals/an-instance');
+var isObject = _dereq_('../internals/is-object');
+var fails = _dereq_('../internals/fails');
+var checkCorrectnessOfIteration = _dereq_('../internals/check-correctness-of-iteration');
+var setToStringTag = _dereq_('../internals/set-to-string-tag');
+var inheritIfRequired = _dereq_('../internals/inherit-if-required');
+
+module.exports = function (CONSTRUCTOR_NAME, wrapper, common, IS_MAP, IS_WEAK) {
+  var NativeConstructor = global[CONSTRUCTOR_NAME];
+  var NativePrototype = NativeConstructor && NativeConstructor.prototype;
+  var Constructor = NativeConstructor;
+  var ADDER = IS_MAP ? 'set' : 'add';
+  var exported = {};
+
+  var fixMethod = function (KEY) {
+    var nativeMethod = NativePrototype[KEY];
+    redefine(NativePrototype, KEY,
+      KEY == 'add' ? function add(value) {
+        nativeMethod.call(this, value === 0 ? 0 : value);
+        return this;
+      } : KEY == 'delete' ? function (key) {
+        return IS_WEAK && !isObject(key) ? false : nativeMethod.call(this, key === 0 ? 0 : key);
+      } : KEY == 'get' ? function get(key) {
+        return IS_WEAK && !isObject(key) ? undefined : nativeMethod.call(this, key === 0 ? 0 : key);
+      } : KEY == 'has' ? function has(key) {
+        return IS_WEAK && !isObject(key) ? false : nativeMethod.call(this, key === 0 ? 0 : key);
+      } : function set(key, value) {
+        nativeMethod.call(this, key === 0 ? 0 : key, value);
+        return this;
+      }
+    );
+  };
+
+  // eslint-disable-next-line max-len
+  if (isForced(CONSTRUCTOR_NAME, typeof NativeConstructor != 'function' || !(IS_WEAK || NativePrototype.forEach && !fails(function () {
+    new NativeConstructor().entries().next();
+  })))) {
+    // create collection constructor
+    Constructor = common.getConstructor(wrapper, CONSTRUCTOR_NAME, IS_MAP, ADDER);
+    InternalMetadataModule.REQUIRED = true;
+  } else if (isForced(CONSTRUCTOR_NAME, true)) {
+    var instance = new Constructor();
+    // early implementations not supports chaining
+    var HASNT_CHAINING = instance[ADDER](IS_WEAK ? {} : -0, 1) != instance;
+    // V8 ~ Chromium 40- weak-collections throws on primitives, but should return false
+    var THROWS_ON_PRIMITIVES = fails(function () { instance.has(1); });
+    // most early implementations doesn't supports iterables, most modern - not close it correctly
+    // eslint-disable-next-line no-new
+    var ACCEPT_ITERABLES = checkCorrectnessOfIteration(function (iterable) { new NativeConstructor(iterable); });
+    // for early implementations -0 and +0 not the same
+    var BUGGY_ZERO = !IS_WEAK && fails(function () {
+      // V8 ~ Chromium 42- fails only with 5+ elements
+      var $instance = new NativeConstructor();
+      var index = 5;
+      while (index--) $instance[ADDER](index, index);
+      return !$instance.has(-0);
+    });
+
+    if (!ACCEPT_ITERABLES) {
+      Constructor = wrapper(function (dummy, iterable) {
+        anInstance(dummy, Constructor, CONSTRUCTOR_NAME);
+        var that = inheritIfRequired(new NativeConstructor(), dummy, Constructor);
+        if (iterable != undefined) iterate(iterable, that[ADDER], that, IS_MAP);
+        return that;
+      });
+      Constructor.prototype = NativePrototype;
+      NativePrototype.constructor = Constructor;
+    }
+
+    if (THROWS_ON_PRIMITIVES || BUGGY_ZERO) {
+      fixMethod('delete');
+      fixMethod('has');
+      IS_MAP && fixMethod('get');
+    }
+
+    if (BUGGY_ZERO || HASNT_CHAINING) fixMethod(ADDER);
+
+    // weak collections should not contains .clear method
+    if (IS_WEAK && NativePrototype.clear) delete NativePrototype.clear;
+  }
+
+  exported[CONSTRUCTOR_NAME] = Constructor;
+  $({ global: true, forced: Constructor != NativeConstructor }, exported);
+
+  setToStringTag(Constructor, CONSTRUCTOR_NAME);
+
+  if (!IS_WEAK) common.setStrong(Constructor, CONSTRUCTOR_NAME, IS_MAP);
+
+  return Constructor;
+};
+
+},{"../internals/an-instance":10,"../internals/check-correctness-of-iteration":20,"../internals/export":37,"../internals/fails":38,"../internals/global":45,"../internals/inherit-if-required":52,"../internals/internal-metadata":53,"../internals/is-forced":57,"../internals/is-object":58,"../internals/iterate":61,"../internals/redefine":84,"../internals/set-to-string-tag":91}],25:[function(_dereq_,module,exports){
 var has = _dereq_('../internals/has');
 var ownKeys = _dereq_('../internals/own-keys');
 var getOwnPropertyDescriptorModule = _dereq_('../internals/object-get-own-property-descriptor');
@@ -1774,7 +1975,7 @@ module.exports = function (target, source) {
   }
 };
 
-},{"../internals/has":44,"../internals/object-define-property":66,"../internals/object-get-own-property-descriptor":67,"../internals/own-keys":77}],25:[function(_dereq_,module,exports){
+},{"../internals/has":46,"../internals/object-define-property":70,"../internals/object-get-own-property-descriptor":71,"../internals/own-keys":81}],26:[function(_dereq_,module,exports){
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
 
 var MATCH = wellKnownSymbol('match');
@@ -1791,7 +1992,7 @@ module.exports = function (METHOD_NAME) {
   } return false;
 };
 
-},{"../internals/well-known-symbol":100}],26:[function(_dereq_,module,exports){
+},{"../internals/well-known-symbol":105}],27:[function(_dereq_,module,exports){
 var fails = _dereq_('../internals/fails');
 
 module.exports = !fails(function () {
@@ -1800,7 +2001,7 @@ module.exports = !fails(function () {
   return Object.getPrototypeOf(new F()) !== F.prototype;
 });
 
-},{"../internals/fails":37}],27:[function(_dereq_,module,exports){
+},{"../internals/fails":38}],28:[function(_dereq_,module,exports){
 'use strict';
 var IteratorPrototype = _dereq_('../internals/iterators-core').IteratorPrototype;
 var create = _dereq_('../internals/object-create');
@@ -1818,7 +2019,7 @@ module.exports = function (IteratorConstructor, NAME, next) {
   return IteratorConstructor;
 };
 
-},{"../internals/create-property-descriptor":28,"../internals/iterators":59,"../internals/iterators-core":58,"../internals/object-create":64,"../internals/set-to-string-tag":86}],28:[function(_dereq_,module,exports){
+},{"../internals/create-property-descriptor":29,"../internals/iterators":63,"../internals/iterators-core":62,"../internals/object-create":68,"../internals/set-to-string-tag":91}],29:[function(_dereq_,module,exports){
 module.exports = function (bitmap, value) {
   return {
     enumerable: !(bitmap & 1),
@@ -1828,7 +2029,7 @@ module.exports = function (bitmap, value) {
   };
 };
 
-},{}],29:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 'use strict';
 var toPrimitive = _dereq_('../internals/to-primitive');
 var definePropertyModule = _dereq_('../internals/object-define-property');
@@ -1840,7 +2041,7 @@ module.exports = function (object, key, value) {
   else object[propertyKey] = value;
 };
 
-},{"../internals/create-property-descriptor":28,"../internals/object-define-property":66,"../internals/to-primitive":98}],30:[function(_dereq_,module,exports){
+},{"../internals/create-property-descriptor":29,"../internals/object-define-property":70,"../internals/to-primitive":103}],31:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var createIteratorConstructor = _dereq_('../internals/create-iterator-constructor');
@@ -1932,7 +2133,7 @@ module.exports = function (Iterable, NAME, IteratorConstructor, next, DEFAULT, I
   return methods;
 };
 
-},{"../internals/create-iterator-constructor":27,"../internals/export":36,"../internals/hide":46,"../internals/is-pure":56,"../internals/iterators":59,"../internals/iterators-core":58,"../internals/object-get-prototype-of":71,"../internals/object-set-prototype-of":75,"../internals/redefine":79,"../internals/set-to-string-tag":86,"../internals/well-known-symbol":100}],31:[function(_dereq_,module,exports){
+},{"../internals/create-iterator-constructor":28,"../internals/export":37,"../internals/hide":48,"../internals/is-pure":59,"../internals/iterators":63,"../internals/iterators-core":62,"../internals/object-get-prototype-of":75,"../internals/object-set-prototype-of":79,"../internals/redefine":84,"../internals/set-to-string-tag":91,"../internals/well-known-symbol":105}],32:[function(_dereq_,module,exports){
 var path = _dereq_('../internals/path');
 var has = _dereq_('../internals/has');
 var wrappedWellKnownSymbolModule = _dereq_('../internals/wrapped-well-known-symbol');
@@ -1945,7 +2146,7 @@ module.exports = function (NAME) {
   });
 };
 
-},{"../internals/has":44,"../internals/object-define-property":66,"../internals/path":78,"../internals/wrapped-well-known-symbol":102}],32:[function(_dereq_,module,exports){
+},{"../internals/has":46,"../internals/object-define-property":70,"../internals/path":82,"../internals/wrapped-well-known-symbol":107}],33:[function(_dereq_,module,exports){
 var fails = _dereq_('../internals/fails');
 
 // Thank's IE8 for his funny defineProperty
@@ -1953,7 +2154,7 @@ module.exports = !fails(function () {
   return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
 });
 
-},{"../internals/fails":37}],33:[function(_dereq_,module,exports){
+},{"../internals/fails":38}],34:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var isObject = _dereq_('../internals/is-object');
 
@@ -1965,7 +2166,7 @@ module.exports = function (it) {
   return EXISTS ? document.createElement(it) : {};
 };
 
-},{"../internals/global":43,"../internals/is-object":55}],34:[function(_dereq_,module,exports){
+},{"../internals/global":45,"../internals/is-object":58}],35:[function(_dereq_,module,exports){
 // iterable DOM collections
 // flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
 module.exports = {
@@ -2002,7 +2203,7 @@ module.exports = {
   TouchList: 0
 };
 
-},{}],35:[function(_dereq_,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 // IE8- don't enum bug keys
 module.exports = [
   'constructor',
@@ -2014,7 +2215,7 @@ module.exports = [
   'valueOf'
 ];
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var getOwnPropertyDescriptor = _dereq_('../internals/object-get-own-property-descriptor').f;
 var hide = _dereq_('../internals/hide');
@@ -2070,7 +2271,7 @@ module.exports = function (options, source) {
   }
 };
 
-},{"../internals/copy-constructor-properties":24,"../internals/global":43,"../internals/hide":46,"../internals/is-forced":54,"../internals/object-get-own-property-descriptor":67,"../internals/redefine":79,"../internals/set-global":84}],37:[function(_dereq_,module,exports){
+},{"../internals/copy-constructor-properties":25,"../internals/global":45,"../internals/hide":48,"../internals/is-forced":57,"../internals/object-get-own-property-descriptor":71,"../internals/redefine":84,"../internals/set-global":89}],38:[function(_dereq_,module,exports){
 module.exports = function (exec) {
   try {
     return !!exec();
@@ -2079,7 +2280,7 @@ module.exports = function (exec) {
   }
 };
 
-},{}],38:[function(_dereq_,module,exports){
+},{}],39:[function(_dereq_,module,exports){
 'use strict';
 var hide = _dereq_('../internals/hide');
 var redefine = _dereq_('../internals/redefine');
@@ -2174,7 +2375,14 @@ module.exports = function (KEY, length, exec, sham) {
   }
 };
 
-},{"../internals/fails":37,"../internals/hide":46,"../internals/redefine":79,"../internals/regexp-exec":81,"../internals/well-known-symbol":100}],39:[function(_dereq_,module,exports){
+},{"../internals/fails":38,"../internals/hide":48,"../internals/redefine":84,"../internals/regexp-exec":86,"../internals/well-known-symbol":105}],40:[function(_dereq_,module,exports){
+var fails = _dereq_('../internals/fails');
+
+module.exports = !fails(function () {
+  return Object.isExtensible(Object.preventExtensions({}));
+});
+
+},{"../internals/fails":38}],41:[function(_dereq_,module,exports){
 'use strict';
 var aFunction = _dereq_('../internals/a-function');
 var isObject = _dereq_('../internals/is-object');
@@ -2203,12 +2411,12 @@ module.exports = Function.bind || function bind(that /* , ...args */) {
   return boundFunction;
 };
 
-},{"../internals/a-function":8,"../internals/is-object":55}],40:[function(_dereq_,module,exports){
+},{"../internals/a-function":6,"../internals/is-object":58}],42:[function(_dereq_,module,exports){
 var shared = _dereq_('../internals/shared');
 
 module.exports = shared('native-function-to-string', Function.toString);
 
-},{"../internals/shared":88}],41:[function(_dereq_,module,exports){
+},{"../internals/shared":93}],43:[function(_dereq_,module,exports){
 var path = _dereq_('../internals/path');
 var global = _dereq_('../internals/global');
 
@@ -2221,7 +2429,7 @@ module.exports = function (namespace, method) {
     : path[namespace] && path[namespace][method] || global[namespace] && global[namespace][method];
 };
 
-},{"../internals/global":43,"../internals/path":78}],42:[function(_dereq_,module,exports){
+},{"../internals/global":45,"../internals/path":82}],44:[function(_dereq_,module,exports){
 var classof = _dereq_('../internals/classof');
 var Iterators = _dereq_('../internals/iterators');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
@@ -2234,7 +2442,7 @@ module.exports = function (it) {
     || Iterators[classof(it)];
 };
 
-},{"../internals/classof":23,"../internals/iterators":59,"../internals/well-known-symbol":100}],43:[function(_dereq_,module,exports){
+},{"../internals/classof":22,"../internals/iterators":63,"../internals/well-known-symbol":105}],45:[function(_dereq_,module,exports){
 (function (global){
 var O = 'object';
 var check = function (it) {
@@ -2252,17 +2460,17 @@ module.exports =
   Function('return this')();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],44:[function(_dereq_,module,exports){
+},{}],46:[function(_dereq_,module,exports){
 var hasOwnProperty = {}.hasOwnProperty;
 
 module.exports = function (it, key) {
   return hasOwnProperty.call(it, key);
 };
 
-},{}],45:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 module.exports = {};
 
-},{}],46:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var definePropertyModule = _dereq_('../internals/object-define-property');
 var createPropertyDescriptor = _dereq_('../internals/create-property-descriptor');
@@ -2274,12 +2482,12 @@ module.exports = DESCRIPTORS ? function (object, key, value) {
   return object;
 };
 
-},{"../internals/create-property-descriptor":28,"../internals/descriptors":32,"../internals/object-define-property":66}],47:[function(_dereq_,module,exports){
+},{"../internals/create-property-descriptor":29,"../internals/descriptors":33,"../internals/object-define-property":70}],49:[function(_dereq_,module,exports){
 var getBuiltIn = _dereq_('../internals/get-built-in');
 
 module.exports = getBuiltIn('document', 'documentElement');
 
-},{"../internals/get-built-in":41}],48:[function(_dereq_,module,exports){
+},{"../internals/get-built-in":43}],50:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var fails = _dereq_('../internals/fails');
 var createElement = _dereq_('../internals/document-create-element');
@@ -2291,7 +2499,7 @@ module.exports = !DESCRIPTORS && !fails(function () {
   }).a != 7;
 });
 
-},{"../internals/descriptors":32,"../internals/document-create-element":33,"../internals/fails":37}],49:[function(_dereq_,module,exports){
+},{"../internals/descriptors":33,"../internals/document-create-element":34,"../internals/fails":38}],51:[function(_dereq_,module,exports){
 var fails = _dereq_('../internals/fails');
 var classof = _dereq_('../internals/classof-raw');
 
@@ -2306,7 +2514,7 @@ module.exports = fails(function () {
   return classof(it) == 'String' ? split.call(it, '') : Object(it);
 } : Object;
 
-},{"../internals/classof-raw":22,"../internals/fails":37}],50:[function(_dereq_,module,exports){
+},{"../internals/classof-raw":21,"../internals/fails":38}],52:[function(_dereq_,module,exports){
 var isObject = _dereq_('../internals/is-object');
 var setPrototypeOf = _dereq_('../internals/object-set-prototype-of');
 
@@ -2325,7 +2533,70 @@ module.exports = function ($this, dummy, Wrapper) {
   return $this;
 };
 
-},{"../internals/is-object":55,"../internals/object-set-prototype-of":75}],51:[function(_dereq_,module,exports){
+},{"../internals/is-object":58,"../internals/object-set-prototype-of":79}],53:[function(_dereq_,module,exports){
+var hiddenKeys = _dereq_('../internals/hidden-keys');
+var isObject = _dereq_('../internals/is-object');
+var has = _dereq_('../internals/has');
+var defineProperty = _dereq_('../internals/object-define-property').f;
+var uid = _dereq_('../internals/uid');
+var FREEZING = _dereq_('../internals/freezing');
+
+var METADATA = uid('meta');
+var id = 0;
+
+var isExtensible = Object.isExtensible || function () {
+  return true;
+};
+
+var setMetadata = function (it) {
+  defineProperty(it, METADATA, { value: {
+    objectID: 'O' + ++id, // object ID
+    weakData: {}          // weak collections IDs
+  } });
+};
+
+var fastKey = function (it, create) {
+  // return a primitive with prefix
+  if (!isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
+  if (!has(it, METADATA)) {
+    // can't set metadata to uncaught frozen object
+    if (!isExtensible(it)) return 'F';
+    // not necessary to add metadata
+    if (!create) return 'E';
+    // add missing metadata
+    setMetadata(it);
+  // return object ID
+  } return it[METADATA].objectID;
+};
+
+var getWeakData = function (it, create) {
+  if (!has(it, METADATA)) {
+    // can't set metadata to uncaught frozen object
+    if (!isExtensible(it)) return true;
+    // not necessary to add metadata
+    if (!create) return false;
+    // add missing metadata
+    setMetadata(it);
+  // return the store of weak collections IDs
+  } return it[METADATA].weakData;
+};
+
+// add metadata on freeze-family methods calling
+var onFreeze = function (it) {
+  if (FREEZING && meta.REQUIRED && isExtensible(it) && !has(it, METADATA)) setMetadata(it);
+  return it;
+};
+
+var meta = module.exports = {
+  REQUIRED: false,
+  fastKey: fastKey,
+  getWeakData: getWeakData,
+  onFreeze: onFreeze
+};
+
+hiddenKeys[METADATA] = true;
+
+},{"../internals/freezing":40,"../internals/has":46,"../internals/hidden-keys":47,"../internals/is-object":58,"../internals/object-define-property":70,"../internals/uid":104}],54:[function(_dereq_,module,exports){
 var NATIVE_WEAK_MAP = _dereq_('../internals/native-weak-map');
 var global = _dereq_('../internals/global');
 var isObject = _dereq_('../internals/is-object');
@@ -2388,7 +2659,7 @@ module.exports = {
   getterFor: getterFor
 };
 
-},{"../internals/global":43,"../internals/has":44,"../internals/hidden-keys":45,"../internals/hide":46,"../internals/is-object":55,"../internals/native-weak-map":61,"../internals/shared-key":87}],52:[function(_dereq_,module,exports){
+},{"../internals/global":45,"../internals/has":46,"../internals/hidden-keys":47,"../internals/hide":48,"../internals/is-object":58,"../internals/native-weak-map":65,"../internals/shared-key":92}],55:[function(_dereq_,module,exports){
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
 var Iterators = _dereq_('../internals/iterators');
 
@@ -2400,7 +2671,7 @@ module.exports = function (it) {
   return it !== undefined && (Iterators.Array === it || ArrayPrototype[ITERATOR] === it);
 };
 
-},{"../internals/iterators":59,"../internals/well-known-symbol":100}],53:[function(_dereq_,module,exports){
+},{"../internals/iterators":63,"../internals/well-known-symbol":105}],56:[function(_dereq_,module,exports){
 var classof = _dereq_('../internals/classof-raw');
 
 // `IsArray` abstract operation
@@ -2409,7 +2680,7 @@ module.exports = Array.isArray || function isArray(arg) {
   return classof(arg) == 'Array';
 };
 
-},{"../internals/classof-raw":22}],54:[function(_dereq_,module,exports){
+},{"../internals/classof-raw":21}],57:[function(_dereq_,module,exports){
 var fails = _dereq_('../internals/fails');
 
 var replacement = /#|\.prototype\./;
@@ -2432,15 +2703,15 @@ var POLYFILL = isForced.POLYFILL = 'P';
 
 module.exports = isForced;
 
-},{"../internals/fails":37}],55:[function(_dereq_,module,exports){
+},{"../internals/fails":38}],58:[function(_dereq_,module,exports){
 module.exports = function (it) {
   return typeof it === 'object' ? it !== null : typeof it === 'function';
 };
 
-},{}],56:[function(_dereq_,module,exports){
+},{}],59:[function(_dereq_,module,exports){
 module.exports = false;
 
-},{}],57:[function(_dereq_,module,exports){
+},{}],60:[function(_dereq_,module,exports){
 var isObject = _dereq_('../internals/is-object');
 var classof = _dereq_('../internals/classof-raw');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
@@ -2454,7 +2725,51 @@ module.exports = function (it) {
   return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classof(it) == 'RegExp');
 };
 
-},{"../internals/classof-raw":22,"../internals/is-object":55,"../internals/well-known-symbol":100}],58:[function(_dereq_,module,exports){
+},{"../internals/classof-raw":21,"../internals/is-object":58,"../internals/well-known-symbol":105}],61:[function(_dereq_,module,exports){
+var anObject = _dereq_('../internals/an-object');
+var isArrayIteratorMethod = _dereq_('../internals/is-array-iterator-method');
+var toLength = _dereq_('../internals/to-length');
+var bind = _dereq_('../internals/bind-context');
+var getIteratorMethod = _dereq_('../internals/get-iterator-method');
+var callWithSafeIterationClosing = _dereq_('../internals/call-with-safe-iteration-closing');
+
+var Result = function (stopped, result) {
+  this.stopped = stopped;
+  this.result = result;
+};
+
+var iterate = module.exports = function (iterable, fn, that, AS_ENTRIES, IS_ITERATOR) {
+  var boundFunction = bind(fn, that, AS_ENTRIES ? 2 : 1);
+  var iterator, iterFn, index, length, result, step;
+
+  if (IS_ITERATOR) {
+    iterator = iterable;
+  } else {
+    iterFn = getIteratorMethod(iterable);
+    if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
+    // optimisation for array iterators
+    if (isArrayIteratorMethod(iterFn)) {
+      for (index = 0, length = toLength(iterable.length); length > index; index++) {
+        result = AS_ENTRIES
+          ? boundFunction(anObject(step = iterable[index])[0], step[1])
+          : boundFunction(iterable[index]);
+        if (result && result instanceof Result) return result;
+      } return new Result(false);
+    }
+    iterator = iterFn.call(iterable);
+  }
+
+  while (!(step = iterator.next()).done) {
+    result = callWithSafeIterationClosing(iterator, boundFunction, step.value, AS_ENTRIES);
+    if (result && result instanceof Result) return result;
+  } return new Result(false);
+};
+
+iterate.stop = function (result) {
+  return new Result(true, result);
+};
+
+},{"../internals/an-object":11,"../internals/bind-context":18,"../internals/call-with-safe-iteration-closing":19,"../internals/get-iterator-method":44,"../internals/is-array-iterator-method":55,"../internals/to-length":101}],62:[function(_dereq_,module,exports){
 'use strict';
 var getPrototypeOf = _dereq_('../internals/object-get-prototype-of');
 var hide = _dereq_('../internals/hide');
@@ -2491,9 +2806,9 @@ module.exports = {
   BUGGY_SAFARI_ITERATORS: BUGGY_SAFARI_ITERATORS
 };
 
-},{"../internals/has":44,"../internals/hide":46,"../internals/is-pure":56,"../internals/object-get-prototype-of":71,"../internals/well-known-symbol":100}],59:[function(_dereq_,module,exports){
-arguments[4][45][0].apply(exports,arguments)
-},{"dup":45}],60:[function(_dereq_,module,exports){
+},{"../internals/has":46,"../internals/hide":48,"../internals/is-pure":59,"../internals/object-get-prototype-of":75,"../internals/well-known-symbol":105}],63:[function(_dereq_,module,exports){
+arguments[4][47][0].apply(exports,arguments)
+},{"dup":47}],64:[function(_dereq_,module,exports){
 var fails = _dereq_('../internals/fails');
 
 module.exports = !!Object.getOwnPropertySymbols && !fails(function () {
@@ -2502,7 +2817,7 @@ module.exports = !!Object.getOwnPropertySymbols && !fails(function () {
   return !String(Symbol());
 });
 
-},{"../internals/fails":37}],61:[function(_dereq_,module,exports){
+},{"../internals/fails":38}],65:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var nativeFunctionToString = _dereq_('../internals/function-to-string');
 
@@ -2510,7 +2825,7 @@ var WeakMap = global.WeakMap;
 
 module.exports = typeof WeakMap === 'function' && /native code/.test(nativeFunctionToString.call(WeakMap));
 
-},{"../internals/function-to-string":40,"../internals/global":43}],62:[function(_dereq_,module,exports){
+},{"../internals/function-to-string":42,"../internals/global":45}],66:[function(_dereq_,module,exports){
 var isRegExp = _dereq_('../internals/is-regexp');
 
 module.exports = function (it) {
@@ -2519,7 +2834,7 @@ module.exports = function (it) {
   } return it;
 };
 
-},{"../internals/is-regexp":57}],63:[function(_dereq_,module,exports){
+},{"../internals/is-regexp":60}],67:[function(_dereq_,module,exports){
 'use strict';
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var fails = _dereq_('../internals/fails');
@@ -2562,7 +2877,7 @@ module.exports = !nativeAssign || fails(function () {
   } return T;
 } : nativeAssign;
 
-},{"../internals/descriptors":32,"../internals/fails":37,"../internals/indexed-object":49,"../internals/object-get-own-property-symbols":70,"../internals/object-keys":73,"../internals/object-property-is-enumerable":74,"../internals/to-object":97}],64:[function(_dereq_,module,exports){
+},{"../internals/descriptors":33,"../internals/fails":38,"../internals/indexed-object":51,"../internals/object-get-own-property-symbols":74,"../internals/object-keys":77,"../internals/object-property-is-enumerable":78,"../internals/to-object":102}],68:[function(_dereq_,module,exports){
 var anObject = _dereq_('../internals/an-object');
 var defineProperties = _dereq_('../internals/object-define-properties');
 var enumBugKeys = _dereq_('../internals/enum-bug-keys');
@@ -2613,7 +2928,7 @@ module.exports = Object.create || function create(O, Properties) {
 
 hiddenKeys[IE_PROTO] = true;
 
-},{"../internals/an-object":12,"../internals/document-create-element":33,"../internals/enum-bug-keys":35,"../internals/hidden-keys":45,"../internals/html":47,"../internals/object-define-properties":65,"../internals/shared-key":87}],65:[function(_dereq_,module,exports){
+},{"../internals/an-object":11,"../internals/document-create-element":34,"../internals/enum-bug-keys":36,"../internals/hidden-keys":47,"../internals/html":49,"../internals/object-define-properties":69,"../internals/shared-key":92}],69:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var definePropertyModule = _dereq_('../internals/object-define-property');
 var anObject = _dereq_('../internals/an-object');
@@ -2631,7 +2946,7 @@ module.exports = DESCRIPTORS ? Object.defineProperties : function defineProperti
   return O;
 };
 
-},{"../internals/an-object":12,"../internals/descriptors":32,"../internals/object-define-property":66,"../internals/object-keys":73}],66:[function(_dereq_,module,exports){
+},{"../internals/an-object":11,"../internals/descriptors":33,"../internals/object-define-property":70,"../internals/object-keys":77}],70:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var IE8_DOM_DEFINE = _dereq_('../internals/ie8-dom-define');
 var anObject = _dereq_('../internals/an-object');
@@ -2653,7 +2968,7 @@ exports.f = DESCRIPTORS ? nativeDefineProperty : function defineProperty(O, P, A
   return O;
 };
 
-},{"../internals/an-object":12,"../internals/descriptors":32,"../internals/ie8-dom-define":48,"../internals/to-primitive":98}],67:[function(_dereq_,module,exports){
+},{"../internals/an-object":11,"../internals/descriptors":33,"../internals/ie8-dom-define":50,"../internals/to-primitive":103}],71:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var propertyIsEnumerableModule = _dereq_('../internals/object-property-is-enumerable');
 var createPropertyDescriptor = _dereq_('../internals/create-property-descriptor');
@@ -2675,7 +2990,7 @@ exports.f = DESCRIPTORS ? nativeGetOwnPropertyDescriptor : function getOwnProper
   if (has(O, P)) return createPropertyDescriptor(!propertyIsEnumerableModule.f.call(O, P), O[P]);
 };
 
-},{"../internals/create-property-descriptor":28,"../internals/descriptors":32,"../internals/has":44,"../internals/ie8-dom-define":48,"../internals/object-property-is-enumerable":74,"../internals/to-indexed-object":94,"../internals/to-primitive":98}],68:[function(_dereq_,module,exports){
+},{"../internals/create-property-descriptor":29,"../internals/descriptors":33,"../internals/has":46,"../internals/ie8-dom-define":50,"../internals/object-property-is-enumerable":78,"../internals/to-indexed-object":99,"../internals/to-primitive":103}],72:[function(_dereq_,module,exports){
 var toIndexedObject = _dereq_('../internals/to-indexed-object');
 var nativeGetOwnPropertyNames = _dereq_('../internals/object-get-own-property-names').f;
 
@@ -2699,7 +3014,7 @@ module.exports.f = function getOwnPropertyNames(it) {
     : nativeGetOwnPropertyNames(toIndexedObject(it));
 };
 
-},{"../internals/object-get-own-property-names":69,"../internals/to-indexed-object":94}],69:[function(_dereq_,module,exports){
+},{"../internals/object-get-own-property-names":73,"../internals/to-indexed-object":99}],73:[function(_dereq_,module,exports){
 var internalObjectKeys = _dereq_('../internals/object-keys-internal');
 var enumBugKeys = _dereq_('../internals/enum-bug-keys');
 
@@ -2711,10 +3026,10 @@ exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return internalObjectKeys(O, hiddenKeys);
 };
 
-},{"../internals/enum-bug-keys":35,"../internals/object-keys-internal":72}],70:[function(_dereq_,module,exports){
+},{"../internals/enum-bug-keys":36,"../internals/object-keys-internal":76}],74:[function(_dereq_,module,exports){
 exports.f = Object.getOwnPropertySymbols;
 
-},{}],71:[function(_dereq_,module,exports){
+},{}],75:[function(_dereq_,module,exports){
 var has = _dereq_('../internals/has');
 var toObject = _dereq_('../internals/to-object');
 var sharedKey = _dereq_('../internals/shared-key');
@@ -2733,7 +3048,7 @@ module.exports = CORRECT_PROTOTYPE_GETTER ? Object.getPrototypeOf : function (O)
   } return O instanceof Object ? ObjectPrototype : null;
 };
 
-},{"../internals/correct-prototype-getter":26,"../internals/has":44,"../internals/shared-key":87,"../internals/to-object":97}],72:[function(_dereq_,module,exports){
+},{"../internals/correct-prototype-getter":27,"../internals/has":46,"../internals/shared-key":92,"../internals/to-object":102}],76:[function(_dereq_,module,exports){
 var has = _dereq_('../internals/has');
 var toIndexedObject = _dereq_('../internals/to-indexed-object');
 var indexOf = _dereq_('../internals/array-includes').indexOf;
@@ -2752,7 +3067,7 @@ module.exports = function (object, names) {
   return result;
 };
 
-},{"../internals/array-includes":15,"../internals/has":44,"../internals/hidden-keys":45,"../internals/to-indexed-object":94}],73:[function(_dereq_,module,exports){
+},{"../internals/array-includes":14,"../internals/has":46,"../internals/hidden-keys":47,"../internals/to-indexed-object":99}],77:[function(_dereq_,module,exports){
 var internalObjectKeys = _dereq_('../internals/object-keys-internal');
 var enumBugKeys = _dereq_('../internals/enum-bug-keys');
 
@@ -2762,7 +3077,7 @@ module.exports = Object.keys || function keys(O) {
   return internalObjectKeys(O, enumBugKeys);
 };
 
-},{"../internals/enum-bug-keys":35,"../internals/object-keys-internal":72}],74:[function(_dereq_,module,exports){
+},{"../internals/enum-bug-keys":36,"../internals/object-keys-internal":76}],78:[function(_dereq_,module,exports){
 'use strict';
 var nativePropertyIsEnumerable = {}.propertyIsEnumerable;
 var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
@@ -2777,7 +3092,7 @@ exports.f = NASHORN_BUG ? function propertyIsEnumerable(V) {
   return !!descriptor && descriptor.enumerable;
 } : nativePropertyIsEnumerable;
 
-},{}],75:[function(_dereq_,module,exports){
+},{}],79:[function(_dereq_,module,exports){
 var anObject = _dereq_('../internals/an-object');
 var aPossiblePrototype = _dereq_('../internals/a-possible-prototype');
 
@@ -2803,7 +3118,7 @@ module.exports = Object.setPrototypeOf || ('__proto__' in {} ? function () {
   };
 }() : undefined);
 
-},{"../internals/a-possible-prototype":9,"../internals/an-object":12}],76:[function(_dereq_,module,exports){
+},{"../internals/a-possible-prototype":7,"../internals/an-object":11}],80:[function(_dereq_,module,exports){
 'use strict';
 var classof = _dereq_('../internals/classof');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
@@ -2819,7 +3134,7 @@ module.exports = String(test) !== '[object z]' ? function toString() {
   return '[object ' + classof(this) + ']';
 } : test.toString;
 
-},{"../internals/classof":23,"../internals/well-known-symbol":100}],77:[function(_dereq_,module,exports){
+},{"../internals/classof":22,"../internals/well-known-symbol":105}],81:[function(_dereq_,module,exports){
 var getBuiltIn = _dereq_('../internals/get-built-in');
 var getOwnPropertyNamesModule = _dereq_('../internals/object-get-own-property-names');
 var getOwnPropertySymbolsModule = _dereq_('../internals/object-get-own-property-symbols');
@@ -2832,10 +3147,18 @@ module.exports = getBuiltIn('Reflect', 'ownKeys') || function ownKeys(it) {
   return getOwnPropertySymbols ? keys.concat(getOwnPropertySymbols(it)) : keys;
 };
 
-},{"../internals/an-object":12,"../internals/get-built-in":41,"../internals/object-get-own-property-names":69,"../internals/object-get-own-property-symbols":70}],78:[function(_dereq_,module,exports){
+},{"../internals/an-object":11,"../internals/get-built-in":43,"../internals/object-get-own-property-names":73,"../internals/object-get-own-property-symbols":74}],82:[function(_dereq_,module,exports){
 module.exports = _dereq_('../internals/global');
 
-},{"../internals/global":43}],79:[function(_dereq_,module,exports){
+},{"../internals/global":45}],83:[function(_dereq_,module,exports){
+var redefine = _dereq_('../internals/redefine');
+
+module.exports = function (target, src, options) {
+  for (var key in src) redefine(target, key, src[key], options);
+  return target;
+};
+
+},{"../internals/redefine":84}],84:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var shared = _dereq_('../internals/shared');
 var hide = _dereq_('../internals/hide');
@@ -2876,7 +3199,7 @@ shared('inspectSource', function (it) {
   return typeof this == 'function' && getInternalState(this).source || nativeFunctionToString.call(this);
 });
 
-},{"../internals/function-to-string":40,"../internals/global":43,"../internals/has":44,"../internals/hide":46,"../internals/internal-state":51,"../internals/set-global":84,"../internals/shared":88}],80:[function(_dereq_,module,exports){
+},{"../internals/function-to-string":42,"../internals/global":45,"../internals/has":46,"../internals/hide":48,"../internals/internal-state":54,"../internals/set-global":89,"../internals/shared":93}],85:[function(_dereq_,module,exports){
 var classof = _dereq_('./classof-raw');
 var regexpExec = _dereq_('./regexp-exec');
 
@@ -2900,7 +3223,7 @@ module.exports = function (R, S) {
 };
 
 
-},{"./classof-raw":22,"./regexp-exec":81}],81:[function(_dereq_,module,exports){
+},{"./classof-raw":21,"./regexp-exec":86}],86:[function(_dereq_,module,exports){
 'use strict';
 var regexpFlags = _dereq_('./regexp-flags');
 
@@ -2956,7 +3279,7 @@ if (PATCH) {
 
 module.exports = patchedExec;
 
-},{"./regexp-flags":82}],82:[function(_dereq_,module,exports){
+},{"./regexp-flags":87}],87:[function(_dereq_,module,exports){
 'use strict';
 var anObject = _dereq_('../internals/an-object');
 
@@ -2974,7 +3297,7 @@ module.exports = function () {
   return result;
 };
 
-},{"../internals/an-object":12}],83:[function(_dereq_,module,exports){
+},{"../internals/an-object":11}],88:[function(_dereq_,module,exports){
 // `RequireObjectCoercible` abstract operation
 // https://tc39.github.io/ecma262/#sec-requireobjectcoercible
 module.exports = function (it) {
@@ -2982,7 +3305,7 @@ module.exports = function (it) {
   return it;
 };
 
-},{}],84:[function(_dereq_,module,exports){
+},{}],89:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var hide = _dereq_('../internals/hide');
 
@@ -2994,7 +3317,7 @@ module.exports = function (key, value) {
   } return value;
 };
 
-},{"../internals/global":43,"../internals/hide":46}],85:[function(_dereq_,module,exports){
+},{"../internals/global":45,"../internals/hide":48}],90:[function(_dereq_,module,exports){
 'use strict';
 var getBuiltIn = _dereq_('../internals/get-built-in');
 var definePropertyModule = _dereq_('../internals/object-define-property');
@@ -3015,7 +3338,7 @@ module.exports = function (CONSTRUCTOR_NAME) {
   }
 };
 
-},{"../internals/descriptors":32,"../internals/get-built-in":41,"../internals/object-define-property":66,"../internals/well-known-symbol":100}],86:[function(_dereq_,module,exports){
+},{"../internals/descriptors":33,"../internals/get-built-in":43,"../internals/object-define-property":70,"../internals/well-known-symbol":105}],91:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('../internals/object-define-property').f;
 var has = _dereq_('../internals/has');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
@@ -3028,7 +3351,7 @@ module.exports = function (it, TAG, STATIC) {
   }
 };
 
-},{"../internals/has":44,"../internals/object-define-property":66,"../internals/well-known-symbol":100}],87:[function(_dereq_,module,exports){
+},{"../internals/has":46,"../internals/object-define-property":70,"../internals/well-known-symbol":105}],92:[function(_dereq_,module,exports){
 var shared = _dereq_('../internals/shared');
 var uid = _dereq_('../internals/uid');
 
@@ -3038,7 +3361,7 @@ module.exports = function (key) {
   return keys[key] || (keys[key] = uid(key));
 };
 
-},{"../internals/shared":88,"../internals/uid":99}],88:[function(_dereq_,module,exports){
+},{"../internals/shared":93,"../internals/uid":104}],93:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var setGlobal = _dereq_('../internals/set-global');
 var IS_PURE = _dereq_('../internals/is-pure');
@@ -3049,12 +3372,12 @@ var store = global[SHARED] || setGlobal(SHARED, {});
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.1.3',
+  version: '3.2.1',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2019 Denis Pushkarev (zloirock.ru)'
 });
 
-},{"../internals/global":43,"../internals/is-pure":56,"../internals/set-global":84}],89:[function(_dereq_,module,exports){
+},{"../internals/global":45,"../internals/is-pure":59,"../internals/set-global":89}],94:[function(_dereq_,module,exports){
 'use strict';
 var fails = _dereq_('../internals/fails');
 
@@ -3066,7 +3389,7 @@ module.exports = function (METHOD_NAME, argument) {
   });
 };
 
-},{"../internals/fails":37}],90:[function(_dereq_,module,exports){
+},{"../internals/fails":38}],95:[function(_dereq_,module,exports){
 var anObject = _dereq_('../internals/an-object');
 var aFunction = _dereq_('../internals/a-function');
 var wellKnownSymbol = _dereq_('../internals/well-known-symbol');
@@ -3081,7 +3404,7 @@ module.exports = function (O, defaultConstructor) {
   return C === undefined || (S = anObject(C)[SPECIES]) == undefined ? defaultConstructor : aFunction(S);
 };
 
-},{"../internals/a-function":8,"../internals/an-object":12,"../internals/well-known-symbol":100}],91:[function(_dereq_,module,exports){
+},{"../internals/a-function":6,"../internals/an-object":11,"../internals/well-known-symbol":105}],96:[function(_dereq_,module,exports){
 var toInteger = _dereq_('../internals/to-integer');
 var requireObjectCoercible = _dereq_('../internals/require-object-coercible');
 
@@ -3110,7 +3433,7 @@ module.exports = {
   charAt: createMethod(true)
 };
 
-},{"../internals/require-object-coercible":83,"../internals/to-integer":95}],92:[function(_dereq_,module,exports){
+},{"../internals/require-object-coercible":88,"../internals/to-integer":100}],97:[function(_dereq_,module,exports){
 var requireObjectCoercible = _dereq_('../internals/require-object-coercible');
 var whitespaces = _dereq_('../internals/whitespaces');
 
@@ -3140,7 +3463,7 @@ module.exports = {
   trim: createMethod(3)
 };
 
-},{"../internals/require-object-coercible":83,"../internals/whitespaces":101}],93:[function(_dereq_,module,exports){
+},{"../internals/require-object-coercible":88,"../internals/whitespaces":106}],98:[function(_dereq_,module,exports){
 var toInteger = _dereq_('../internals/to-integer');
 
 var max = Math.max;
@@ -3154,7 +3477,7 @@ module.exports = function (index, length) {
   return integer < 0 ? max(integer + length, 0) : min(integer, length);
 };
 
-},{"../internals/to-integer":95}],94:[function(_dereq_,module,exports){
+},{"../internals/to-integer":100}],99:[function(_dereq_,module,exports){
 // toObject with fallback for non-array-like ES3 strings
 var IndexedObject = _dereq_('../internals/indexed-object');
 var requireObjectCoercible = _dereq_('../internals/require-object-coercible');
@@ -3163,7 +3486,7 @@ module.exports = function (it) {
   return IndexedObject(requireObjectCoercible(it));
 };
 
-},{"../internals/indexed-object":49,"../internals/require-object-coercible":83}],95:[function(_dereq_,module,exports){
+},{"../internals/indexed-object":51,"../internals/require-object-coercible":88}],100:[function(_dereq_,module,exports){
 var ceil = Math.ceil;
 var floor = Math.floor;
 
@@ -3173,7 +3496,7 @@ module.exports = function (argument) {
   return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor : ceil)(argument);
 };
 
-},{}],96:[function(_dereq_,module,exports){
+},{}],101:[function(_dereq_,module,exports){
 var toInteger = _dereq_('../internals/to-integer');
 
 var min = Math.min;
@@ -3184,7 +3507,7 @@ module.exports = function (argument) {
   return argument > 0 ? min(toInteger(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
 };
 
-},{"../internals/to-integer":95}],97:[function(_dereq_,module,exports){
+},{"../internals/to-integer":100}],102:[function(_dereq_,module,exports){
 var requireObjectCoercible = _dereq_('../internals/require-object-coercible');
 
 // `ToObject` abstract operation
@@ -3193,7 +3516,7 @@ module.exports = function (argument) {
   return Object(requireObjectCoercible(argument));
 };
 
-},{"../internals/require-object-coercible":83}],98:[function(_dereq_,module,exports){
+},{"../internals/require-object-coercible":88}],103:[function(_dereq_,module,exports){
 var isObject = _dereq_('../internals/is-object');
 
 // `ToPrimitive` abstract operation
@@ -3209,7 +3532,7 @@ module.exports = function (input, PREFERRED_STRING) {
   throw TypeError("Can't convert object to primitive value");
 };
 
-},{"../internals/is-object":55}],99:[function(_dereq_,module,exports){
+},{"../internals/is-object":58}],104:[function(_dereq_,module,exports){
 var id = 0;
 var postfix = Math.random();
 
@@ -3217,7 +3540,7 @@ module.exports = function (key) {
   return 'Symbol(' + String(key === undefined ? '' : key) + ')_' + (++id + postfix).toString(36);
 };
 
-},{}],100:[function(_dereq_,module,exports){
+},{}],105:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var shared = _dereq_('../internals/shared');
 var uid = _dereq_('../internals/uid');
@@ -3231,15 +3554,15 @@ module.exports = function (name) {
     || (NATIVE_SYMBOL ? Symbol : uid)('Symbol.' + name));
 };
 
-},{"../internals/global":43,"../internals/native-symbol":60,"../internals/shared":88,"../internals/uid":99}],101:[function(_dereq_,module,exports){
+},{"../internals/global":45,"../internals/native-symbol":64,"../internals/shared":93,"../internals/uid":104}],106:[function(_dereq_,module,exports){
 // a string of all valid unicode whitespaces
 // eslint-disable-next-line max-len
 module.exports = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
 
-},{}],102:[function(_dereq_,module,exports){
+},{}],107:[function(_dereq_,module,exports){
 exports.f = _dereq_('../internals/well-known-symbol');
 
-},{"../internals/well-known-symbol":100}],103:[function(_dereq_,module,exports){
+},{"../internals/well-known-symbol":105}],108:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var fails = _dereq_('../internals/fails');
@@ -3297,7 +3620,7 @@ $({ target: 'Array', proto: true, forced: FORCED }, {
   }
 });
 
-},{"../internals/array-method-has-species-support":17,"../internals/array-species-create":18,"../internals/create-property":29,"../internals/export":36,"../internals/fails":37,"../internals/is-array":53,"../internals/is-object":55,"../internals/to-length":96,"../internals/to-object":97,"../internals/well-known-symbol":100}],104:[function(_dereq_,module,exports){
+},{"../internals/array-method-has-species-support":16,"../internals/array-species-create":17,"../internals/create-property":30,"../internals/export":37,"../internals/fails":38,"../internals/is-array":56,"../internals/is-object":58,"../internals/to-length":101,"../internals/to-object":102,"../internals/well-known-symbol":105}],109:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var $find = _dereq_('../internals/array-iteration').find;
@@ -3320,7 +3643,7 @@ $({ target: 'Array', proto: true, forced: SKIPS_HOLES }, {
 // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
 addToUnscopables(FIND);
 
-},{"../internals/add-to-unscopables":10,"../internals/array-iteration":16,"../internals/export":36}],105:[function(_dereq_,module,exports){
+},{"../internals/add-to-unscopables":8,"../internals/array-iteration":15,"../internals/export":37}],110:[function(_dereq_,module,exports){
 var $ = _dereq_('../internals/export');
 var from = _dereq_('../internals/array-from');
 var checkCorrectnessOfIteration = _dereq_('../internals/check-correctness-of-iteration');
@@ -3335,7 +3658,7 @@ $({ target: 'Array', stat: true, forced: INCORRECT_ITERATION }, {
   from: from
 });
 
-},{"../internals/array-from":14,"../internals/check-correctness-of-iteration":21,"../internals/export":36}],106:[function(_dereq_,module,exports){
+},{"../internals/array-from":13,"../internals/check-correctness-of-iteration":20,"../internals/export":37}],111:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var $includes = _dereq_('../internals/array-includes').includes;
@@ -3352,7 +3675,7 @@ $({ target: 'Array', proto: true }, {
 // https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
 addToUnscopables('includes');
 
-},{"../internals/add-to-unscopables":10,"../internals/array-includes":15,"../internals/export":36}],107:[function(_dereq_,module,exports){
+},{"../internals/add-to-unscopables":8,"../internals/array-includes":14,"../internals/export":37}],112:[function(_dereq_,module,exports){
 'use strict';
 var toIndexedObject = _dereq_('../internals/to-indexed-object');
 var addToUnscopables = _dereq_('../internals/add-to-unscopables');
@@ -3407,7 +3730,7 @@ addToUnscopables('keys');
 addToUnscopables('values');
 addToUnscopables('entries');
 
-},{"../internals/add-to-unscopables":10,"../internals/define-iterator":30,"../internals/internal-state":51,"../internals/iterators":59,"../internals/to-indexed-object":94}],108:[function(_dereq_,module,exports){
+},{"../internals/add-to-unscopables":8,"../internals/define-iterator":31,"../internals/internal-state":54,"../internals/iterators":63,"../internals/to-indexed-object":99}],113:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var IndexedObject = _dereq_('../internals/indexed-object');
@@ -3427,7 +3750,7 @@ $({ target: 'Array', proto: true, forced: ES3_STRINGS || SLOPPY_METHOD }, {
   }
 });
 
-},{"../internals/export":36,"../internals/indexed-object":49,"../internals/sloppy-array-method":89,"../internals/to-indexed-object":94}],109:[function(_dereq_,module,exports){
+},{"../internals/export":37,"../internals/indexed-object":51,"../internals/sloppy-array-method":94,"../internals/to-indexed-object":99}],114:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var $map = _dereq_('../internals/array-iteration').map;
@@ -3442,7 +3765,7 @@ $({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('map') }
   }
 });
 
-},{"../internals/array-iteration":16,"../internals/array-method-has-species-support":17,"../internals/export":36}],110:[function(_dereq_,module,exports){
+},{"../internals/array-iteration":15,"../internals/array-method-has-species-support":16,"../internals/export":37}],115:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var isObject = _dereq_('../internals/is-object');
@@ -3489,7 +3812,7 @@ $({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('slice')
   }
 });
 
-},{"../internals/array-method-has-species-support":17,"../internals/create-property":29,"../internals/export":36,"../internals/is-array":53,"../internals/is-object":55,"../internals/to-absolute-index":93,"../internals/to-indexed-object":94,"../internals/to-length":96,"../internals/well-known-symbol":100}],111:[function(_dereq_,module,exports){
+},{"../internals/array-method-has-species-support":16,"../internals/create-property":30,"../internals/export":37,"../internals/is-array":56,"../internals/is-object":58,"../internals/to-absolute-index":98,"../internals/to-indexed-object":99,"../internals/to-length":101,"../internals/well-known-symbol":105}],116:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var toAbsoluteIndex = _dereq_('../internals/to-absolute-index');
@@ -3557,7 +3880,7 @@ $({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('splice'
   }
 });
 
-},{"../internals/array-method-has-species-support":17,"../internals/array-species-create":18,"../internals/create-property":29,"../internals/export":36,"../internals/to-absolute-index":93,"../internals/to-integer":95,"../internals/to-length":96,"../internals/to-object":97}],112:[function(_dereq_,module,exports){
+},{"../internals/array-method-has-species-support":16,"../internals/array-species-create":17,"../internals/create-property":30,"../internals/export":37,"../internals/to-absolute-index":98,"../internals/to-integer":100,"../internals/to-length":101,"../internals/to-object":102}],117:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var defineProperty = _dereq_('../internals/object-define-property').f;
 
@@ -3581,7 +3904,7 @@ if (DESCRIPTORS && !(NAME in FunctionPrototype)) {
   });
 }
 
-},{"../internals/descriptors":32,"../internals/object-define-property":66}],113:[function(_dereq_,module,exports){
+},{"../internals/descriptors":33,"../internals/object-define-property":70}],118:[function(_dereq_,module,exports){
 'use strict';
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var global = _dereq_('../internals/global');
@@ -3661,7 +3984,7 @@ if (isForced(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNumb
   redefine(global, NUMBER, NumberWrapper);
 }
 
-},{"../internals/classof-raw":22,"../internals/descriptors":32,"../internals/fails":37,"../internals/global":43,"../internals/has":44,"../internals/inherit-if-required":50,"../internals/is-forced":54,"../internals/object-create":64,"../internals/object-define-property":66,"../internals/object-get-own-property-descriptor":67,"../internals/object-get-own-property-names":69,"../internals/redefine":79,"../internals/string-trim":92,"../internals/to-primitive":98}],114:[function(_dereq_,module,exports){
+},{"../internals/classof-raw":21,"../internals/descriptors":33,"../internals/fails":38,"../internals/global":45,"../internals/has":46,"../internals/inherit-if-required":52,"../internals/is-forced":57,"../internals/object-create":68,"../internals/object-define-property":70,"../internals/object-get-own-property-descriptor":71,"../internals/object-get-own-property-names":73,"../internals/redefine":84,"../internals/string-trim":97,"../internals/to-primitive":103}],119:[function(_dereq_,module,exports){
 var $ = _dereq_('../internals/export');
 var assign = _dereq_('../internals/object-assign');
 
@@ -3671,7 +3994,7 @@ $({ target: 'Object', stat: true, forced: Object.assign !== assign }, {
   assign: assign
 });
 
-},{"../internals/export":36,"../internals/object-assign":63}],115:[function(_dereq_,module,exports){
+},{"../internals/export":37,"../internals/object-assign":67}],120:[function(_dereq_,module,exports){
 var $ = _dereq_('../internals/export');
 var fails = _dereq_('../internals/fails');
 var toIndexedObject = _dereq_('../internals/to-indexed-object');
@@ -3689,7 +4012,7 @@ $({ target: 'Object', stat: true, forced: FORCED, sham: !DESCRIPTORS }, {
   }
 });
 
-},{"../internals/descriptors":32,"../internals/export":36,"../internals/fails":37,"../internals/object-get-own-property-descriptor":67,"../internals/to-indexed-object":94}],116:[function(_dereq_,module,exports){
+},{"../internals/descriptors":33,"../internals/export":37,"../internals/fails":38,"../internals/object-get-own-property-descriptor":71,"../internals/to-indexed-object":99}],121:[function(_dereq_,module,exports){
 var $ = _dereq_('../internals/export');
 var toObject = _dereq_('../internals/to-object');
 var nativeKeys = _dereq_('../internals/object-keys');
@@ -3705,7 +4028,7 @@ $({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
   }
 });
 
-},{"../internals/export":36,"../internals/fails":37,"../internals/object-keys":73,"../internals/to-object":97}],117:[function(_dereq_,module,exports){
+},{"../internals/export":37,"../internals/fails":38,"../internals/object-keys":77,"../internals/to-object":102}],122:[function(_dereq_,module,exports){
 var redefine = _dereq_('../internals/redefine');
 var toString = _dereq_('../internals/object-to-string');
 
@@ -3717,7 +4040,7 @@ if (toString !== ObjectPrototype.toString) {
   redefine(ObjectPrototype, 'toString', toString, { unsafe: true });
 }
 
-},{"../internals/object-to-string":76,"../internals/redefine":79}],118:[function(_dereq_,module,exports){
+},{"../internals/object-to-string":80,"../internals/redefine":84}],123:[function(_dereq_,module,exports){
 var $ = _dereq_('../internals/export');
 var getBuiltIn = _dereq_('../internals/get-built-in');
 var aFunction = _dereq_('../internals/a-function');
@@ -3770,7 +4093,7 @@ $({ target: 'Reflect', stat: true, forced: FORCED, sham: FORCED }, {
   }
 });
 
-},{"../internals/a-function":8,"../internals/an-object":12,"../internals/export":36,"../internals/fails":37,"../internals/function-bind":39,"../internals/get-built-in":41,"../internals/is-object":55,"../internals/object-create":64}],119:[function(_dereq_,module,exports){
+},{"../internals/a-function":6,"../internals/an-object":11,"../internals/export":37,"../internals/fails":38,"../internals/function-bind":41,"../internals/get-built-in":43,"../internals/is-object":58,"../internals/object-create":68}],124:[function(_dereq_,module,exports){
 var DESCRIPTORS = _dereq_('../internals/descriptors');
 var global = _dereq_('../internals/global');
 var isForced = _dereq_('../internals/is-forced');
@@ -3832,7 +4155,7 @@ if (FORCED) {
 // https://tc39.github.io/ecma262/#sec-get-regexp-@@species
 setSpecies('RegExp');
 
-},{"../internals/descriptors":32,"../internals/fails":37,"../internals/global":43,"../internals/inherit-if-required":50,"../internals/is-forced":54,"../internals/is-regexp":57,"../internals/object-define-property":66,"../internals/object-get-own-property-names":69,"../internals/redefine":79,"../internals/regexp-flags":82,"../internals/set-species":85,"../internals/well-known-symbol":100}],120:[function(_dereq_,module,exports){
+},{"../internals/descriptors":33,"../internals/fails":38,"../internals/global":45,"../internals/inherit-if-required":52,"../internals/is-forced":57,"../internals/is-regexp":60,"../internals/object-define-property":70,"../internals/object-get-own-property-names":73,"../internals/redefine":84,"../internals/regexp-flags":87,"../internals/set-species":90,"../internals/well-known-symbol":105}],125:[function(_dereq_,module,exports){
 'use strict';
 var redefine = _dereq_('../internals/redefine');
 var anObject = _dereq_('../internals/an-object');
@@ -3859,7 +4182,7 @@ if (NOT_GENERIC || INCORRECT_NAME) {
   }, { unsafe: true });
 }
 
-},{"../internals/an-object":12,"../internals/fails":37,"../internals/redefine":79,"../internals/regexp-flags":82}],121:[function(_dereq_,module,exports){
+},{"../internals/an-object":11,"../internals/fails":38,"../internals/redefine":84,"../internals/regexp-flags":87}],126:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var notARegExp = _dereq_('../internals/not-a-regexp');
@@ -3875,7 +4198,7 @@ $({ target: 'String', proto: true, forced: !correctIsRegExpLogic('includes') }, 
   }
 });
 
-},{"../internals/correct-is-regexp-logic":25,"../internals/export":36,"../internals/not-a-regexp":62,"../internals/require-object-coercible":83}],122:[function(_dereq_,module,exports){
+},{"../internals/correct-is-regexp-logic":26,"../internals/export":37,"../internals/not-a-regexp":66,"../internals/require-object-coercible":88}],127:[function(_dereq_,module,exports){
 'use strict';
 var charAt = _dereq_('../internals/string-multibyte').charAt;
 var InternalStateModule = _dereq_('../internals/internal-state');
@@ -3906,7 +4229,7 @@ defineIterator(String, 'String', function (iterated) {
   return { value: point, done: false };
 });
 
-},{"../internals/define-iterator":30,"../internals/internal-state":51,"../internals/string-multibyte":91}],123:[function(_dereq_,module,exports){
+},{"../internals/define-iterator":31,"../internals/internal-state":54,"../internals/string-multibyte":96}],128:[function(_dereq_,module,exports){
 'use strict';
 var fixRegExpWellKnownSymbolLogic = _dereq_('../internals/fix-regexp-well-known-symbol-logic');
 var anObject = _dereq_('../internals/an-object');
@@ -3952,7 +4275,7 @@ fixRegExpWellKnownSymbolLogic('match', 1, function (MATCH, nativeMatch, maybeCal
   ];
 });
 
-},{"../internals/advance-string-index":11,"../internals/an-object":12,"../internals/fix-regexp-well-known-symbol-logic":38,"../internals/regexp-exec-abstract":80,"../internals/require-object-coercible":83,"../internals/to-length":96}],124:[function(_dereq_,module,exports){
+},{"../internals/advance-string-index":9,"../internals/an-object":11,"../internals/fix-regexp-well-known-symbol-logic":39,"../internals/regexp-exec-abstract":85,"../internals/require-object-coercible":88,"../internals/to-length":101}],129:[function(_dereq_,module,exports){
 'use strict';
 var fixRegExpWellKnownSymbolLogic = _dereq_('../internals/fix-regexp-well-known-symbol-logic');
 var anObject = _dereq_('../internals/an-object');
@@ -4080,7 +4403,7 @@ fixRegExpWellKnownSymbolLogic('replace', 2, function (REPLACE, nativeReplace, ma
   }
 });
 
-},{"../internals/advance-string-index":11,"../internals/an-object":12,"../internals/fix-regexp-well-known-symbol-logic":38,"../internals/regexp-exec-abstract":80,"../internals/require-object-coercible":83,"../internals/to-integer":95,"../internals/to-length":96,"../internals/to-object":97}],125:[function(_dereq_,module,exports){
+},{"../internals/advance-string-index":9,"../internals/an-object":11,"../internals/fix-regexp-well-known-symbol-logic":39,"../internals/regexp-exec-abstract":85,"../internals/require-object-coercible":88,"../internals/to-integer":100,"../internals/to-length":101,"../internals/to-object":102}],130:[function(_dereq_,module,exports){
 'use strict';
 var fixRegExpWellKnownSymbolLogic = _dereq_('../internals/fix-regexp-well-known-symbol-logic');
 var isRegExp = _dereq_('../internals/is-regexp');
@@ -4216,7 +4539,7 @@ fixRegExpWellKnownSymbolLogic('split', 2, function (SPLIT, nativeSplit, maybeCal
   ];
 }, !SUPPORTS_Y);
 
-},{"../internals/advance-string-index":11,"../internals/an-object":12,"../internals/fails":37,"../internals/fix-regexp-well-known-symbol-logic":38,"../internals/is-regexp":57,"../internals/regexp-exec":81,"../internals/regexp-exec-abstract":80,"../internals/require-object-coercible":83,"../internals/species-constructor":90,"../internals/to-length":96}],126:[function(_dereq_,module,exports){
+},{"../internals/advance-string-index":9,"../internals/an-object":11,"../internals/fails":38,"../internals/fix-regexp-well-known-symbol-logic":39,"../internals/is-regexp":60,"../internals/regexp-exec":86,"../internals/regexp-exec-abstract":85,"../internals/require-object-coercible":88,"../internals/species-constructor":95,"../internals/to-length":101}],131:[function(_dereq_,module,exports){
 // `Symbol.prototype.description` getter
 // https://tc39.github.io/ecma262/#sec-symbol.prototype.description
 'use strict';
@@ -4268,14 +4591,14 @@ if (DESCRIPTORS && typeof NativeSymbol == 'function' && (!('description' in Nati
   });
 }
 
-},{"../internals/copy-constructor-properties":24,"../internals/descriptors":32,"../internals/export":36,"../internals/global":43,"../internals/has":44,"../internals/is-object":55,"../internals/object-define-property":66}],127:[function(_dereq_,module,exports){
+},{"../internals/copy-constructor-properties":25,"../internals/descriptors":33,"../internals/export":37,"../internals/global":45,"../internals/has":46,"../internals/is-object":58,"../internals/object-define-property":70}],132:[function(_dereq_,module,exports){
 var defineWellKnownSymbol = _dereq_('../internals/define-well-known-symbol');
 
 // `Symbol.iterator` well-known symbol
 // https://tc39.github.io/ecma262/#sec-symbol.iterator
 defineWellKnownSymbol('iterator');
 
-},{"../internals/define-well-known-symbol":31}],128:[function(_dereq_,module,exports){
+},{"../internals/define-well-known-symbol":32}],133:[function(_dereq_,module,exports){
 'use strict';
 var $ = _dereq_('../internals/export');
 var global = _dereq_('../internals/global');
@@ -4576,7 +4899,76 @@ setToStringTag($Symbol, SYMBOL);
 
 hiddenKeys[HIDDEN] = true;
 
-},{"../internals/an-object":12,"../internals/array-iteration":16,"../internals/create-property-descriptor":28,"../internals/define-well-known-symbol":31,"../internals/descriptors":32,"../internals/export":36,"../internals/fails":37,"../internals/global":43,"../internals/has":44,"../internals/hidden-keys":45,"../internals/hide":46,"../internals/internal-state":51,"../internals/is-array":53,"../internals/is-object":55,"../internals/is-pure":56,"../internals/native-symbol":60,"../internals/object-create":64,"../internals/object-define-property":66,"../internals/object-get-own-property-descriptor":67,"../internals/object-get-own-property-names":69,"../internals/object-get-own-property-names-external":68,"../internals/object-get-own-property-symbols":70,"../internals/object-keys":73,"../internals/object-property-is-enumerable":74,"../internals/redefine":79,"../internals/set-to-string-tag":86,"../internals/shared":88,"../internals/shared-key":87,"../internals/to-indexed-object":94,"../internals/to-object":97,"../internals/to-primitive":98,"../internals/uid":99,"../internals/well-known-symbol":100,"../internals/wrapped-well-known-symbol":102}],129:[function(_dereq_,module,exports){
+},{"../internals/an-object":11,"../internals/array-iteration":15,"../internals/create-property-descriptor":29,"../internals/define-well-known-symbol":32,"../internals/descriptors":33,"../internals/export":37,"../internals/fails":38,"../internals/global":45,"../internals/has":46,"../internals/hidden-keys":47,"../internals/hide":48,"../internals/internal-state":54,"../internals/is-array":56,"../internals/is-object":58,"../internals/is-pure":59,"../internals/native-symbol":64,"../internals/object-create":68,"../internals/object-define-property":70,"../internals/object-get-own-property-descriptor":71,"../internals/object-get-own-property-names":73,"../internals/object-get-own-property-names-external":72,"../internals/object-get-own-property-symbols":74,"../internals/object-keys":77,"../internals/object-property-is-enumerable":78,"../internals/redefine":84,"../internals/set-to-string-tag":91,"../internals/shared":93,"../internals/shared-key":92,"../internals/to-indexed-object":99,"../internals/to-object":102,"../internals/to-primitive":103,"../internals/uid":104,"../internals/well-known-symbol":105,"../internals/wrapped-well-known-symbol":107}],134:[function(_dereq_,module,exports){
+'use strict';
+var global = _dereq_('../internals/global');
+var redefineAll = _dereq_('../internals/redefine-all');
+var InternalMetadataModule = _dereq_('../internals/internal-metadata');
+var collection = _dereq_('../internals/collection');
+var collectionWeak = _dereq_('../internals/collection-weak');
+var isObject = _dereq_('../internals/is-object');
+var enforceIternalState = _dereq_('../internals/internal-state').enforce;
+var NATIVE_WEAK_MAP = _dereq_('../internals/native-weak-map');
+
+var IS_IE11 = !global.ActiveXObject && 'ActiveXObject' in global;
+var isExtensible = Object.isExtensible;
+var InternalWeakMap;
+
+var wrapper = function (get) {
+  return function WeakMap() {
+    return get(this, arguments.length ? arguments[0] : undefined);
+  };
+};
+
+// `WeakMap` constructor
+// https://tc39.github.io/ecma262/#sec-weakmap-constructor
+var $WeakMap = module.exports = collection('WeakMap', wrapper, collectionWeak, true, true);
+
+// IE11 WeakMap frozen keys fix
+// We can't use feature detection because it crash some old IE builds
+// https://github.com/zloirock/core-js/issues/485
+if (NATIVE_WEAK_MAP && IS_IE11) {
+  InternalWeakMap = collectionWeak.getConstructor(wrapper, 'WeakMap', true);
+  InternalMetadataModule.REQUIRED = true;
+  var WeakMapPrototype = $WeakMap.prototype;
+  var nativeDelete = WeakMapPrototype['delete'];
+  var nativeHas = WeakMapPrototype.has;
+  var nativeGet = WeakMapPrototype.get;
+  var nativeSet = WeakMapPrototype.set;
+  redefineAll(WeakMapPrototype, {
+    'delete': function (key) {
+      if (isObject(key) && !isExtensible(key)) {
+        var state = enforceIternalState(this);
+        if (!state.frozen) state.frozen = new InternalWeakMap();
+        return nativeDelete.call(this, key) || state.frozen['delete'](key);
+      } return nativeDelete.call(this, key);
+    },
+    has: function has(key) {
+      if (isObject(key) && !isExtensible(key)) {
+        var state = enforceIternalState(this);
+        if (!state.frozen) state.frozen = new InternalWeakMap();
+        return nativeHas.call(this, key) || state.frozen.has(key);
+      } return nativeHas.call(this, key);
+    },
+    get: function get(key) {
+      if (isObject(key) && !isExtensible(key)) {
+        var state = enforceIternalState(this);
+        if (!state.frozen) state.frozen = new InternalWeakMap();
+        return nativeHas.call(this, key) ? nativeGet.call(this, key) : state.frozen.get(key);
+      } return nativeGet.call(this, key);
+    },
+    set: function set(key, value) {
+      if (isObject(key) && !isExtensible(key)) {
+        var state = enforceIternalState(this);
+        if (!state.frozen) state.frozen = new InternalWeakMap();
+        nativeHas.call(this, key) ? nativeSet.call(this, key, value) : state.frozen.set(key, value);
+      } else nativeSet.call(this, key, value);
+      return this;
+    }
+  });
+}
+
+},{"../internals/collection":24,"../internals/collection-weak":23,"../internals/global":45,"../internals/internal-metadata":53,"../internals/internal-state":54,"../internals/is-object":58,"../internals/native-weak-map":65,"../internals/redefine-all":83}],135:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var DOMIterables = _dereq_('../internals/dom-iterables');
 var forEach = _dereq_('../internals/array-for-each');
@@ -4593,7 +4985,7 @@ for (var COLLECTION_NAME in DOMIterables) {
   }
 }
 
-},{"../internals/array-for-each":13,"../internals/dom-iterables":34,"../internals/global":43,"../internals/hide":46}],130:[function(_dereq_,module,exports){
+},{"../internals/array-for-each":12,"../internals/dom-iterables":35,"../internals/global":45,"../internals/hide":48}],136:[function(_dereq_,module,exports){
 var global = _dereq_('../internals/global');
 var DOMIterables = _dereq_('../internals/dom-iterables');
 var ArrayIteratorMethods = _dereq_('../modules/es.array.iterator');
@@ -4626,7 +5018,111 @@ for (var COLLECTION_NAME in DOMIterables) {
   }
 }
 
-},{"../internals/dom-iterables":34,"../internals/global":43,"../internals/hide":46,"../internals/well-known-symbol":100,"../modules/es.array.iterator":107}],131:[function(_dereq_,module,exports){
+},{"../internals/dom-iterables":35,"../internals/global":45,"../internals/hide":48,"../internals/well-known-symbol":105,"../modules/es.array.iterator":112}],137:[function(_dereq_,module,exports){
+"use strict";
+
+_dereq_("core-js/modules/es.array.concat");
+
+_dereq_("core-js/modules/es.object.to-string");
+
+_dereq_("core-js/modules/es.reflect.construct");
+
+_dereq_("core-js/modules/es.regexp.to-string");
+
+_dereq_("core-js/modules/es.string.replace");
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _lodash = _interopRequireDefault(_dereq_("lodash"));
+
+var _stringHash = _interopRequireDefault(_dereq_("string-hash"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var Evaluator = {
+  noeval: false,
+  cache: {},
+  templateSettings: {
+    evaluate: /\{%([\s\S]+?)%\}/g,
+    interpolate: /\{\{([\s\S]+?)\}\}/g,
+    escape: /\{\{\{([\s\S]+?)\}\}\}/g
+  },
+  evaluator: function evaluator(func) {
+    if (Evaluator.noeval) {
+      console.warn('No evaluations allowed for this renderer.');
+      return _lodash.default.noop;
+    } else {
+      for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        params[_key - 1] = arguments[_key];
+      }
+
+      return _construct(Function, params.concat([func]));
+    }
+  },
+  template: function template(_template, hash) {
+    if (typeof _template === 'function') {
+      return _template;
+    }
+
+    hash = hash || (0, _stringHash.default)(_template);
+
+    try {
+      return Evaluator.cache[hash] = _lodash.default.template(_template, Evaluator.templateSettings);
+    } catch (err) {
+      console.warn('Error while processing template', err, _template);
+    }
+  },
+  interpolate: function interpolate(rawTemplate, data, options) {
+    var _ref = options || {},
+        suppressWarnings = _ref.suppressWarnings;
+
+    if (typeof rawTemplate === 'function') {
+      return rawTemplate(data);
+    }
+
+    var hash = _lodash.default.isNumber(rawTemplate) ? rawTemplate : (0, _stringHash.default)(rawTemplate);
+    var template;
+
+    if (Evaluator.cache[hash]) {
+      template = Evaluator.cache[hash];
+    } else if (Evaluator.noeval) {
+      // No cached template methods available. Use poor-mans interpolate without eval.
+      return rawTemplate.replace(/({{\s+(.*)\s+}})/, function (match, $1, $2) {
+        return _lodash.default.get(data, $2);
+      });
+    } else {
+      template = Evaluator.template(rawTemplate, hash);
+    }
+
+    if (typeof template === 'function') {
+      try {
+        return template(data);
+      } catch (err) {
+        if (!suppressWarnings) {
+          console.warn('Error interpolating template', err, rawTemplate, data);
+        }
+
+        if (options && options.hasOwnProperty('defaultValue')) {
+          return options.defaultValue || '';
+        }
+      }
+    }
+
+    return template;
+  }
+};
+var _default = Evaluator;
+exports.default = _default;
+},{"core-js/modules/es.array.concat":108,"core-js/modules/es.object.to-string":122,"core-js/modules/es.reflect.construct":123,"core-js/modules/es.regexp.to-string":125,"core-js/modules/es.string.replace":129,"lodash":362,"string-hash":389}],138:[function(_dereq_,module,exports){
 "use strict";
 
 _dereq_("core-js/modules/es.array.concat");
@@ -5331,7 +5827,7 @@ function getStrings(form) {
   }, true);
   return strings;
 }
-},{"core-js/modules/es.array.concat":103,"core-js/modules/es.array.from":105,"core-js/modules/es.array.includes":106,"core-js/modules/es.array.iterator":107,"core-js/modules/es.array.join":108,"core-js/modules/es.array.map":109,"core-js/modules/es.array.slice":110,"core-js/modules/es.array.splice":111,"core-js/modules/es.object.to-string":117,"core-js/modules/es.regexp.to-string":120,"core-js/modules/es.string.iterator":122,"core-js/modules/es.string.match":123,"core-js/modules/es.string.replace":124,"core-js/modules/es.string.split":125,"core-js/modules/web.dom-collections.for-each":129,"core-js/modules/web.dom-collections.iterator":130,"fast-json-patch":5,"lodash/chunk":319,"lodash/clone":320,"lodash/findIndex":327,"lodash/forOwn":329,"lodash/get":330,"lodash/has":332,"lodash/isNaN":343,"lodash/isNil":344,"lodash/isPlainObject":348,"lodash/isString":350,"lodash/pad":361,"lodash/round":366,"lodash/set":367}],132:[function(_dereq_,module,exports){
+},{"core-js/modules/es.array.concat":108,"core-js/modules/es.array.from":110,"core-js/modules/es.array.includes":111,"core-js/modules/es.array.iterator":112,"core-js/modules/es.array.join":113,"core-js/modules/es.array.map":114,"core-js/modules/es.array.slice":115,"core-js/modules/es.array.splice":116,"core-js/modules/es.object.to-string":122,"core-js/modules/es.regexp.to-string":125,"core-js/modules/es.string.iterator":127,"core-js/modules/es.string.match":128,"core-js/modules/es.string.replace":129,"core-js/modules/es.string.split":130,"core-js/modules/web.dom-collections.for-each":135,"core-js/modules/web.dom-collections.iterator":136,"fast-json-patch":3,"lodash/chunk":326,"lodash/clone":327,"lodash/findIndex":334,"lodash/forOwn":336,"lodash/get":337,"lodash/has":339,"lodash/isNaN":350,"lodash/isNil":351,"lodash/isPlainObject":355,"lodash/isString":357,"lodash/pad":368,"lodash/round":373,"lodash/set":374}],139:[function(_dereq_,module,exports){
 (function (global){
 "use strict";
 
@@ -5349,6 +5845,8 @@ _dereq_("core-js/modules/es.object.to-string");
 
 _dereq_("core-js/modules/es.string.iterator");
 
+_dereq_("core-js/modules/es.weak-map");
+
 _dereq_("core-js/modules/web.dom-collections.iterator");
 
 Object.defineProperty(exports, "__esModule", {
@@ -5358,7 +5856,9 @@ exports.default = void 0;
 
 var FormioUtils = _interopRequireWildcard(_dereq_("./utils"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -5369,7 +5869,7 @@ if ((typeof global === "undefined" ? "undefined" : _typeof(global)) === 'object'
 var _default = FormioUtils;
 exports.default = _default;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./utils":134,"core-js/modules/es.array.iterator":107,"core-js/modules/es.object.get-own-property-descriptor":115,"core-js/modules/es.object.to-string":117,"core-js/modules/es.string.iterator":122,"core-js/modules/es.symbol":128,"core-js/modules/es.symbol.description":126,"core-js/modules/es.symbol.iterator":127,"core-js/modules/web.dom-collections.iterator":130}],133:[function(_dereq_,module,exports){
+},{"./utils":141,"core-js/modules/es.array.iterator":112,"core-js/modules/es.object.get-own-property-descriptor":120,"core-js/modules/es.object.to-string":122,"core-js/modules/es.string.iterator":127,"core-js/modules/es.symbol":133,"core-js/modules/es.symbol.description":131,"core-js/modules/es.symbol.iterator":132,"core-js/modules/es.weak-map":134,"core-js/modules/web.dom-collections.iterator":136}],140:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5390,7 +5890,7 @@ var lodashOperators = [// Array
 'camelCase', 'capitalize', 'deburr', 'endsWith', 'escape', 'escapeRegExp', 'kebabCase', 'lowerCase', 'lowerFirst', 'pad', 'padEnd', 'padStart', 'parseInt', 'repeat', 'replace', 'snakeCase', 'split', 'startCase', 'startsWith', 'toLower', 'toUpper', 'trim', 'trimEnd', 'trimStart', 'truncate', 'unescape', 'upperCase', 'upperFirst', 'words', // Util
 'cond', 'conforms', 'constant', 'defaultTo', 'flow', 'flowRight', 'identity', 'iteratee', 'matches', 'matchesProperty', 'method', 'methodOf', 'nthArg', 'over', 'overEvery', 'overSome', 'property', 'propertyOf', 'range', 'rangeRight', 'stubArray', 'stubFalse', 'stubObject', 'stubString', 'stubTrue', 'times', 'toPath', 'uniqueId'];
 exports.lodashOperators = lodashOperators;
-},{}],134:[function(_dereq_,module,exports){
+},{}],141:[function(_dereq_,module,exports){
 "use strict";
 
 _dereq_("core-js/modules/es.symbol");
@@ -5424,8 +5924,6 @@ _dereq_("core-js/modules/es.object.assign");
 _dereq_("core-js/modules/es.object.keys");
 
 _dereq_("core-js/modules/es.object.to-string");
-
-_dereq_("core-js/modules/es.reflect.construct");
 
 _dereq_("core-js/modules/es.regexp.constructor");
 
@@ -5462,8 +5960,6 @@ var _exportNames = {
   checkCondition: true,
   checkTrigger: true,
   setActionProperty: true,
-  addTemplateHash: true,
-  interpolate: true,
   uniqueName: true,
   guid: true,
   getDateSetting: true,
@@ -5494,8 +5990,11 @@ var _exportNames = {
   firstNonNil: true,
   withSwitch: true,
   observeOverload: true,
+  isInputComponent: true,
+  interpolate: true,
   jsonLogic: true,
-  moment: true
+  moment: true,
+  Evaluator: true
 };
 exports.evaluate = evaluate;
 exports.getRandomComponentId = getRandomComponentId;
@@ -5510,8 +6009,6 @@ exports.checkJsonConditional = checkJsonConditional;
 exports.checkCondition = checkCondition;
 exports.checkTrigger = checkTrigger;
 exports.setActionProperty = setActionProperty;
-exports.addTemplateHash = addTemplateHash;
-exports.interpolate = interpolate;
 exports.uniqueName = uniqueName;
 exports.guid = guid;
 exports.getDateSetting = getDateSetting;
@@ -5541,6 +6038,7 @@ exports.bootstrapVersion = bootstrapVersion;
 exports.unfold = unfold;
 exports.withSwitch = withSwitch;
 exports.observeOverload = observeOverload;
+exports.isInputComponent = isInputComponent;
 Object.defineProperty(exports, "jsonLogic", {
   enumerable: true,
   get: function get() {
@@ -5553,7 +6051,13 @@ Object.defineProperty(exports, "moment", {
     return _momentTimezone.default;
   }
 });
-exports.firstNonNil = void 0;
+Object.defineProperty(exports, "Evaluator", {
+  enumerable: true,
+  get: function get() {
+    return _Evaluator.default;
+  }
+});
+exports.interpolate = exports.firstNonNil = void 0;
 
 var _lodash = _interopRequireDefault(_dereq_("lodash"));
 
@@ -5582,17 +6086,11 @@ Object.keys(_formUtils).forEach(function (key) {
   });
 });
 
-var _stringHash = _interopRequireDefault(_dereq_("string-hash"));
+var _Evaluator = _interopRequireDefault(_dereq_("./Evaluator"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -5601,6 +6099,9 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+var interpolate = _Evaluator.default.interpolate;
+exports.interpolate = interpolate;
 
 var _fetchPonyfill = (0, _fetchPonyfill2.default)({
   Promise: _nativePromiseOnly.default
@@ -5677,7 +6178,7 @@ function evaluate(func, args, ret, tokenize) {
     }
 
     try {
-      func = _construct(Function, _toConsumableArray(params).concat([func]));
+      func = _Evaluator.default.evaluator.apply(_Evaluator.default, [func].concat(_toConsumableArray(params)));
       args = _lodash.default.values(args);
     } catch (err) {
       console.warn("An error occured within the custom function for ".concat(componentKey), err);
@@ -5952,7 +6453,7 @@ function setActionProperty(component, action, row, data, result, instance) {
           result: result
         };
         var textValue = action.property.component ? action[action.property.component] : action.text;
-        var newValue = instance && instance.interpolate ? instance.interpolate(textValue, evalData) : interpolate(textValue, evalData);
+        var newValue = instance && instance.interpolate ? instance.interpolate(textValue, evalData) : _Evaluator.default.interpolate(textValue, evalData);
 
         if (newValue !== _lodash.default.get(component, action.property.value, '')) {
           _lodash.default.set(component, action.property.value, newValue);
@@ -5963,51 +6464,6 @@ function setActionProperty(component, action, row, data, result, instance) {
   }
 
   return component;
-}
-
-var templateCache = {};
-var templateHashCache = {};
-
-function interpolateTemplate(template) {
-  var templateSettings = {
-    evaluate: /\{%([\s\S]+?)%\}/g,
-    interpolate: /\{\{([\s\S]+?)\}\}/g,
-    escape: /\{\{\{([\s\S]+?)\}\}\}/g
-  };
-
-  try {
-    return _lodash.default.template(template, templateSettings);
-  } catch (err) {
-    console.warn('Error while processing template', err, template);
-  }
-}
-
-function addTemplateHash(template) {
-  var hash = (0, _stringHash.default)(template);
-  templateHashCache[hash] = interpolateTemplate(template);
-  return hash;
-}
-/**
- * Interpolate a string and add data replacements.
- *
- * @param string
- * @param data
- * @returns {XML|string|*|void}
- */
-
-
-function interpolate(rawTemplate, data) {
-  var template = _lodash.default.isNumber(rawTemplate) && templateHashCache.hasOwnProperty(rawTemplate) ? templateHashCache[rawTemplate] : templateCache[rawTemplate] = templateCache[rawTemplate] || interpolateTemplate(rawTemplate);
-
-  if (typeof template === 'function') {
-    try {
-      return template(data);
-    } catch (err) {
-      console.warn('Error interpolating template', err, rawTemplate, data);
-    }
-  }
-
-  return template;
 }
 /**
  * Make a filename guaranteed to be unique.
@@ -6035,7 +6491,7 @@ function uniqueName(name, template, evalContext) {
     guid: guid()
   }); //only letters, numbers, dots, dashes, underscores and spaces are allowed. Anything else will be replaced with dash
 
-  var uniqueName = "".concat(interpolate(template, evalContext)).concat(extension).replace(/[^0-9a-zA-Z.\-_ ]/g, '-');
+  var uniqueName = "".concat(_Evaluator.default.interpolate(template, evalContext)).concat(extension).replace(/[^0-9a-zA-Z.\-_ ]/g, '-');
   return uniqueName;
 }
 
@@ -6074,7 +6530,7 @@ function getDateSetting(date) {
   dateSetting = null;
 
   try {
-    var value = new Function('moment', "return ".concat(date, ";"))(_momentTimezone.default);
+    var value = _Evaluator.default.evaluator("return ".concat(date, ";"), 'moment')(_momentTimezone.default);
 
     if (typeof value === 'string') {
       dateSetting = (0, _momentTimezone.default)(value);
@@ -6315,7 +6771,7 @@ function convertFormatToFlatpickr(format) {
   .replace('MMMM', 'F').replace(/M/g, 'n').replace('nnn', 'M').replace('nn', 'm') // Day in month.
   .replace(/d/g, 'j').replace(/jj/g, 'd') // Day in week.
   .replace('EEEE', 'l').replace('EEE', 'D') // Hours, minutes, seconds
-  .replace('HH', 'H').replace('hh', 'h').replace('mm', 'i').replace('ss', 'S').replace(/a/g, 'K');
+  .replace('HH', 'H').replace('hh', 'G').replace('mm', 'i').replace('ss', 'S').replace(/a/g, 'K');
 }
 /**
  * Convert the format from the angular-datepicker module to moment format.
@@ -6333,8 +6789,10 @@ function convertFormatToMoment(format) {
 }
 
 function convertFormatToMask(format) {
-  return format // Short and long month replacement.
-  .replace(/(MMM|MMMM)/g, 'MM') // Year conversion
+  return format // Long month replacement.
+  .replace(/M{4}/g, 'MM') // Initial short month conversion.
+  .replace(/M{3}/g, '***') // Short month conversion if input as text.
+  .replace(/e/g, 'AAA') // Year conversion
   .replace(/[ydhmsHM]/g, '9') // AM/PM conversion
   .replace(/a/g, 'AA');
 }
@@ -6686,7 +7144,29 @@ function observeOverload(callback) {
     }
   };
 }
-},{"./formUtils":131,"./jsonlogic/operators":133,"core-js/modules/es.array.concat":103,"core-js/modules/es.array.find":104,"core-js/modules/es.array.from":105,"core-js/modules/es.array.includes":106,"core-js/modules/es.array.iterator":107,"core-js/modules/es.array.join":108,"core-js/modules/es.array.map":109,"core-js/modules/es.array.slice":110,"core-js/modules/es.function.name":112,"core-js/modules/es.number.constructor":113,"core-js/modules/es.object.assign":114,"core-js/modules/es.object.keys":116,"core-js/modules/es.object.to-string":117,"core-js/modules/es.reflect.construct":118,"core-js/modules/es.regexp.constructor":119,"core-js/modules/es.regexp.to-string":120,"core-js/modules/es.string.includes":121,"core-js/modules/es.string.iterator":122,"core-js/modules/es.string.match":123,"core-js/modules/es.string.replace":124,"core-js/modules/es.string.split":125,"core-js/modules/es.symbol":128,"core-js/modules/es.symbol.description":126,"core-js/modules/es.symbol.iterator":127,"core-js/modules/web.dom-collections.for-each":129,"core-js/modules/web.dom-collections.iterator":130,"fetch-ponyfill":7,"json-logic-js":135,"jstimezonedetect":136,"lodash":355,"moment-timezone/moment-timezone":378,"native-promise-only":380,"string-hash":382}],135:[function(_dereq_,module,exports){
+
+function isInputComponent(componentJson) {
+  if (componentJson.input === false || componentJson.input === true) {
+    return componentJson.input;
+  }
+
+  switch (componentJson.type) {
+    case 'htmlelement':
+    case 'content':
+    case 'columns':
+    case 'fieldset':
+    case 'panel':
+    case 'table':
+    case 'tabs':
+    case 'well':
+    case 'button':
+      return false;
+
+    default:
+      return true;
+  }
+}
+},{"./Evaluator":137,"./formUtils":138,"./jsonlogic/operators":140,"core-js/modules/es.array.concat":108,"core-js/modules/es.array.find":109,"core-js/modules/es.array.from":110,"core-js/modules/es.array.includes":111,"core-js/modules/es.array.iterator":112,"core-js/modules/es.array.join":113,"core-js/modules/es.array.map":114,"core-js/modules/es.array.slice":115,"core-js/modules/es.function.name":117,"core-js/modules/es.number.constructor":118,"core-js/modules/es.object.assign":119,"core-js/modules/es.object.keys":121,"core-js/modules/es.object.to-string":122,"core-js/modules/es.regexp.constructor":124,"core-js/modules/es.regexp.to-string":125,"core-js/modules/es.string.includes":126,"core-js/modules/es.string.iterator":127,"core-js/modules/es.string.match":128,"core-js/modules/es.string.replace":129,"core-js/modules/es.string.split":130,"core-js/modules/es.symbol":133,"core-js/modules/es.symbol.description":131,"core-js/modules/es.symbol.iterator":132,"core-js/modules/web.dom-collections.for-each":135,"core-js/modules/web.dom-collections.iterator":136,"fetch-ponyfill":5,"json-logic-js":142,"jstimezonedetect":143,"lodash":362,"moment-timezone/moment-timezone":385,"native-promise-only":387}],142:[function(_dereq_,module,exports){
 /* globals define,module */
 /*
 Using a Universal Module Loader that should be browser, require, and AMD friendly
@@ -7152,1442 +7632,10 @@ http://ricostacruz.com/cheatsheets/umdjs.html
   return jsonLogic;
 }));
 
-},{}],136:[function(_dereq_,module,exports){
-(function (root) {/*global exports, Intl*/
-/**
- * This script gives you the zone info key representing your device's time zone setting.
- *
- * @name jsTimezoneDetect
- * @version 1.0.6
- * @author Jon Nylander
- * @license MIT License - https://bitbucket.org/pellepim/jstimezonedetect/src/default/LICENCE.txt
- *
- * For usage and examples, visit:
- * http://pellepim.bitbucket.org/jstz/
- *
- * Copyright (c) Jon Nylander
- */
-
-
-/**
- * Namespace to hold all the code for timezone detection.
- */
-var jstz = (function () {
-    'use strict';
-    var HEMISPHERE_SOUTH = 's',
-
-        consts = {
-            DAY: 86400000,
-            HOUR: 3600000,
-            MINUTE: 60000,
-            SECOND: 1000,
-            BASELINE_YEAR: 2014,
-            MAX_SCORE: 864000000, // 10 days
-            AMBIGUITIES: {
-                'America/Denver':       ['America/Mazatlan'],
-                'Europe/London':        ['Africa/Casablanca'],
-                'America/Chicago':      ['America/Mexico_City'],
-                'America/Asuncion':     ['America/Campo_Grande', 'America/Santiago'],
-                'America/Montevideo':   ['America/Sao_Paulo', 'America/Santiago'],
-                // Europe/Minsk should not be in this list... but Windows.
-                'Asia/Beirut':          ['Asia/Amman', 'Asia/Jerusalem', 'Europe/Helsinki', 'Asia/Damascus', 'Africa/Cairo', 'Asia/Gaza', 'Europe/Minsk'],
-                'Pacific/Auckland':     ['Pacific/Fiji'],
-                'America/Los_Angeles':  ['America/Santa_Isabel'],
-                'America/New_York':     ['America/Havana'],
-                'America/Halifax':      ['America/Goose_Bay'],
-                'America/Godthab':      ['America/Miquelon'],
-                'Asia/Dubai':           ['Asia/Yerevan'],
-                'Asia/Jakarta':         ['Asia/Krasnoyarsk'],
-                'Asia/Shanghai':        ['Asia/Irkutsk', 'Australia/Perth'],
-                'Australia/Sydney':     ['Australia/Lord_Howe'],
-                'Asia/Tokyo':           ['Asia/Yakutsk'],
-                'Asia/Dhaka':           ['Asia/Omsk'],
-                // In the real world Yerevan is not ambigous for Baku... but Windows.
-                'Asia/Baku':            ['Asia/Yerevan'],
-                'Australia/Brisbane':   ['Asia/Vladivostok'],
-                'Pacific/Noumea':       ['Asia/Vladivostok'],
-                'Pacific/Majuro':       ['Asia/Kamchatka', 'Pacific/Fiji'],
-                'Pacific/Tongatapu':    ['Pacific/Apia'],
-                'Asia/Baghdad':         ['Europe/Minsk', 'Europe/Moscow'],
-                'Asia/Karachi':         ['Asia/Yekaterinburg'],
-                'Africa/Johannesburg':  ['Asia/Gaza', 'Africa/Cairo']
-            }
-        },
-
-        /**
-         * Gets the offset in minutes from UTC for a certain date.
-         * @param {Date} date
-         * @returns {Number}
-         */
-        get_date_offset = function get_date_offset(date) {
-            var offset = -date.getTimezoneOffset();
-            return (offset !== null ? offset : 0);
-        },
-
-        /**
-         * This function does some basic calculations to create information about
-         * the user's timezone. It uses REFERENCE_YEAR as a solid year for which
-         * the script has been tested rather than depend on the year set by the
-         * client device.
-         *
-         * Returns a key that can be used to do lookups in jstz.olson.timezones.
-         * eg: "720,1,2".
-         *
-         * @returns {String}
-         */
-        lookup_key = function lookup_key() {
-            var january_offset = get_date_offset(new Date(consts.BASELINE_YEAR, 0, 2)),
-                june_offset = get_date_offset(new Date(consts.BASELINE_YEAR, 5, 2)),
-                diff = january_offset - june_offset;
-
-            if (diff < 0) {
-                return january_offset + ",1";
-            } else if (diff > 0) {
-                return june_offset + ",1," + HEMISPHERE_SOUTH;
-            }
-
-            return january_offset + ",0";
-        },
-
-
-        /**
-         * Tries to get the time zone key directly from the operating system for those
-         * environments that support the ECMAScript Internationalization API.
-         */
-        get_from_internationalization_api = function get_from_internationalization_api() {
-            var format, timezone;
-            if (typeof Intl === "undefined" || typeof Intl.DateTimeFormat === "undefined") {
-                return;
-            }
-
-            format = Intl.DateTimeFormat();
-
-            if (typeof format === "undefined" || typeof format.resolvedOptions === "undefined") {
-                return;
-            }
-
-            timezone = format.resolvedOptions().timeZone;
-
-            if (timezone && (timezone.indexOf("/") > -1 || timezone === 'UTC')) {
-                return timezone;
-            }
-
-        },
-
-        /**
-         * Starting point for getting all the DST rules for a specific year
-         * for the current timezone (as described by the client system).
-         *
-         * Returns an object with start and end attributes, or false if no
-         * DST rules were found for the year.
-         *
-         * @param year
-         * @returns {Object} || {Boolean}
-         */
-        dst_dates = function dst_dates(year) {
-            var yearstart = new Date(year, 0, 1, 0, 0, 1, 0).getTime();
-            var yearend = new Date(year, 12, 31, 23, 59, 59).getTime();
-            var current = yearstart;
-            var offset = (new Date(current)).getTimezoneOffset();
-            var dst_start = null;
-            var dst_end = null;
-
-            while (current < yearend - 86400000) {
-                var dateToCheck = new Date(current);
-                var dateToCheckOffset = dateToCheck.getTimezoneOffset();
-
-                if (dateToCheckOffset !== offset) {
-                    if (dateToCheckOffset < offset) {
-                        dst_start = dateToCheck;
-                    }
-                    if (dateToCheckOffset > offset) {
-                        dst_end = dateToCheck;
-                    }
-                    offset = dateToCheckOffset;
-                }
-
-                current += 86400000;
-            }
-
-            if (dst_start && dst_end) {
-                return {
-                    s: find_dst_fold(dst_start).getTime(),
-                    e: find_dst_fold(dst_end).getTime()
-                };
-            }
-
-            return false;
-        },
-
-        /**
-         * Probably completely unnecessary function that recursively finds the
-         * exact (to the second) time when a DST rule was changed.
-         *
-         * @param a_date - The candidate Date.
-         * @param padding - integer specifying the padding to allow around the candidate
-         *                  date for finding the fold.
-         * @param iterator - integer specifying how many milliseconds to iterate while
-         *                   searching for the fold.
-         *
-         * @returns {Date}
-         */
-        find_dst_fold = function find_dst_fold(a_date, padding, iterator) {
-            if (typeof padding === 'undefined') {
-                padding = consts.DAY;
-                iterator = consts.HOUR;
-            }
-
-            var date_start = new Date(a_date.getTime() - padding).getTime();
-            var date_end = a_date.getTime() + padding;
-            var offset = new Date(date_start).getTimezoneOffset();
-
-            var current = date_start;
-
-            var dst_change = null;
-            while (current < date_end - iterator) {
-                var dateToCheck = new Date(current);
-                var dateToCheckOffset = dateToCheck.getTimezoneOffset();
-
-                if (dateToCheckOffset !== offset) {
-                    dst_change = dateToCheck;
-                    break;
-                }
-                current += iterator;
-            }
-
-            if (padding === consts.DAY) {
-                return find_dst_fold(dst_change, consts.HOUR, consts.MINUTE);
-            }
-
-            if (padding === consts.HOUR) {
-                return find_dst_fold(dst_change, consts.MINUTE, consts.SECOND);
-            }
-
-            return dst_change;
-        },
-
-        windows7_adaptations = function windows7_adaptions(rule_list, preliminary_timezone, score, sample) {
-            if (score !== 'N/A') {
-                return score;
-            }
-            if (preliminary_timezone === 'Asia/Beirut') {
-                if (sample.name === 'Africa/Cairo') {
-                    if (rule_list[6].s === 1398376800000 && rule_list[6].e === 1411678800000) {
-                        return 0;
-                    }
-                }
-                if (sample.name === 'Asia/Jerusalem') {
-                    if (rule_list[6].s === 1395964800000 && rule_list[6].e === 1411858800000) {
-                        return 0;
-                }
-            }
-            } else if (preliminary_timezone === 'America/Santiago') {
-                if (sample.name === 'America/Asuncion') {
-                    if (rule_list[6].s === 1412481600000 && rule_list[6].e === 1397358000000) {
-                        return 0;
-                    }
-                }
-                if (sample.name === 'America/Campo_Grande') {
-                    if (rule_list[6].s === 1413691200000 && rule_list[6].e === 1392519600000) {
-                        return 0;
-                    }
-                }
-            } else if (preliminary_timezone === 'America/Montevideo') {
-                if (sample.name === 'America/Sao_Paulo') {
-                    if (rule_list[6].s === 1413687600000 && rule_list[6].e === 1392516000000) {
-                        return 0;
-                    }
-                }
-            } else if (preliminary_timezone === 'Pacific/Auckland') {
-                if (sample.name === 'Pacific/Fiji') {
-                    if (rule_list[6].s === 1414245600000 && rule_list[6].e === 1396101600000) {
-                        return 0;
-                    }
-                }
-            }
-
-            return score;
-        },
-
-        /**
-         * Takes the DST rules for the current timezone, and proceeds to find matches
-         * in the jstz.olson.dst_rules.zones array.
-         *
-         * Compares samples to the current timezone on a scoring basis.
-         *
-         * Candidates are ruled immediately if either the candidate or the current zone
-         * has a DST rule where the other does not.
-         *
-         * Candidates are ruled out immediately if the current zone has a rule that is
-         * outside the DST scope of the candidate.
-         *
-         * Candidates are included for scoring if the current zones rules fall within the
-         * span of the samples rules.
-         *
-         * Low score is best, the score is calculated by summing up the differences in DST
-         * rules and if the consts.MAX_SCORE is overreached the candidate is ruled out.
-         *
-         * Yah follow? :)
-         *
-         * @param rule_list
-         * @param preliminary_timezone
-         * @returns {*}
-         */
-        best_dst_match = function best_dst_match(rule_list, preliminary_timezone) {
-            var score_sample = function score_sample(sample) {
-                var score = 0;
-
-                for (var j = 0; j < rule_list.length; j++) {
-
-                    // Both sample and current time zone report DST during the year.
-                    if (!!sample.rules[j] && !!rule_list[j]) {
-
-                        // The current time zone's DST rules are inside the sample's. Include.
-                        if (rule_list[j].s >= sample.rules[j].s && rule_list[j].e <= sample.rules[j].e) {
-                            score = 0;
-                            score += Math.abs(rule_list[j].s - sample.rules[j].s);
-                            score += Math.abs(sample.rules[j].e - rule_list[j].e);
-
-                        // The current time zone's DST rules are outside the sample's. Discard.
-                        } else {
-                            score = 'N/A';
-                            break;
-                        }
-
-                        // The max score has been reached. Discard.
-                        if (score > consts.MAX_SCORE) {
-                            score = 'N/A';
-                            break;
-                        }
-                    }
-                }
-
-                score = windows7_adaptations(rule_list, preliminary_timezone, score, sample);
-
-                return score;
-            };
-            var scoreboard = {};
-            var dst_zones = jstz.olson.dst_rules.zones;
-            var dst_zones_length = dst_zones.length;
-            var ambiguities = consts.AMBIGUITIES[preliminary_timezone];
-
-            for (var i = 0; i < dst_zones_length; i++) {
-                var sample = dst_zones[i];
-                var score = score_sample(dst_zones[i]);
-
-                if (score !== 'N/A') {
-                    scoreboard[sample.name] = score;
-                }
-            }
-
-            for (var tz in scoreboard) {
-                if (scoreboard.hasOwnProperty(tz)) {
-                    for (var j = 0; j < ambiguities.length; j++) {
-                        if (ambiguities[j] === tz) {
-                            return tz;
-                        }
-                    }
-                }
-            }
-
-            return preliminary_timezone;
-        },
-
-        /**
-         * Takes the preliminary_timezone as detected by lookup_key().
-         *
-         * Builds up the current timezones DST rules for the years defined
-         * in the jstz.olson.dst_rules.years array.
-         *
-         * If there are no DST occurences for those years, immediately returns
-         * the preliminary timezone. Otherwise proceeds and tries to solve
-         * ambiguities.
-         *
-         * @param preliminary_timezone
-         * @returns {String} timezone_name
-         */
-        get_by_dst = function get_by_dst(preliminary_timezone) {
-            var get_rules = function get_rules() {
-                var rule_list = [];
-                for (var i = 0; i < jstz.olson.dst_rules.years.length; i++) {
-                    var year_rules = dst_dates(jstz.olson.dst_rules.years[i]);
-                    rule_list.push(year_rules);
-                }
-                return rule_list;
-            };
-            var check_has_dst = function check_has_dst(rules) {
-                for (var i = 0; i < rules.length; i++) {
-                    if (rules[i] !== false) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            var rules = get_rules();
-            var has_dst = check_has_dst(rules);
-
-            if (has_dst) {
-                return best_dst_match(rules, preliminary_timezone);
-            }
-
-            return preliminary_timezone;
-        },
-
-        /**
-         * Uses get_timezone_info() to formulate a key to use in the olson.timezones dictionary.
-         *
-         * Returns an object with one function ".name()"
-         *
-         * @returns Object
-         */
-        determine = function determine() {
-            var preliminary_tz = get_from_internationalization_api();
-
-            if (!preliminary_tz) {
-                preliminary_tz = jstz.olson.timezones[lookup_key()];
-
-                if (typeof consts.AMBIGUITIES[preliminary_tz] !== 'undefined') {
-                    preliminary_tz = get_by_dst(preliminary_tz);
-                }
-            }
-
-            return {
-                name: function () {
-                    return preliminary_tz;
-                }
-            };
-        };
-
-    return {
-        determine: determine
-    };
-}());
-
-
-jstz.olson = jstz.olson || {};
-
-/**
- * The keys in this dictionary are comma separated as such:
- *
- * First the offset compared to UTC time in minutes.
- *
- * Then a flag which is 0 if the timezone does not take daylight savings into account and 1 if it
- * does.
- *
- * Thirdly an optional 's' signifies that the timezone is in the southern hemisphere,
- * only interesting for timezones with DST.
- *
- * The mapped arrays is used for constructing the jstz.TimeZone object from within
- * jstz.determine();
- */
-jstz.olson.timezones = {
-    '-720,0': 'Etc/GMT+12',
-    '-660,0': 'Pacific/Pago_Pago',
-    '-660,1,s': 'Pacific/Apia', // Why? Because windows... cry!
-    '-600,1': 'America/Adak',
-    '-600,0': 'Pacific/Honolulu',
-    '-570,0': 'Pacific/Marquesas',
-    '-540,0': 'Pacific/Gambier',
-    '-540,1': 'America/Anchorage',
-    '-480,1': 'America/Los_Angeles',
-    '-480,0': 'Pacific/Pitcairn',
-    '-420,0': 'America/Phoenix',
-    '-420,1': 'America/Denver',
-    '-360,0': 'America/Guatemala',
-    '-360,1': 'America/Chicago',
-    '-360,1,s': 'Pacific/Easter',
-    '-300,0': 'America/Bogota',
-    '-300,1': 'America/New_York',
-    '-270,0': 'America/Caracas',
-    '-240,1': 'America/Halifax',
-    '-240,0': 'America/Santo_Domingo',
-    '-240,1,s': 'America/Asuncion',
-    '-210,1': 'America/St_Johns',
-    '-180,1': 'America/Godthab',
-    '-180,0': 'America/Argentina/Buenos_Aires',
-    '-180,1,s': 'America/Montevideo',
-    '-120,0': 'America/Noronha',
-    '-120,1': 'America/Noronha',
-    '-60,1': 'Atlantic/Azores',
-    '-60,0': 'Atlantic/Cape_Verde',
-    '0,0': 'UTC',
-    '0,1': 'Europe/London',
-    '60,1': 'Europe/Berlin',
-    '60,0': 'Africa/Lagos',
-    '60,1,s': 'Africa/Windhoek',
-    '120,1': 'Asia/Beirut',
-    '120,0': 'Africa/Johannesburg',
-    '180,0': 'Asia/Baghdad',
-    '180,1': 'Europe/Moscow',
-    '210,1': 'Asia/Tehran',
-    '240,0': 'Asia/Dubai',
-    '240,1': 'Asia/Baku',
-    '270,0': 'Asia/Kabul',
-    '300,1': 'Asia/Yekaterinburg',
-    '300,0': 'Asia/Karachi',
-    '330,0': 'Asia/Kolkata',
-    '345,0': 'Asia/Kathmandu',
-    '360,0': 'Asia/Dhaka',
-    '360,1': 'Asia/Omsk',
-    '390,0': 'Asia/Rangoon',
-    '420,1': 'Asia/Krasnoyarsk',
-    '420,0': 'Asia/Jakarta',
-    '480,0': 'Asia/Shanghai',
-    '480,1': 'Asia/Irkutsk',
-    '525,0': 'Australia/Eucla',
-    '525,1,s': 'Australia/Eucla',
-    '540,1': 'Asia/Yakutsk',
-    '540,0': 'Asia/Tokyo',
-    '570,0': 'Australia/Darwin',
-    '570,1,s': 'Australia/Adelaide',
-    '600,0': 'Australia/Brisbane',
-    '600,1': 'Asia/Vladivostok',
-    '600,1,s': 'Australia/Sydney',
-    '630,1,s': 'Australia/Lord_Howe',
-    '660,1': 'Asia/Kamchatka',
-    '660,0': 'Pacific/Noumea',
-    '690,0': 'Pacific/Norfolk',
-    '720,1,s': 'Pacific/Auckland',
-    '720,0': 'Pacific/Majuro',
-    '765,1,s': 'Pacific/Chatham',
-    '780,0': 'Pacific/Tongatapu',
-    '780,1,s': 'Pacific/Apia',
-    '840,0': 'Pacific/Kiritimati'
-};
-
-/* Build time: 2015-11-02 13:01:00Z Build by invoking python utilities/dst.py generate */
-jstz.olson.dst_rules = {
-    "years": [
-        2008,
-        2009,
-        2010,
-        2011,
-        2012,
-        2013,
-        2014
-    ],
-    "zones": [
-        {
-            "name": "Africa/Cairo",
-            "rules": [
-                {
-                    "e": 1219957200000,
-                    "s": 1209074400000
-                },
-                {
-                    "e": 1250802000000,
-                    "s": 1240524000000
-                },
-                {
-                    "e": 1285880400000,
-                    "s": 1284069600000
-                },
-                false,
-                false,
-                false,
-                {
-                    "e": 1411678800000,
-                    "s": 1406844000000
-                }
-            ]
-        },
-        {
-            "name": "Africa/Casablanca",
-            "rules": [
-                {
-                    "e": 1220223600000,
-                    "s": 1212278400000
-                },
-                {
-                    "e": 1250809200000,
-                    "s": 1243814400000
-                },
-                {
-                    "e": 1281222000000,
-                    "s": 1272758400000
-                },
-                {
-                    "e": 1312066800000,
-                    "s": 1301788800000
-                },
-                {
-                    "e": 1348970400000,
-                    "s": 1345428000000
-                },
-                {
-                    "e": 1382839200000,
-                    "s": 1376100000000
-                },
-                {
-                    "e": 1414288800000,
-                    "s": 1406944800000
-                }
-            ]
-        },
-        {
-            "name": "America/Asuncion",
-            "rules": [
-                {
-                    "e": 1205031600000,
-                    "s": 1224388800000
-                },
-                {
-                    "e": 1236481200000,
-                    "s": 1255838400000
-                },
-                {
-                    "e": 1270954800000,
-                    "s": 1286078400000
-                },
-                {
-                    "e": 1302404400000,
-                    "s": 1317528000000
-                },
-                {
-                    "e": 1333854000000,
-                    "s": 1349582400000
-                },
-                {
-                    "e": 1364094000000,
-                    "s": 1381032000000
-                },
-                {
-                    "e": 1395543600000,
-                    "s": 1412481600000
-                }
-            ]
-        },
-        {
-            "name": "America/Campo_Grande",
-            "rules": [
-                {
-                    "e": 1203217200000,
-                    "s": 1224388800000
-                },
-                {
-                    "e": 1234666800000,
-                    "s": 1255838400000
-                },
-                {
-                    "e": 1266721200000,
-                    "s": 1287288000000
-                },
-                {
-                    "e": 1298170800000,
-                    "s": 1318737600000
-                },
-                {
-                    "e": 1330225200000,
-                    "s": 1350792000000
-                },
-                {
-                    "e": 1361070000000,
-                    "s": 1382241600000
-                },
-                {
-                    "e": 1392519600000,
-                    "s": 1413691200000
-                }
-            ]
-        },
-        {
-            "name": "America/Goose_Bay",
-            "rules": [
-                {
-                    "e": 1225594860000,
-                    "s": 1205035260000
-                },
-                {
-                    "e": 1257044460000,
-                    "s": 1236484860000
-                },
-                {
-                    "e": 1289098860000,
-                    "s": 1268539260000
-                },
-                {
-                    "e": 1320555600000,
-                    "s": 1299988860000
-                },
-                {
-                    "e": 1352005200000,
-                    "s": 1331445600000
-                },
-                {
-                    "e": 1383454800000,
-                    "s": 1362895200000
-                },
-                {
-                    "e": 1414904400000,
-                    "s": 1394344800000
-                }
-            ]
-        },
-        {
-            "name": "America/Havana",
-            "rules": [
-                {
-                    "e": 1224997200000,
-                    "s": 1205643600000
-                },
-                {
-                    "e": 1256446800000,
-                    "s": 1236488400000
-                },
-                {
-                    "e": 1288501200000,
-                    "s": 1268542800000
-                },
-                {
-                    "e": 1321160400000,
-                    "s": 1300597200000
-                },
-                {
-                    "e": 1352005200000,
-                    "s": 1333256400000
-                },
-                {
-                    "e": 1383454800000,
-                    "s": 1362891600000
-                },
-                {
-                    "e": 1414904400000,
-                    "s": 1394341200000
-                }
-            ]
-        },
-        {
-            "name": "America/Mazatlan",
-            "rules": [
-                {
-                    "e": 1225008000000,
-                    "s": 1207472400000
-                },
-                {
-                    "e": 1256457600000,
-                    "s": 1238922000000
-                },
-                {
-                    "e": 1288512000000,
-                    "s": 1270371600000
-                },
-                {
-                    "e": 1319961600000,
-                    "s": 1301821200000
-                },
-                {
-                    "e": 1351411200000,
-                    "s": 1333270800000
-                },
-                {
-                    "e": 1382860800000,
-                    "s": 1365325200000
-                },
-                {
-                    "e": 1414310400000,
-                    "s": 1396774800000
-                }
-            ]
-        },
-        {
-            "name": "America/Mexico_City",
-            "rules": [
-                {
-                    "e": 1225004400000,
-                    "s": 1207468800000
-                },
-                {
-                    "e": 1256454000000,
-                    "s": 1238918400000
-                },
-                {
-                    "e": 1288508400000,
-                    "s": 1270368000000
-                },
-                {
-                    "e": 1319958000000,
-                    "s": 1301817600000
-                },
-                {
-                    "e": 1351407600000,
-                    "s": 1333267200000
-                },
-                {
-                    "e": 1382857200000,
-                    "s": 1365321600000
-                },
-                {
-                    "e": 1414306800000,
-                    "s": 1396771200000
-                }
-            ]
-        },
-        {
-            "name": "America/Miquelon",
-            "rules": [
-                {
-                    "e": 1225598400000,
-                    "s": 1205038800000
-                },
-                {
-                    "e": 1257048000000,
-                    "s": 1236488400000
-                },
-                {
-                    "e": 1289102400000,
-                    "s": 1268542800000
-                },
-                {
-                    "e": 1320552000000,
-                    "s": 1299992400000
-                },
-                {
-                    "e": 1352001600000,
-                    "s": 1331442000000
-                },
-                {
-                    "e": 1383451200000,
-                    "s": 1362891600000
-                },
-                {
-                    "e": 1414900800000,
-                    "s": 1394341200000
-                }
-            ]
-        },
-        {
-            "name": "America/Santa_Isabel",
-            "rules": [
-                {
-                    "e": 1225011600000,
-                    "s": 1207476000000
-                },
-                {
-                    "e": 1256461200000,
-                    "s": 1238925600000
-                },
-                {
-                    "e": 1288515600000,
-                    "s": 1270375200000
-                },
-                {
-                    "e": 1319965200000,
-                    "s": 1301824800000
-                },
-                {
-                    "e": 1351414800000,
-                    "s": 1333274400000
-                },
-                {
-                    "e": 1382864400000,
-                    "s": 1365328800000
-                },
-                {
-                    "e": 1414314000000,
-                    "s": 1396778400000
-                }
-            ]
-        },
-        {
-            "name": "America/Santiago",
-            "rules": [
-                {
-                    "e": 1206846000000,
-                    "s": 1223784000000
-                },
-                {
-                    "e": 1237086000000,
-                    "s": 1255233600000
-                },
-                {
-                    "e": 1270350000000,
-                    "s": 1286683200000
-                },
-                {
-                    "e": 1304823600000,
-                    "s": 1313899200000
-                },
-                {
-                    "e": 1335668400000,
-                    "s": 1346558400000
-                },
-                {
-                    "e": 1367118000000,
-                    "s": 1378612800000
-                },
-                {
-                    "e": 1398567600000,
-                    "s": 1410062400000
-                }
-            ]
-        },
-        {
-            "name": "America/Sao_Paulo",
-            "rules": [
-                {
-                    "e": 1203213600000,
-                    "s": 1224385200000
-                },
-                {
-                    "e": 1234663200000,
-                    "s": 1255834800000
-                },
-                {
-                    "e": 1266717600000,
-                    "s": 1287284400000
-                },
-                {
-                    "e": 1298167200000,
-                    "s": 1318734000000
-                },
-                {
-                    "e": 1330221600000,
-                    "s": 1350788400000
-                },
-                {
-                    "e": 1361066400000,
-                    "s": 1382238000000
-                },
-                {
-                    "e": 1392516000000,
-                    "s": 1413687600000
-                }
-            ]
-        },
-        {
-            "name": "Asia/Amman",
-            "rules": [
-                {
-                    "e": 1225404000000,
-                    "s": 1206655200000
-                },
-                {
-                    "e": 1256853600000,
-                    "s": 1238104800000
-                },
-                {
-                    "e": 1288303200000,
-                    "s": 1269554400000
-                },
-                {
-                    "e": 1319752800000,
-                    "s": 1301608800000
-                },
-                false,
-                false,
-                {
-                    "e": 1414706400000,
-                    "s": 1395957600000
-                }
-            ]
-        },
-        {
-            "name": "Asia/Damascus",
-            "rules": [
-                {
-                    "e": 1225486800000,
-                    "s": 1207260000000
-                },
-                {
-                    "e": 1256850000000,
-                    "s": 1238104800000
-                },
-                {
-                    "e": 1288299600000,
-                    "s": 1270159200000
-                },
-                {
-                    "e": 1319749200000,
-                    "s": 1301608800000
-                },
-                {
-                    "e": 1351198800000,
-                    "s": 1333058400000
-                },
-                {
-                    "e": 1382648400000,
-                    "s": 1364508000000
-                },
-                {
-                    "e": 1414702800000,
-                    "s": 1395957600000
-                }
-            ]
-        },
-        {
-            "name": "Asia/Dubai",
-            "rules": [
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Gaza",
-            "rules": [
-                {
-                    "e": 1219957200000,
-                    "s": 1206655200000
-                },
-                {
-                    "e": 1252015200000,
-                    "s": 1238104800000
-                },
-                {
-                    "e": 1281474000000,
-                    "s": 1269640860000
-                },
-                {
-                    "e": 1312146000000,
-                    "s": 1301608860000
-                },
-                {
-                    "e": 1348178400000,
-                    "s": 1333058400000
-                },
-                {
-                    "e": 1380229200000,
-                    "s": 1364508000000
-                },
-                {
-                    "e": 1414098000000,
-                    "s": 1395957600000
-                }
-            ]
-        },
-        {
-            "name": "Asia/Irkutsk",
-            "rules": [
-                {
-                    "e": 1224957600000,
-                    "s": 1206813600000
-                },
-                {
-                    "e": 1256407200000,
-                    "s": 1238263200000
-                },
-                {
-                    "e": 1288461600000,
-                    "s": 1269712800000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Jerusalem",
-            "rules": [
-                {
-                    "e": 1223161200000,
-                    "s": 1206662400000
-                },
-                {
-                    "e": 1254006000000,
-                    "s": 1238112000000
-                },
-                {
-                    "e": 1284246000000,
-                    "s": 1269561600000
-                },
-                {
-                    "e": 1317510000000,
-                    "s": 1301616000000
-                },
-                {
-                    "e": 1348354800000,
-                    "s": 1333065600000
-                },
-                {
-                    "e": 1382828400000,
-                    "s": 1364515200000
-                },
-                {
-                    "e": 1414278000000,
-                    "s": 1395964800000
-                }
-            ]
-        },
-        {
-            "name": "Asia/Kamchatka",
-            "rules": [
-                {
-                    "e": 1224943200000,
-                    "s": 1206799200000
-                },
-                {
-                    "e": 1256392800000,
-                    "s": 1238248800000
-                },
-                {
-                    "e": 1288450800000,
-                    "s": 1269698400000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Krasnoyarsk",
-            "rules": [
-                {
-                    "e": 1224961200000,
-                    "s": 1206817200000
-                },
-                {
-                    "e": 1256410800000,
-                    "s": 1238266800000
-                },
-                {
-                    "e": 1288465200000,
-                    "s": 1269716400000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Omsk",
-            "rules": [
-                {
-                    "e": 1224964800000,
-                    "s": 1206820800000
-                },
-                {
-                    "e": 1256414400000,
-                    "s": 1238270400000
-                },
-                {
-                    "e": 1288468800000,
-                    "s": 1269720000000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Vladivostok",
-            "rules": [
-                {
-                    "e": 1224950400000,
-                    "s": 1206806400000
-                },
-                {
-                    "e": 1256400000000,
-                    "s": 1238256000000
-                },
-                {
-                    "e": 1288454400000,
-                    "s": 1269705600000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Yakutsk",
-            "rules": [
-                {
-                    "e": 1224954000000,
-                    "s": 1206810000000
-                },
-                {
-                    "e": 1256403600000,
-                    "s": 1238259600000
-                },
-                {
-                    "e": 1288458000000,
-                    "s": 1269709200000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Yekaterinburg",
-            "rules": [
-                {
-                    "e": 1224968400000,
-                    "s": 1206824400000
-                },
-                {
-                    "e": 1256418000000,
-                    "s": 1238274000000
-                },
-                {
-                    "e": 1288472400000,
-                    "s": 1269723600000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Asia/Yerevan",
-            "rules": [
-                {
-                    "e": 1224972000000,
-                    "s": 1206828000000
-                },
-                {
-                    "e": 1256421600000,
-                    "s": 1238277600000
-                },
-                {
-                    "e": 1288476000000,
-                    "s": 1269727200000
-                },
-                {
-                    "e": 1319925600000,
-                    "s": 1301176800000
-                },
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Australia/Lord_Howe",
-            "rules": [
-                {
-                    "e": 1207407600000,
-                    "s": 1223134200000
-                },
-                {
-                    "e": 1238857200000,
-                    "s": 1254583800000
-                },
-                {
-                    "e": 1270306800000,
-                    "s": 1286033400000
-                },
-                {
-                    "e": 1301756400000,
-                    "s": 1317483000000
-                },
-                {
-                    "e": 1333206000000,
-                    "s": 1349537400000
-                },
-                {
-                    "e": 1365260400000,
-                    "s": 1380987000000
-                },
-                {
-                    "e": 1396710000000,
-                    "s": 1412436600000
-                }
-            ]
-        },
-        {
-            "name": "Australia/Perth",
-            "rules": [
-                {
-                    "e": 1206813600000,
-                    "s": 1224957600000
-                },
-                false,
-                false,
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Europe/Helsinki",
-            "rules": [
-                {
-                    "e": 1224982800000,
-                    "s": 1206838800000
-                },
-                {
-                    "e": 1256432400000,
-                    "s": 1238288400000
-                },
-                {
-                    "e": 1288486800000,
-                    "s": 1269738000000
-                },
-                {
-                    "e": 1319936400000,
-                    "s": 1301187600000
-                },
-                {
-                    "e": 1351386000000,
-                    "s": 1332637200000
-                },
-                {
-                    "e": 1382835600000,
-                    "s": 1364691600000
-                },
-                {
-                    "e": 1414285200000,
-                    "s": 1396141200000
-                }
-            ]
-        },
-        {
-            "name": "Europe/Minsk",
-            "rules": [
-                {
-                    "e": 1224979200000,
-                    "s": 1206835200000
-                },
-                {
-                    "e": 1256428800000,
-                    "s": 1238284800000
-                },
-                {
-                    "e": 1288483200000,
-                    "s": 1269734400000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Europe/Moscow",
-            "rules": [
-                {
-                    "e": 1224975600000,
-                    "s": 1206831600000
-                },
-                {
-                    "e": 1256425200000,
-                    "s": 1238281200000
-                },
-                {
-                    "e": 1288479600000,
-                    "s": 1269730800000
-                },
-                false,
-                false,
-                false,
-                false
-            ]
-        },
-        {
-            "name": "Pacific/Apia",
-            "rules": [
-                false,
-                false,
-                false,
-                {
-                    "e": 1301752800000,
-                    "s": 1316872800000
-                },
-                {
-                    "e": 1333202400000,
-                    "s": 1348927200000
-                },
-                {
-                    "e": 1365256800000,
-                    "s": 1380376800000
-                },
-                {
-                    "e": 1396706400000,
-                    "s": 1411826400000
-                }
-            ]
-        },
-        {
-            "name": "Pacific/Fiji",
-            "rules": [
-                false,
-                false,
-                {
-                    "e": 1269698400000,
-                    "s": 1287842400000
-                },
-                {
-                    "e": 1327154400000,
-                    "s": 1319292000000
-                },
-                {
-                    "e": 1358604000000,
-                    "s": 1350741600000
-                },
-                {
-                    "e": 1390050000000,
-                    "s": 1382796000000
-                },
-                {
-                    "e": 1421503200000,
-                    "s": 1414850400000
-                }
-            ]
-        },
-        {
-            "name": "Europe/London",
-            "rules": [
-                {
-                    "e": 1224982800000,
-                    "s": 1206838800000
-                },
-                {
-                    "e": 1256432400000,
-                    "s": 1238288400000
-                },
-                {
-                    "e": 1288486800000,
-                    "s": 1269738000000
-                },
-                {
-                    "e": 1319936400000,
-                    "s": 1301187600000
-                },
-                {
-                    "e": 1351386000000,
-                    "s": 1332637200000
-                },
-                {
-                    "e": 1382835600000,
-                    "s": 1364691600000
-                },
-                {
-                    "e": 1414285200000,
-                    "s": 1396141200000
-                }
-            ]
-        }
-    ]
-};
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = jstz;
-} else if ((typeof define !== 'undefined' && define !== null) && (define.amd != null)) {
-    define([], function() {
-        return jstz;
-    });
-} else {
-    if (typeof root === 'undefined') {
-        window.jstz = jstz;
-    } else {
-        root.jstz = jstz;
-    }
-}
-}());
-
-},{}],137:[function(_dereq_,module,exports){
+},{}],143:[function(_dereq_,module,exports){
+/* jstz.min.js Version: 1.0.6 Build date: 2019-09-09 */
+!function(e){var a=function(){"use strict";var e="s",s={DAY:864e5,HOUR:36e5,MINUTE:6e4,SECOND:1e3,BASELINE_YEAR:2014,MAX_SCORE:864e6,AMBIGUITIES:{"America/Denver":["America/Mazatlan"],"America/Chicago":["America/Mexico_City"],"America/Asuncion":["America/Campo_Grande","America/Santiago"],"America/Montevideo":["America/Sao_Paulo","America/Santiago"],"Asia/Beirut":["Asia/Amman","Asia/Jerusalem","Europe/Helsinki","Asia/Damascus","Africa/Cairo","Asia/Gaza","Europe/Minsk","Africa/Windhoek"],"Pacific/Auckland":["Pacific/Fiji"],"America/Los_Angeles":["America/Santa_Isabel"],"America/New_York":["America/Havana"],"America/Halifax":["America/Goose_Bay"],"America/Godthab":["America/Miquelon"],"Asia/Dubai":["Asia/Yerevan"],"Asia/Jakarta":["Asia/Krasnoyarsk"],"Asia/Shanghai":["Asia/Irkutsk","Australia/Perth"],"Australia/Sydney":["Australia/Lord_Howe"],"Asia/Tokyo":["Asia/Yakutsk"],"Asia/Dhaka":["Asia/Omsk"],"Asia/Baku":["Asia/Yerevan"],"Australia/Brisbane":["Asia/Vladivostok"],"Pacific/Noumea":["Asia/Vladivostok"],"Pacific/Majuro":["Asia/Kamchatka","Pacific/Fiji"],"Pacific/Tongatapu":["Pacific/Apia"],"Asia/Baghdad":["Europe/Minsk","Europe/Moscow"],"Asia/Karachi":["Asia/Yekaterinburg"],"Africa/Johannesburg":["Asia/Gaza","Africa/Cairo"]}},i=function(e){var a=-e.getTimezoneOffset();return null!==a?a:0},r=function(){for(var e=[],a=0;a<=11;a++)for(var r=1;r<=28;r++){var n=i(new Date(s.BASELINE_YEAR,a,r));e?e&&e[e.length-1]!==n&&e.push(n):e.push()}return e},n=function(){var a=0,s=r();return s.length>1&&(a=s[0]-s[1]),s.length>3?s[0]+",1,weird":a<0?s[0]+",1":a>0?s[1]+",1,"+e:s[0]+",0"},o=function(){var e,a;if(Intl&&"undefined"!=typeof Intl&&"undefined"!=typeof Intl.DateTimeFormat&&(e=Intl.DateTimeFormat(),"undefined"!=typeof e&&"undefined"!=typeof e.resolvedOptions))return a=e.resolvedOptions().timeZone,a&&(a.indexOf("/")>-1||"UTC"===a)?a:void 0},t=function(e){for(var a=new Date(e,0,1,0,0,1,0).getTime(),s=new Date(e,12,31,23,59,59).getTime(),i=a,r=new Date(i).getTimezoneOffset(),n=null,o=null;i<s-864e5;){var t=new Date(i),A=t.getTimezoneOffset();A!==r&&(A<r&&(n=t),A>r&&(o=t),r=A),i+=864e5}return!(!n||!o)&&{s:u(n).getTime(),e:u(o).getTime()}},u=function f(e,a,i){"undefined"==typeof a&&(a=s.DAY,i=s.HOUR);for(var r=new Date(e.getTime()-a).getTime(),n=e.getTime()+a,o=new Date(r).getTimezoneOffset(),t=r,u=null;t<n-i;){var A=new Date(t),c=A.getTimezoneOffset();if(c!==o){u=A;break}t+=i}return a===s.DAY?f(u,s.HOUR,s.MINUTE):a===s.HOUR?f(u,s.MINUTE,s.SECOND):u},A=function(e,a,s,i){if("N/A"!==s)return s;if("Asia/Beirut"===a){if("Africa/Cairo"===i.name&&13983768e5===e[6].s&&14116788e5===e[6].e)return 0;if("Asia/Jerusalem"===i.name&&13959648e5===e[6].s&&14118588e5===e[6].e)return 0}else if("America/Santiago"===a){if("America/Asuncion"===i.name&&14124816e5===e[6].s&&1397358e6===e[6].e)return 0;if("America/Campo_Grande"===i.name&&14136912e5===e[6].s&&13925196e5===e[6].e)return 0}else if("America/Montevideo"===a){if("America/Sao_Paulo"===i.name&&14136876e5===e[6].s&&1392516e6===e[6].e)return 0}else if("Pacific/Auckland"===a&&"Pacific/Fiji"===i.name&&14142456e5===e[6].s&&13961016e5===e[6].e)return 0;return s},c=function(e,i){for(var r=function(a){for(var r=0,n=0;n<e.length;n++)if(a.rules[n]&&e[n]){if(!(e[n].s>=a.rules[n].s&&e[n].e<=a.rules[n].e)){r="N/A";break}if(r=0,r+=Math.abs(e[n].s-a.rules[n].s),r+=Math.abs(a.rules[n].e-e[n].e),r>s.MAX_SCORE){r="N/A";break}}return r=A(e,i,r,a)},n={},o=a.olson.dst_rules.zones,t=o.length,u=s.AMBIGUITIES[i],c=0;c<t;c++){var m=o[c],l=r(o[c]);"N/A"!==l&&(n[m.name]=l)}for(var f in n)if(n.hasOwnProperty(f))for(var d=0;d<u.length;d++)if(u[d]===f)return f;return i},m=function(e){var s=function(){for(var e=[],s=0;s<a.olson.dst_rules.years.length;s++){var i=t(a.olson.dst_rules.years[s]);e.push(i)}return e},i=function(e){for(var a=0;a<e.length;a++)if(e[a]!==!1)return!0;return!1},r=s(),n=i(r);return n?c(r,e):e},l=function(e){var i=!1,t=n();return(e||"undefined"==typeof e)&&(i=o()),i||(i=a.olson.timezones[t],"undefined"!=typeof s.AMBIGUITIES[i]&&(i=m(i))),{name:function(){return i},using_intl:e||"undefined"==typeof e,needle:t,offsets:r()}};return{determine:l}}();a.olson=a.olson||{},a.olson.timezones={"-720,0":"Etc/GMT+12","-660,0":"Pacific/Pago_Pago","-660,1,s":"Pacific/Apia","-600,1":"America/Adak","-600,0":"Pacific/Honolulu","-570,0":"Pacific/Marquesas","-540,0":"Pacific/Gambier","-540,1":"America/Anchorage","-480,1":"America/Los_Angeles","-480,0":"Pacific/Pitcairn","-420,0":"America/Phoenix","-420,1":"America/Denver","-360,0":"America/Guatemala","-360,1":"America/Chicago","-360,1,s":"Pacific/Easter","-300,0":"America/Bogota","-300,1":"America/New_York","-270,0":"America/Caracas","-240,1":"America/Halifax","-240,0":"America/Santo_Domingo","-240,1,s":"America/Asuncion","-210,1":"America/St_Johns","-180,1":"America/Godthab","-180,0":"America/Buenos_Aires","-180,1,s":"America/Montevideo","-120,0":"America/Noronha","-120,1":"America/Noronha","-60,1":"Atlantic/Azores","-60,0":"Atlantic/Cape_Verde","0,0":"UTC","0,1":"Europe/London","0,1,weird":"Africa/Casablanca","60,1":"Europe/Berlin","60,0":"Africa/Lagos","60,1,weird":"Africa/Casablanca","120,1":"Asia/Beirut","120,1,weird":"Africa/Cairo","120,0":"Africa/Johannesburg","180,0":"Asia/Baghdad","180,1":"Europe/Moscow","210,1":"Asia/Tehran","240,0":"Asia/Dubai","240,1":"Asia/Baku","270,0":"Asia/Kabul","300,1":"Asia/Yekaterinburg","300,0":"Asia/Karachi","330,0":"Asia/Calcutta","345,0":"Asia/Katmandu","360,0":"Asia/Dhaka","360,1":"Asia/Omsk","390,0":"Asia/Rangoon","420,1":"Asia/Krasnoyarsk","420,0":"Asia/Jakarta","480,0":"Asia/Shanghai","480,1":"Asia/Irkutsk","525,0":"Australia/Eucla","525,1,s":"Australia/Eucla","540,1":"Asia/Yakutsk","540,0":"Asia/Tokyo","570,0":"Australia/Darwin","570,1,s":"Australia/Adelaide","600,0":"Australia/Brisbane","600,1":"Asia/Vladivostok","600,1,s":"Australia/Sydney","630,1,s":"Australia/Lord_Howe","660,1":"Asia/Kamchatka","660,0":"Pacific/Noumea","690,0":"Pacific/Norfolk","720,1,s":"Pacific/Auckland","720,0":"Pacific/Majuro","765,1,s":"Pacific/Chatham","780,0":"Pacific/Tongatapu","780,1,s":"Pacific/Apia","840,0":"Pacific/Kiritimati"},a.olson.dst_rules={years:[2008,2009,2010,2011,2012,2013,2014],zones:[{name:"Africa/Cairo",rules:[{e:12199572e5,s:12090744e5},{e:1250802e6,s:1240524e6},{e:12858804e5,s:12840696e5},!1,!1,!1,{e:14116788e5,s:1406844e6}]},{name:"America/Asuncion",rules:[{e:12050316e5,s:12243888e5},{e:12364812e5,s:12558384e5},{e:12709548e5,s:12860784e5},{e:13024044e5,s:1317528e6},{e:1333854e6,s:13495824e5},{e:1364094e6,s:1381032e6},{e:13955436e5,s:14124816e5}]},{name:"America/Campo_Grande",rules:[{e:12032172e5,s:12243888e5},{e:12346668e5,s:12558384e5},{e:12667212e5,s:1287288e6},{e:12981708e5,s:13187376e5},{e:13302252e5,s:1350792e6},{e:136107e7,s:13822416e5},{e:13925196e5,s:14136912e5}]},{name:"America/Goose_Bay",rules:[{e:122559486e4,s:120503526e4},{e:125704446e4,s:123648486e4},{e:128909886e4,s:126853926e4},{e:13205556e5,s:129998886e4},{e:13520052e5,s:13314456e5},{e:13834548e5,s:13628952e5},{e:14149044e5,s:13943448e5}]},{name:"America/Havana",rules:[{e:12249972e5,s:12056436e5},{e:12564468e5,s:12364884e5},{e:12885012e5,s:12685428e5},{e:13211604e5,s:13005972e5},{e:13520052e5,s:13332564e5},{e:13834548e5,s:13628916e5},{e:14149044e5,s:13943412e5}]},{name:"America/Mazatlan",rules:[{e:1225008e6,s:12074724e5},{e:12564576e5,s:1238922e6},{e:1288512e6,s:12703716e5},{e:13199616e5,s:13018212e5},{e:13514112e5,s:13332708e5},{e:13828608e5,s:13653252e5},{e:14143104e5,s:13967748e5}]},{name:"America/Mexico_City",rules:[{e:12250044e5,s:12074688e5},{e:1256454e6,s:12389184e5},{e:12885084e5,s:1270368e6},{e:1319958e6,s:13018176e5},{e:13514076e5,s:13332672e5},{e:13828572e5,s:13653216e5},{e:14143068e5,s:13967712e5}]},{name:"America/Miquelon",rules:[{e:12255984e5,s:12050388e5},{e:1257048e6,s:12364884e5},{e:12891024e5,s:12685428e5},{e:1320552e6,s:12999924e5},{e:13520016e5,s:1331442e6},{e:13834512e5,s:13628916e5},{e:14149008e5,s:13943412e5}]},{name:"America/Santa_Isabel",rules:[{e:12250116e5,s:1207476e6},{e:12564612e5,s:12389256e5},{e:12891204e5,s:12685608e5},{e:132057e7,s:13000104e5},{e:13520196e5,s:133146e7},{e:13834692e5,s:13629096e5},{e:14149188e5,s:13943592e5}]},{name:"America/Santiago",rules:[{e:1206846e6,s:1223784e6},{e:1237086e6,s:12552336e5},{e:127035e7,s:12866832e5},{e:13048236e5,s:13138992e5},{e:13356684e5,s:13465584e5},{e:1367118e6,s:13786128e5},{e:13985676e5,s:14100624e5}]},{name:"America/Sao_Paulo",rules:[{e:12032136e5,s:12243852e5},{e:12346632e5,s:12558348e5},{e:12667176e5,s:12872844e5},{e:12981672e5,s:1318734e6},{e:13302216e5,s:13507884e5},{e:13610664e5,s:1382238e6},{e:1392516e6,s:14136876e5}]},{name:"Asia/Amman",rules:[{e:1225404e6,s:12066552e5},{e:12568536e5,s:12381048e5},{e:12883032e5,s:12695544e5},{e:13197528e5,s:13016088e5},!1,!1,{e:14147064e5,s:13959576e5}]},{name:"Asia/Damascus",rules:[{e:12254868e5,s:120726e7},{e:125685e7,s:12381048e5},{e:12882996e5,s:12701592e5},{e:13197492e5,s:13016088e5},{e:13511988e5,s:13330584e5},{e:13826484e5,s:1364508e6},{e:14147028e5,s:13959576e5}]},{name:"Asia/Dubai",rules:[!1,!1,!1,!1,!1,!1,!1]},{name:"Asia/Gaza",rules:[{e:12199572e5,s:12066552e5},{e:12520152e5,s:12381048e5},{e:1281474e6,s:126964086e4},{e:1312146e6,s:130160886e4},{e:13481784e5,s:13330584e5},{e:13802292e5,s:1364508e6},{e:1414098e6,s:13959576e5}]},{name:"Asia/Irkutsk",rules:[{e:12249576e5,s:12068136e5},{e:12564072e5,s:12382632e5},{e:12884616e5,s:12697128e5},!1,!1,!1,!1]},{name:"Asia/Jerusalem",rules:[{e:12231612e5,s:12066624e5},{e:1254006e6,s:1238112e6},{e:1284246e6,s:12695616e5},{e:131751e7,s:1301616e6},{e:13483548e5,s:13330656e5},{e:13828284e5,s:13645152e5},{e:1414278e6,s:13959648e5}]},{name:"Asia/Kamchatka",rules:[{e:12249432e5,s:12067992e5},{e:12563928e5,s:12382488e5},{e:12884508e5,s:12696984e5},!1,!1,!1,!1]},{name:"Asia/Krasnoyarsk",rules:[{e:12249612e5,s:12068172e5},{e:12564108e5,s:12382668e5},{e:12884652e5,s:12697164e5},!1,!1,!1,!1]},{name:"Asia/Omsk",rules:[{e:12249648e5,s:12068208e5},{e:12564144e5,s:12382704e5},{e:12884688e5,s:126972e7},!1,!1,!1,!1]},{name:"Asia/Vladivostok",rules:[{e:12249504e5,s:12068064e5},{e:12564e8,s:1238256e6},{e:12884544e5,s:12697056e5},!1,!1,!1,!1]},{name:"Asia/Yakutsk",rules:[{e:1224954e6,s:120681e7},{e:12564036e5,s:12382596e5},{e:1288458e6,s:12697092e5},!1,!1,!1,!1]},{name:"Asia/Yekaterinburg",rules:[{e:12249684e5,s:12068244e5},{e:1256418e6,s:1238274e6},{e:12884724e5,s:12697236e5},!1,!1,!1,!1]},{name:"Asia/Yerevan",rules:[{e:1224972e6,s:1206828e6},{e:12564216e5,s:12382776e5},{e:1288476e6,s:12697272e5},{e:13199256e5,s:13011768e5},!1,!1,!1]},{name:"Australia/Lord_Howe",rules:[{e:12074076e5,s:12231342e5},{e:12388572e5,s:12545838e5},{e:12703068e5,s:12860334e5},{e:13017564e5,s:1317483e6},{e:1333206e6,s:13495374e5},{e:13652604e5,s:1380987e6},{e:139671e7,s:14124366e5}]},{name:"Australia/Perth",rules:[{e:12068136e5,s:12249576e5},!1,!1,!1,!1,!1,!1]},{name:"Europe/Helsinki",rules:[{e:12249828e5,s:12068388e5},{e:12564324e5,s:12382884e5},{e:12884868e5,s:1269738e6},{e:13199364e5,s:13011876e5},{e:1351386e6,s:13326372e5},{e:13828356e5,s:13646916e5},{e:14142852e5,s:13961412e5}]},{name:"Europe/Minsk",rules:[{e:12249792e5,s:12068352e5},{e:12564288e5,s:12382848e5},{e:12884832e5,s:12697344e5},!1,!1,!1,!1]},{name:"Europe/Moscow",rules:[{e:12249756e5,s:12068316e5},{e:12564252e5,s:12382812e5},{e:12884796e5,s:12697308e5},!1,!1,!1,!1]},{name:"Pacific/Apia",rules:[!1,!1,!1,{e:13017528e5,s:13168728e5},{e:13332024e5,s:13489272e5},{e:13652568e5,s:13803768e5},{e:13967064e5,s:14118264e5}]},{name:"Pacific/Fiji",rules:[!1,!1,{e:12696984e5,s:12878424e5},{e:13271544e5,s:1319292e6},{e:1358604e6,s:13507416e5},{e:139005e7,s:1382796e6},{e:14215032e5,s:14148504e5}]},{name:"Europe/London",rules:[{e:12249828e5,s:12068388e5},{e:12564324e5,s:12382884e5},{e:12884868e5,s:1269738e6},{e:13199364e5,s:13011876e5},{e:1351386e6,s:13326372e5},{e:13828356e5,s:13646916e5},{e:14142852e5,s:13961412e5}]},{name:"Africa/Windhoek",rules:[{e:12207492e5,s:120744e7},{e:12521988e5,s:12388896e5},{e:12836484e5,s:12703392e5},{e:1315098e6,s:13017888e5},{e:13465476e5,s:13332384e5},{e:13779972e5,s:13652928e5},{e:14100516e5,s:13967424e5}]}]},"undefined"!=typeof module&&"undefined"!=typeof module.exports?module.exports=a:"undefined"!=typeof define&&null!==define&&null!=define.amd?define([],function(){return a}):"undefined"==typeof e?window.jstz=a:e.jstz=a}();
+},{}],144:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -8596,7 +7644,7 @@ var DataView = getNative(root, 'DataView');
 
 module.exports = DataView;
 
-},{"./_getNative":249,"./_root":295}],138:[function(_dereq_,module,exports){
+},{"./_getNative":256,"./_root":302}],145:[function(_dereq_,module,exports){
 var hashClear = _dereq_('./_hashClear'),
     hashDelete = _dereq_('./_hashDelete'),
     hashGet = _dereq_('./_hashGet'),
@@ -8630,7 +7678,7 @@ Hash.prototype.set = hashSet;
 
 module.exports = Hash;
 
-},{"./_hashClear":259,"./_hashDelete":260,"./_hashGet":261,"./_hashHas":262,"./_hashSet":263}],139:[function(_dereq_,module,exports){
+},{"./_hashClear":266,"./_hashDelete":267,"./_hashGet":268,"./_hashHas":269,"./_hashSet":270}],146:[function(_dereq_,module,exports){
 var listCacheClear = _dereq_('./_listCacheClear'),
     listCacheDelete = _dereq_('./_listCacheDelete'),
     listCacheGet = _dereq_('./_listCacheGet'),
@@ -8664,7 +7712,7 @@ ListCache.prototype.set = listCacheSet;
 
 module.exports = ListCache;
 
-},{"./_listCacheClear":275,"./_listCacheDelete":276,"./_listCacheGet":277,"./_listCacheHas":278,"./_listCacheSet":279}],140:[function(_dereq_,module,exports){
+},{"./_listCacheClear":282,"./_listCacheDelete":283,"./_listCacheGet":284,"./_listCacheHas":285,"./_listCacheSet":286}],147:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -8673,7 +7721,7 @@ var Map = getNative(root, 'Map');
 
 module.exports = Map;
 
-},{"./_getNative":249,"./_root":295}],141:[function(_dereq_,module,exports){
+},{"./_getNative":256,"./_root":302}],148:[function(_dereq_,module,exports){
 var mapCacheClear = _dereq_('./_mapCacheClear'),
     mapCacheDelete = _dereq_('./_mapCacheDelete'),
     mapCacheGet = _dereq_('./_mapCacheGet'),
@@ -8707,7 +7755,7 @@ MapCache.prototype.set = mapCacheSet;
 
 module.exports = MapCache;
 
-},{"./_mapCacheClear":280,"./_mapCacheDelete":281,"./_mapCacheGet":282,"./_mapCacheHas":283,"./_mapCacheSet":284}],142:[function(_dereq_,module,exports){
+},{"./_mapCacheClear":287,"./_mapCacheDelete":288,"./_mapCacheGet":289,"./_mapCacheHas":290,"./_mapCacheSet":291}],149:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -8716,7 +7764,7 @@ var Promise = getNative(root, 'Promise');
 
 module.exports = Promise;
 
-},{"./_getNative":249,"./_root":295}],143:[function(_dereq_,module,exports){
+},{"./_getNative":256,"./_root":302}],150:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -8725,7 +7773,7 @@ var Set = getNative(root, 'Set');
 
 module.exports = Set;
 
-},{"./_getNative":249,"./_root":295}],144:[function(_dereq_,module,exports){
+},{"./_getNative":256,"./_root":302}],151:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache'),
     setCacheAdd = _dereq_('./_setCacheAdd'),
     setCacheHas = _dereq_('./_setCacheHas');
@@ -8754,7 +7802,7 @@ SetCache.prototype.has = setCacheHas;
 
 module.exports = SetCache;
 
-},{"./_MapCache":141,"./_setCacheAdd":297,"./_setCacheHas":298}],145:[function(_dereq_,module,exports){
+},{"./_MapCache":148,"./_setCacheAdd":304,"./_setCacheHas":305}],152:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     stackClear = _dereq_('./_stackClear'),
     stackDelete = _dereq_('./_stackDelete'),
@@ -8783,7 +7831,7 @@ Stack.prototype.set = stackSet;
 
 module.exports = Stack;
 
-},{"./_ListCache":139,"./_stackClear":302,"./_stackDelete":303,"./_stackGet":304,"./_stackHas":305,"./_stackSet":306}],146:[function(_dereq_,module,exports){
+},{"./_ListCache":146,"./_stackClear":309,"./_stackDelete":310,"./_stackGet":311,"./_stackHas":312,"./_stackSet":313}],153:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -8791,7 +7839,7 @@ var Symbol = root.Symbol;
 
 module.exports = Symbol;
 
-},{"./_root":295}],147:[function(_dereq_,module,exports){
+},{"./_root":302}],154:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Built-in value references. */
@@ -8799,7 +7847,7 @@ var Uint8Array = root.Uint8Array;
 
 module.exports = Uint8Array;
 
-},{"./_root":295}],148:[function(_dereq_,module,exports){
+},{"./_root":302}],155:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative'),
     root = _dereq_('./_root');
 
@@ -8808,7 +7856,7 @@ var WeakMap = getNative(root, 'WeakMap');
 
 module.exports = WeakMap;
 
-},{"./_getNative":249,"./_root":295}],149:[function(_dereq_,module,exports){
+},{"./_getNative":256,"./_root":302}],156:[function(_dereq_,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -8831,7 +7879,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],150:[function(_dereq_,module,exports){
+},{}],157:[function(_dereq_,module,exports){
 /**
  * A specialized version of `baseAggregator` for arrays.
  *
@@ -8855,7 +7903,7 @@ function arrayAggregator(array, setter, iteratee, accumulator) {
 
 module.exports = arrayAggregator;
 
-},{}],151:[function(_dereq_,module,exports){
+},{}],158:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.forEach` for arrays without support for
  * iteratee shorthands.
@@ -8879,7 +7927,7 @@ function arrayEach(array, iteratee) {
 
 module.exports = arrayEach;
 
-},{}],152:[function(_dereq_,module,exports){
+},{}],159:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for
  * iteratee shorthands.
@@ -8906,7 +7954,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],153:[function(_dereq_,module,exports){
+},{}],160:[function(_dereq_,module,exports){
 var baseIndexOf = _dereq_('./_baseIndexOf');
 
 /**
@@ -8925,7 +7973,7 @@ function arrayIncludes(array, value) {
 
 module.exports = arrayIncludes;
 
-},{"./_baseIndexOf":184}],154:[function(_dereq_,module,exports){
+},{"./_baseIndexOf":191}],161:[function(_dereq_,module,exports){
 /**
  * This function is like `arrayIncludes` except that it accepts a comparator.
  *
@@ -8949,7 +7997,7 @@ function arrayIncludesWith(array, value, comparator) {
 
 module.exports = arrayIncludesWith;
 
-},{}],155:[function(_dereq_,module,exports){
+},{}],162:[function(_dereq_,module,exports){
 var baseTimes = _dereq_('./_baseTimes'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -9000,7 +8048,7 @@ function arrayLikeKeys(value, inherited) {
 
 module.exports = arrayLikeKeys;
 
-},{"./_baseTimes":212,"./_isIndex":268,"./isArguments":335,"./isArray":336,"./isBuffer":339,"./isTypedArray":352}],156:[function(_dereq_,module,exports){
+},{"./_baseTimes":219,"./_isIndex":275,"./isArguments":342,"./isArray":343,"./isBuffer":346,"./isTypedArray":359}],163:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.map` for arrays without support for iteratee
  * shorthands.
@@ -9023,7 +8071,7 @@ function arrayMap(array, iteratee) {
 
 module.exports = arrayMap;
 
-},{}],157:[function(_dereq_,module,exports){
+},{}],164:[function(_dereq_,module,exports){
 /**
  * Appends the elements of `values` to `array`.
  *
@@ -9045,7 +8093,7 @@ function arrayPush(array, values) {
 
 module.exports = arrayPush;
 
-},{}],158:[function(_dereq_,module,exports){
+},{}],165:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.reduce` for arrays without support for
  * iteratee shorthands.
@@ -9073,7 +8121,7 @@ function arrayReduce(array, iteratee, accumulator, initAccum) {
 
 module.exports = arrayReduce;
 
-},{}],159:[function(_dereq_,module,exports){
+},{}],166:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for iteratee
  * shorthands.
@@ -9098,7 +8146,7 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],160:[function(_dereq_,module,exports){
+},{}],167:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty');
 
 /**
@@ -9112,7 +8160,7 @@ var asciiSize = baseProperty('length');
 
 module.exports = asciiSize;
 
-},{"./_baseProperty":203}],161:[function(_dereq_,module,exports){
+},{"./_baseProperty":210}],168:[function(_dereq_,module,exports){
 /**
  * Converts an ASCII `string` to an array.
  *
@@ -9126,7 +8174,7 @@ function asciiToArray(string) {
 
 module.exports = asciiToArray;
 
-},{}],162:[function(_dereq_,module,exports){
+},{}],169:[function(_dereq_,module,exports){
 /** Used to match words composed of alphanumeric characters. */
 var reAsciiWord = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
 
@@ -9143,7 +8191,7 @@ function asciiWords(string) {
 
 module.exports = asciiWords;
 
-},{}],163:[function(_dereq_,module,exports){
+},{}],170:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -9165,7 +8213,7 @@ function assignMergeValue(object, key, value) {
 
 module.exports = assignMergeValue;
 
-},{"./_baseAssignValue":169,"./eq":326}],164:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":176,"./eq":333}],171:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     eq = _dereq_('./eq');
 
@@ -9195,7 +8243,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./_baseAssignValue":169,"./eq":326}],165:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":176,"./eq":333}],172:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq');
 
 /**
@@ -9218,7 +8266,7 @@ function assocIndexOf(array, key) {
 
 module.exports = assocIndexOf;
 
-},{"./eq":326}],166:[function(_dereq_,module,exports){
+},{"./eq":333}],173:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -9241,7 +8289,7 @@ function baseAggregator(collection, setter, iteratee, accumulator) {
 
 module.exports = baseAggregator;
 
-},{"./_baseEach":173}],167:[function(_dereq_,module,exports){
+},{"./_baseEach":180}],174:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keys = _dereq_('./keys');
 
@@ -9260,7 +8308,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"./_copyObject":226,"./keys":353}],168:[function(_dereq_,module,exports){
+},{"./_copyObject":233,"./keys":360}],175:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -9279,7 +8327,7 @@ function baseAssignIn(object, source) {
 
 module.exports = baseAssignIn;
 
-},{"./_copyObject":226,"./keysIn":354}],169:[function(_dereq_,module,exports){
+},{"./_copyObject":233,"./keysIn":361}],176:[function(_dereq_,module,exports){
 var defineProperty = _dereq_('./_defineProperty');
 
 /**
@@ -9306,7 +8354,7 @@ function baseAssignValue(object, key, value) {
 
 module.exports = baseAssignValue;
 
-},{"./_defineProperty":240}],170:[function(_dereq_,module,exports){
+},{"./_defineProperty":247}],177:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     arrayEach = _dereq_('./_arrayEach'),
     assignValue = _dereq_('./_assignValue'),
@@ -9473,7 +8521,7 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
 
 module.exports = baseClone;
 
-},{"./_Stack":145,"./_arrayEach":151,"./_assignValue":164,"./_baseAssign":167,"./_baseAssignIn":168,"./_cloneBuffer":220,"./_copyArray":225,"./_copySymbols":227,"./_copySymbolsIn":228,"./_getAllKeys":245,"./_getAllKeysIn":246,"./_getTag":254,"./_initCloneArray":264,"./_initCloneByTag":265,"./_initCloneObject":266,"./isArray":336,"./isBuffer":339,"./isMap":342,"./isObject":346,"./isSet":349,"./keys":353}],171:[function(_dereq_,module,exports){
+},{"./_Stack":152,"./_arrayEach":158,"./_assignValue":171,"./_baseAssign":174,"./_baseAssignIn":175,"./_cloneBuffer":227,"./_copyArray":232,"./_copySymbols":234,"./_copySymbolsIn":235,"./_getAllKeys":252,"./_getAllKeysIn":253,"./_getTag":261,"./_initCloneArray":271,"./_initCloneByTag":272,"./_initCloneObject":273,"./isArray":343,"./isBuffer":346,"./isMap":349,"./isObject":353,"./isSet":356,"./keys":360}],178:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /** Built-in value references. */
@@ -9505,7 +8553,7 @@ var baseCreate = (function() {
 
 module.exports = baseCreate;
 
-},{"./isObject":346}],172:[function(_dereq_,module,exports){
+},{"./isObject":353}],179:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arrayIncludes = _dereq_('./_arrayIncludes'),
     arrayIncludesWith = _dereq_('./_arrayIncludesWith'),
@@ -9574,7 +8622,7 @@ function baseDifference(array, values, iteratee, comparator) {
 
 module.exports = baseDifference;
 
-},{"./_SetCache":144,"./_arrayIncludes":153,"./_arrayIncludesWith":154,"./_arrayMap":156,"./_baseUnary":214,"./_cacheHas":215}],173:[function(_dereq_,module,exports){
+},{"./_SetCache":151,"./_arrayIncludes":160,"./_arrayIncludesWith":161,"./_arrayMap":163,"./_baseUnary":221,"./_cacheHas":222}],180:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     createBaseEach = _dereq_('./_createBaseEach');
 
@@ -9590,7 +8638,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./_baseForOwn":178,"./_createBaseEach":232}],174:[function(_dereq_,module,exports){
+},{"./_baseForOwn":185,"./_createBaseEach":239}],181:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach');
 
 /**
@@ -9613,7 +8661,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./_baseEach":173}],175:[function(_dereq_,module,exports){
+},{"./_baseEach":180}],182:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.findIndex` and `_.findLastIndex` without
  * support for iteratee shorthands.
@@ -9639,7 +8687,7 @@ function baseFindIndex(array, predicate, fromIndex, fromRight) {
 
 module.exports = baseFindIndex;
 
-},{}],176:[function(_dereq_,module,exports){
+},{}],183:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isFlattenable = _dereq_('./_isFlattenable');
 
@@ -9679,7 +8727,7 @@ function baseFlatten(array, depth, predicate, isStrict, result) {
 
 module.exports = baseFlatten;
 
-},{"./_arrayPush":157,"./_isFlattenable":267}],177:[function(_dereq_,module,exports){
+},{"./_arrayPush":164,"./_isFlattenable":274}],184:[function(_dereq_,module,exports){
 var createBaseFor = _dereq_('./_createBaseFor');
 
 /**
@@ -9697,7 +8745,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./_createBaseFor":233}],178:[function(_dereq_,module,exports){
+},{"./_createBaseFor":240}],185:[function(_dereq_,module,exports){
 var baseFor = _dereq_('./_baseFor'),
     keys = _dereq_('./keys');
 
@@ -9715,7 +8763,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"./_baseFor":177,"./keys":353}],179:[function(_dereq_,module,exports){
+},{"./_baseFor":184,"./keys":360}],186:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     toKey = _dereq_('./_toKey');
 
@@ -9741,7 +8789,7 @@ function baseGet(object, path) {
 
 module.exports = baseGet;
 
-},{"./_castPath":217,"./_toKey":311}],180:[function(_dereq_,module,exports){
+},{"./_castPath":224,"./_toKey":318}],187:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     isArray = _dereq_('./isArray');
 
@@ -9763,7 +8811,7 @@ function baseGetAllKeys(object, keysFunc, symbolsFunc) {
 
 module.exports = baseGetAllKeys;
 
-},{"./_arrayPush":157,"./isArray":336}],181:[function(_dereq_,module,exports){
+},{"./_arrayPush":164,"./isArray":343}],188:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     getRawTag = _dereq_('./_getRawTag'),
     objectToString = _dereq_('./_objectToString');
@@ -9793,7 +8841,7 @@ function baseGetTag(value) {
 
 module.exports = baseGetTag;
 
-},{"./_Symbol":146,"./_getRawTag":251,"./_objectToString":292}],182:[function(_dereq_,module,exports){
+},{"./_Symbol":153,"./_getRawTag":258,"./_objectToString":299}],189:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -9814,7 +8862,7 @@ function baseHas(object, key) {
 
 module.exports = baseHas;
 
-},{}],183:[function(_dereq_,module,exports){
+},{}],190:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
  *
@@ -9829,7 +8877,7 @@ function baseHasIn(object, key) {
 
 module.exports = baseHasIn;
 
-},{}],184:[function(_dereq_,module,exports){
+},{}],191:[function(_dereq_,module,exports){
 var baseFindIndex = _dereq_('./_baseFindIndex'),
     baseIsNaN = _dereq_('./_baseIsNaN'),
     strictIndexOf = _dereq_('./_strictIndexOf');
@@ -9851,7 +8899,7 @@ function baseIndexOf(array, value, fromIndex) {
 
 module.exports = baseIndexOf;
 
-},{"./_baseFindIndex":175,"./_baseIsNaN":190,"./_strictIndexOf":307}],185:[function(_dereq_,module,exports){
+},{"./_baseFindIndex":182,"./_baseIsNaN":197,"./_strictIndexOf":314}],192:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -9871,7 +8919,7 @@ function baseIsArguments(value) {
 
 module.exports = baseIsArguments;
 
-},{"./_baseGetTag":181,"./isObjectLike":347}],186:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./isObjectLike":354}],193:[function(_dereq_,module,exports){
 var baseIsEqualDeep = _dereq_('./_baseIsEqualDeep'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -9901,7 +8949,7 @@ function baseIsEqual(value, other, bitmask, customizer, stack) {
 
 module.exports = baseIsEqual;
 
-},{"./_baseIsEqualDeep":187,"./isObjectLike":347}],187:[function(_dereq_,module,exports){
+},{"./_baseIsEqualDeep":194,"./isObjectLike":354}],194:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     equalArrays = _dereq_('./_equalArrays'),
     equalByTag = _dereq_('./_equalByTag'),
@@ -9986,7 +9034,7 @@ function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = baseIsEqualDeep;
 
-},{"./_Stack":145,"./_equalArrays":241,"./_equalByTag":242,"./_equalObjects":243,"./_getTag":254,"./isArray":336,"./isBuffer":339,"./isTypedArray":352}],188:[function(_dereq_,module,exports){
+},{"./_Stack":152,"./_equalArrays":248,"./_equalByTag":249,"./_equalObjects":250,"./_getTag":261,"./isArray":343,"./isBuffer":346,"./isTypedArray":359}],195:[function(_dereq_,module,exports){
 var getTag = _dereq_('./_getTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -10006,7 +9054,7 @@ function baseIsMap(value) {
 
 module.exports = baseIsMap;
 
-},{"./_getTag":254,"./isObjectLike":347}],189:[function(_dereq_,module,exports){
+},{"./_getTag":261,"./isObjectLike":354}],196:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     baseIsEqual = _dereq_('./_baseIsEqual');
 
@@ -10070,7 +9118,7 @@ function baseIsMatch(object, source, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./_Stack":145,"./_baseIsEqual":186}],190:[function(_dereq_,module,exports){
+},{"./_Stack":152,"./_baseIsEqual":193}],197:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.isNaN` without support for number objects.
  *
@@ -10084,7 +9132,7 @@ function baseIsNaN(value) {
 
 module.exports = baseIsNaN;
 
-},{}],191:[function(_dereq_,module,exports){
+},{}],198:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isMasked = _dereq_('./_isMasked'),
     isObject = _dereq_('./isObject'),
@@ -10133,7 +9181,7 @@ function baseIsNative(value) {
 
 module.exports = baseIsNative;
 
-},{"./_isMasked":272,"./_toSource":312,"./isFunction":340,"./isObject":346}],192:[function(_dereq_,module,exports){
+},{"./_isMasked":279,"./_toSource":319,"./isFunction":347,"./isObject":353}],199:[function(_dereq_,module,exports){
 var getTag = _dereq_('./_getTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -10153,7 +9201,7 @@ function baseIsSet(value) {
 
 module.exports = baseIsSet;
 
-},{"./_getTag":254,"./isObjectLike":347}],193:[function(_dereq_,module,exports){
+},{"./_getTag":261,"./isObjectLike":354}],200:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isLength = _dereq_('./isLength'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -10215,7 +9263,7 @@ function baseIsTypedArray(value) {
 
 module.exports = baseIsTypedArray;
 
-},{"./_baseGetTag":181,"./isLength":341,"./isObjectLike":347}],194:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./isLength":348,"./isObjectLike":354}],201:[function(_dereq_,module,exports){
 var baseMatches = _dereq_('./_baseMatches'),
     baseMatchesProperty = _dereq_('./_baseMatchesProperty'),
     identity = _dereq_('./identity'),
@@ -10248,7 +9296,7 @@ function baseIteratee(value) {
 
 module.exports = baseIteratee;
 
-},{"./_baseMatches":198,"./_baseMatchesProperty":199,"./identity":334,"./isArray":336,"./property":363}],195:[function(_dereq_,module,exports){
+},{"./_baseMatches":205,"./_baseMatchesProperty":206,"./identity":341,"./isArray":343,"./property":370}],202:[function(_dereq_,module,exports){
 var isPrototype = _dereq_('./_isPrototype'),
     nativeKeys = _dereq_('./_nativeKeys');
 
@@ -10280,7 +9328,7 @@ function baseKeys(object) {
 
 module.exports = baseKeys;
 
-},{"./_isPrototype":273,"./_nativeKeys":289}],196:[function(_dereq_,module,exports){
+},{"./_isPrototype":280,"./_nativeKeys":296}],203:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isPrototype = _dereq_('./_isPrototype'),
     nativeKeysIn = _dereq_('./_nativeKeysIn');
@@ -10315,7 +9363,7 @@ function baseKeysIn(object) {
 
 module.exports = baseKeysIn;
 
-},{"./_isPrototype":273,"./_nativeKeysIn":290,"./isObject":346}],197:[function(_dereq_,module,exports){
+},{"./_isPrototype":280,"./_nativeKeysIn":297,"./isObject":353}],204:[function(_dereq_,module,exports){
 var baseEach = _dereq_('./_baseEach'),
     isArrayLike = _dereq_('./isArrayLike');
 
@@ -10339,7 +9387,7 @@ function baseMap(collection, iteratee) {
 
 module.exports = baseMap;
 
-},{"./_baseEach":173,"./isArrayLike":337}],198:[function(_dereq_,module,exports){
+},{"./_baseEach":180,"./isArrayLike":344}],205:[function(_dereq_,module,exports){
 var baseIsMatch = _dereq_('./_baseIsMatch'),
     getMatchData = _dereq_('./_getMatchData'),
     matchesStrictComparable = _dereq_('./_matchesStrictComparable');
@@ -10363,7 +9411,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./_baseIsMatch":189,"./_getMatchData":248,"./_matchesStrictComparable":286}],199:[function(_dereq_,module,exports){
+},{"./_baseIsMatch":196,"./_getMatchData":255,"./_matchesStrictComparable":293}],206:[function(_dereq_,module,exports){
 var baseIsEqual = _dereq_('./_baseIsEqual'),
     get = _dereq_('./get'),
     hasIn = _dereq_('./hasIn'),
@@ -10398,7 +9446,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"./_baseIsEqual":186,"./_isKey":270,"./_isStrictComparable":274,"./_matchesStrictComparable":286,"./_toKey":311,"./get":330,"./hasIn":333}],200:[function(_dereq_,module,exports){
+},{"./_baseIsEqual":193,"./_isKey":277,"./_isStrictComparable":281,"./_matchesStrictComparable":293,"./_toKey":318,"./get":337,"./hasIn":340}],207:[function(_dereq_,module,exports){
 var Stack = _dereq_('./_Stack'),
     assignMergeValue = _dereq_('./_assignMergeValue'),
     baseFor = _dereq_('./_baseFor'),
@@ -10442,7 +9490,7 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
 
 module.exports = baseMerge;
 
-},{"./_Stack":145,"./_assignMergeValue":163,"./_baseFor":177,"./_baseMergeDeep":201,"./_safeGet":296,"./isObject":346,"./keysIn":354}],201:[function(_dereq_,module,exports){
+},{"./_Stack":152,"./_assignMergeValue":170,"./_baseFor":184,"./_baseMergeDeep":208,"./_safeGet":303,"./isObject":353,"./keysIn":361}],208:[function(_dereq_,module,exports){
 var assignMergeValue = _dereq_('./_assignMergeValue'),
     cloneBuffer = _dereq_('./_cloneBuffer'),
     cloneTypedArray = _dereq_('./_cloneTypedArray'),
@@ -10538,7 +9586,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
 
 module.exports = baseMergeDeep;
 
-},{"./_assignMergeValue":163,"./_cloneBuffer":220,"./_cloneTypedArray":224,"./_copyArray":225,"./_initCloneObject":266,"./_safeGet":296,"./isArguments":335,"./isArray":336,"./isArrayLikeObject":338,"./isBuffer":339,"./isFunction":340,"./isObject":346,"./isPlainObject":348,"./isTypedArray":352,"./toPlainObject":373}],202:[function(_dereq_,module,exports){
+},{"./_assignMergeValue":170,"./_cloneBuffer":227,"./_cloneTypedArray":231,"./_copyArray":232,"./_initCloneObject":273,"./_safeGet":303,"./isArguments":342,"./isArray":343,"./isArrayLikeObject":345,"./isBuffer":346,"./isFunction":347,"./isObject":353,"./isPlainObject":355,"./isTypedArray":359,"./toPlainObject":380}],209:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet'),
     baseSet = _dereq_('./_baseSet'),
     castPath = _dereq_('./_castPath');
@@ -10570,7 +9618,7 @@ function basePickBy(object, paths, predicate) {
 
 module.exports = basePickBy;
 
-},{"./_baseGet":179,"./_baseSet":209,"./_castPath":217}],203:[function(_dereq_,module,exports){
+},{"./_baseGet":186,"./_baseSet":216,"./_castPath":224}],210:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -10586,7 +9634,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],204:[function(_dereq_,module,exports){
+},{}],211:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -10604,7 +9652,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./_baseGet":179}],205:[function(_dereq_,module,exports){
+},{"./_baseGet":186}],212:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.propertyOf` without support for deep paths.
  *
@@ -10620,7 +9668,7 @@ function basePropertyOf(object) {
 
 module.exports = basePropertyOf;
 
-},{}],206:[function(_dereq_,module,exports){
+},{}],213:[function(_dereq_,module,exports){
 /* Built-in method references for those with the same name as other `lodash` methods. */
 var nativeCeil = Math.ceil,
     nativeMax = Math.max;
@@ -10650,7 +9698,7 @@ function baseRange(start, end, step, fromRight) {
 
 module.exports = baseRange;
 
-},{}],207:[function(_dereq_,module,exports){
+},{}],214:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -10687,7 +9735,7 @@ function baseRepeat(string, n) {
 
 module.exports = baseRepeat;
 
-},{}],208:[function(_dereq_,module,exports){
+},{}],215:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity'),
     overRest = _dereq_('./_overRest'),
     setToString = _dereq_('./_setToString');
@@ -10706,7 +9754,7 @@ function baseRest(func, start) {
 
 module.exports = baseRest;
 
-},{"./_overRest":294,"./_setToString":300,"./identity":334}],209:[function(_dereq_,module,exports){
+},{"./_overRest":301,"./_setToString":307,"./identity":341}],216:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     castPath = _dereq_('./_castPath'),
     isIndex = _dereq_('./_isIndex'),
@@ -10755,7 +9803,7 @@ function baseSet(object, path, value, customizer) {
 
 module.exports = baseSet;
 
-},{"./_assignValue":164,"./_castPath":217,"./_isIndex":268,"./_toKey":311,"./isObject":346}],210:[function(_dereq_,module,exports){
+},{"./_assignValue":171,"./_castPath":224,"./_isIndex":275,"./_toKey":318,"./isObject":353}],217:[function(_dereq_,module,exports){
 var constant = _dereq_('./constant'),
     defineProperty = _dereq_('./_defineProperty'),
     identity = _dereq_('./identity');
@@ -10779,7 +9827,7 @@ var baseSetToString = !defineProperty ? identity : function(func, string) {
 
 module.exports = baseSetToString;
 
-},{"./_defineProperty":240,"./constant":322,"./identity":334}],211:[function(_dereq_,module,exports){
+},{"./_defineProperty":247,"./constant":329,"./identity":341}],218:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -10812,7 +9860,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],212:[function(_dereq_,module,exports){
+},{}],219:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -10834,7 +9882,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],213:[function(_dereq_,module,exports){
+},{}],220:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     arrayMap = _dereq_('./_arrayMap'),
     isArray = _dereq_('./isArray'),
@@ -10873,7 +9921,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{"./_Symbol":146,"./_arrayMap":156,"./isArray":336,"./isSymbol":351}],214:[function(_dereq_,module,exports){
+},{"./_Symbol":153,"./_arrayMap":163,"./isArray":343,"./isSymbol":358}],221:[function(_dereq_,module,exports){
 /**
  * The base implementation of `_.unary` without support for storing metadata.
  *
@@ -10889,7 +9937,7 @@ function baseUnary(func) {
 
 module.exports = baseUnary;
 
-},{}],215:[function(_dereq_,module,exports){
+},{}],222:[function(_dereq_,module,exports){
 /**
  * Checks if a `cache` value for `key` exists.
  *
@@ -10904,7 +9952,7 @@ function cacheHas(cache, key) {
 
 module.exports = cacheHas;
 
-},{}],216:[function(_dereq_,module,exports){
+},{}],223:[function(_dereq_,module,exports){
 var identity = _dereq_('./identity');
 
 /**
@@ -10920,7 +9968,7 @@ function castFunction(value) {
 
 module.exports = castFunction;
 
-},{"./identity":334}],217:[function(_dereq_,module,exports){
+},{"./identity":341}],224:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isKey = _dereq_('./_isKey'),
     stringToPath = _dereq_('./_stringToPath'),
@@ -10943,7 +9991,7 @@ function castPath(value, object) {
 
 module.exports = castPath;
 
-},{"./_isKey":270,"./_stringToPath":310,"./isArray":336,"./toString":374}],218:[function(_dereq_,module,exports){
+},{"./_isKey":277,"./_stringToPath":317,"./isArray":343,"./toString":381}],225:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice');
 
 /**
@@ -10963,7 +10011,7 @@ function castSlice(array, start, end) {
 
 module.exports = castSlice;
 
-},{"./_baseSlice":211}],219:[function(_dereq_,module,exports){
+},{"./_baseSlice":218}],226:[function(_dereq_,module,exports){
 var Uint8Array = _dereq_('./_Uint8Array');
 
 /**
@@ -10981,7 +10029,7 @@ function cloneArrayBuffer(arrayBuffer) {
 
 module.exports = cloneArrayBuffer;
 
-},{"./_Uint8Array":147}],220:[function(_dereq_,module,exports){
+},{"./_Uint8Array":154}],227:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Detect free variable `exports`. */
@@ -11018,7 +10066,7 @@ function cloneBuffer(buffer, isDeep) {
 
 module.exports = cloneBuffer;
 
-},{"./_root":295}],221:[function(_dereq_,module,exports){
+},{"./_root":302}],228:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -11036,7 +10084,7 @@ function cloneDataView(dataView, isDeep) {
 
 module.exports = cloneDataView;
 
-},{"./_cloneArrayBuffer":219}],222:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":226}],229:[function(_dereq_,module,exports){
 /** Used to match `RegExp` flags from their coerced string values. */
 var reFlags = /\w*$/;
 
@@ -11055,7 +10103,7 @@ function cloneRegExp(regexp) {
 
 module.exports = cloneRegExp;
 
-},{}],223:[function(_dereq_,module,exports){
+},{}],230:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used to convert symbols to primitives and strings. */
@@ -11075,7 +10123,7 @@ function cloneSymbol(symbol) {
 
 module.exports = cloneSymbol;
 
-},{"./_Symbol":146}],224:[function(_dereq_,module,exports){
+},{"./_Symbol":153}],231:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer');
 
 /**
@@ -11093,7 +10141,7 @@ function cloneTypedArray(typedArray, isDeep) {
 
 module.exports = cloneTypedArray;
 
-},{"./_cloneArrayBuffer":219}],225:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":226}],232:[function(_dereq_,module,exports){
 /**
  * Copies the values of `source` to `array`.
  *
@@ -11115,7 +10163,7 @@ function copyArray(source, array) {
 
 module.exports = copyArray;
 
-},{}],226:[function(_dereq_,module,exports){
+},{}],233:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     baseAssignValue = _dereq_('./_baseAssignValue');
 
@@ -11157,7 +10205,7 @@ function copyObject(source, props, object, customizer) {
 
 module.exports = copyObject;
 
-},{"./_assignValue":164,"./_baseAssignValue":169}],227:[function(_dereq_,module,exports){
+},{"./_assignValue":171,"./_baseAssignValue":176}],234:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbols = _dereq_('./_getSymbols');
 
@@ -11175,7 +10223,7 @@ function copySymbols(source, object) {
 
 module.exports = copySymbols;
 
-},{"./_copyObject":226,"./_getSymbols":252}],228:[function(_dereq_,module,exports){
+},{"./_copyObject":233,"./_getSymbols":259}],235:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     getSymbolsIn = _dereq_('./_getSymbolsIn');
 
@@ -11193,7 +10241,7 @@ function copySymbolsIn(source, object) {
 
 module.exports = copySymbolsIn;
 
-},{"./_copyObject":226,"./_getSymbolsIn":253}],229:[function(_dereq_,module,exports){
+},{"./_copyObject":233,"./_getSymbolsIn":260}],236:[function(_dereq_,module,exports){
 var root = _dereq_('./_root');
 
 /** Used to detect overreaching core-js shims. */
@@ -11201,7 +10249,7 @@ var coreJsData = root['__core-js_shared__'];
 
 module.exports = coreJsData;
 
-},{"./_root":295}],230:[function(_dereq_,module,exports){
+},{"./_root":302}],237:[function(_dereq_,module,exports){
 var arrayAggregator = _dereq_('./_arrayAggregator'),
     baseAggregator = _dereq_('./_baseAggregator'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -11226,7 +10274,7 @@ function createAggregator(setter, initializer) {
 
 module.exports = createAggregator;
 
-},{"./_arrayAggregator":150,"./_baseAggregator":166,"./_baseIteratee":194,"./isArray":336}],231:[function(_dereq_,module,exports){
+},{"./_arrayAggregator":157,"./_baseAggregator":173,"./_baseIteratee":201,"./isArray":343}],238:[function(_dereq_,module,exports){
 var baseRest = _dereq_('./_baseRest'),
     isIterateeCall = _dereq_('./_isIterateeCall');
 
@@ -11265,7 +10313,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_baseRest":208,"./_isIterateeCall":269}],232:[function(_dereq_,module,exports){
+},{"./_baseRest":215,"./_isIterateeCall":276}],239:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike');
 
 /**
@@ -11299,7 +10347,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./isArrayLike":337}],233:[function(_dereq_,module,exports){
+},{"./isArrayLike":344}],240:[function(_dereq_,module,exports){
 /**
  * Creates a base function for methods like `_.forIn` and `_.forOwn`.
  *
@@ -11326,7 +10374,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{}],234:[function(_dereq_,module,exports){
+},{}],241:[function(_dereq_,module,exports){
 var castSlice = _dereq_('./_castSlice'),
     hasUnicode = _dereq_('./_hasUnicode'),
     stringToArray = _dereq_('./_stringToArray'),
@@ -11361,7 +10409,7 @@ function createCaseFirst(methodName) {
 
 module.exports = createCaseFirst;
 
-},{"./_castSlice":218,"./_hasUnicode":257,"./_stringToArray":309,"./toString":374}],235:[function(_dereq_,module,exports){
+},{"./_castSlice":225,"./_hasUnicode":264,"./_stringToArray":316,"./toString":381}],242:[function(_dereq_,module,exports){
 var arrayReduce = _dereq_('./_arrayReduce'),
     deburr = _dereq_('./deburr'),
     words = _dereq_('./words');
@@ -11387,7 +10435,7 @@ function createCompounder(callback) {
 
 module.exports = createCompounder;
 
-},{"./_arrayReduce":158,"./deburr":323,"./words":377}],236:[function(_dereq_,module,exports){
+},{"./_arrayReduce":165,"./deburr":330,"./words":384}],243:[function(_dereq_,module,exports){
 var baseRepeat = _dereq_('./_baseRepeat'),
     baseToString = _dereq_('./_baseToString'),
     castSlice = _dereq_('./_castSlice'),
@@ -11422,7 +10470,7 @@ function createPadding(length, chars) {
 
 module.exports = createPadding;
 
-},{"./_baseRepeat":207,"./_baseToString":213,"./_castSlice":218,"./_hasUnicode":257,"./_stringSize":308,"./_stringToArray":309}],237:[function(_dereq_,module,exports){
+},{"./_baseRepeat":214,"./_baseToString":220,"./_castSlice":225,"./_hasUnicode":264,"./_stringSize":315,"./_stringToArray":316}],244:[function(_dereq_,module,exports){
 var baseRange = _dereq_('./_baseRange'),
     isIterateeCall = _dereq_('./_isIterateeCall'),
     toFinite = _dereq_('./toFinite');
@@ -11454,7 +10502,7 @@ function createRange(fromRight) {
 
 module.exports = createRange;
 
-},{"./_baseRange":206,"./_isIterateeCall":269,"./toFinite":370}],238:[function(_dereq_,module,exports){
+},{"./_baseRange":213,"./_isIterateeCall":276,"./toFinite":377}],245:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     toInteger = _dereq_('./toInteger'),
     toNumber = _dereq_('./toNumber'),
@@ -11491,7 +10539,7 @@ function createRound(methodName) {
 
 module.exports = createRound;
 
-},{"./_root":295,"./toInteger":371,"./toNumber":372,"./toString":374}],239:[function(_dereq_,module,exports){
+},{"./_root":302,"./toInteger":378,"./toNumber":379,"./toString":381}],246:[function(_dereq_,module,exports){
 var basePropertyOf = _dereq_('./_basePropertyOf');
 
 /** Used to map Latin Unicode letters to basic Latin letters. */
@@ -11564,7 +10612,7 @@ var deburrLetter = basePropertyOf(deburredLetters);
 
 module.exports = deburrLetter;
 
-},{"./_basePropertyOf":205}],240:[function(_dereq_,module,exports){
+},{"./_basePropertyOf":212}],247:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 var defineProperty = (function() {
@@ -11577,7 +10625,7 @@ var defineProperty = (function() {
 
 module.exports = defineProperty;
 
-},{"./_getNative":249}],241:[function(_dereq_,module,exports){
+},{"./_getNative":256}],248:[function(_dereq_,module,exports){
 var SetCache = _dereq_('./_SetCache'),
     arraySome = _dereq_('./_arraySome'),
     cacheHas = _dereq_('./_cacheHas');
@@ -11662,7 +10710,7 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalArrays;
 
-},{"./_SetCache":144,"./_arraySome":159,"./_cacheHas":215}],242:[function(_dereq_,module,exports){
+},{"./_SetCache":151,"./_arraySome":166,"./_cacheHas":222}],249:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     Uint8Array = _dereq_('./_Uint8Array'),
     eq = _dereq_('./eq'),
@@ -11776,7 +10824,7 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalByTag;
 
-},{"./_Symbol":146,"./_Uint8Array":147,"./_equalArrays":241,"./_mapToArray":285,"./_setToArray":299,"./eq":326}],243:[function(_dereq_,module,exports){
+},{"./_Symbol":153,"./_Uint8Array":154,"./_equalArrays":248,"./_mapToArray":292,"./_setToArray":306,"./eq":333}],250:[function(_dereq_,module,exports){
 var getAllKeys = _dereq_('./_getAllKeys');
 
 /** Used to compose bitmasks for value comparisons. */
@@ -11867,7 +10915,7 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
 
 module.exports = equalObjects;
 
-},{"./_getAllKeys":245}],244:[function(_dereq_,module,exports){
+},{"./_getAllKeys":252}],251:[function(_dereq_,module,exports){
 (function (global){
 /** Detect free variable `global` from Node.js. */
 var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
@@ -11875,7 +10923,7 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 module.exports = freeGlobal;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],245:[function(_dereq_,module,exports){
+},{}],252:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbols = _dereq_('./_getSymbols'),
     keys = _dereq_('./keys');
@@ -11893,7 +10941,7 @@ function getAllKeys(object) {
 
 module.exports = getAllKeys;
 
-},{"./_baseGetAllKeys":180,"./_getSymbols":252,"./keys":353}],246:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":187,"./_getSymbols":259,"./keys":360}],253:[function(_dereq_,module,exports){
 var baseGetAllKeys = _dereq_('./_baseGetAllKeys'),
     getSymbolsIn = _dereq_('./_getSymbolsIn'),
     keysIn = _dereq_('./keysIn');
@@ -11912,7 +10960,7 @@ function getAllKeysIn(object) {
 
 module.exports = getAllKeysIn;
 
-},{"./_baseGetAllKeys":180,"./_getSymbolsIn":253,"./keysIn":354}],247:[function(_dereq_,module,exports){
+},{"./_baseGetAllKeys":187,"./_getSymbolsIn":260,"./keysIn":361}],254:[function(_dereq_,module,exports){
 var isKeyable = _dereq_('./_isKeyable');
 
 /**
@@ -11932,7 +10980,7 @@ function getMapData(map, key) {
 
 module.exports = getMapData;
 
-},{"./_isKeyable":271}],248:[function(_dereq_,module,exports){
+},{"./_isKeyable":278}],255:[function(_dereq_,module,exports){
 var isStrictComparable = _dereq_('./_isStrictComparable'),
     keys = _dereq_('./keys');
 
@@ -11958,7 +11006,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"./_isStrictComparable":274,"./keys":353}],249:[function(_dereq_,module,exports){
+},{"./_isStrictComparable":281,"./keys":360}],256:[function(_dereq_,module,exports){
 var baseIsNative = _dereq_('./_baseIsNative'),
     getValue = _dereq_('./_getValue');
 
@@ -11977,7 +11025,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"./_baseIsNative":191,"./_getValue":255}],250:[function(_dereq_,module,exports){
+},{"./_baseIsNative":198,"./_getValue":262}],257:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /** Built-in value references. */
@@ -11985,7 +11033,7 @@ var getPrototype = overArg(Object.getPrototypeOf, Object);
 
 module.exports = getPrototype;
 
-},{"./_overArg":293}],251:[function(_dereq_,module,exports){
+},{"./_overArg":300}],258:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol');
 
 /** Used for built-in method references. */
@@ -12033,7 +11081,7 @@ function getRawTag(value) {
 
 module.exports = getRawTag;
 
-},{"./_Symbol":146}],252:[function(_dereq_,module,exports){
+},{"./_Symbol":153}],259:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     stubArray = _dereq_('./stubArray');
 
@@ -12065,7 +11113,7 @@ var getSymbols = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbols;
 
-},{"./_arrayFilter":152,"./stubArray":368}],253:[function(_dereq_,module,exports){
+},{"./_arrayFilter":159,"./stubArray":375}],260:[function(_dereq_,module,exports){
 var arrayPush = _dereq_('./_arrayPush'),
     getPrototype = _dereq_('./_getPrototype'),
     getSymbols = _dereq_('./_getSymbols'),
@@ -12092,7 +11140,7 @@ var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
 
 module.exports = getSymbolsIn;
 
-},{"./_arrayPush":157,"./_getPrototype":250,"./_getSymbols":252,"./stubArray":368}],254:[function(_dereq_,module,exports){
+},{"./_arrayPush":164,"./_getPrototype":257,"./_getSymbols":259,"./stubArray":375}],261:[function(_dereq_,module,exports){
 var DataView = _dereq_('./_DataView'),
     Map = _dereq_('./_Map'),
     Promise = _dereq_('./_Promise'),
@@ -12152,7 +11200,7 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 
 module.exports = getTag;
 
-},{"./_DataView":137,"./_Map":140,"./_Promise":142,"./_Set":143,"./_WeakMap":148,"./_baseGetTag":181,"./_toSource":312}],255:[function(_dereq_,module,exports){
+},{"./_DataView":144,"./_Map":147,"./_Promise":149,"./_Set":150,"./_WeakMap":155,"./_baseGetTag":188,"./_toSource":319}],262:[function(_dereq_,module,exports){
 /**
  * Gets the value at `key` of `object`.
  *
@@ -12167,7 +11215,7 @@ function getValue(object, key) {
 
 module.exports = getValue;
 
-},{}],256:[function(_dereq_,module,exports){
+},{}],263:[function(_dereq_,module,exports){
 var castPath = _dereq_('./_castPath'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray'),
@@ -12208,7 +11256,7 @@ function hasPath(object, path, hasFunc) {
 
 module.exports = hasPath;
 
-},{"./_castPath":217,"./_isIndex":268,"./_toKey":311,"./isArguments":335,"./isArray":336,"./isLength":341}],257:[function(_dereq_,module,exports){
+},{"./_castPath":224,"./_isIndex":275,"./_toKey":318,"./isArguments":342,"./isArray":343,"./isLength":348}],264:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -12236,7 +11284,7 @@ function hasUnicode(string) {
 
 module.exports = hasUnicode;
 
-},{}],258:[function(_dereq_,module,exports){
+},{}],265:[function(_dereq_,module,exports){
 /** Used to detect strings that need a more robust regexp to match words. */
 var reHasUnicodeWord = /[a-z][A-Z]|[A-Z]{2}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
 
@@ -12253,7 +11301,7 @@ function hasUnicodeWord(string) {
 
 module.exports = hasUnicodeWord;
 
-},{}],259:[function(_dereq_,module,exports){
+},{}],266:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /**
@@ -12270,7 +11318,7 @@ function hashClear() {
 
 module.exports = hashClear;
 
-},{"./_nativeCreate":288}],260:[function(_dereq_,module,exports){
+},{"./_nativeCreate":295}],267:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the hash.
  *
@@ -12289,7 +11337,7 @@ function hashDelete(key) {
 
 module.exports = hashDelete;
 
-},{}],261:[function(_dereq_,module,exports){
+},{}],268:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -12321,7 +11369,7 @@ function hashGet(key) {
 
 module.exports = hashGet;
 
-},{"./_nativeCreate":288}],262:[function(_dereq_,module,exports){
+},{"./_nativeCreate":295}],269:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used for built-in method references. */
@@ -12346,7 +11394,7 @@ function hashHas(key) {
 
 module.exports = hashHas;
 
-},{"./_nativeCreate":288}],263:[function(_dereq_,module,exports){
+},{"./_nativeCreate":295}],270:[function(_dereq_,module,exports){
 var nativeCreate = _dereq_('./_nativeCreate');
 
 /** Used to stand-in for `undefined` hash values. */
@@ -12371,7 +11419,7 @@ function hashSet(key, value) {
 
 module.exports = hashSet;
 
-},{"./_nativeCreate":288}],264:[function(_dereq_,module,exports){
+},{"./_nativeCreate":295}],271:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -12399,7 +11447,7 @@ function initCloneArray(array) {
 
 module.exports = initCloneArray;
 
-},{}],265:[function(_dereq_,module,exports){
+},{}],272:[function(_dereq_,module,exports){
 var cloneArrayBuffer = _dereq_('./_cloneArrayBuffer'),
     cloneDataView = _dereq_('./_cloneDataView'),
     cloneRegExp = _dereq_('./_cloneRegExp'),
@@ -12478,7 +11526,7 @@ function initCloneByTag(object, tag, isDeep) {
 
 module.exports = initCloneByTag;
 
-},{"./_cloneArrayBuffer":219,"./_cloneDataView":221,"./_cloneRegExp":222,"./_cloneSymbol":223,"./_cloneTypedArray":224}],266:[function(_dereq_,module,exports){
+},{"./_cloneArrayBuffer":226,"./_cloneDataView":228,"./_cloneRegExp":229,"./_cloneSymbol":230,"./_cloneTypedArray":231}],273:[function(_dereq_,module,exports){
 var baseCreate = _dereq_('./_baseCreate'),
     getPrototype = _dereq_('./_getPrototype'),
     isPrototype = _dereq_('./_isPrototype');
@@ -12498,7 +11546,7 @@ function initCloneObject(object) {
 
 module.exports = initCloneObject;
 
-},{"./_baseCreate":171,"./_getPrototype":250,"./_isPrototype":273}],267:[function(_dereq_,module,exports){
+},{"./_baseCreate":178,"./_getPrototype":257,"./_isPrototype":280}],274:[function(_dereq_,module,exports){
 var Symbol = _dereq_('./_Symbol'),
     isArguments = _dereq_('./isArguments'),
     isArray = _dereq_('./isArray');
@@ -12520,7 +11568,7 @@ function isFlattenable(value) {
 
 module.exports = isFlattenable;
 
-},{"./_Symbol":146,"./isArguments":335,"./isArray":336}],268:[function(_dereq_,module,exports){
+},{"./_Symbol":153,"./isArguments":342,"./isArray":343}],275:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -12547,7 +11595,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],269:[function(_dereq_,module,exports){
+},{}],276:[function(_dereq_,module,exports){
 var eq = _dereq_('./eq'),
     isArrayLike = _dereq_('./isArrayLike'),
     isIndex = _dereq_('./_isIndex'),
@@ -12579,7 +11627,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":268,"./eq":326,"./isArrayLike":337,"./isObject":346}],270:[function(_dereq_,module,exports){
+},{"./_isIndex":275,"./eq":333,"./isArrayLike":344,"./isObject":353}],277:[function(_dereq_,module,exports){
 var isArray = _dereq_('./isArray'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -12610,7 +11658,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"./isArray":336,"./isSymbol":351}],271:[function(_dereq_,module,exports){
+},{"./isArray":343,"./isSymbol":358}],278:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is suitable for use as unique object key.
  *
@@ -12627,7 +11675,7 @@ function isKeyable(value) {
 
 module.exports = isKeyable;
 
-},{}],272:[function(_dereq_,module,exports){
+},{}],279:[function(_dereq_,module,exports){
 var coreJsData = _dereq_('./_coreJsData');
 
 /** Used to detect methods masquerading as native. */
@@ -12649,7 +11697,7 @@ function isMasked(func) {
 
 module.exports = isMasked;
 
-},{"./_coreJsData":229}],273:[function(_dereq_,module,exports){
+},{"./_coreJsData":236}],280:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -12669,7 +11717,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],274:[function(_dereq_,module,exports){
+},{}],281:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject');
 
 /**
@@ -12686,7 +11734,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"./isObject":346}],275:[function(_dereq_,module,exports){
+},{"./isObject":353}],282:[function(_dereq_,module,exports){
 /**
  * Removes all key-value entries from the list cache.
  *
@@ -12701,7 +11749,7 @@ function listCacheClear() {
 
 module.exports = listCacheClear;
 
-},{}],276:[function(_dereq_,module,exports){
+},{}],283:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /** Used for built-in method references. */
@@ -12738,7 +11786,7 @@ function listCacheDelete(key) {
 
 module.exports = listCacheDelete;
 
-},{"./_assocIndexOf":165}],277:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":172}],284:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -12759,7 +11807,7 @@ function listCacheGet(key) {
 
 module.exports = listCacheGet;
 
-},{"./_assocIndexOf":165}],278:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":172}],285:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -12777,7 +11825,7 @@ function listCacheHas(key) {
 
 module.exports = listCacheHas;
 
-},{"./_assocIndexOf":165}],279:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":172}],286:[function(_dereq_,module,exports){
 var assocIndexOf = _dereq_('./_assocIndexOf');
 
 /**
@@ -12805,7 +11853,7 @@ function listCacheSet(key, value) {
 
 module.exports = listCacheSet;
 
-},{"./_assocIndexOf":165}],280:[function(_dereq_,module,exports){
+},{"./_assocIndexOf":172}],287:[function(_dereq_,module,exports){
 var Hash = _dereq_('./_Hash'),
     ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map');
@@ -12828,7 +11876,7 @@ function mapCacheClear() {
 
 module.exports = mapCacheClear;
 
-},{"./_Hash":138,"./_ListCache":139,"./_Map":140}],281:[function(_dereq_,module,exports){
+},{"./_Hash":145,"./_ListCache":146,"./_Map":147}],288:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -12848,7 +11896,7 @@ function mapCacheDelete(key) {
 
 module.exports = mapCacheDelete;
 
-},{"./_getMapData":247}],282:[function(_dereq_,module,exports){
+},{"./_getMapData":254}],289:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -12866,7 +11914,7 @@ function mapCacheGet(key) {
 
 module.exports = mapCacheGet;
 
-},{"./_getMapData":247}],283:[function(_dereq_,module,exports){
+},{"./_getMapData":254}],290:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -12884,7 +11932,7 @@ function mapCacheHas(key) {
 
 module.exports = mapCacheHas;
 
-},{"./_getMapData":247}],284:[function(_dereq_,module,exports){
+},{"./_getMapData":254}],291:[function(_dereq_,module,exports){
 var getMapData = _dereq_('./_getMapData');
 
 /**
@@ -12908,7 +11956,7 @@ function mapCacheSet(key, value) {
 
 module.exports = mapCacheSet;
 
-},{"./_getMapData":247}],285:[function(_dereq_,module,exports){
+},{"./_getMapData":254}],292:[function(_dereq_,module,exports){
 /**
  * Converts `map` to its key-value pairs.
  *
@@ -12928,7 +11976,7 @@ function mapToArray(map) {
 
 module.exports = mapToArray;
 
-},{}],286:[function(_dereq_,module,exports){
+},{}],293:[function(_dereq_,module,exports){
 /**
  * A specialized version of `matchesProperty` for source values suitable
  * for strict equality comparisons, i.e. `===`.
@@ -12950,7 +11998,7 @@ function matchesStrictComparable(key, srcValue) {
 
 module.exports = matchesStrictComparable;
 
-},{}],287:[function(_dereq_,module,exports){
+},{}],294:[function(_dereq_,module,exports){
 var memoize = _dereq_('./memoize');
 
 /** Used as the maximum memoize cache size. */
@@ -12978,7 +12026,7 @@ function memoizeCapped(func) {
 
 module.exports = memoizeCapped;
 
-},{"./memoize":357}],288:[function(_dereq_,module,exports){
+},{"./memoize":364}],295:[function(_dereq_,module,exports){
 var getNative = _dereq_('./_getNative');
 
 /* Built-in method references that are verified to be native. */
@@ -12986,7 +12034,7 @@ var nativeCreate = getNative(Object, 'create');
 
 module.exports = nativeCreate;
 
-},{"./_getNative":249}],289:[function(_dereq_,module,exports){
+},{"./_getNative":256}],296:[function(_dereq_,module,exports){
 var overArg = _dereq_('./_overArg');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -12994,7 +12042,7 @@ var nativeKeys = overArg(Object.keys, Object);
 
 module.exports = nativeKeys;
 
-},{"./_overArg":293}],290:[function(_dereq_,module,exports){
+},{"./_overArg":300}],297:[function(_dereq_,module,exports){
 /**
  * This function is like
  * [`Object.keys`](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
@@ -13016,7 +12064,7 @@ function nativeKeysIn(object) {
 
 module.exports = nativeKeysIn;
 
-},{}],291:[function(_dereq_,module,exports){
+},{}],298:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `exports`. */
@@ -13048,7 +12096,7 @@ var nodeUtil = (function() {
 
 module.exports = nodeUtil;
 
-},{"./_freeGlobal":244}],292:[function(_dereq_,module,exports){
+},{"./_freeGlobal":251}],299:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -13072,7 +12120,7 @@ function objectToString(value) {
 
 module.exports = objectToString;
 
-},{}],293:[function(_dereq_,module,exports){
+},{}],300:[function(_dereq_,module,exports){
 /**
  * Creates a unary function that invokes `func` with its argument transformed.
  *
@@ -13089,7 +12137,7 @@ function overArg(func, transform) {
 
 module.exports = overArg;
 
-},{}],294:[function(_dereq_,module,exports){
+},{}],301:[function(_dereq_,module,exports){
 var apply = _dereq_('./_apply');
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
@@ -13127,7 +12175,7 @@ function overRest(func, start, transform) {
 
 module.exports = overRest;
 
-},{"./_apply":149}],295:[function(_dereq_,module,exports){
+},{"./_apply":156}],302:[function(_dereq_,module,exports){
 var freeGlobal = _dereq_('./_freeGlobal');
 
 /** Detect free variable `self`. */
@@ -13138,7 +12186,7 @@ var root = freeGlobal || freeSelf || Function('return this')();
 
 module.exports = root;
 
-},{"./_freeGlobal":244}],296:[function(_dereq_,module,exports){
+},{"./_freeGlobal":251}],303:[function(_dereq_,module,exports){
 /**
  * Gets the value at `key`, unless `key` is "__proto__" or "constructor".
  *
@@ -13161,7 +12209,7 @@ function safeGet(object, key) {
 
 module.exports = safeGet;
 
-},{}],297:[function(_dereq_,module,exports){
+},{}],304:[function(_dereq_,module,exports){
 /** Used to stand-in for `undefined` hash values. */
 var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
@@ -13182,7 +12230,7 @@ function setCacheAdd(value) {
 
 module.exports = setCacheAdd;
 
-},{}],298:[function(_dereq_,module,exports){
+},{}],305:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is in the array cache.
  *
@@ -13198,7 +12246,7 @@ function setCacheHas(value) {
 
 module.exports = setCacheHas;
 
-},{}],299:[function(_dereq_,module,exports){
+},{}],306:[function(_dereq_,module,exports){
 /**
  * Converts `set` to an array of its values.
  *
@@ -13218,7 +12266,7 @@ function setToArray(set) {
 
 module.exports = setToArray;
 
-},{}],300:[function(_dereq_,module,exports){
+},{}],307:[function(_dereq_,module,exports){
 var baseSetToString = _dereq_('./_baseSetToString'),
     shortOut = _dereq_('./_shortOut');
 
@@ -13234,7 +12282,7 @@ var setToString = shortOut(baseSetToString);
 
 module.exports = setToString;
 
-},{"./_baseSetToString":210,"./_shortOut":301}],301:[function(_dereq_,module,exports){
+},{"./_baseSetToString":217,"./_shortOut":308}],308:[function(_dereq_,module,exports){
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
 var HOT_COUNT = 800,
     HOT_SPAN = 16;
@@ -13273,7 +12321,7 @@ function shortOut(func) {
 
 module.exports = shortOut;
 
-},{}],302:[function(_dereq_,module,exports){
+},{}],309:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache');
 
 /**
@@ -13290,7 +12338,7 @@ function stackClear() {
 
 module.exports = stackClear;
 
-},{"./_ListCache":139}],303:[function(_dereq_,module,exports){
+},{"./_ListCache":146}],310:[function(_dereq_,module,exports){
 /**
  * Removes `key` and its value from the stack.
  *
@@ -13310,7 +12358,7 @@ function stackDelete(key) {
 
 module.exports = stackDelete;
 
-},{}],304:[function(_dereq_,module,exports){
+},{}],311:[function(_dereq_,module,exports){
 /**
  * Gets the stack value for `key`.
  *
@@ -13326,7 +12374,7 @@ function stackGet(key) {
 
 module.exports = stackGet;
 
-},{}],305:[function(_dereq_,module,exports){
+},{}],312:[function(_dereq_,module,exports){
 /**
  * Checks if a stack value for `key` exists.
  *
@@ -13342,7 +12390,7 @@ function stackHas(key) {
 
 module.exports = stackHas;
 
-},{}],306:[function(_dereq_,module,exports){
+},{}],313:[function(_dereq_,module,exports){
 var ListCache = _dereq_('./_ListCache'),
     Map = _dereq_('./_Map'),
     MapCache = _dereq_('./_MapCache');
@@ -13378,7 +12426,7 @@ function stackSet(key, value) {
 
 module.exports = stackSet;
 
-},{"./_ListCache":139,"./_Map":140,"./_MapCache":141}],307:[function(_dereq_,module,exports){
+},{"./_ListCache":146,"./_Map":147,"./_MapCache":148}],314:[function(_dereq_,module,exports){
 /**
  * A specialized version of `_.indexOf` which performs strict equality
  * comparisons of values, i.e. `===`.
@@ -13403,7 +12451,7 @@ function strictIndexOf(array, value, fromIndex) {
 
 module.exports = strictIndexOf;
 
-},{}],308:[function(_dereq_,module,exports){
+},{}],315:[function(_dereq_,module,exports){
 var asciiSize = _dereq_('./_asciiSize'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeSize = _dereq_('./_unicodeSize');
@@ -13423,7 +12471,7 @@ function stringSize(string) {
 
 module.exports = stringSize;
 
-},{"./_asciiSize":160,"./_hasUnicode":257,"./_unicodeSize":313}],309:[function(_dereq_,module,exports){
+},{"./_asciiSize":167,"./_hasUnicode":264,"./_unicodeSize":320}],316:[function(_dereq_,module,exports){
 var asciiToArray = _dereq_('./_asciiToArray'),
     hasUnicode = _dereq_('./_hasUnicode'),
     unicodeToArray = _dereq_('./_unicodeToArray');
@@ -13443,7 +12491,7 @@ function stringToArray(string) {
 
 module.exports = stringToArray;
 
-},{"./_asciiToArray":161,"./_hasUnicode":257,"./_unicodeToArray":314}],310:[function(_dereq_,module,exports){
+},{"./_asciiToArray":168,"./_hasUnicode":264,"./_unicodeToArray":321}],317:[function(_dereq_,module,exports){
 var memoizeCapped = _dereq_('./_memoizeCapped');
 
 /** Used to match property names within property paths. */
@@ -13472,7 +12520,7 @@ var stringToPath = memoizeCapped(function(string) {
 
 module.exports = stringToPath;
 
-},{"./_memoizeCapped":287}],311:[function(_dereq_,module,exports){
+},{"./_memoizeCapped":294}],318:[function(_dereq_,module,exports){
 var isSymbol = _dereq_('./isSymbol');
 
 /** Used as references for various `Number` constants. */
@@ -13495,7 +12543,7 @@ function toKey(value) {
 
 module.exports = toKey;
 
-},{"./isSymbol":351}],312:[function(_dereq_,module,exports){
+},{"./isSymbol":358}],319:[function(_dereq_,module,exports){
 /** Used for built-in method references. */
 var funcProto = Function.prototype;
 
@@ -13523,7 +12571,7 @@ function toSource(func) {
 
 module.exports = toSource;
 
-},{}],313:[function(_dereq_,module,exports){
+},{}],320:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -13569,7 +12617,7 @@ function unicodeSize(string) {
 
 module.exports = unicodeSize;
 
-},{}],314:[function(_dereq_,module,exports){
+},{}],321:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -13611,7 +12659,7 @@ function unicodeToArray(string) {
 
 module.exports = unicodeToArray;
 
-},{}],315:[function(_dereq_,module,exports){
+},{}],322:[function(_dereq_,module,exports){
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff',
     rsComboMarksRange = '\\u0300-\\u036f',
@@ -13682,7 +12730,7 @@ function unicodeWords(string) {
 
 module.exports = unicodeWords;
 
-},{}],316:[function(_dereq_,module,exports){
+},{}],323:[function(_dereq_,module,exports){
 var assignValue = _dereq_('./_assignValue'),
     copyObject = _dereq_('./_copyObject'),
     createAssigner = _dereq_('./_createAssigner'),
@@ -13742,7 +12790,7 @@ var assign = createAssigner(function(object, source) {
 
 module.exports = assign;
 
-},{"./_assignValue":164,"./_copyObject":226,"./_createAssigner":231,"./_isPrototype":273,"./isArrayLike":337,"./keys":353}],317:[function(_dereq_,module,exports){
+},{"./_assignValue":171,"./_copyObject":233,"./_createAssigner":238,"./_isPrototype":280,"./isArrayLike":344,"./keys":360}],324:[function(_dereq_,module,exports){
 var capitalize = _dereq_('./capitalize'),
     createCompounder = _dereq_('./_createCompounder');
 
@@ -13773,7 +12821,7 @@ var camelCase = createCompounder(function(result, word, index) {
 
 module.exports = camelCase;
 
-},{"./_createCompounder":235,"./capitalize":318}],318:[function(_dereq_,module,exports){
+},{"./_createCompounder":242,"./capitalize":325}],325:[function(_dereq_,module,exports){
 var toString = _dereq_('./toString'),
     upperFirst = _dereq_('./upperFirst');
 
@@ -13798,7 +12846,7 @@ function capitalize(string) {
 
 module.exports = capitalize;
 
-},{"./toString":374,"./upperFirst":375}],319:[function(_dereq_,module,exports){
+},{"./toString":381,"./upperFirst":382}],326:[function(_dereq_,module,exports){
 var baseSlice = _dereq_('./_baseSlice'),
     isIterateeCall = _dereq_('./_isIterateeCall'),
     toInteger = _dereq_('./toInteger');
@@ -13850,7 +12898,7 @@ function chunk(array, size, guard) {
 
 module.exports = chunk;
 
-},{"./_baseSlice":211,"./_isIterateeCall":269,"./toInteger":371}],320:[function(_dereq_,module,exports){
+},{"./_baseSlice":218,"./_isIterateeCall":276,"./toInteger":378}],327:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -13888,7 +12936,7 @@ function clone(value) {
 
 module.exports = clone;
 
-},{"./_baseClone":170}],321:[function(_dereq_,module,exports){
+},{"./_baseClone":177}],328:[function(_dereq_,module,exports){
 var baseClone = _dereq_('./_baseClone');
 
 /** Used to compose bitmasks for cloning. */
@@ -13919,7 +12967,7 @@ function cloneDeep(value) {
 
 module.exports = cloneDeep;
 
-},{"./_baseClone":170}],322:[function(_dereq_,module,exports){
+},{"./_baseClone":177}],329:[function(_dereq_,module,exports){
 /**
  * Creates a function that returns `value`.
  *
@@ -13947,7 +12995,7 @@ function constant(value) {
 
 module.exports = constant;
 
-},{}],323:[function(_dereq_,module,exports){
+},{}],330:[function(_dereq_,module,exports){
 var deburrLetter = _dereq_('./_deburrLetter'),
     toString = _dereq_('./toString');
 
@@ -13994,7 +13042,7 @@ function deburr(string) {
 
 module.exports = deburr;
 
-},{"./_deburrLetter":239,"./toString":374}],324:[function(_dereq_,module,exports){
+},{"./_deburrLetter":246,"./toString":381}],331:[function(_dereq_,module,exports){
 var baseDifference = _dereq_('./_baseDifference'),
     baseFlatten = _dereq_('./_baseFlatten'),
     baseRest = _dereq_('./_baseRest'),
@@ -14029,10 +13077,10 @@ var difference = baseRest(function(array, values) {
 
 module.exports = difference;
 
-},{"./_baseDifference":172,"./_baseFlatten":176,"./_baseRest":208,"./isArrayLikeObject":338}],325:[function(_dereq_,module,exports){
+},{"./_baseDifference":179,"./_baseFlatten":183,"./_baseRest":215,"./isArrayLikeObject":345}],332:[function(_dereq_,module,exports){
 module.exports = _dereq_('./forEach');
 
-},{"./forEach":328}],326:[function(_dereq_,module,exports){
+},{"./forEach":335}],333:[function(_dereq_,module,exports){
 /**
  * Performs a
  * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
@@ -14071,7 +13119,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],327:[function(_dereq_,module,exports){
+},{}],334:[function(_dereq_,module,exports){
 var baseFindIndex = _dereq_('./_baseFindIndex'),
     baseIteratee = _dereq_('./_baseIteratee'),
     toInteger = _dereq_('./toInteger');
@@ -14128,7 +13176,7 @@ function findIndex(array, predicate, fromIndex) {
 
 module.exports = findIndex;
 
-},{"./_baseFindIndex":175,"./_baseIteratee":194,"./toInteger":371}],328:[function(_dereq_,module,exports){
+},{"./_baseFindIndex":182,"./_baseIteratee":201,"./toInteger":378}],335:[function(_dereq_,module,exports){
 var arrayEach = _dereq_('./_arrayEach'),
     baseEach = _dereq_('./_baseEach'),
     castFunction = _dereq_('./_castFunction'),
@@ -14171,7 +13219,7 @@ function forEach(collection, iteratee) {
 
 module.exports = forEach;
 
-},{"./_arrayEach":151,"./_baseEach":173,"./_castFunction":216,"./isArray":336}],329:[function(_dereq_,module,exports){
+},{"./_arrayEach":158,"./_baseEach":180,"./_castFunction":223,"./isArray":343}],336:[function(_dereq_,module,exports){
 var baseForOwn = _dereq_('./_baseForOwn'),
     castFunction = _dereq_('./_castFunction');
 
@@ -14209,7 +13257,7 @@ function forOwn(object, iteratee) {
 
 module.exports = forOwn;
 
-},{"./_baseForOwn":178,"./_castFunction":216}],330:[function(_dereq_,module,exports){
+},{"./_baseForOwn":185,"./_castFunction":223}],337:[function(_dereq_,module,exports){
 var baseGet = _dereq_('./_baseGet');
 
 /**
@@ -14244,7 +13292,7 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-},{"./_baseGet":179}],331:[function(_dereq_,module,exports){
+},{"./_baseGet":186}],338:[function(_dereq_,module,exports){
 var baseAssignValue = _dereq_('./_baseAssignValue'),
     createAggregator = _dereq_('./_createAggregator');
 
@@ -14287,7 +13335,7 @@ var groupBy = createAggregator(function(result, value, key) {
 
 module.exports = groupBy;
 
-},{"./_baseAssignValue":169,"./_createAggregator":230}],332:[function(_dereq_,module,exports){
+},{"./_baseAssignValue":176,"./_createAggregator":237}],339:[function(_dereq_,module,exports){
 var baseHas = _dereq_('./_baseHas'),
     hasPath = _dereq_('./_hasPath');
 
@@ -14324,7 +13372,7 @@ function has(object, path) {
 
 module.exports = has;
 
-},{"./_baseHas":182,"./_hasPath":256}],333:[function(_dereq_,module,exports){
+},{"./_baseHas":189,"./_hasPath":263}],340:[function(_dereq_,module,exports){
 var baseHasIn = _dereq_('./_baseHasIn'),
     hasPath = _dereq_('./_hasPath');
 
@@ -14360,7 +13408,7 @@ function hasIn(object, path) {
 
 module.exports = hasIn;
 
-},{"./_baseHasIn":183,"./_hasPath":256}],334:[function(_dereq_,module,exports){
+},{"./_baseHasIn":190,"./_hasPath":263}],341:[function(_dereq_,module,exports){
 /**
  * This method returns the first argument it receives.
  *
@@ -14383,7 +13431,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],335:[function(_dereq_,module,exports){
+},{}],342:[function(_dereq_,module,exports){
 var baseIsArguments = _dereq_('./_baseIsArguments'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -14421,7 +13469,7 @@ var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsAr
 
 module.exports = isArguments;
 
-},{"./_baseIsArguments":185,"./isObjectLike":347}],336:[function(_dereq_,module,exports){
+},{"./_baseIsArguments":192,"./isObjectLike":354}],343:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -14449,7 +13497,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],337:[function(_dereq_,module,exports){
+},{}],344:[function(_dereq_,module,exports){
 var isFunction = _dereq_('./isFunction'),
     isLength = _dereq_('./isLength');
 
@@ -14484,7 +13532,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./isFunction":340,"./isLength":341}],338:[function(_dereq_,module,exports){
+},{"./isFunction":347,"./isLength":348}],345:[function(_dereq_,module,exports){
 var isArrayLike = _dereq_('./isArrayLike'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -14519,7 +13567,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":337,"./isObjectLike":347}],339:[function(_dereq_,module,exports){
+},{"./isArrayLike":344,"./isObjectLike":354}],346:[function(_dereq_,module,exports){
 var root = _dereq_('./_root'),
     stubFalse = _dereq_('./stubFalse');
 
@@ -14559,7 +13607,7 @@ var isBuffer = nativeIsBuffer || stubFalse;
 
 module.exports = isBuffer;
 
-},{"./_root":295,"./stubFalse":369}],340:[function(_dereq_,module,exports){
+},{"./_root":302,"./stubFalse":376}],347:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObject = _dereq_('./isObject');
 
@@ -14598,7 +13646,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./_baseGetTag":181,"./isObject":346}],341:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./isObject":353}],348:[function(_dereq_,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -14635,7 +13683,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],342:[function(_dereq_,module,exports){
+},{}],349:[function(_dereq_,module,exports){
 var baseIsMap = _dereq_('./_baseIsMap'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -14664,7 +13712,7 @@ var isMap = nodeIsMap ? baseUnary(nodeIsMap) : baseIsMap;
 
 module.exports = isMap;
 
-},{"./_baseIsMap":188,"./_baseUnary":214,"./_nodeUtil":291}],343:[function(_dereq_,module,exports){
+},{"./_baseIsMap":195,"./_baseUnary":221,"./_nodeUtil":298}],350:[function(_dereq_,module,exports){
 var isNumber = _dereq_('./isNumber');
 
 /**
@@ -14704,7 +13752,7 @@ function isNaN(value) {
 
 module.exports = isNaN;
 
-},{"./isNumber":345}],344:[function(_dereq_,module,exports){
+},{"./isNumber":352}],351:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is `null` or `undefined`.
  *
@@ -14731,7 +13779,7 @@ function isNil(value) {
 
 module.exports = isNil;
 
-},{}],345:[function(_dereq_,module,exports){
+},{}],352:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -14771,7 +13819,7 @@ function isNumber(value) {
 
 module.exports = isNumber;
 
-},{"./_baseGetTag":181,"./isObjectLike":347}],346:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./isObjectLike":354}],353:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is the
  * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
@@ -14804,7 +13852,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],347:[function(_dereq_,module,exports){
+},{}],354:[function(_dereq_,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -14835,7 +13883,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],348:[function(_dereq_,module,exports){
+},{}],355:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     getPrototype = _dereq_('./_getPrototype'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -14899,7 +13947,7 @@ function isPlainObject(value) {
 
 module.exports = isPlainObject;
 
-},{"./_baseGetTag":181,"./_getPrototype":250,"./isObjectLike":347}],349:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./_getPrototype":257,"./isObjectLike":354}],356:[function(_dereq_,module,exports){
 var baseIsSet = _dereq_('./_baseIsSet'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -14928,7 +13976,7 @@ var isSet = nodeIsSet ? baseUnary(nodeIsSet) : baseIsSet;
 
 module.exports = isSet;
 
-},{"./_baseIsSet":192,"./_baseUnary":214,"./_nodeUtil":291}],350:[function(_dereq_,module,exports){
+},{"./_baseIsSet":199,"./_baseUnary":221,"./_nodeUtil":298}],357:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isArray = _dereq_('./isArray'),
     isObjectLike = _dereq_('./isObjectLike');
@@ -14960,7 +14008,7 @@ function isString(value) {
 
 module.exports = isString;
 
-},{"./_baseGetTag":181,"./isArray":336,"./isObjectLike":347}],351:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./isArray":343,"./isObjectLike":354}],358:[function(_dereq_,module,exports){
 var baseGetTag = _dereq_('./_baseGetTag'),
     isObjectLike = _dereq_('./isObjectLike');
 
@@ -14991,7 +14039,7 @@ function isSymbol(value) {
 
 module.exports = isSymbol;
 
-},{"./_baseGetTag":181,"./isObjectLike":347}],352:[function(_dereq_,module,exports){
+},{"./_baseGetTag":188,"./isObjectLike":354}],359:[function(_dereq_,module,exports){
 var baseIsTypedArray = _dereq_('./_baseIsTypedArray'),
     baseUnary = _dereq_('./_baseUnary'),
     nodeUtil = _dereq_('./_nodeUtil');
@@ -15020,7 +14068,7 @@ var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedA
 
 module.exports = isTypedArray;
 
-},{"./_baseIsTypedArray":193,"./_baseUnary":214,"./_nodeUtil":291}],353:[function(_dereq_,module,exports){
+},{"./_baseIsTypedArray":200,"./_baseUnary":221,"./_nodeUtil":298}],360:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeys = _dereq_('./_baseKeys'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -15059,7 +14107,7 @@ function keys(object) {
 
 module.exports = keys;
 
-},{"./_arrayLikeKeys":155,"./_baseKeys":195,"./isArrayLike":337}],354:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":162,"./_baseKeys":202,"./isArrayLike":344}],361:[function(_dereq_,module,exports){
 var arrayLikeKeys = _dereq_('./_arrayLikeKeys'),
     baseKeysIn = _dereq_('./_baseKeysIn'),
     isArrayLike = _dereq_('./isArrayLike');
@@ -15093,7 +14141,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_arrayLikeKeys":155,"./_baseKeysIn":196,"./isArrayLike":337}],355:[function(_dereq_,module,exports){
+},{"./_arrayLikeKeys":162,"./_baseKeysIn":203,"./isArrayLike":344}],362:[function(_dereq_,module,exports){
 (function (global){
 /**
  * @license
@@ -32209,7 +31257,7 @@ module.exports = keysIn;
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],356:[function(_dereq_,module,exports){
+},{}],363:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     baseMap = _dereq_('./_baseMap'),
@@ -32264,7 +31312,7 @@ function map(collection, iteratee) {
 
 module.exports = map;
 
-},{"./_arrayMap":156,"./_baseIteratee":194,"./_baseMap":197,"./isArray":336}],357:[function(_dereq_,module,exports){
+},{"./_arrayMap":163,"./_baseIteratee":201,"./_baseMap":204,"./isArray":343}],364:[function(_dereq_,module,exports){
 var MapCache = _dereq_('./_MapCache');
 
 /** Error message constants. */
@@ -32339,7 +31387,7 @@ memoize.Cache = MapCache;
 
 module.exports = memoize;
 
-},{"./_MapCache":141}],358:[function(_dereq_,module,exports){
+},{"./_MapCache":148}],365:[function(_dereq_,module,exports){
 var baseMerge = _dereq_('./_baseMerge'),
     createAssigner = _dereq_('./_createAssigner');
 
@@ -32380,7 +31428,7 @@ var merge = createAssigner(function(object, source, srcIndex) {
 
 module.exports = merge;
 
-},{"./_baseMerge":200,"./_createAssigner":231}],359:[function(_dereq_,module,exports){
+},{"./_baseMerge":207,"./_createAssigner":238}],366:[function(_dereq_,module,exports){
 /** Error message constants. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -32422,7 +31470,7 @@ function negate(predicate) {
 
 module.exports = negate;
 
-},{}],360:[function(_dereq_,module,exports){
+},{}],367:[function(_dereq_,module,exports){
 var baseIteratee = _dereq_('./_baseIteratee'),
     negate = _dereq_('./negate'),
     pickBy = _dereq_('./pickBy');
@@ -32453,7 +31501,7 @@ function omitBy(object, predicate) {
 
 module.exports = omitBy;
 
-},{"./_baseIteratee":194,"./negate":359,"./pickBy":362}],361:[function(_dereq_,module,exports){
+},{"./_baseIteratee":201,"./negate":366,"./pickBy":369}],368:[function(_dereq_,module,exports){
 var createPadding = _dereq_('./_createPadding'),
     stringSize = _dereq_('./_stringSize'),
     toInteger = _dereq_('./toInteger'),
@@ -32504,7 +31552,7 @@ function pad(string, length, chars) {
 
 module.exports = pad;
 
-},{"./_createPadding":236,"./_stringSize":308,"./toInteger":371,"./toString":374}],362:[function(_dereq_,module,exports){
+},{"./_createPadding":243,"./_stringSize":315,"./toInteger":378,"./toString":381}],369:[function(_dereq_,module,exports){
 var arrayMap = _dereq_('./_arrayMap'),
     baseIteratee = _dereq_('./_baseIteratee'),
     basePickBy = _dereq_('./_basePickBy'),
@@ -32543,7 +31591,7 @@ function pickBy(object, predicate) {
 
 module.exports = pickBy;
 
-},{"./_arrayMap":156,"./_baseIteratee":194,"./_basePickBy":202,"./_getAllKeysIn":246}],363:[function(_dereq_,module,exports){
+},{"./_arrayMap":163,"./_baseIteratee":201,"./_basePickBy":209,"./_getAllKeysIn":253}],370:[function(_dereq_,module,exports){
 var baseProperty = _dereq_('./_baseProperty'),
     basePropertyDeep = _dereq_('./_basePropertyDeep'),
     isKey = _dereq_('./_isKey'),
@@ -32577,7 +31625,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"./_baseProperty":203,"./_basePropertyDeep":204,"./_isKey":270,"./_toKey":311}],364:[function(_dereq_,module,exports){
+},{"./_baseProperty":210,"./_basePropertyDeep":211,"./_isKey":277,"./_toKey":318}],371:[function(_dereq_,module,exports){
 var createRange = _dereq_('./_createRange');
 
 /**
@@ -32625,7 +31673,7 @@ var range = createRange();
 
 module.exports = range;
 
-},{"./_createRange":237}],365:[function(_dereq_,module,exports){
+},{"./_createRange":244}],372:[function(_dereq_,module,exports){
 var arrayFilter = _dereq_('./_arrayFilter'),
     baseFilter = _dereq_('./_baseFilter'),
     baseIteratee = _dereq_('./_baseIteratee'),
@@ -32673,7 +31721,7 @@ function reject(collection, predicate) {
 
 module.exports = reject;
 
-},{"./_arrayFilter":152,"./_baseFilter":174,"./_baseIteratee":194,"./isArray":336,"./negate":359}],366:[function(_dereq_,module,exports){
+},{"./_arrayFilter":159,"./_baseFilter":181,"./_baseIteratee":201,"./isArray":343,"./negate":366}],373:[function(_dereq_,module,exports){
 var createRound = _dereq_('./_createRound');
 
 /**
@@ -32701,7 +31749,7 @@ var round = createRound('round');
 
 module.exports = round;
 
-},{"./_createRound":238}],367:[function(_dereq_,module,exports){
+},{"./_createRound":245}],374:[function(_dereq_,module,exports){
 var baseSet = _dereq_('./_baseSet');
 
 /**
@@ -32738,7 +31786,7 @@ function set(object, path, value) {
 
 module.exports = set;
 
-},{"./_baseSet":209}],368:[function(_dereq_,module,exports){
+},{"./_baseSet":216}],375:[function(_dereq_,module,exports){
 /**
  * This method returns a new empty array.
  *
@@ -32763,7 +31811,7 @@ function stubArray() {
 
 module.exports = stubArray;
 
-},{}],369:[function(_dereq_,module,exports){
+},{}],376:[function(_dereq_,module,exports){
 /**
  * This method returns `false`.
  *
@@ -32783,7 +31831,7 @@ function stubFalse() {
 
 module.exports = stubFalse;
 
-},{}],370:[function(_dereq_,module,exports){
+},{}],377:[function(_dereq_,module,exports){
 var toNumber = _dereq_('./toNumber');
 
 /** Used as references for various `Number` constants. */
@@ -32827,7 +31875,7 @@ function toFinite(value) {
 
 module.exports = toFinite;
 
-},{"./toNumber":372}],371:[function(_dereq_,module,exports){
+},{"./toNumber":379}],378:[function(_dereq_,module,exports){
 var toFinite = _dereq_('./toFinite');
 
 /**
@@ -32865,7 +31913,7 @@ function toInteger(value) {
 
 module.exports = toInteger;
 
-},{"./toFinite":370}],372:[function(_dereq_,module,exports){
+},{"./toFinite":377}],379:[function(_dereq_,module,exports){
 var isObject = _dereq_('./isObject'),
     isSymbol = _dereq_('./isSymbol');
 
@@ -32933,7 +31981,7 @@ function toNumber(value) {
 
 module.exports = toNumber;
 
-},{"./isObject":346,"./isSymbol":351}],373:[function(_dereq_,module,exports){
+},{"./isObject":353,"./isSymbol":358}],380:[function(_dereq_,module,exports){
 var copyObject = _dereq_('./_copyObject'),
     keysIn = _dereq_('./keysIn');
 
@@ -32967,7 +32015,7 @@ function toPlainObject(value) {
 
 module.exports = toPlainObject;
 
-},{"./_copyObject":226,"./keysIn":354}],374:[function(_dereq_,module,exports){
+},{"./_copyObject":233,"./keysIn":361}],381:[function(_dereq_,module,exports){
 var baseToString = _dereq_('./_baseToString');
 
 /**
@@ -32997,7 +32045,7 @@ function toString(value) {
 
 module.exports = toString;
 
-},{"./_baseToString":213}],375:[function(_dereq_,module,exports){
+},{"./_baseToString":220}],382:[function(_dereq_,module,exports){
 var createCaseFirst = _dereq_('./_createCaseFirst');
 
 /**
@@ -33021,7 +32069,7 @@ var upperFirst = createCaseFirst('toUpperCase');
 
 module.exports = upperFirst;
 
-},{"./_createCaseFirst":234}],376:[function(_dereq_,module,exports){
+},{"./_createCaseFirst":241}],383:[function(_dereq_,module,exports){
 var baseDifference = _dereq_('./_baseDifference'),
     baseRest = _dereq_('./_baseRest'),
     isArrayLikeObject = _dereq_('./isArrayLikeObject');
@@ -33054,7 +32102,7 @@ var without = baseRest(function(array, values) {
 
 module.exports = without;
 
-},{"./_baseDifference":172,"./_baseRest":208,"./isArrayLikeObject":338}],377:[function(_dereq_,module,exports){
+},{"./_baseDifference":179,"./_baseRest":215,"./isArrayLikeObject":345}],384:[function(_dereq_,module,exports){
 var asciiWords = _dereq_('./_asciiWords'),
     hasUnicodeWord = _dereq_('./_hasUnicodeWord'),
     toString = _dereq_('./toString'),
@@ -33091,7 +32139,7 @@ function words(string, pattern, guard) {
 
 module.exports = words;
 
-},{"./_asciiWords":162,"./_hasUnicodeWord":258,"./_unicodeWords":315,"./toString":374}],378:[function(_dereq_,module,exports){
+},{"./_asciiWords":169,"./_hasUnicodeWord":265,"./_unicodeWords":322,"./toString":381}],385:[function(_dereq_,module,exports){
 //! moment-timezone.js
 //! version : 0.5.26
 //! Copyright (c) JS Foundation and other contributors
@@ -33720,7 +32768,7 @@ module.exports = words;
 	return moment;
 }));
 
-},{"moment":379}],379:[function(_dereq_,module,exports){
+},{"moment":386}],386:[function(_dereq_,module,exports){
 //! moment.js
 
 ;(function (global, factory) {
@@ -38324,7 +37372,7 @@ module.exports = words;
 
 })));
 
-},{}],380:[function(_dereq_,module,exports){
+},{}],387:[function(_dereq_,module,exports){
 (function (global,setImmediate){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -38701,7 +37749,7 @@ module.exports = words;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},_dereq_("timers").setImmediate)
-},{"timers":383}],381:[function(_dereq_,module,exports){
+},{"timers":390}],388:[function(_dereq_,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -38887,7 +37935,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],382:[function(_dereq_,module,exports){
+},{}],389:[function(_dereq_,module,exports){
 "use strict";
 
 function hash(str) {
@@ -38906,7 +37954,7 @@ function hash(str) {
 
 module.exports = hash;
 
-},{}],383:[function(_dereq_,module,exports){
+},{}],390:[function(_dereq_,module,exports){
 (function (setImmediate,clearImmediate){
 var nextTick = _dereq_('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -38985,9 +38033,9 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
-},{"process/browser.js":381,"timers":383}],384:[function(_dereq_,module,exports){
+},{"process/browser.js":388,"timers":390}],391:[function(_dereq_,module,exports){
 !function(e,r){"object"==typeof exports&&"object"==typeof module?module.exports=r():"function"==typeof define&&define.amd?define([],r):"object"==typeof exports?exports.vanillaTextMask=r():e.vanillaTextMask=r()}(this,function(){return function(e){function r(n){if(t[n])return t[n].exports;var o=t[n]={exports:{},id:n,loaded:!1};return e[n].call(o.exports,o,o.exports,r),o.loaded=!0,o.exports}var t={};return r.m=e,r.c=t,r.p="",r(0)}([function(e,r,t){"use strict";function n(e){return e&&e.__esModule?e:{default:e}}function o(e){var r=e.inputElement,t=(0,u.default)(e),n=function(e){var r=e.target.value;return t.update(r)};return r.addEventListener("input",n),t.update(r.value),{textMaskInputElement:t,destroy:function(){r.removeEventListener("input",n)}}}Object.defineProperty(r,"__esModule",{value:!0}),r.conformToMask=void 0,r.maskInput=o;var i=t(2);Object.defineProperty(r,"conformToMask",{enumerable:!0,get:function(){return n(i).default}});var a=t(5),u=n(a);r.default=o},function(e,r){"use strict";Object.defineProperty(r,"__esModule",{value:!0}),r.placeholderChar="_",r.strFunction="function"},function(e,r,t){"use strict";function n(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:l,r=arguments.length>1&&void 0!==arguments[1]?arguments[1]:u,t=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};if(!(0,i.isArray)(r)){if(("undefined"==typeof r?"undefined":o(r))!==a.strFunction)throw new Error("Text-mask:conformToMask; The mask property must be an array.");r=r(e,t),r=(0,i.processCaretTraps)(r).maskWithoutCaretTraps}var n=t.guide,s=void 0===n||n,f=t.previousConformedValue,d=void 0===f?l:f,c=t.placeholderChar,p=void 0===c?a.placeholderChar:c,v=t.placeholder,h=void 0===v?(0,i.convertMaskToPlaceholder)(r,p):v,m=t.currentCaretPosition,y=t.keepCharPositions,g=s===!1&&void 0!==d,b=e.length,C=d.length,k=h.length,x=r.length,P=b-C,T=P>0,O=m+(T?-P:0),M=O+Math.abs(P);if(y===!0&&!T){for(var w=l,S=O;S<M;S++)h[S]===p&&(w+=p);e=e.slice(0,O)+w+e.slice(O,b)}for(var _=e.split(l).map(function(e,r){return{char:e,isNew:r>=O&&r<M}}),j=b-1;j>=0;j--){var V=_[j].char;if(V!==p){var A=j>=O&&C===x;V===h[A?j-P:j]&&_.splice(j,1)}}var E=l,N=!1;e:for(var F=0;F<k;F++){var I=h[F];if(I===p){if(_.length>0)for(;_.length>0;){var L=_.shift(),R=L.char,J=L.isNew;if(R===p&&g!==!0){E+=p;continue e}if(r[F].test(R)){if(y===!0&&J!==!1&&d!==l&&s!==!1&&T){for(var W=_.length,q=null,z=0;z<W;z++){var B=_[z];if(B.char!==p&&B.isNew===!1)break;if(B.char===p){q=z;break}}null!==q?(E+=R,_.splice(q,1)):F--}else E+=R;continue e}N=!0}g===!1&&(E+=h.substr(F,k));break}E+=I}if(g&&T===!1){for(var D=null,G=0;G<E.length;G++)h[G]===p&&(D=G);E=null!==D?E.substr(0,D+1):l}return{conformedValue:E,meta:{someCharsRejected:N}}}Object.defineProperty(r,"__esModule",{value:!0});var o="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};r.default=n;var i=t(3),a=t(1),u=[],l=""},function(e,r,t){"use strict";function n(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:s,r=arguments.length>1&&void 0!==arguments[1]?arguments[1]:l.placeholderChar;if(!o(e))throw new Error("Text-mask:convertMaskToPlaceholder; The mask property must be an array.");if(e.indexOf(r)!==-1)throw new Error("Placeholder character must not be used as part of the mask. Please specify a character that is not present in your mask as your placeholder character.\n\n"+("The placeholder character that was received is: "+JSON.stringify(r)+"\n\n")+("The mask that was received is: "+JSON.stringify(e)));return e.map(function(e){return e instanceof RegExp?r:e}).join("")}function o(e){return Array.isArray&&Array.isArray(e)||e instanceof Array}function i(e){return"string"==typeof e||e instanceof String}function a(e){return"number"==typeof e&&void 0===e.length&&!isNaN(e)}function u(e){for(var r=[],t=void 0;t=e.indexOf(f),t!==-1;)r.push(t),e.splice(t,1);return{maskWithoutCaretTraps:e,indexes:r}}Object.defineProperty(r,"__esModule",{value:!0}),r.convertMaskToPlaceholder=n,r.isArray=o,r.isString=i,r.isNumber=a,r.processCaretTraps=u;var l=t(1),s=[],f="[]"},function(e,r){"use strict";function t(e){var r=e.previousConformedValue,t=void 0===r?o:r,i=e.previousPlaceholder,a=void 0===i?o:i,u=e.currentCaretPosition,l=void 0===u?0:u,s=e.conformedValue,f=e.rawValue,d=e.placeholderChar,c=e.placeholder,p=e.indexesOfPipedChars,v=void 0===p?n:p,h=e.caretTrapIndexes,m=void 0===h?n:h;if(0===l||!f.length)return 0;var y=f.length,g=t.length,b=c.length,C=s.length,k=y-g,x=k>0,P=0===g,T=k>1&&!x&&!P;if(T)return l;var O=x&&(t===s||s===c),M=0,w=void 0,S=void 0;if(O)M=l-k;else{var _=s.toLowerCase(),j=f.toLowerCase(),V=j.substr(0,l).split(o),A=V.filter(function(e){return _.indexOf(e)!==-1});S=A[A.length-1];var E=a.substr(0,A.length).split(o).filter(function(e){return e!==d}).length,N=c.substr(0,A.length).split(o).filter(function(e){return e!==d}).length,F=N!==E,I=void 0!==a[A.length-1]&&void 0!==c[A.length-2]&&a[A.length-1]!==d&&a[A.length-1]!==c[A.length-1]&&a[A.length-1]===c[A.length-2];!x&&(F||I)&&E>0&&c.indexOf(S)>-1&&void 0!==f[l]&&(w=!0,S=f[l]);for(var L=v.map(function(e){return _[e]}),R=L.filter(function(e){return e===S}).length,J=A.filter(function(e){return e===S}).length,W=c.substr(0,c.indexOf(d)).split(o).filter(function(e,r){return e===S&&f[r]!==e}).length,q=W+J+R+(w?1:0),z=0,B=0;B<C;B++){var D=_[B];if(M=B+1,D===S&&z++,z>=q)break}}if(x){for(var G=M,H=M;H<=b;H++)if(c[H]===d&&(G=H),c[H]===d||m.indexOf(H)!==-1||H===b)return G}else if(w){for(var K=M-1;K>=0;K--)if(s[K]===S||m.indexOf(K)!==-1||0===K)return K}else for(var Q=M;Q>=0;Q--)if(c[Q-1]===d||m.indexOf(Q)!==-1||0===Q)return Q}Object.defineProperty(r,"__esModule",{value:!0}),r.default=t;var n=[],o=""},function(e,r,t){"use strict";function n(e){return e&&e.__esModule?e:{default:e}}function o(e){var r={previousConformedValue:void 0,previousPlaceholder:void 0};return{state:r,update:function(t){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:e,o=n.inputElement,s=n.mask,d=n.guide,m=n.pipe,g=n.placeholderChar,b=void 0===g?v.placeholderChar:g,C=n.keepCharPositions,k=void 0!==C&&C,x=n.showMask,P=void 0!==x&&x;if("undefined"==typeof t&&(t=o.value),t!==r.previousConformedValue){("undefined"==typeof s?"undefined":l(s))===y&&void 0!==s.pipe&&void 0!==s.mask&&(m=s.pipe,s=s.mask);var T=void 0,O=void 0;if(s instanceof Array&&(T=(0,p.convertMaskToPlaceholder)(s,b)),s!==!1){var M=a(t),w=o.selectionEnd,S=r.previousConformedValue,_=r.previousPlaceholder,j=void 0;if(("undefined"==typeof s?"undefined":l(s))===v.strFunction){if(O=s(M,{currentCaretPosition:w,previousConformedValue:S,placeholderChar:b}),O===!1)return;var V=(0,p.processCaretTraps)(O),A=V.maskWithoutCaretTraps,E=V.indexes;O=A,j=E,T=(0,p.convertMaskToPlaceholder)(O,b)}else O=s;var N={previousConformedValue:S,guide:d,placeholderChar:b,pipe:m,placeholder:T,currentCaretPosition:w,keepCharPositions:k},F=(0,c.default)(M,O,N),I=F.conformedValue,L=("undefined"==typeof m?"undefined":l(m))===v.strFunction,R={};L&&(R=m(I,u({rawValue:M},N)),R===!1?R={value:S,rejected:!0}:(0,p.isString)(R)&&(R={value:R}));var J=L?R.value:I,W=(0,f.default)({previousConformedValue:S,previousPlaceholder:_,conformedValue:J,placeholder:T,rawValue:M,currentCaretPosition:w,placeholderChar:b,indexesOfPipedChars:R.indexesOfPipedChars,caretTrapIndexes:j}),q=J===T&&0===W,z=P?T:h,B=q?z:J;r.previousConformedValue=B,r.previousPlaceholder=T,o.value!==B&&(o.value=B,i(o,W))}}}}}function i(e,r){document.activeElement===e&&(g?b(function(){return e.setSelectionRange(r,r,m)},0):e.setSelectionRange(r,r,m))}function a(e){if((0,p.isString)(e))return e;if((0,p.isNumber)(e))return String(e);if(void 0===e||null===e)return h;throw new Error("The 'value' provided to Text Mask needs to be a string or a number. The value received was:\n\n "+JSON.stringify(e))}Object.defineProperty(r,"__esModule",{value:!0});var u=Object.assign||function(e){for(var r=1;r<arguments.length;r++){var t=arguments[r];for(var n in t)Object.prototype.hasOwnProperty.call(t,n)&&(e[n]=t[n])}return e},l="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e};r.default=o;var s=t(4),f=n(s),d=t(2),c=n(d),p=t(3),v=t(1),h="",m="none",y="object",g="undefined"!=typeof navigator&&/Android/i.test(navigator.userAgent),b="undefined"!=typeof requestAnimationFrame?requestAnimationFrame:setTimeout}])});
-},{}],385:[function(_dereq_,module,exports){
+},{}],392:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39067,7 +38115,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],386:[function(_dereq_,module,exports){
+},{}],393:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39161,7 +38209,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],387:[function(_dereq_,module,exports){
+},{}],394:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39286,7 +38334,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],388:[function(_dereq_,module,exports){
+},{}],395:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39371,7 +38419,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],389:[function(_dereq_,module,exports){
+},{}],396:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.run([
@@ -39531,7 +38579,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],390:[function(_dereq_,module,exports){
+},{}],397:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39595,7 +38643,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],391:[function(_dereq_,module,exports){
+},{}],398:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39666,7 +38714,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],392:[function(_dereq_,module,exports){
+},{}],399:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39746,7 +38794,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],393:[function(_dereq_,module,exports){
+},{}],400:[function(_dereq_,module,exports){
 "use strict";
 var _assign = _dereq_('lodash/assign');
 
@@ -39812,7 +38860,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/assign":316}],394:[function(_dereq_,module,exports){
+},{"lodash/assign":323}],401:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -39911,7 +38959,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],395:[function(_dereq_,module,exports){
+},{}],402:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40094,7 +39142,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],396:[function(_dereq_,module,exports){
+},{}],403:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40179,7 +39227,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],397:[function(_dereq_,module,exports){
+},{}],404:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40288,7 +39336,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],398:[function(_dereq_,module,exports){
+},{}],405:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -40338,7 +39386,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":321,"lodash/each":325}],399:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":328,"lodash/each":332}],406:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40401,7 +39449,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],400:[function(_dereq_,module,exports){
+},{}],407:[function(_dereq_,module,exports){
 "use strict";
 var _map = _dereq_('lodash/map');
 module.exports = function(app) {
@@ -40496,7 +39544,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/map":356}],401:[function(_dereq_,module,exports){
+},{"lodash/map":363}],408:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40622,7 +39670,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],402:[function(_dereq_,module,exports){
+},{}],409:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40683,7 +39731,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],403:[function(_dereq_,module,exports){
+},{}],410:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40745,7 +39793,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],404:[function(_dereq_,module,exports){
+},{}],411:[function(_dereq_,module,exports){
 "use strict";
 var app = angular.module('ngFormBuilder');
 
@@ -40790,7 +39838,7 @@ _dereq_('./panel')(app);
 _dereq_('./table')(app);
 _dereq_('./well')(app);
 
-},{"./address":385,"./button":386,"./checkbox":387,"./columns":388,"./components":389,"./container":390,"./content":391,"./currency":392,"./custom":393,"./datagrid":394,"./datetime":395,"./day":396,"./editgrid":397,"./email":398,"./fieldset":399,"./file":400,"./form":401,"./hidden":402,"./htmlelement":403,"./number":405,"./page":406,"./panel":407,"./password":408,"./phonenumber":409,"./radio":410,"./resource":411,"./select":412,"./selectboxes":413,"./signature":414,"./survey":415,"./table":416,"./textarea":417,"./textfield":418,"./time":419,"./well":420}],405:[function(_dereq_,module,exports){
+},{"./address":392,"./button":393,"./checkbox":394,"./columns":395,"./components":396,"./container":397,"./content":398,"./currency":399,"./custom":400,"./datagrid":401,"./datetime":402,"./day":403,"./editgrid":404,"./email":405,"./fieldset":406,"./file":407,"./form":408,"./hidden":409,"./htmlelement":410,"./number":412,"./page":413,"./panel":414,"./password":415,"./phonenumber":416,"./radio":417,"./resource":418,"./select":419,"./selectboxes":420,"./signature":421,"./survey":422,"./table":423,"./textarea":424,"./textfield":425,"./time":426,"./well":427}],412:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40926,7 +39974,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],406:[function(_dereq_,module,exports){
+},{}],413:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -40947,7 +39995,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],407:[function(_dereq_,module,exports){
+},{}],414:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41062,7 +40110,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],408:[function(_dereq_,module,exports){
+},{}],415:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41138,7 +40186,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],409:[function(_dereq_,module,exports){
+},{}],416:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41221,7 +40269,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],410:[function(_dereq_,module,exports){
+},{}],417:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41300,7 +40348,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],411:[function(_dereq_,module,exports){
+},{}],418:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41404,7 +40452,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],412:[function(_dereq_,module,exports){
+},{}],419:[function(_dereq_,module,exports){
 "use strict";
 var _clone = _dereq_('lodash/clone');
 module.exports = function(app) {
@@ -41665,7 +40713,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/clone":320}],413:[function(_dereq_,module,exports){
+},{"lodash/clone":327}],420:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41752,7 +40800,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],414:[function(_dereq_,module,exports){
+},{}],421:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41820,7 +40868,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],415:[function(_dereq_,module,exports){
+},{}],422:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41893,7 +40941,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],416:[function(_dereq_,module,exports){
+},{}],423:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -41966,7 +41014,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],417:[function(_dereq_,module,exports){
+},{}],424:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42133,7 +41181,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],418:[function(_dereq_,module,exports){
+},{}],425:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42273,7 +41321,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],419:[function(_dereq_,module,exports){
+},{}],426:[function(_dereq_,module,exports){
 "use strict";
 var _cloneDeep = _dereq_('lodash/cloneDeep');
 var _each = _dereq_('lodash/each');
@@ -42326,7 +41374,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{"lodash/cloneDeep":321,"lodash/each":325}],420:[function(_dereq_,module,exports){
+},{"lodash/cloneDeep":328,"lodash/each":332}],427:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function(app) {
   app.config([
@@ -42374,7 +41422,7 @@ module.exports = function(app) {
   ]);
 };
 
-},{}],421:[function(_dereq_,module,exports){
+},{}],428:[function(_dereq_,module,exports){
 "use strict";
 /**
   * These are component options that can be reused
@@ -42738,7 +41786,7 @@ module.exports = {
   }
 };
 
-},{}],422:[function(_dereq_,module,exports){
+},{}],429:[function(_dereq_,module,exports){
 "use strict";
 module.exports = {
   actions: [
@@ -42821,7 +41869,7 @@ module.exports = {
   ]
 };
 
-},{}],423:[function(_dereq_,module,exports){
+},{}],430:[function(_dereq_,module,exports){
 "use strict";
 /*eslint max-statements: 0*/
 var _cloneDeep = _dereq_('lodash/cloneDeep');
@@ -43266,7 +42314,7 @@ module.exports = ['debounce', function(debounce) {
   };
 }];
 
-},{"lodash/capitalize":318,"lodash/cloneDeep":321,"lodash/each":325,"lodash/groupBy":331,"lodash/merge":358,"lodash/omitBy":360,"lodash/upperFirst":375}],424:[function(_dereq_,module,exports){
+},{"lodash/capitalize":325,"lodash/cloneDeep":328,"lodash/each":332,"lodash/groupBy":338,"lodash/merge":365,"lodash/omitBy":367,"lodash/upperFirst":382}],431:[function(_dereq_,module,exports){
 "use strict";
 /**
  * Create the form-builder-component directive.
@@ -43282,7 +42330,7 @@ module.exports = [
   }
 ];
 
-},{}],425:[function(_dereq_,module,exports){
+},{}],432:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 var utils = _dereq_('formiojs/utils').default;
@@ -43378,7 +42426,7 @@ module.exports = [
   }
 ];
 
-},{"formiojs/utils":132,"lodash/get":330,"lodash/reject":365}],426:[function(_dereq_,module,exports){
+},{"formiojs/utils":139,"lodash/get":337,"lodash/reject":372}],433:[function(_dereq_,module,exports){
 "use strict";
 var _isNumber = _dereq_('lodash/isNumber');
 var _camelCase = _dereq_('lodash/camelCase');
@@ -43729,7 +42777,7 @@ module.exports = [
   }
 ];
 
-},{"lodash/assign":316,"lodash/camelCase":317,"lodash/isNumber":345}],427:[function(_dereq_,module,exports){
+},{"lodash/assign":323,"lodash/camelCase":324,"lodash/isNumber":352}],434:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   'formioElementDirective',
@@ -43754,7 +42802,7 @@ module.exports = [
   }
 ];
 
-},{}],428:[function(_dereq_,module,exports){
+},{}],435:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -43780,7 +42828,7 @@ module.exports = [
   }
 ];
 
-},{}],429:[function(_dereq_,module,exports){
+},{}],436:[function(_dereq_,module,exports){
 "use strict";
 /**
 * This directive creates a field for tweaking component options.
@@ -43871,7 +42919,7 @@ module.exports = ['COMMON_OPTIONS', '$filter', function(COMMON_OPTIONS, $filter)
   };
 }];
 
-},{}],430:[function(_dereq_,module,exports){
+},{}],437:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for editing a component's custom validation.
@@ -43912,7 +42960,7 @@ module.exports = function() {
   };
 };
 
-},{}],431:[function(_dereq_,module,exports){
+},{}],438:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component input format.
@@ -43956,7 +43004,7 @@ module.exports = function() {
   };
 };
 
-},{}],432:[function(_dereq_,module,exports){
+},{}],439:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component inputs' label position.
@@ -43998,7 +43046,7 @@ module.exports = function() {
     };
   };
 
-},{}],433:[function(_dereq_,module,exports){
+},{}],440:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's key.
@@ -44044,7 +43092,7 @@ module.exports = function() {
   };
 };
 
-},{}],434:[function(_dereq_,module,exports){
+},{}],441:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's label position.
@@ -44108,7 +43156,7 @@ module.exports = function() {
     };
   };
 
-},{}],435:[function(_dereq_,module,exports){
+},{}],442:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component options' label position.
@@ -44150,7 +43198,7 @@ module.exports = function() {
     };
   };
 
-},{}],436:[function(_dereq_,module,exports){
+},{}],443:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's shortcut.
@@ -44172,7 +43220,7 @@ module.exports = function() {
   };
 };
 
-},{}],437:[function(_dereq_,module,exports){
+},{}],444:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for a field to edit a component's tags.
@@ -44216,7 +43264,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/map":356}],438:[function(_dereq_,module,exports){
+},{"lodash/map":363}],445:[function(_dereq_,module,exports){
 "use strict";
 module.exports = [
   function() {
@@ -44238,7 +43286,7 @@ module.exports = [
   }
 ];
 
-},{}],439:[function(_dereq_,module,exports){
+},{}],446:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive for a table builder
@@ -44292,7 +43340,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/merge":358}],440:[function(_dereq_,module,exports){
+},{"lodash/merge":365}],447:[function(_dereq_,module,exports){
 "use strict";
 /**
 * Invokes Bootstrap's popover jquery plugin on an element
@@ -44337,7 +43385,7 @@ module.exports = ['$filter', function($filter) {
   };
 }];
 
-},{}],441:[function(_dereq_,module,exports){
+},{}],448:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -44400,7 +43448,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":317,"lodash/map":356}],442:[function(_dereq_,module,exports){
+},{"lodash/camelCase":324,"lodash/map":363}],449:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function() {
   return {
@@ -44437,7 +43485,7 @@ module.exports = function() {
   };
 };
 
-},{}],443:[function(_dereq_,module,exports){
+},{}],450:[function(_dereq_,module,exports){
 "use strict";
 module.exports = function () {
   return {
@@ -44460,7 +43508,7 @@ module.exports = function () {
   };
 }
 
-},{}],444:[function(_dereq_,module,exports){
+},{}],451:[function(_dereq_,module,exports){
 "use strict";
 /**
  * A directive that provides a UI for multiple masks input.
@@ -44501,7 +43549,7 @@ module.exports = ['COMMON_OPTIONS', function (COMMON_OPTIONS) {
   };
 }];
 
-},{}],445:[function(_dereq_,module,exports){
+},{}],452:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add key-value pair object.
@@ -44574,7 +43622,7 @@ module.exports = function() {
   };
 };
 
-},{}],446:[function(_dereq_,module,exports){
+},{}],453:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive for an input mask for default value.
@@ -44624,7 +43672,7 @@ module.exports = function() {
   };
 };
 
-},{"formiojs/utils":132,"vanilla-text-mask":384}],447:[function(_dereq_,module,exports){
+},{"formiojs/utils":139,"vanilla-text-mask":391}],454:[function(_dereq_,module,exports){
 "use strict";
 /*
 * Prevents user inputting invalid api key characters.
@@ -44647,7 +43695,7 @@ module.exports = function() {
   };
 };
 
-},{}],448:[function(_dereq_,module,exports){
+},{}],455:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -44729,7 +43777,7 @@ module.exports = function() {
   };
 };
 
-},{"lodash/camelCase":317,"lodash/map":356}],449:[function(_dereq_,module,exports){
+},{"lodash/camelCase":324,"lodash/map":363}],456:[function(_dereq_,module,exports){
 "use strict";
 /**
 * A directive that provides a UI to add {value, label} objects to an array.
@@ -44851,7 +43899,7 @@ module.exports = ['BuilderUtils', function(BuilderUtils) {
   }
 ];
 
-},{"lodash/camelCase":317,"lodash/difference":324,"lodash/map":356,"lodash/without":376}],450:[function(_dereq_,module,exports){
+},{"lodash/camelCase":324,"lodash/difference":331,"lodash/map":363,"lodash/without":383}],457:[function(_dereq_,module,exports){
 "use strict";
 'use strict';
 
@@ -45010,7 +44058,7 @@ module.exports = ['FormioUtils', function(FormioUtils) {
   };
 }];
 
-},{"lodash/difference":324,"lodash/range":364}],451:[function(_dereq_,module,exports){
+},{"lodash/difference":331,"lodash/range":371}],458:[function(_dereq_,module,exports){
 "use strict";
 // Create an AngularJS service called debounce
 module.exports = ['$timeout','$q', function($timeout, $q) {
@@ -45044,7 +44092,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
   };
 }];
 
-},{}],452:[function(_dereq_,module,exports){
+},{}],459:[function(_dereq_,module,exports){
 "use strict";
 /*! ng-formio-builder v2.38.1 | https://unpkg.com/ng-formio-builder@2.38.1/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
@@ -45255,5 +44303,5 @@ app.run([
 
 _dereq_('./components');
 
-},{"./components":404,"./constants/commonOptions":421,"./constants/formOptions":422,"./directives/formBuilder":423,"./directives/formBuilderComponent":424,"./directives/formBuilderConditional":425,"./directives/formBuilderDnd":426,"./directives/formBuilderElement":427,"./directives/formBuilderList":428,"./directives/formBuilderOption":429,"./directives/formBuilderOptionCustomValidation":430,"./directives/formBuilderOptionInputFormat":431,"./directives/formBuilderOptionInputsLabelPosition":432,"./directives/formBuilderOptionKey":433,"./directives/formBuilderOptionLabelPosition":434,"./directives/formBuilderOptionOptionsLabelPosition":435,"./directives/formBuilderOptionShortcut":436,"./directives/formBuilderOptionTags":437,"./directives/formBuilderRow":438,"./directives/formBuilderTable":439,"./directives/formBuilderTooltip":440,"./directives/headersBuilder":441,"./directives/jsonInput":442,"./directives/labelValidator":443,"./directives/multiMaskInput":444,"./directives/objectBuilder":445,"./directives/textMask":446,"./directives/validApiKey":447,"./directives/valueBuilder":448,"./directives/valueBuilderWithShortcuts":449,"./factories/BuilderUtils":450,"./factories/debounce":451,"formiojs/utils":132}]},{},[452])(452)
+},{"./components":411,"./constants/commonOptions":428,"./constants/formOptions":429,"./directives/formBuilder":430,"./directives/formBuilderComponent":431,"./directives/formBuilderConditional":432,"./directives/formBuilderDnd":433,"./directives/formBuilderElement":434,"./directives/formBuilderList":435,"./directives/formBuilderOption":436,"./directives/formBuilderOptionCustomValidation":437,"./directives/formBuilderOptionInputFormat":438,"./directives/formBuilderOptionInputsLabelPosition":439,"./directives/formBuilderOptionKey":440,"./directives/formBuilderOptionLabelPosition":441,"./directives/formBuilderOptionOptionsLabelPosition":442,"./directives/formBuilderOptionShortcut":443,"./directives/formBuilderOptionTags":444,"./directives/formBuilderRow":445,"./directives/formBuilderTable":446,"./directives/formBuilderTooltip":447,"./directives/headersBuilder":448,"./directives/jsonInput":449,"./directives/labelValidator":450,"./directives/multiMaskInput":451,"./directives/objectBuilder":452,"./directives/textMask":453,"./directives/validApiKey":454,"./directives/valueBuilder":455,"./directives/valueBuilderWithShortcuts":456,"./factories/BuilderUtils":457,"./factories/debounce":458,"formiojs/utils":139}]},{},[459])(459)
 });
