@@ -65,7 +65,7 @@ app.directive('formBuilderDraggable', function() {
 
       el.addEventListener('dragstart', function(event) {
         event.stopPropagation();
-        event.dataTransfer.setData('text/plain', 'true');
+        event.dataTransfer.setData('text', 'true');
         if (!dropZone) {
           dropZone = document.getElementById('fb-drop-zone');
         }
