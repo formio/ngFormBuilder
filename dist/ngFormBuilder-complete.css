@@ -1099,6 +1099,13 @@ input[type="password"][draggable="true"] {
 .bs-wizard > .bs-wizard-step.disabled a.bs-wizard-dot{ pointer-events: none; }
 /*END Form Wizard*/
 
+.formio-select-autocomplete-input {
+  /* we can't use display: none or visibility: hidden because autocomplete won't work on hidden field */
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+}
+
 @media (max-width: 767px) {
   .col-sm-1.bs-wizard-step,
   .col-sm-2.bs-wizard-step,

@@ -39538,6 +39538,8 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
           '<form-builder-option property="validate.customMessage"></form-builder-option>' +
+          '<form-builder-option property="validate.minItems" label="Min items" type="number"></form-builder-option>' +
+          '<form-builder-option property="validate.maxItems" label="Max items" type="number"></form-builder-option>' +
         '</ng-form>'
       );
     }
@@ -44094,7 +44096,7 @@ module.exports = ['$timeout','$q', function($timeout, $q) {
 
 },{}],459:[function(_dereq_,module,exports){
 "use strict";
-/*! ng-formio-builder v2.38.1 | https://unpkg.com/ng-formio-builder@2.38.1/LICENSE.txt */
+/*! ng-formio-builder v2.39.0 | https://unpkg.com/ng-formio-builder@2.39.0/LICENSE.txt */
 /*global window: false, console: false, jQuery: false */
 /*jshint browser: true */
 
@@ -44161,7 +44163,7 @@ app.directive('formBuilderDraggable', function() {
 
       el.addEventListener('dragstart', function(event) {
         event.stopPropagation();
-        event.dataTransfer.setData('text/plain', 'true');
+        event.dataTransfer.setData('text', 'true');
         if (!dropZone) {
           dropZone = document.getElementById('fb-drop-zone');
         }
