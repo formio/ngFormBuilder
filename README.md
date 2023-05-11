@@ -1,3 +1,13 @@
+## This repository is now considered legacy and no longer supported. It has been replaced with our latest Form Builder and Renderer @ https://github.com/formio/formio.js and Angular libraries @ https://github.com/formio/angular.
+
+## Please take a look at our recent repositories and help documentation at the following links.
+ - https://help.form.io
+ - https://github.com/formio/formio.js
+ - https://github.com/formio/formio
+ - https://github.com/formio/react
+ - https://github.com/formio/angular
+ - https://github.com/formio/vue
+
 The [Form.io](https://form.io) Form Builder
 --------------------------------
 This library provides form building capabilities to an Angular.js application. This form builder's purpose is to 
